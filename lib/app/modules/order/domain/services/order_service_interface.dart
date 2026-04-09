@@ -1,0 +1,25 @@
+import 'package:image_picker/image_picker.dart';
+
+import '../../../../core/api/api_client.dart';
+import '../../../../core/common/models/response_model.dart';
+import '../models/order_cancellation_body_model.dart';
+import '../models/order_details_model.dart';
+import '../models/order_model.dart';
+import '../models/update_status_body_model.dart';
+
+abstract class OrderServiceInterface {
+  Future<List<OrderModel>?> getCurrentOrders();
+  Future<PaginatedOrderModel?> getPaginatedOrderList(int offset, String status);
+  Future<ResponseModel> updateOrderStatus(
+    UpdateStatusBodyModel updateStatusBody,
+    List<MultipartBody> proofAttachment,
+  );
+  Future<List<OrderDetailsModel>?> getOrderDetails(int orderID);
+  Future<OrderModel?> getOrderWithId(int orderId);
+  Future<ResponseModel> updateOrderAmount(Map<String, String> body);
+  Future<OrderCancellationBodyModel?> getCancelReasons();
+  Future<bool> sendDeliveredNotification(int? orderID);
+  List<MultipartBody> processMultipartData(List<XFile> pickedPrescriptions);
+  Future<void> setBluetoothAddress(String? address);
+  String? getBluetoothAddress();
+}
