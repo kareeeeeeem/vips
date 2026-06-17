@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart'; // Add this import
 import 'package:get/get.dart';
 
-import 'app/core/translations/app_translations.dart';
-import 'app/routes/app_pages.dart';
+import 'appuser/core/translations/app_translations.dart';
+import 'appuser/routes/app_pages.dart';
 
 void main() {
   runApp(MyApp());
