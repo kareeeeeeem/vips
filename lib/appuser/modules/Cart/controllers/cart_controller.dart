@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/order_success.dart';
 import '../views/widgets/payment_method_bottomsheet.dart';
@@ -18,11 +19,13 @@ class CartItem {
   final CartItemType type;
   int quantity;
   final String? category;
+  final String? merchantId;
   final Map<String, dynamic>? options;
   bool isFavorite;
 
   CartItem({
     required this.id,
+    this.merchantId,
     required this.name,
     required this.description,
     this.image,
@@ -40,6 +43,7 @@ class CartItem {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'merchantId': merchantId,
       'name': name,
       'description': description,
       'image': image,
@@ -61,6 +65,7 @@ class CartItem {
       image: json['image'],
       price: json['price'].toDouble(),
       oldPrice: json['oldPrice']?.toDouble(),
+      merchantId: json['merchantId'],
       type: CartItemType.values.firstWhere(
         (e) => e.toString() == json['type'],
         orElse: () => CartItemType.product,
@@ -82,11 +87,13 @@ class CartItem {
     CartItemType? type,
     int? quantity,
     String? category,
+    String? merchantId,
     Map<String, dynamic>? options,
     bool? isFavorite,
   }) {
     return CartItem(
       id: id ?? this.id,
+      merchantId: merchantId ?? this.merchantId,
       name: name ?? this.name,
       description: description ?? this.description,
       image: image ?? this.image,
@@ -195,6 +202,7 @@ class CartController extends GetxController
       cartItems.value = [
         CartItem(
           id: '1',
+          merchantId: '64abcd1234567890abcdef12',
           name: 'Pizza Hub happy meal',
           description: 'Delicious combo with pizza, fries and drink',
           image:
@@ -437,7 +445,7 @@ class CartController extends GetxController
               GestureDetector(
                 onTap: () {
                   Get.back();
-                  proceedToCheckout();
+                  placeOrder();
                 },
                 child: Container(
                   width: double.infinity,
@@ -590,7 +598,35 @@ class CartController extends GetxController
     }
   }
 
-  RxString selectedPaymentMethod = ''.obs;
+  RxString selectedPaymentMethod = 'cash_on_delivery'.obs;
+
+  String get selectedPaymentMethodLabel {
+    switch (selectedPaymentMethod.value) {
+      case 'cash_on_delivery':
+        return 'Cash on Delivery';
+      case 'paypal':
+        return 'Paypal';
+      case 'bkash':
+        return 'Bkash';
+      case 'stripe':
+        return 'Stripe';
+      case 'razorpay':
+        return 'Razorpay';
+      case 'semangpay':
+        return 'SemangPay';
+      case 'flutterwave':
+        return 'Flutterwave';
+      case 'paystack':
+        return 'Paystack';
+      default:
+        return selectedPaymentMethod.value;
+    }
+  }
+
+  String get normalizedPaymentMethod {
+    if (selectedPaymentMethod.value == 'cash_on_delivery') return 'cash';
+    return selectedPaymentMethod.value.toLowerCase();
+  }
 
   void selectPaymentMethod() {
     Get.put(PaymentMethodController(totalBill: total, walletPoints: 28560));
@@ -626,11 +662,69 @@ class CartController extends GetxController
   }
 
   void viewPromotions() {
-    // TODO: Navigate to promotions page
     Get.toNamed('/promotions');
   }
 
   // ==================== MAIN METHODS ====================
+
+  void placeOrder() async {
+    if (cartItems.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Your cart is empty',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    try {
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      final items = cartItems
+          .map(
+            (item) => {
+              'productId': item.id,
+              'name': item.name,
+              'price': item.price,
+              'quantity': item.quantity,
+            },
+          )
+          .toList();
+
+      final response = await ApiService().post('/order/create', {
+        'merchantId': cartItems.first.merchantId ?? '64abcd1234567890abcdef12',
+        'items': items,
+        'paymentMethod': normalizedPaymentMethod,
+        'deliveryAddress':
+            selectedOrderType.value == 0 ? deliveryAddress.value : 'Pickup',
+      });
+
+      Get.back(); // close loading dialog
+
+      if (response.success) {
+        Get.to(() => const OrderSuccessView());
+        clearCartLocally();
+      } else {
+        Get.snackbar(
+          'Error',
+          response.message,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Get.back(); // close loading dialog
+      Get.snackbar(
+        'Error',
+        'Failed to place order: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+
 
   void addItems() {
     Get.back();
@@ -638,6 +732,11 @@ class CartController extends GetxController
 
   void updateNote(String note) {
     deliveryNote.value = note;
+  }
+
+  void clearCartLocally() {
+    cartItems.clear();
+    selectedItems.clear();
   }
 
   void toggleFavorite(CartItem item) {
@@ -941,7 +1040,7 @@ class CartController extends GetxController
     if (selectedItems.length == cartItems.length) {
       selectedItems.clear();
     } else {
-      selectedItems.value = cartItems.map((item) => item.id).toSet();
+      selectedItems.assignAll(cartItems.map((item) => item.id));
     }
   }
 
@@ -1001,23 +1100,23 @@ class CartController extends GetxController
     Get.back();
   }
 
-  void proceedToCheckout() async {
+  void proceedToCheckout() {
     if (cartItems.isEmpty) return;
 
-    // Créer la commande
-    final orderId = '127HJJSHYZ63HHS';
-
-    if (orderId != null) {
-      // Navigation vers la page de succès
-      Get.offAll(
-        () => OrderSuccessView(),
-        arguments: {
-          'orderId': orderId,
-          'total': total,
-          'orderType': 'Order Type',
-        },
-      );
-    }
+    Get.toNamed(
+      '/checkout',
+      arguments: {
+        'subtotal': subtotal,
+        'deliveryFee': deliveryFee,
+        'discount': discount,
+        'deliveryOption': selectedOrderType.value == 0
+            ? 'delivery'
+            : selectedOrderType.value == 1
+                ? 'takeaway'
+                : 'inStore',
+        'paymentMethod': normalizedPaymentMethod,
+      },
+    );
   }
 
   void continueShopping() {

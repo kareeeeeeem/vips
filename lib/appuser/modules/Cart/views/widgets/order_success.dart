@@ -91,7 +91,7 @@ class OrderSuccessController extends GetxController {
   }
 
   void goHome() {
-    Get.offAllNamed('/home');
+    Get.offAllNamed('/main-app');
   }
 
   void restartTimer() {

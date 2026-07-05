@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import '../../../../design_system/organisms/pin/pin.dart';
@@ -48,18 +49,60 @@ class ElectricBillAmountController extends GetxController {
             ),
           );
         },
-        onValidPin: () {
-          Get.to(
-            () => OrderDetailsView(),
-            arguments: {
-              'amount': amount,
-              'serviceFee': serviceFee,
-              'billNumber': billingNumber,
-              'operator': operatorName,
-            },
+        onValidPin: () async {
+          Get.back(); // close pin validator
+
+          // Show loading dialog
+          Get.dialog(
+            const Center(child: CircularProgressIndicator()),
+            barrierDismissible: false,
           );
+
+          try {
+            final response = await ApiService().post('/services/pay-bill', {
+              'billServiceId':
+                  'electric_company_id_123', // should be dynamic, placeholder for now
+              'amount': amount + serviceFee,
+              'referenceNumber': billingNumber,
+            });
+
+            Get.back(); // close loading dialog
+
+            if (response.success) {
+              Get.snackbar(
+                'Success',
+                'Bill paid successfully!',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+              Get.to(
+                () => const OrderDetailsView(),
+                arguments: {
+                  'amount': amount,
+                  'serviceFee': serviceFee,
+                  'billNumber': billingNumber,
+                  'operator': operatorName,
+                },
+              );
+            } else {
+              Get.snackbar(
+                'Error',
+                response.message,
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            }
+          } catch (e) {
+            Get.back(); // close loading dialog
+            Get.snackbar(
+              'Error',
+              'Failed to pay bill: $e',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
         },
-        supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
+        supportedMethods: const [
+          ValidationMethod.pin,
+          ValidationMethod.biometrics,
+        ],
       ),
     );
   }

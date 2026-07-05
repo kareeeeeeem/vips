@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:vip/core/services/api_service.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -39,66 +40,94 @@ class LoginController extends GetxController {
 
   // Phone Login Method
   void login() async {
-    if (!canLogin) return;
+    if (!canLogin) {
+      Get.defaultDialog(
+        title: 'Validation Error',
+        middleText: 'Please enter a valid phone and password.',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.redAccent,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
 
     try {
-      // Implement your phone login logic here
-      // For example, using FirebaseAuth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: '${phoneController.text}@example.com', // Adapt as needed
-            password: passwordController.text,
-          );
+      final response = await ApiService().post('/auth/login', {
+        'email':
+            '${phoneController.text}@example.com', // Adapting phone to email for now or change backend
+        'password': passwordController.text,
+      });
 
-      _handleSuccessfulLogin(userCredential.user);
+      if (response.success && response.data != null) {
+        final token = response.data['token'];
+        await ApiService().setToken(token);
+        _handleSuccessfulLogin(
+          null,
+        ); // Passing null since we don't use Firebase User anymore
+      } else {
+        _handleLoginError(response.message);
+      }
     } catch (e) {
-      _handleLoginError(e);
+      _handleLoginError(e.toString());
     }
   }
 
   // Email Login Method
   void emailLogin() async {
-    if (!canEmailLogin) return;
+    if (!canEmailLogin) {
+      Get.defaultDialog(
+        title: 'Validation Error',
+        middleText: 'Please enter a valid email and password.',
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.redAccent,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
+      final response = await ApiService().post('/auth/login', {
+        'email': emailController.text.trim(),
+        'password': passwordController.text,
+      });
 
-      _handleSuccessfulLogin(userCredential.user);
+      if (response.success && response.data != null) {
+        final token = response.data['token'];
+        await ApiService().setToken(token);
+        _handleSuccessfulLogin(null);
+      } else {
+        _handleLoginError(response.message);
+      }
     } catch (e) {
-      _handleLoginError(e);
+      _handleLoginError(e.toString());
     }
   }
 
   // Google Login Method
   Future<void> googleLogin() async {
     try {
-      // Trigger the Google Authentication flow
-      final GoogleSignInAccount? googleUser =
-          GoogleSignIn.instance as GoogleSignInAccount?;
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // User canceled
 
-      if (googleUser == null) return;
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.idToken,
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the credential
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
+      // If backend has a social login endpoint, you should call it here with userCredential.user
+      // final idToken = await userCredential.user?.getIdToken();
+      // final response = await ApiService().post('/auth/social', {'token': idToken});
+      // await ApiService().setToken(response.data['token']);
+
       _handleSuccessfulLogin(userCredential.user);
     } catch (e) {
-      _handleLoginError(e);
+      _handleLoginError(e.toString());
     }
   }
 
@@ -154,54 +183,31 @@ class LoginController extends GetxController {
     }
   }
 
-  // Guest Login Method
+  // Guest Login Method — no auth required, browse as guest
   Future<void> guestLogin() async {
-    try {
-      // Sign in anonymously with Firebase
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInAnonymously();
-
-      _handleSuccessfulLogin(userCredential.user);
-    } catch (e) {
-      _handleLoginError(e);
-    }
+    Get.offAllNamed('/main-app');
   }
 
   // Handle Successful Login
   void _handleSuccessfulLogin(User? user) {
-    if (user != null) {
-      // Navigate to the main screen or dashboard
-      Get.offAllNamed('/home'); // Adjust route as needed
-
-      // Optional: Save login state if "Remember Me" is checked
-      if (rememberMe) {
-        // Implement persistent login logic
-        // For example, using secure storage
-      }
-    }
+    // Navigate to main app shell after login so bottom navigation is shown
+    Get.offAllNamed('/main-app');
   }
 
   // Handle Login Errors
   void _handleLoginError(dynamic error) {
-    String errorMessage = 'An unknown error occurred';
+    final String errorMessage = error is String
+        ? error
+        : (error?.toString() ?? 'An unknown error occurred');
 
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'user-not-found':
-          errorMessage = 'No user found with this email/phone.';
-          break;
-        case 'wrong-password':
-          errorMessage = 'Incorrect password.';
-          break;
-        case 'invalid-email':
-          errorMessage = 'Invalid email address.';
-          break;
-        default:
-          errorMessage = error.message ?? 'Authentication error';
-      }
-    }
-
-    // Show error notification
+    Get.defaultDialog(
+      title: 'Login Error',
+      middleText: errorMessage,
+      textConfirm: 'OK',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.redAccent,
+      onConfirm: () => Get.back(),
+    );
   }
 
   // Forgot Password Method

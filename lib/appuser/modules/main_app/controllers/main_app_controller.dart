@@ -8,10 +8,15 @@ class MainAppController extends GetxController {
   final RxInt currentIndex = 0.obs;
   final RxBool isAmountVisible = false.obs;
 
-  // Points de l'utilisateur (à récupérer depuis votre backend/database)
-  final RxDouble userPoints = 285.0.obs;
-
-  // Getter pour récupérer la primaryColor depuis ProfileController
+  // Points de l'utilisateur
+  double get userPoints {
+    try {
+      final profileController = Get.find<ProfileController>();
+      return profileController.totalExpenses.value.toDouble();
+    } catch (e) {
+      return 0.0;
+    }
+  }
   Color get primaryColor {
     try {
       final profileController = Get.find<ProfileController>();
@@ -35,14 +40,9 @@ class MainAppController extends GetxController {
   void onScanTap() {
     WalletPointsBottomSheet.show(
       primaryColor: primaryColor,
-      points: userPoints.value,
+      points: userPoints,
       role: currentRole,
     );
-  }
-
-  // Méthode pour mettre à jour les points (depuis API par exemple)
-  void updateUserPoints(double newPoints) {
-    userPoints.value = newPoints;
   }
 
   void changePage(int index) {

@@ -6,10 +6,11 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/forgot_password_controller.dart';
 
 class ForgotPasswordView extends GetView<ForgotPasswordController> {
-  const ForgotPasswordView({Key? key}) : super(key: key);
+  const ForgotPasswordView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Get.put(ForgotPasswordController());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -64,7 +65,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
         height: 80.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.AppPrimaryColor.withOpacity(0.1),
+          color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -166,14 +167,13 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
 
   Widget _buildSendButton() {
     return Obx(() {
-      final isEnabled = controller.isEmailValid.value;
       final isLoading = controller.isSending.value;
 
       return SizedBox(
         width: double.infinity,
         height: 56.h,
         child: ElevatedButton(
-          onPressed: isEnabled && !isLoading ? controller.sendResetLink : null,
+          onPressed: isLoading ? null : controller.sendResetCode,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.AppPrimaryColor,
             disabledBackgroundColor: Colors.grey.shade300,

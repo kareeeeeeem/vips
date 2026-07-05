@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class VIPsClubController extends GetxController {
   // Observable variables
@@ -68,6 +69,37 @@ class VIPsClubController extends GetxController {
   void onInit() {
     super.onInit();
     checkTodayStatus();
+    fetchWalletData();
+  }
+
+  Future<void> fetchWalletData() async {
+    try {
+      final response = await ApiService().get('/user/wallet');
+      if (response.success && response.data != null) {
+        // Update diamonds with user's points
+        convertibleDiamonds.value = response.data['points'] ?? 0;
+
+        // Also update the latest transactions
+        final List<dynamic> txList = response.data['recentTransactions'] ?? [];
+        if (txList.isNotEmpty) {
+          transactionHistory.value =
+              txList.map((tx) {
+                return {
+                  'amount': tx['amount'],
+                  'type': tx['type'], // debit/credit
+                  'description': tx['description'] ?? 'Transaction',
+                  'date':
+                      tx['createdAt'] != null
+                          ? DateTime.parse(tx['createdAt']).toString()
+                          : DateTime.now().toString(),
+                  'isDebit': tx['type'] == 'debit',
+                };
+              }).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching wallet data: $e');
+    }
   }
 
   void checkTodayStatus() {

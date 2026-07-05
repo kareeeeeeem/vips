@@ -714,13 +714,15 @@ class CartView extends GetView<CartController> {
                     ),
                   ),
                   SizedBox(height: 4.h),
-                  Text(
-                    'Cash on Delivery',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                      fontFamily: 'SF Pro Display',
+                  Obx(
+                    () => Text(
+                      controller.selectedPaymentMethodLabel,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        fontFamily: 'SF Pro Display',
+                      ),
                     ),
                   ),
                 ],

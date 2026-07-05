@@ -100,24 +100,9 @@ class BuildTrendingMerchants extends GetView<HomeController> {
               borderRadius: BorderRadius.circular(16.r),
               child: Padding(
                 padding: EdgeInsets.all(8.w),
-                child: Image.network(
-                  merchant['logo'],
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value:
-                            loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    (loadingProgress.expectedTotalBytes ?? 1)
-                                : null,
-                        strokeWidth: 2,
-                        color: const Color(0xFF3B82F6),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
+                child: Builder(builder: (context) {
+                  final logoUrl = merchant['logo']?.toString() ?? '';
+                  if (logoUrl.isEmpty) {
                     return Container(
                       color: Colors.grey[100],
                       child: Center(
@@ -128,8 +113,37 @@ class BuildTrendingMerchants extends GetView<HomeController> {
                         ),
                       ),
                     );
-                  },
-                ),
+                  }
+                  return Image.network(
+                    logoUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  (loadingProgress.expectedTotalBytes ?? 1)
+                              : null,
+                          strokeWidth: 2,
+                          color: const Color(0xFF3B82F6),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[100],
+                        child: Center(
+                          child: Icon(
+                            Icons.store,
+                            color: Colors.grey[400],
+                            size: 24.sp,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
               ),
             ),
           ),
@@ -140,7 +154,7 @@ class BuildTrendingMerchants extends GetView<HomeController> {
           SizedBox(
             width: 80.w,
             child: Text(
-              merchant['name'],
+              merchant['name']?.toString() ?? '',
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,

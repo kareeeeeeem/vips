@@ -6,7 +6,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/reset_password_controller.dart';
 
 class ResetPasswordView extends GetView<ResetPasswordController> {
-  const ResetPasswordView({Key? key}) : super(key: key);
+  const ResetPasswordView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +59,7 @@ class ResetPasswordView extends GetView<ResetPasswordController> {
         width: 80.w,
         height: 80.h,
         decoration: BoxDecoration(
-          color: AppColors.AppPrimaryColor.withOpacity(0.1),
+          color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -85,7 +85,7 @@ class ResetPasswordView extends GetView<ResetPasswordController> {
         ),
         SizedBox(height: 12.h),
         Text(
-          'Please enter your new password. Make sure it\'s strong and secure.',
+          'Enter the 6-digit code sent to your email, then set your new password.',
           style: TextStyle(
             fontSize: 15.sp,
             color: Colors.grey.shade600,
@@ -99,6 +99,57 @@ class ResetPasswordView extends GetView<ResetPasswordController> {
   Widget _buildPasswordFields() {
     return Column(
       children: [
+        // OTP Code Field
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Verification Code',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            TextField(
+              controller: controller.otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: InputDecoration(
+                hintText: '000000',
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                counterText: '',
+                prefixIcon: Icon(
+                  Icons.pin_outlined,
+                  color: AppColors.AppPrimaryColor,
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(
+                    color: AppColors.AppPrimaryColor,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 16.h,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20.h),
         _buildPasswordField(
           label: 'New Password',
           controller: controller.passwordController,
@@ -203,16 +254,13 @@ class ResetPasswordView extends GetView<ResetPasswordController> {
 
   Widget _buildResetButton() {
     return Obx(() {
-      final isEnabled =
-          controller.isPasswordValid.value &&
-          controller.isPasswordConfirmed.value;
       final isLoading = controller.isResetting.value;
 
       return SizedBox(
         width: double.infinity,
         height: 56.h,
         child: ElevatedButton(
-          onPressed: isEnabled && !isLoading ? controller.resetPassword : null,
+          onPressed: isLoading ? null : controller.resetPassword,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.AppPrimaryColor,
             disabledBackgroundColor: Colors.grey.shade300,

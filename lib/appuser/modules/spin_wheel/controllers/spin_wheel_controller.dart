@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:vip/core/services/api_service.dart';
 import '../views/widgets/WinDialogWidget.dart';
 
 class SpinWheelController extends GetxController
@@ -97,39 +98,65 @@ class SpinWheelController extends GetxController
     });
   }
 
-  void spinWheel() {
+  void spinWheel() async {
     if (isSpinning.value || remainingSpins.value <= 0 || !canSpin.value) {
       return;
     }
 
     isSpinning.value = true;
     canSpin.value = false;
-    remainingSpins.value--;
 
-    // Random number of full rotations (5-8) + random angle
-    final random = Random();
-    final extraRotations = 5 + random.nextInt(4); // 5 à 8 tours complets
-    final randomAngle = random.nextDouble(); // 0 à 1
+    try {
+      final response = await ApiService().post('/rewards/spin-wheel', {});
+      if (response.success && response.data != null) {
+        remainingSpins.value--;
+        final amountWon = response.data['amount'];
 
-    // Calculate which prize will be won
-    final totalRotation = extraRotations + randomAngle;
-    final finalAngle = (totalRotation % 1) * 2 * pi;
-    final sectionAngle = (2 * pi) / prizes.length;
+        // Find the index of the prize we won
+        int winningIndex = prizes.indexWhere((p) => p.value == amountWon);
+        if (winningIndex == -1) {
+          winningIndex = 0; // fallback
+        }
+        wonPrize.value = prizes[winningIndex];
 
-    // Determine winning section (adjusting for rotation direction)
-    final winningIndex =
-        ((2 * pi - finalAngle) / sectionAngle).floor() % prizes.length;
-    wonPrize.value = prizes[winningIndex];
+        // Random number of full rotations (5-8)
+        final random = Random();
+        final extraRotations = 5 + random.nextInt(4);
 
-    // Start animation
-    animation = Tween<double>(
-      begin: rotation.value,
-      end: rotation.value + totalRotation,
-    ).animate(
-      CurvedAnimation(parent: animationController, curve: Curves.easeOutCubic),
-    );
+        // Calculate the exact angle to land on winningIndex
+        final sectionAngle = (2 * pi) / prizes.length;
+        // We want finalAngle such that: floor((2*pi - finalAngle) / sectionAngle) % length == winningIndex
+        // finalAngle = 2*pi - (winningIndex * sectionAngle) - (random offset inside section)
+        final randomOffset = random.nextDouble() * sectionAngle;
+        final targetFinalAngle =
+            (2 * pi) - (winningIndex * sectionAngle) - randomOffset;
 
-    animationController.forward(from: 0);
+        final totalRotation = extraRotations * 2 * pi + targetFinalAngle;
+
+        // Start animation
+        animation = Tween<double>(
+          begin: rotation.value,
+          end:
+              rotation.value +
+              (totalRotation / (2 * pi)), // animation value is in rotations
+        ).animate(
+          CurvedAnimation(
+            parent: animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
+        animationController.forward(from: 0);
+      } else {
+        Get.snackbar('Error', 'Failed to spin. Try again.');
+        isSpinning.value = false;
+        canSpin.value = true;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'An error occurred.');
+      isSpinning.value = false;
+      canSpin.value = true;
+    }
   }
 
   void _showWinDialog() {

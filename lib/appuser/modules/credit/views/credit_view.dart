@@ -54,7 +54,9 @@ class CreditView extends GetView<CreditController> {
     return Row(
       children: [
         GestureDetector(
-          onTap: () => Get.back(),
+          onTap: () {
+            Get.back();
+          },
           child: Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(

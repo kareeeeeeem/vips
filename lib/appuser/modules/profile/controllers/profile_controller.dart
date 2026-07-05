@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
 import '../../../design_system/organisms/pin/pin.dart';
@@ -19,11 +20,43 @@ class ProfileController extends GetxController {
   final RxString userName = 'Full Name'.obs;
   final RxString userEmail = 'user@email.com'.obs;
   final RxDouble profileCompletion = 0.31.obs;
-  final RxInt totalCredits = 1250.obs;
-  final RxInt totalExpenses = 850.obs;
+  final RxInt totalCredits = 0.obs;
+  final RxInt totalExpenses = 0.obs;
   final RxBool isStoresExpanded = false.obs;
+  final RxBool isLoading = true.obs;
 
   final RxString selectedStore = 'Store 1'.obs; // Store sélectionné par défaut
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchUserProfile();
+  }
+
+  Future<void> fetchUserProfile() async {
+    isLoading.value = true;
+    try {
+      final userResponse = await ApiService().get('/auth/me');
+      if (userResponse.success && userResponse.data != null) {
+        final user = userResponse.data['user'];
+        userName.value = user['fullName'] ?? 'User';
+        userEmail.value = user['email'] ?? '';
+      }
+
+      final walletResponse = await ApiService().get('/user/wallet');
+      if (walletResponse.success && walletResponse.data != null) {
+        totalCredits.value =
+            (walletResponse.data['balance'] as num?)?.toInt() ?? 0;
+        totalExpenses.value =
+            (walletResponse.data['points'] as num?)?.toInt() ?? 0;
+        // Also could parse transactions
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   // Gestion des filtres de commandes
   final RxString selectedOrderFilter = 'Active'.obs;

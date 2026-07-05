@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../../verification/views/verification_view.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class ForgotPasswordController extends GetxController {
   final TextEditingController emailController = TextEditingController();
 
   final RxBool isEmailValid = false.obs;
   final RxBool isSending = false.obs;
+
+  // Store the email used so reset-password screen can use it
+  String get submittedEmail => emailController.text.trim();
 
   @override
   void onInit() {
@@ -22,26 +24,60 @@ class ForgotPasswordController extends GetxController {
     ).hasMatch(email);
   }
 
-  Future<void> sendResetLink() async {
-    if (!isEmailValid.value) return;
+  Future<void> sendResetCode() async {
+    if (!isEmailValid.value) {
+      Get.snackbar(
+        'Validation Error',
+        'Please enter a valid email address.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     isSending.value = true;
 
-    // Simuler l'envoi
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final response = await ApiService().post('/auth/forgot-password', {
+        'email': emailController.text.trim(),
+      });
 
-    // TODO: Implémenter la logique d'envoi du lien de réinitialisation
-    print('Envoi du lien de réinitialisation à: ${emailController.text}');
+      if (response.success) {
+        // Navigate to reset password screen, passing the email
+        Get.toNamed(
+          '/reset-password',
+          arguments: {'email': emailController.text.trim()},
+        );
 
-    isSending.value = false;
-
-    // Afficher un message de succès
-
-    // Retourner à la page de connexion après 2 secondes
-    Get.off(
-      () => VerificationView(true),
-      arguments: {'email': emailController.text},
-    );
+        Get.snackbar(
+          'Code Sent',
+          response.message,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          response.message,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      isSending.value = false;
+    }
   }
 
   void goBack() {

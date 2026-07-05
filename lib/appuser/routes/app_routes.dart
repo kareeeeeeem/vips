@@ -25,6 +25,10 @@ abstract class Routes {
   static const SHIPPING = _Paths.SHIPPING;
   static const MOBILE = _Paths.MOBILE;
   static const PAY_BILLS = _Paths.PAY_BILLS;
+  static const HOT_DEALS = _Paths.HOT_DEALS;
+  static const DEAL_DETAILS = _Paths.DEAL_DETAILS;
+  static const ALL_MERCHANTS = _Paths.ALL_MERCHANTS;
+  static const MERCHANT_DETAILS = _Paths.MERCHANT_DETAILS;
   static const GIFT = _Paths.GIFT;
   static const EXPENSE_TO_REWARD = _Paths.EXPENSE_TO_REWARD;
   static const TRANSACTIONS_EXTRACT = _Paths.TRANSACTIONS_EXTRACT;
@@ -70,6 +74,10 @@ abstract class _Paths {
   static const SHIPPING = '/shipping';
   static const MOBILE = '/mobile';
   static const PAY_BILLS = '/pay-bills';
+  static const HOT_DEALS = '/hot-deals';
+  static const DEAL_DETAILS = '/deal-details';
+  static const ALL_MERCHANTS = '/all-merchants';
+  static const MERCHANT_DETAILS = '/merchant-details';
   static const GIFT = '/gift';
   static const EXPENSE_TO_REWARD = '/expense-to-reward';
   static const TRANSACTIONS_EXTRACT = '/transactions-extract';

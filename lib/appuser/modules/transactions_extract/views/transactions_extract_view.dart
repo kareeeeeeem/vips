@@ -62,7 +62,9 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Get.back(),
+            onTap: () {
+              Get.back();
+            },
             child: Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
@@ -551,15 +553,15 @@ class TransactionActionsSheet extends StatelessWidget {
           ),
           SizedBox(height: 24.h),
           _buildActionButton('View Details', Icons.info_outline_rounded, () {
-            Get.back();
+            Navigator.of(context).pop();
             controller.viewDetails(transaction);
           }),
           _buildActionButton('Share Transaction', Icons.share_rounded, () {
-            Get.back();
+            Navigator.of(context).pop();
             controller.shareTransaction(transaction);
           }),
           _buildActionButton('Download Receipt', Icons.download_rounded, () {
-            Get.back();
+            Navigator.of(context).pop();
             controller.downloadExtract();
           }),
           SizedBox(height: 8.h),

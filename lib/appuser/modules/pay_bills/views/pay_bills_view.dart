@@ -51,20 +51,25 @@ class PayBillsView extends GetView<PayBillsController> {
   }
 
   Widget _buildCategoriesGrid() {
-    return GridView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16.w,
-        mainAxisSpacing: 16.h,
-        childAspectRatio: 0.95,
-      ),
-      itemCount: controller.billCategories.length,
-      itemBuilder: (context, index) {
-        final category = controller.billCategories[index];
-        return _buildCategoryCard(category);
-      },
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return GridView.builder(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 16.w,
+          mainAxisSpacing: 16.h,
+          childAspectRatio: 0.95,
+        ),
+        itemCount: controller.billCategories.length,
+        itemBuilder: (context, index) {
+          final category = controller.billCategories[index];
+          return _buildCategoryCard(category);
+        },
+      );
+    });
   }
 
   Widget _buildCategoryCard(Map<String, dynamic> category) {
@@ -177,20 +182,25 @@ class PayBillsViewModern extends GetView<PayBillsController> {
   }
 
   Widget _buildCategoriesGrid() {
-    return GridView.builder(
-      padding: EdgeInsets.all(16.w),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16.w,
-        mainAxisSpacing: 16.h,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: controller.billCategories.length,
-      itemBuilder: (context, index) {
-        final category = controller.billCategories[index];
-        return _buildModernCategoryCard(category);
-      },
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return GridView.builder(
+        padding: EdgeInsets.all(16.w),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 16.w,
+          mainAxisSpacing: 16.h,
+          childAspectRatio: 0.85,
+        ),
+        itemCount: controller.billCategories.length,
+        itemBuilder: (context, index) {
+          final category = controller.billCategories[index];
+          return _buildModernCategoryCard(category);
+        },
+      );
+    });
   }
 
   Widget _buildModernCategoryCard(Map<String, dynamic> category) {

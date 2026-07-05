@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:vip/appuser/modules/onboarding/views/onboarding_view.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class SplashController extends GetxController {
   @override
@@ -11,14 +12,22 @@ class SplashController extends GetxController {
   }
 
   void startTimer() {
-    // Naviguer vers l'écran suivant après 3 secondes
     Timer(const Duration(seconds: 1), () {
       navigateToNextScreen();
     });
   }
 
-  void navigateToNextScreen() {
-    Get.off(() => OnboardingView());
+  Future<void> navigateToNextScreen() async {
+    // Initialize ApiService (loads saved token from SharedPreferences)
+    await ApiService().init();
+
+    if (ApiService().isLoggedIn) {
+      // Token found → go directly to main app, no login needed
+      Get.offAllNamed('/main-app');
+    } else {
+      // No token → go to onboarding
+      Get.off(() => OnboardingView());
+    }
   }
 }
 

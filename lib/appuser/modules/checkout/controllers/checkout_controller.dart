@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+
+import '../../Cart/controllers/cart_controller.dart';
 
 enum OrderType { delivery, takeaway, inStore }
 
@@ -81,6 +84,27 @@ class CheckoutController extends GetxController {
           selectedOrderType.value = OrderType.takeaway;
         } else if (option == 'pickup' || option == 'inStore') {
           selectedOrderType.value = OrderType.inStore;
+        }
+      }
+
+      if (args.containsKey('paymentMethod')) {
+        final method = args['paymentMethod'] as String;
+        switch (method) {
+          case 'cash':
+            paymentMethod.value = 'Cash';
+            break;
+          case 'paypal':
+            paymentMethod.value = 'PayPal';
+            break;
+          case 'credit card':
+            paymentMethod.value = 'Credit Card';
+            break;
+          case 'apple pay':
+            paymentMethod.value = 'Apple Pay';
+            break;
+          default:
+            paymentMethod.value = method.capitalizeFirst ?? method;
+            break;
         }
       }
 
@@ -536,7 +560,7 @@ class CheckoutController extends GetxController {
 
   // ==================== PLACE ORDER ====================
 
-  void placeOrder() {
+  void placeOrder() async {
     // Show loading dialog
     Get.dialog(
       Center(
@@ -566,13 +590,64 @@ class CheckoutController extends GetxController {
       barrierDismissible: false,
     );
 
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      List<Map<String, dynamic>> items = [];
+      try {
+        final cartController = Get.find<CartController>();
+        items =
+            cartController.cartItems
+                .map(
+                  (item) => {
+                    'productId': item.id,
+                    'name': item.name,
+                    'price': item.price,
+                    'quantity': item.quantity,
+                  },
+                )
+                .toList();
+      } catch (e) {
+        // CartController not found or empty
+      }
+
+      final cartController = Get.isRegistered<CartController>()
+          ? Get.find<CartController>()
+          : null;
+      final merchantId = cartController?.cartItems.first.merchantId ?? '64abcd1234567890abcdef12';
+
+      final response = await ApiService().post('/order/create', {
+        'merchantId': merchantId,
+        'items': items,
+        'paymentMethod': paymentMethod.value == 'Cash'
+            ? 'cash'
+            : paymentMethod.value.toLowerCase(),
+        'deliveryAddress':
+            selectedOrderType.value == OrderType.delivery
+                ? deliveryAddress.value
+                : 'Pickup',
+      });
+
       Get.back(); // Close loading dialog
 
-      // Show success dialog
-      _showOrderSuccessDialog();
-    });
+      if (response.success) {
+        _showOrderSuccessDialog();
+        try {
+          Get.find<CartController>().clearCartLocally();
+        } catch (_) {}
+      } else {
+        Get.snackbar(
+          'Error',
+          response.message,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Get.back(); // Close loading dialog
+      Get.snackbar(
+        'Error',
+        'Failed to place order: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   void _showOrderSuccessDialog() {

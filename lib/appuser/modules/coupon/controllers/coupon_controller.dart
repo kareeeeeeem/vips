@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/coupon_details_sheet.dart';
 import '../views/widgets/coupon_sheet.dart';
@@ -29,53 +30,39 @@ class CouponController extends GetxController
   }
 
   // Charger les données
-  void loadData() {
+  Future<void> loadData() async {
     isLoading.value = true;
-    Future.delayed(Duration(seconds: 1), () {
-      coupons.value = [
-        Coupon(
-          id: '2',
-          code: 'SUMMER50',
-          discount: 50,
-          type: CouponType.fixed,
-          status: CouponStatus.active,
-          expiryDate: DateTime.now().add(Duration(days: 15)),
-          usageCount: 78,
-          maxUsage: 200,
-        ),
-        Coupon(
-          id: '3',
-          code: 'EXPIRED10',
-          discount: 10,
-          type: CouponType.percentage,
-          status: CouponStatus.expired,
-          expiryDate: DateTime.now().subtract(Duration(days: 5)),
-          usageCount: 100,
-          maxUsage: 100,
-        ),
-      ];
-
-      packages.value = [
-        Package(
-          id: '1',
-          name: 'Basic Package',
-          price: 99.99,
-          duration: 30,
-          features: ['Feature 1', 'Feature 2', 'Feature 3'],
-          isPopular: false,
-        ),
-        Package(
-          id: '2',
-          name: 'Premium Package',
-          price: 199.99,
-          duration: 90,
-          features: ['All Basic', 'Feature 4', 'Feature 5', 'Feature 6'],
-          isPopular: true,
-        ),
-      ];
-
+    try {
+      final response = await ApiService().get('/rewards/coupons');
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        coupons.value =
+            data.map((c) {
+              final isExpired = DateTime.parse(
+                c['expiryDate'],
+              ).isBefore(DateTime.now());
+              return Coupon(
+                id: c['_id'],
+                code: c['code'],
+                discount: (c['discount'] as num).toDouble(),
+                type: CouponType.percentage, // Defaulting as example
+                status:
+                    isExpired
+                        ? CouponStatus.expired
+                        : (c['isActive']
+                            ? CouponStatus.active
+                            : CouponStatus.inactive),
+                expiryDate: DateTime.parse(c['expiryDate']),
+                usageCount: 0, // Placeholder
+                maxUsage: 100, // Placeholder
+              );
+            }).toList();
+      }
+    } catch (e) {
+      print('Error fetching coupons: $e');
+    } finally {
       isLoading.value = false;
-    });
+    }
   }
 
   // Ouvrir le date picker

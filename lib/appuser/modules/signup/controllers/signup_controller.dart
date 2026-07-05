@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vip/appuser/modules/verification/views/verification_view.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class SignupController extends GetxController
     with GetSingleTickerProviderStateMixin {
-  // Contrôleurs de texte
+  // Text Controllers
+  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -15,18 +17,20 @@ class SignupController extends GetxController
   late Animation<double> fadeAnimation;
   late Animation<Offset> slideAnimation;
 
-  // Observable pour gérer l'état du formulaire
+  // Observable state
+  final RxBool isFullNameValid = false.obs;
+  final RxBool isPhoneValid = false.obs;
   final RxBool isEmailValid = false.obs;
   final RxBool isPasswordValid = false.obs;
   final RxBool isPasswordConfirmed = false.obs;
   final RxBool isPasswordVisible = false.obs;
   final RxBool isConfirmPasswordVisible = false.obs;
+  final RxBool isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
 
-    // Configuration des animations
     animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -49,76 +53,140 @@ class SignupController extends GetxController
       ),
     );
 
-    // Démarrer l'animation
     animationController.forward();
 
-    // Écouter les changements du formulaire
+    fullNameController.addListener(_validateFullName);
+    phoneController.addListener(_validatePhone);
     emailController.addListener(_validateEmail);
     passwordController.addListener(_validatePassword);
     confirmPasswordController.addListener(_validatePasswordConfirmation);
   }
 
-  // Validation de l'email
+  void _validateFullName() {
+    isFullNameValid.value = fullNameController.text.trim().length >= 3;
+  }
+
+  void _validatePhone() {
+    final phone = phoneController.text.trim();
+    isPhoneValid.value = RegExp(r'^\+?[0-9]{8,15}$').hasMatch(phone);
+  }
+
   void _validateEmail() {
     final email = emailController.text.trim();
     isEmailValid.value = GetUtils.isEmail(email);
   }
 
-  // Validation du mot de passe
   void _validatePassword() {
     final password = passwordController.text;
-    // Critères de validation du mot de passe
     isPasswordValid.value =
         password.length >= 8 &&
         password.contains(RegExp(r'[A-Z]')) &&
         password.contains(RegExp(r'[a-z]')) &&
         password.contains(RegExp(r'[0-9]'));
 
-    // Vérifier la confirmation du mot de passe
     _validatePasswordConfirmation();
   }
 
-  // Validation de la confirmation du mot de passe
   void _validatePasswordConfirmation() {
     isPasswordConfirmed.value =
         passwordController.text == confirmPasswordController.text &&
         isPasswordValid.value;
   }
 
-  // Basculer la visibilité du mot de passe
+  bool get canSubmit =>
+      isFullNameValid.value &&
+      isPhoneValid.value &&
+      isEmailValid.value &&
+      isPasswordConfirmed.value;
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  // Basculer la visibilité de la confirmation du mot de passe
   void toggleConfirmPasswordVisibility() {
     isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
   }
 
-  // Méthode pour créer un compte
-  void createAccount() {
-    Get.off(
-      () => VerificationView(false),
-      arguments: {'email': emailController.text},
-    );
+  Future<void> createAccount() async {
+    if (!canSubmit) {
+      String error = 'Please fill out all fields correctly.';
+      if (!isFullNameValid.value) {
+        error = 'Please enter a valid full name (min 3 characters).';
+      } else if (!isPhoneValid.value) {
+        error = 'Please enter a valid phone number.';
+      } else if (!isEmailValid.value) {
+        error = 'Please enter a valid email address.';
+      } else if (!isPasswordValid.value) {
+        error = 'Password must be 8+ characters, with uppercase, lowercase, and numbers.';
+      } else if (!isPasswordConfirmed.value) {
+        error = 'Passwords do not match.';
+      }
+
+      Get.defaultDialog(
+        title: 'Validation Error',
+        middleText: error,
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.redAccent,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    isLoading.value = true;
+
+    try {
+      final response = await ApiService().post('/auth/register', {
+        'fullName': fullNameController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'email': emailController.text.trim(),
+        'password': passwordController.text,
+      });
+
+      if (response.success && response.data != null) {
+        final token = response.data['token'];
+        await ApiService().setToken(token);
+        Get.offAllNamed('/main-app');
+      } else {
+        Get.defaultDialog(
+          title: 'Error',
+          middleText: response.message,
+          textConfirm: 'OK',
+          confirmTextColor: Colors.white,
+          buttonColor: Colors.redAccent,
+          onConfirm: () => Get.back(),
+        );
+      }
+    } catch (e) {
+      Get.defaultDialog(
+        title: 'Error',
+        middleText: e.toString(),
+        textConfirm: 'OK',
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.redAccent,
+        onConfirm: () => Get.back(),
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // Méthodes pour les connexions sociales
   void signUpWithGoogle() {
-    // Logique de connexion Google
+    // TODO: Implement Google sign up
   }
 
   void signUpWithFacebook() {
-    // Logique de connexion Facebook
+    // TODO: Implement Facebook sign up
   }
 
-  // Aller à l'écran de connexion
   void navigateToSignIn() {
     Get.offNamed('/login');
   }
 
   @override
   void onClose() {
+    fullNameController.dispose();
+    phoneController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();

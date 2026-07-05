@@ -53,7 +53,7 @@ class BuildBillPayments extends GetView<HomeController> {
 
                 // Bouton voir plus
                 GestureDetector(
-                  onTap: () => controller.navigateToAllHotDeals(),
+                  onTap: () => controller.navigateToPayBills(),
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 12.w,
@@ -97,25 +97,40 @@ class BuildBillPayments extends GetView<HomeController> {
             ),
           ),
 
-          // Liste horizontale des deals
+          // Liste horizontale des services de factures
           SizedBox(
             height: 100.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: controller.billTypes.length,
-              itemBuilder: (context, index) {
-                final billType = controller.billTypes[index];
-                return Container(
-                  width: 60.w,
-                  margin: EdgeInsets.only(right: 16.w),
-                  child: _buildBillTypeCard(
-                    billType: billType,
-                    onTap: () => controller.navigateToBillType(billType),
+            child: controller.billTypes.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Text(
+                        'loading_bill_services'.tr,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF1E293B),
+                          fontFamily: 'SF Pro Text',
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    itemCount: controller.billTypes.length,
+                    itemBuilder: (context, index) {
+                      final billType = controller.billTypes[index];
+                      return Container(
+                        width: 60.w,
+                        margin: EdgeInsets.only(right: 16.w),
+                        child: _buildBillTypeCard(
+                          billType: billType,
+                          onTap: () => controller.navigateToPayBills(),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

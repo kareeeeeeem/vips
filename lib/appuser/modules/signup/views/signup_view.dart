@@ -7,7 +7,7 @@ import '../../../core/constants/app_assets.dart';
 import '../../../design_system/atoms/app_colors.dart';
 
 class SignupView extends GetView<SignupController> {
-  const SignupView({Key? key}) : super(key: key);
+  const SignupView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +80,28 @@ class SignupView extends GetView<SignupController> {
   Widget _buildForm() {
     return Column(
       children: [
+        // Full Name
+        _buildTextField(
+          controller: controller.fullNameController,
+          label: 'Full Name',
+          hint: 'John Doe',
+          keyboardType: TextInputType.name,
+          isValid: controller.isFullNameValid,
+        ),
+
+        SizedBox(height: 20.h),
+
+        // Phone
+        _buildTextField(
+          controller: controller.phoneController,
+          label: 'Phone Number',
+          hint: '+1234567890',
+          keyboardType: TextInputType.phone,
+          isValid: controller.isPhoneValid,
+        ),
+
+        SizedBox(height: 20.h),
+
         // Email
         _buildTextField(
           controller: controller.emailController,
@@ -258,14 +280,11 @@ class SignupView extends GetView<SignupController> {
 
   Widget _buildButton() {
     return Obx(() {
-      final isEnabled =
-          controller.isEmailValid.value && controller.isPasswordConfirmed.value;
-
       return SizedBox(
         width: double.infinity,
         height: 56.h,
         child: ElevatedButton(
-          onPressed: controller.createAccount,
+          onPressed: controller.isLoading.value ? null : controller.createAccount,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.AppPrimaryColor,
             disabledBackgroundColor: Colors.grey.shade300,
@@ -274,14 +293,23 @@ class SignupView extends GetView<SignupController> {
             ),
             elevation: 0,
           ),
-          child: Text(
-            'Create Account',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
+          child: controller.isLoading.value
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
         ),
       );
     });

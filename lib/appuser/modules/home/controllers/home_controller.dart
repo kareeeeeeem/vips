@@ -2,6 +2,8 @@ import 'package:carousel_slider/carousel_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/modules/search/views/search_view.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../models/gift_voucher.dart';
 
@@ -57,6 +59,13 @@ class HomeController extends GetxController {
     // Auto-scroll du carousel (optionnel)
     _startAutoScroll();
     loadGiftVouchers();
+
+    // Fetch dynamic content
+    refreshHotDeals();
+    refreshEndingSoonDeals();
+    refreshOutings();
+    refreshTrendingMerchants();
+    refreshBillTypes();
   }
 
   @override
@@ -134,7 +143,7 @@ class HomeController extends GetxController {
   }
 
   void navigateToGiftVouchers() {
-    Get.toNamed('/gift-vouchers');
+    Get.toNamed(Routes.GIFT);
   }
 
   // Nouvelles méthodes pour le carousel
@@ -231,176 +240,17 @@ class HomeController extends GetxController {
     Get.toNamed('/health-wellness');
   }
 
-  List<Map<String, dynamic>> hotDeals = [
-    {
-      'id': '3',
-      'title': 'Eastern El',
-      'description': 'Pizza 4 season',
-      'image':
-          'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 120,
-      'originalPrice': 240,
-      'discount': 25,
-      'rating': 4.5,
-      'category': 'entertainment',
-    },
-    {
-      'id': '4',
-      'title': 'Spa & Wellness',
-      'description': 'Relaxing spa treatments',
-      'image':
-          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 299,
-      'originalPrice': 450,
-      'discount': 35,
-      'rating': 4.9,
-      'category': 'wellness',
-    },
-    {
-      'id': '5',
-      'title': 'Italian Restaurant',
-      'description': 'Authentic cuisine',
-      'image':
-          'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 180,
-      'originalPrice': 250,
-      'discount': 28,
-      'rating': 4.6,
-      'category': 'food',
-    },
-    {
-      'id': '6',
-      'title': 'Adventure Park',
-      'description': 'Thrilling outdoor activities',
-      'image':
-          'https://images.unsplash.com/photo-1453090927415-5f45085b65c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 320,
-      'originalPrice': 400,
-      'discount': 20,
-      'rating': 4.4,
-      'category': 'adventure',
-    },
-    {
-      'id': '1',
-      'title': 'Dream Park',
-      'description': '29% off @Dream Park',
-      'image':
-          'https://images.unsplash.com/photo-1569973189506-82c9b96b8e30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 265,
-      'originalPrice': 375,
-      'discount': 29,
-      'rating': 4.8,
-      'category': 'entertainment',
-    },
-    {
-      'id': '2',
-      'title': 'El Demeshky',
-      'description': 'Syrian & Egyptian dishes',
-      'image':
-          'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'currentPrice': 99,
-      'originalPrice': 150,
-      'discount': 37,
-      'rating': 4.7,
-      'category': 'food',
-    },
-  ];
+  List<Map<String, dynamic>> hotDeals = [];
 
-  // Dans votre contrôleur, ajoutez des offres avec endTime
-  List<Map<String, dynamic>> endingSoonDeals = [
-    {
-      'id': '1',
-      'title': 'Mega Pizza Deal',
-      'description': 'Large Pizza + 2 Sides',
-      'image':
-          'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 50,
-      'currentPrice': 150,
-      'originalPrice': 300,
-      'endTime': DateTime.now().add(Duration(hours: 12, minutes: 30)),
-      'isFavorite': false,
-    },
-    {
-      'id': '2',
-      'title': 'Sushi Combo',
-      'description': '24 Pieces Mixed',
-      'image':
-          'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 40,
-      'currentPrice': 180,
-      'originalPrice': 300,
-      'endTime': DateTime.now().add(Duration(hours: 8, minutes: 45)),
-      'isFavorite': false,
-    },
-    {
-      'id': '3',
-      'title': 'Burger Feast',
-      'description': '2 Burgers + Fries',
-      'image':
-          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 45,
-      'currentPrice': 110,
-      'originalPrice': 200,
-      'endTime': DateTime.now().add(Duration(hours: 18, minutes: 15)),
-      'isFavorite': false,
-    },
-    {
-      'id': '4',
-      'title': 'Steak Dinner',
-      'description': 'Premium Cut 300g',
-      'image':
-          'https://images.unsplash.com/photo-1558030006-450675393462?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 35,
-      'currentPrice': 390,
-      'originalPrice': 600,
-      'endTime': DateTime.now().add(Duration(hours: 6, minutes: 20)),
-      'isFavorite': false,
-    },
-    {
-      'id': '5',
-      'title': 'Pasta Paradise',
-      'description': 'Any Pasta + Drink',
-      'image':
-          'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 30,
-      'currentPrice': 140,
-      'originalPrice': 200,
-      'endTime': DateTime.now().add(Duration(hours: 15, minutes: 50)),
-      'isFavorite': false,
-    },
-    {
-      'id': '6',
-      'title': 'Coffee & Cake',
-      'description': 'Premium Dessert Set',
-      'image':
-          'https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 25,
-      'currentPrice': 75,
-      'originalPrice': 100,
-      'endTime': DateTime.now().add(Duration(hours: 4, minutes: 10)),
-      'isFavorite': false,
-    },
-    {
-      'id': '7',
-      'title': 'Seafood Platter',
-      'description': 'Mixed Seafood Special',
-      'image':
-          'https://images.unsplash.com/photo-1559339352-11d035aa65de?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'discount': 55,
-      'currentPrice': 225,
-      'originalPrice': 500,
-      'endTime': DateTime.now().add(Duration(hours: 22, minutes: 40)),
-      'isFavorite': false,
-    },
-  ];
+  List<Map<String, dynamic>> endingSoonDeals = [];
 
   // Nouvelles méthodes pour Hot Deals
   void navigateToAllHotDeals() {
-    Get.toNamed('/hot-deals');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToHotDeal(Map<String, dynamic> deal) {
-    Get.toNamed('/deal-details', arguments: deal);
+    Get.toNamed(Routes.DEAL_DETAILS, arguments: deal);
   }
 
   // Méthode pour filtrer les deals par catégorie
@@ -426,14 +276,28 @@ class HomeController extends GetxController {
     return sortedDeals.take(3).toList();
   }
 
+  Future<void> refreshEndingSoonDeals() async {
+    try {
+      final response = await ApiService().get('/content/ending-soon-deals');
+      if (response.success) {
+        endingSoonDeals = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching ending soon deals: $e');
+    }
+    update();
+  }
+
   // Méthode pour rafraîchir les deals (API call)
   Future<void> refreshHotDeals() async {
-    // Simulation d'un appel API
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Ici vous feriez appel à votre API
-    // hotDeals = await ApiService.getHotDeals();
-
+    try {
+      final response = await ApiService().get('/content/hot-deals');
+      if (response.success) {
+        hotDeals = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching hot deals: $e');
+    }
     update(); // Met à jour l'UI
   }
 
@@ -462,128 +326,7 @@ Réduction: ${deal['discount']}%
     // Share.share(shareText);
   }
 
-  List<Map<String, dynamic>> outings = [
-    {
-      'id': '1',
-      'title': 'Mall Of Egypt Offers',
-      'subtitle': 'Shopping & Entertainment',
-      'image':
-          'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Shopping',
-      'location': 'New Cairo',
-      'type': 'mall',
-    },
-    {
-      'id': '2',
-      'title': 'CFC Mall Offers',
-      'subtitle': 'Family Fun & Dining',
-      'image':
-          'https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Entertainment',
-      'location': 'Sheikh Zayed',
-      'type': 'mall',
-    },
-    {
-      'id': '3',
-      'title': 'City Center Almaza',
-      'subtitle': 'Luxury Shopping',
-      'image':
-          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Luxury',
-      'location': 'Heliopolis',
-      'type': 'mall',
-    },
-    {
-      'id': '4',
-      'title': 'Walk of Cairo',
-      'subtitle': 'Outdoor Shopping Experience',
-      'image':
-          'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Outdoor',
-      'location': 'New Capital',
-      'type': 'outdoor',
-    },
-    {
-      'id': '5',
-      'title': 'Festival City Mall',
-      'subtitle': 'Complete Shopping Destination',
-      'image':
-          'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Shopping',
-      'location': 'New Cairo',
-      'type': 'mall',
-    },
-    {
-      'id': '6',
-      'title': 'Maadi Grand Mall',
-      'subtitle': 'Local Shopping Hub',
-      'image':
-          'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Local',
-      'location': 'Maadi',
-      'type': 'mall',
-    },
-    {
-      'id': '7',
-      'title': 'Downtown Katameya',
-      'subtitle': 'Modern Lifestyle Center',
-      'image':
-          'https://images.unsplash.com/photo-1567958451986-2de427a4a0be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Modern',
-      'location': 'New Cairo',
-      'type': 'mall',
-    },
-    {
-      'id': '8',
-      'title': 'Dandy Mega Mall',
-      'subtitle': 'Family Entertainment',
-      'image':
-          'https://images.unsplash.com/photo-1596178060810-4d3b0c750f2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Family',
-      'location': 'Nasr City',
-      'type': 'mall',
-    },
-    {
-      'id': '9',
-      'title': 'Citystars Mall',
-      'subtitle': 'Iconic Shopping Experience',
-      'image':
-          'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Premium',
-      'location': 'Nasr City',
-      'type': 'mall',
-    },
-    {
-      'id': '10',
-      'title': 'Arabella Plaza',
-      'subtitle': 'Boutique Shopping',
-      'image':
-          'https://images.unsplash.com/photo-1534452203293-494d7ddbf7e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Boutique',
-      'location': 'New Cairo',
-      'type': 'plaza',
-    },
-    {
-      'id': '11',
-      'title': 'Point 90 Mall',
-      'subtitle': 'Contemporary Shopping',
-      'image':
-          'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Contemporary',
-      'location': 'New Cairo',
-      'type': 'mall',
-    },
-    {
-      'id': '12',
-      'title': 'Galleria40 Mall',
-      'subtitle': 'Dining & Lifestyle',
-      'image':
-          'https://images.unsplash.com/photo-1567449303183-1e36714d3e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-      'category': 'Lifestyle',
-      'location': 'Sheikh Zayed',
-      'type': 'mall',
-    },
-  ];
+  List<Map<String, dynamic>> outings = [];
 
   // ... vos méthodes existantes ...
 
@@ -618,12 +361,14 @@ Réduction: ${deal['discount']}%
 
   // Méthode pour rafraîchir les outings (API call)
   Future<void> refreshOutings() async {
-    // Simulation d'un appel API
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Ici vous feriez appel à votre API
-    // outings = await ApiService.getOutings();
-
+    try {
+      final response = await ApiService().get('/content/outings');
+      if (response.success) {
+        outings = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching outings: $e');
+    }
     update(); // Met à jour l'UI
   }
 
@@ -679,136 +424,27 @@ Catégorie: ${outing['category']}
     return outings.take(3).toList();
   }
 
-  List<Map<String, dynamic>> trendingMerchants = [
-    {
-      'id': '11',
-      'name': 'Nestlé',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/09/Nestle-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFF991B1B, // Rouge foncé Nestlé
-      'isTrending': false,
-      'discountPercentage': 15,
-    },
-    {
-      'id': '1',
-      'name': 'Carrefour',
-      'logo':
-          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOdP7dYdtDVHm7eDiHCdZaLxRpvw3HQAcFBg&s',
-      'category': 'Shopping',
-      'brandColor': 0xFF2563EB, // Bleu Carrefour
-      'isTrending': true,
-      'discountPercentage': 25,
-    },
-    {
-      'id': '2',
-      'name': 'McDonald\'s',
-      'logo':
-          "https://d1csarkz8obe9u.cloudfront.net/posterpreviews/mcdonald's-logo-design-template-c03c253e9d3c73bacdf4d3499e6a0b72_screen.jpg?ts=1738336858",
-      'category': 'Food',
-      'brandColor': 0xFFDC2626, // Rouge McDonald's
-      'isTrending': true,
-      'discountPercentage': 20,
-    },
-    {
-      'id': '3',
-      'name': 'Lidl',
-      'logo':
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Lidl-Logo.svg/768px-Lidl-Logo.svg.png',
-      'category': 'Shopping',
-      'brandColor': 0xFF1E40AF, // Bleu Lidl
-      'isTrending': true,
-      'discountPercentage': 30,
-    },
-    {
-      'id': '4',
-      'name': 'Délice',
-      'logo':
-          'https://www.delice.com.tn/wp-content/uploads/2021/03/logo-delice.png',
-      'category': 'Food',
-      'brandColor': 0xFFEF4444, // Rouge Délice
-      'isTrending': true,
-      'discountPercentage': 15,
-    },
-    {
-      'id': '5',
-      'name': 'Danone',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/09/Danone-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFF3B82F6, // Bleu Danone
-      'isTrending': true,
-      'discountPercentage': 18,
-    },
-    {
-      'id': '6',
-      'name': 'KFC',
-      'logo': 'https://logos-world.net/wp-content/uploads/2020/08/KFC-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFFDC2626, // Rouge KFC
-      'isTrending': true,
-      'discountPercentage': 22,
-    },
-    {
-      'id': '7',
-      'name': 'Pizza Hut',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/08/Pizza-Hut-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFFDC2626, // Rouge Pizza Hut
-      'isTrending': false,
-      'discountPercentage': 35,
-    },
-    {
-      'id': '8',
-      'name': 'Subway',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/08/Subway-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFF16A34A, // Vert Subway
-      'isTrending': false,
-      'discountPercentage': 12,
-    },
-    {
-      'id': '9',
-      'name': 'Starbucks',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/04/Starbucks-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFF059669, // Vert Starbucks
-      'isTrending': true,
-      'discountPercentage': 20,
-    },
-    {
-      'id': '10',
-      'name': 'Coca-Cola',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/09/Coca-Cola-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFFDC2626, // Rouge Coca-Cola
-      'isTrending': false,
-      'discountPercentage': 10,
-    },
+  List<Map<String, dynamic>> trendingMerchants = [];
 
-    {
-      'id': '12',
-      'name': 'Domino\'s',
-      'logo':
-          'https://logos-world.net/wp-content/uploads/2020/08/Dominos-Logo.png',
-      'category': 'Food',
-      'brandColor': 0xFF2563EB, // Bleu Domino's
-      'isTrending': true,
-      'discountPercentage': 40,
-    },
-  ];
+  Future<void> refreshTrendingMerchants() async {
+    try {
+      final response = await ApiService().get('/content/trending-merchants');
+      if (response.success) {
+        trendingMerchants = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching merchants: $e');
+    }
+    update();
+  }
 
   // Nouvelles méthodes pour Trending Merchants
   void navigateToMerchant(Map<String, dynamic> merchant) {
-    Get.toNamed('/merchant-details', arguments: merchant);
+    Get.toNamed(Routes.MERCHANT_DETAILS, arguments: merchant);
   }
 
   void navigateToAllMerchants() {
-    Get.toNamed('/all-merchants');
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   // Méthode pour filtrer les merchants par catégorie
@@ -862,16 +498,7 @@ Catégorie: ${outing['category']}
         .toList();
   }
 
-  // Méthode pour rafraîchir les merchants (API call)
-  Future<void> refreshTrendingMerchants() async {
-    // Simulation d'un appel API
-    await Future.delayed(const Duration(seconds: 1));
 
-    // Ici vous feriez appel à votre API
-    // trendingMerchants = await ApiService.getTrendingMerchants();
-
-    update(); // Met à jour l'UI
-  }
 
   // Méthode pour obtenir les merchants par popularité
   List<Map<String, dynamic>> getPopularMerchants() {
@@ -1058,8 +685,14 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     await Future.delayed(const Duration(seconds: 1));
 
     // Ici vous feriez appel à votre API
-    // billServices = await ApiService.getBillServices();
-
+    try {
+      final response = await ApiService().get('/services/bills');
+      if (response.success) {
+        billServices = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching bill services: $e');
+    }
     update(); // Met à jour l'UI
   }
 
@@ -1213,11 +846,15 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // Nouvelles méthodes pour Bill Types
   void navigateToBillType(Map<String, dynamic> billType) {
-    Get.toNamed('/bill-type', arguments: billType);
+    Get.toNamed(Routes.PAY_BILLS);
   }
 
   void navigateToAllBillTypes() {
-    Get.toNamed('/all-bill-types');
+    Get.toNamed(Routes.PAY_BILLS);
+  }
+
+  void navigateToPayBills() {
+    Get.toNamed(Routes.PAY_BILLS);
   }
 
   // Méthode pour obtenir les types populaires
@@ -1311,8 +948,14 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     await Future.delayed(const Duration(seconds: 1));
 
     // Ici vous feriez appel à votre API
-    // billTypes = await ApiService.getBillTypes();
-
+    try {
+      final response = await ApiService().get('/services/bills');
+      if (response.success) {
+        billTypes = List<Map<String, dynamic>>.from(response.data);
+      }
+    } catch (e) {
+      print('Error fetching bill types: $e');
+    }
     update(); // Met à jour l'UI
   }
 
@@ -1329,36 +972,17 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     try {
       isLoading.value = true;
 
-      // Simulation d'un appel API
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Données exemple basées sur votre screenshot
-      final vouchers = [
-        GiftVoucher(
-          id: '1',
-          name: 'Carrefour',
-          logoUrl: 'assets/carrefour_logo.png',
-          minAmount: 200,
-          maxAmount: 5000,
-        ),
-        GiftVoucher(
-          id: '2',
-          name: '2B',
-          logoUrl: 'assets/2b_logo.png',
-          minAmount: 500,
-          maxAmount: 20000,
-        ),
-        GiftVoucher(
-          id: '3',
-          name: 'FiT&F',
-          logoUrl: 'assets/fitf_logo.png',
-          minAmount: 200,
-          maxAmount: 1000,
-        ),
-      ];
-
-      giftVouchers.value = vouchers;
+      final response = await ApiService().get('/rewards/gift-vouchers');
+      if (response.success && response.data != null) {
+        final List<dynamic> payload = response.data;
+        giftVouchers.value = payload
+            .map((json) => GiftVoucher.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+      } else {
+        giftVouchers.value = [];
+      }
     } catch (e) {
+      giftVouchers.value = [];
     } finally {
       isLoading.value = false;
     }

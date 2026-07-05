@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 // =====================================================
 // CONTROLLER
@@ -41,9 +42,28 @@ class VipsClubHistoryController extends GetxController {
     loadHistory();
   }
 
-  void loadHistory() {
-    // TODO: Implement API call to fetch transaction history
-    print('Loading VIPs Club History...');
+  Future<void> loadHistory() async {
+    try {
+      final response = await ApiService().get('/user/transactions');
+      if (response.success && response.data != null) {
+        final List<dynamic> txList = response.data['transactions'] ?? [];
+        transactions.value =
+            txList.map((tx) {
+              return DiamantTransaction(
+                amount: (tx['amount'] as num).toInt(),
+                type: tx['type'] ?? 'credit',
+                description: tx['description'],
+                date:
+                    tx['createdAt'] != null
+                        ? DateTime.parse(tx['createdAt'])
+                        : DateTime.now(),
+                orderNumber: tx['reference'],
+              );
+            }).toList();
+      }
+    } catch (e) {
+      print('Error loading history: $e');
+    }
   }
 
   void onConvertNow() {

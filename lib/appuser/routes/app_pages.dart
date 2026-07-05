@@ -12,6 +12,10 @@ import '../modules/checkout/bindings/checkout_binding.dart';
 import '../modules/checkout/views/checkout_view.dart' hide CheckoutBinding;
 import '../modules/contact/bindings/contact_binding.dart';
 import '../modules/contact/views/contact_view.dart';
+import '../modules/home/views/all_merchants_view.dart';
+import '../modules/home/views/deal_details_view.dart';
+import '../modules/home/views/hot_deals_view.dart';
+import '../modules/home/views/merchant_details_view.dart';
 import '../modules/coupon/bindings/coupon_binding.dart';
 import '../modules/coupon/views/coupon_view.dart';
 import '../modules/createpin/bindings/createpin_binding.dart';
@@ -49,8 +53,7 @@ import '../modules/pay_bills/views/pay_bills_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/promotions/bindings/promotions_binding.dart';
-import '../modules/promotions/views/promotions_view.dart'
-    hide PromotionsBinding;
+import '../modules/promotions/views/promotions_view.dart';
 import '../modules/report/bindings/report_binding.dart';
 import '../modules/report/views/report_view.dart';
 import '../modules/reset_password/bindings/reset_password_binding.dart';
@@ -197,6 +200,22 @@ class AppPages {
       name: _Paths.PAY_BILLS,
       page: () => const PayBillsView(),
       binding: PayBillsBinding(),
+    ),
+    GetPage(
+      name: _Paths.HOT_DEALS,
+      page: () => const HotDealsView(),
+    ),
+    GetPage(
+      name: _Paths.DEAL_DETAILS,
+      page: () => const DealDetailsView(),
+    ),
+    GetPage(
+      name: _Paths.ALL_MERCHANTS,
+      page: () => const AllMerchantsView(),
+    ),
+    GetPage(
+      name: _Paths.MERCHANT_DETAILS,
+      page: () => const MerchantDetailsView(),
     ),
     GetPage(
       name: _Paths.GIFT,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../design_system/atoms/app_colors.dart';
@@ -24,6 +25,32 @@ class NotificationItem {
     required this.isRead,
     required this.type,
   });
+
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? UniqueKey().toString(),
+      title: json['title'] ?? 'Notification',
+      message: json['message'] ?? '',
+      time: json['time'] ?? 'Just now',
+      image: json['image'],
+      isRead: json['isRead'] == true,
+      type: _notificationTypeFromString(json['type'] ?? 'account'),
+    );
+  }
+
+  static NotificationType _notificationTypeFromString(String type) {
+    switch (type.toLowerCase()) {
+      case 'promotion':
+        return NotificationType.promotion;
+      case 'payment':
+        return NotificationType.payment;
+      case 'partnership':
+        return NotificationType.partnership;
+      case 'account':
+      default:
+        return NotificationType.account;
+    }
+  }
 }
 
 class NotificationsController extends GetxController
@@ -70,61 +97,76 @@ class NotificationsController extends GetxController
     animationController.forward();
   }
 
-  void _loadNotifications() {
+  void _loadNotifications() async {
     isLoading.value = true;
 
-    // Simuler le chargement des données
-    Future.delayed(const Duration(milliseconds: 500), () {
-      notifications.value = [
-        NotificationItem(
-          id: '1',
-          title: 'LC WAIKIKI',
-          message:
-              'Welcome to resort paradise we ensure the best service in bali with an emphasis on customer satisfaction and comfort.',
-          time: '1 day ago',
-          image: AppImages.LC,
-          isRead: false,
-          type: NotificationType.promotion,
-        ),
-        NotificationItem(
-          id: '2',
-          title: 'VIP Account Update',
-          message:
-              'Your profile has been successfully updated. All changes are now active.',
-          time: '2 hours ago',
-          isRead: true,
-          type: NotificationType.account,
-        ),
-        NotificationItem(
-          id: '3',
-          title: 'Payment Successful',
-          message:
-              'Your payment of \$89.99 has been processed successfully for your VIP membership.',
-          time: '3 hours ago',
-          isRead: false,
-          type: NotificationType.payment,
-        ),
-        NotificationItem(
-          id: '4',
-          title: 'New Partner Added',
-          message:
-              'Great news! A new exclusive partner has joined our VIP network.',
-          time: '1 day ago',
-          isRead: true,
-          type: NotificationType.partnership,
-        ),
-        NotificationItem(
-          id: '5',
-          title: 'Special Offer',
-          message:
-              'Limited time offer: Get 20% off on all premium services this week!',
-          time: '2 days ago',
-          isRead: false,
-          type: NotificationType.promotion,
-        ),
-      ];
+    try {
+      final response = await ApiService().get('/user/notifications');
+      if (response.success && response.data != null) {
+        final data = response.data as List<dynamic>;
+        notifications.value = data
+            .map((item) => NotificationItem.fromJson(item))
+            .toList();
+      } else {
+        _loadLocalNotifications();
+      }
+    } catch (e) {
+      print('Error loading notifications: $e');
+      _loadLocalNotifications();
+    } finally {
       isLoading.value = false;
-    });
+    }
+  }
+
+  void _loadLocalNotifications() {
+    notifications.value = [
+      NotificationItem(
+        id: '1',
+        title: 'LC WAIKIKI',
+        message:
+            'Welcome to resort paradise we ensure the best service in bali with an emphasis on customer satisfaction and comfort.',
+        time: '1 day ago',
+        image: AppImages.LC,
+        isRead: false,
+        type: NotificationType.promotion,
+      ),
+      NotificationItem(
+        id: '2',
+        title: 'VIP Account Update',
+        message:
+            'Your profile has been successfully updated. All changes are now active.',
+        time: '2 hours ago',
+        isRead: true,
+        type: NotificationType.account,
+      ),
+      NotificationItem(
+        id: '3',
+        title: 'Payment Successful',
+        message:
+            'Your payment of \$89.99 has been processed successfully for your VIP membership.',
+        time: '3 hours ago',
+        isRead: false,
+        type: NotificationType.payment,
+      ),
+      NotificationItem(
+        id: '4',
+        title: 'New Partner Added',
+        message:
+            'Great news! A new exclusive partner has joined our VIP network.',
+        time: '1 day ago',
+        isRead: true,
+        type: NotificationType.partnership,
+      ),
+      NotificationItem(
+        id: '5',
+        title: 'Special Offer',
+        message:
+            'Limited time offer: Get 20% off on all premium services this week!',
+        time: '2 days ago',
+        isRead: false,
+        type: NotificationType.promotion,
+      ),
+    ];
   }
 
   // Getters
@@ -145,7 +187,10 @@ class NotificationsController extends GetxController
 
   // Actions
   void goBack() {
-    Get.back();
+    // Use Navigator directly to avoid GetX snackbar queue crash
+    if (Get.context != null && Navigator.of(Get.context!).canPop()) {
+      Navigator.of(Get.context!).pop();
+    }
   }
 
   void markAllAsRead() {

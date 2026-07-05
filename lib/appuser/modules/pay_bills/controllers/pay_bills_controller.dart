@@ -1,9 +1,12 @@
 import 'package:get/get.dart';
-
+import 'package:vip/core/services/api_service.dart';
 import '../views/widgets/electric_bill.dart';
 
 class PayBillsController extends GetxController {
-  final List<Map<String, dynamic>> billCategories = [
+  RxList<Map<String, dynamic>> billCategories = <Map<String, dynamic>>[].obs;
+  RxBool isLoading = false.obs;
+
+  final List<Map<String, dynamic>> _fallbackCategories = [
     {
       'id': 'electric',
       'title': 'Electric',
@@ -47,6 +50,44 @@ class PayBillsController extends GetxController {
       'route': '/donation',
     },
   ];
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchBills();
+  }
+
+  Future<void> fetchBills() async {
+    isLoading.value = true;
+    try {
+      final response = await ApiService().get('/services/bills');
+      if (response.success && response.data != null) {
+        List<dynamic> data = response.data;
+        if (data.isNotEmpty) {
+          billCategories.value =
+              data
+                  .map(
+                    (b) => {
+                      'id': b['_id'],
+                      'title': b['name'],
+                      'image': b['logo'] ?? 'https://via.placeholder.com/150',
+                      'route': 'dynamic-bill', // generic route
+                    },
+                  )
+                  .toList();
+        } else {
+          billCategories.value = _fallbackCategories;
+        }
+      } else {
+        billCategories.value = _fallbackCategories;
+      }
+    } catch (e) {
+      print('Error fetching bills: $e');
+      billCategories.value = _fallbackCategories;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void navigateToCategory(String route) {
     if (route == 'electric-bill') {

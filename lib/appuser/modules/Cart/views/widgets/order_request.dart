@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../../core/services/api_service.dart';
 
 class OrderItem {
   final String id;
@@ -390,8 +391,17 @@ class OrderRequestController extends GetxController {
   Future<void> fetchOrderDetails(String orderId) async {
     try {
       // TODO: Appel API pour récupérer les détails de la commande
-      // final response = await ApiService.getOrderDetails(orderId);
-      // _updateFromResponse(response);
+      final response = await ApiService().get('/order/\$orderId');
+      if (response.success && response.data != null) {
+        // _updateFromResponse(response.data);
+      }
+      Get.snackbar(
+        'Error',
+        'Failed to load order details',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.9),
+        colorText: Colors.white,
+      );
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -406,8 +416,20 @@ class OrderRequestController extends GetxController {
   Future<void> updateOrderStatus(String status) async {
     try {
       // TODO: Appel API pour mettre à jour le statut
-      // await ApiService.updateOrderStatus(orderId.value, status);
-      orderStatus.value = status;
+      final response = await ApiService().put(
+        '/order/\${orderId.value}/status',
+        {'status': status},
+      );
+      if (response.success) {
+        orderStatus.value = status;
+      }
+      Get.snackbar(
+        'Error',
+        'Failed to update order status',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.9),
+        colorText: Colors.white,
+      );
     } catch (e) {
       Get.snackbar(
         'Error',

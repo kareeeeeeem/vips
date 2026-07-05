@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
 
@@ -226,16 +227,99 @@ class ExpenseToRewardController extends GetxController {
   }
 
   // Procéder au paiement
-  void proceedToReward() {
+  Future<void> proceedToReward() async {
     if (!isFormValid) {
       return;
     }
 
     stopTimer();
-    Get.toNamed(
-      '/invoice-reward',
-      arguments: {'amount': billAmount.value, 'userId': userId.value},
+
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
     );
+
+    try {
+      final response = await ApiService().post('/rewards/expense-to-reward', {
+        'amount': double.tryParse(billAmount.value),
+        'merchantId': userId.value,
+      });
+
+      Get.back(); // close loading
+
+      if (response.success) {
+        final earned = response.data['pointsEarned'];
+        Get.dialog(
+          Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+            child: Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24.r),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 64.sp,
+                    color: Colors.green,
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Success!',
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Your expense was recorded and you earned $earned points!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.back(); // Close dialog
+                      Get.back(); // Go back to previous screen
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.AppPrimaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                    child: Text(
+                      'Done',
+                      style: TextStyle(color: Colors.white, fontSize: 16.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      } else {
+        Get.snackbar('Error', response.message);
+        startTimer();
+      }
+    } catch (e) {
+      Get.back(); // close loading
+      Get.snackbar('Error', 'Failed to process expense');
+      startTimer();
+    }
   }
 
   @override

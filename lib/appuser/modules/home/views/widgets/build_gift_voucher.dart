@@ -121,7 +121,7 @@ class GiftVoucherView extends GetView<HomeController> {
 
                 // Bouton voir plus
                 GestureDetector(
-                  onTap: () => controller.navigateToAllHotDeals(),
+                  onTap: () => controller.navigateToGiftVouchers(),
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 12.w,

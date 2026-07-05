@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
+import 'package:vip/core/services/api_service.dart';
 import '../views/transactions_extract_view.dart';
 
 class TransactionsExtractController extends GetxController {
@@ -29,51 +30,43 @@ class TransactionsExtractController extends GetxController {
   }
 
   // Charger les transactions
-  void loadTransactions() {
+  Future<void> loadTransactions() async {
     isLoading.value = true;
-
-    // Simuler le chargement des données
-    Future.delayed(Duration(seconds: 1), () {
-      transactions.value = [
-        Transaction(
-          id: '1259632555',
-          type: TransactionType.reward,
-          amount: 1650,
-          title: 'Expense to Reward',
-          time: '4:34 PM',
-          date: DateTime.now(),
-          status: TransactionStatus.completed,
-        ),
-        Transaction(
-          id: '1259632556',
-          type: TransactionType.extract,
-          amount: 850,
-          title: 'Extract to Wallet',
-          time: '3:15 PM',
-          date: DateTime.now(),
-          status: TransactionStatus.completed,
-        ),
-        Transaction(
-          id: '1259632557',
-          type: TransactionType.reward,
-          amount: 2100,
-          title: 'Expense to Reward',
-          time: '2:10 PM',
-          date: DateTime.now().subtract(Duration(days: 1)),
-          status: TransactionStatus.completed,
-        ),
-        Transaction(
-          id: '1259632558',
-          type: TransactionType.extract,
-          amount: 1200,
-          title: 'Extract to Bank',
-          time: '11:45 AM',
-          date: DateTime.now().subtract(Duration(days: 1)),
-          status: TransactionStatus.pending,
-        ),
-      ];
+    try {
+      final response = await ApiService().get('/user/transactions?limit=50');
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data['transactions'];
+        transactions.value =
+            data.map((t) {
+              return Transaction(
+                id: t['reference'] ?? t['_id'].toString(),
+                type:
+                    t['type'] == 'expense'
+                        ? TransactionType.extract
+                        : TransactionType.reward,
+                amount: (t['amount'] as num).toDouble(),
+                title: t['description'] ?? 'Transaction',
+                time:
+                    t['createdAt'] != null
+                        ? '${DateTime.parse(t['createdAt']).hour}:${DateTime.parse(t['createdAt']).minute}'
+                        : '',
+                date:
+                    t['createdAt'] != null
+                        ? DateTime.parse(t['createdAt'])
+                        : DateTime.now(),
+                status:
+                    t['status'] == 'completed'
+                        ? TransactionStatus.completed
+                        : TransactionStatus.pending,
+              );
+            }).toList();
+        calculateStats();
+      }
+    } catch (e) {
+      print('Error loading transactions: $e');
+    } finally {
       isLoading.value = false;
-    });
+    }
   }
 
   // Calculer les statistiques

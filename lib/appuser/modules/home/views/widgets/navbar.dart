@@ -84,7 +84,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         children: [
           // Bottom Navigation Bar
           Container(
-            height: 65.h,
+            height: 72.h,
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -98,46 +98,53 @@ class CustomBottomNavigationBar extends StatelessWidget {
             child: SafeArea(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    // Premier onglet : Home ou Brand
-                    _buildNavItem(
-                      icon: isVendor ? Icons.store : CupertinoIcons.home,
-                      label: isVendor ? 'Brand' : 'Home',
-                      index: 0,
-                      primaryColor: primaryColor,
-                    ),
+                child: Builder(builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Premier onglet : Home ou Brand
+                      _buildNavItem(
+                        screenWidth: screenWidth,
+                        icon: isVendor ? Icons.store : CupertinoIcons.home,
+                        label: isVendor ? 'Brand' : 'Home',
+                        index: 0,
+                        primaryColor: primaryColor,
+                      ),
 
-                    // Deuxième onglet : Offers ou Order
-                    _buildNavItem(
-                      icon: isVendor ? Icons.receipt_long : CupertinoIcons.gift,
-                      label: isVendor ? 'Order' : 'Offers',
-                      index: 1,
-                      primaryColor: primaryColor,
-                    ),
+                      // Deuxième onglet : Offers ou Order
+                      _buildNavItem(
+                        screenWidth: screenWidth,
+                        icon: isVendor ? Icons.receipt_long : CupertinoIcons.gift,
+                        label: isVendor ? 'Order' : 'Offers',
+                        index: 1,
+                        primaryColor: primaryColor,
+                      ),
 
-                    // Espace vide pour le FAB
-                    SizedBox(width: MediaQuery.of(context).size.width * 0.2),
+                      // Espace vide pour le FAB
+                      SizedBox(width: screenWidth * 0.2),
 
-                    // Troisième onglet : Bills
-                    _buildNavItem(
-                      icon: CupertinoIcons.command,
-                      // svgAsset: "assets/icons/digital.png",
-                      label: 'Digital',
-                      index: 2,
-                      primaryColor: primaryColor,
-                    ),
+                      // Troisième onglet : Bills
+                      _buildNavItem(
+                        screenWidth: screenWidth,
+                        icon: CupertinoIcons.command,
+                        // svgAsset: "assets/icons/digital.png",
+                        label: 'Digital',
+                        index: 2,
+                        primaryColor: primaryColor,
+                      ),
 
-                    // Quatrième onglet : Account
-                    _buildNavItem(
-                      icon: CupertinoIcons.person,
-                      label: 'Account',
-                      index: 3,
-                      primaryColor: primaryColor,
-                    ),
-                  ],
-                ),
+                      // Quatrième onglet : Account
+                      _buildNavItem(
+                        screenWidth: screenWidth,
+                        icon: CupertinoIcons.person,
+                        label: 'Account',
+                        index: 3,
+                        primaryColor: primaryColor,
+                      ),
+                    ],
+                  );
+                }),
               ),
             ),
           ),
@@ -171,12 +178,13 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(28.r),
                   onTap: onScanTap,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.qr_code_scanner,
                         color: Colors.white,
-                        size: 26.sp,
+                        size: 24.sp,
                       ),
                     ],
                   ),
@@ -190,6 +198,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
   }
 
   Widget _buildNavItem({
+    required double screenWidth,
     required IconData icon,
     required String label,
     required int index,
@@ -202,25 +211,26 @@ class CustomBottomNavigationBar extends StatelessWidget {
       onTap: () => _handleNavigation(index),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: MediaQuery.of(Get.context!).size.width * 0.15,
+        width: screenWidth * 0.15,
         padding: EdgeInsets.zero,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
             svgAsset != null
                 ? Image.asset(
-                  svgAsset,
-                  width: 20.sp,
-                  height: 20.sp,
+                    svgAsset,
+                    width: 16.sp,
+                    height: 16.sp,
                   // color: isSelected ? primaryColor : const Color(0xFF9CA3AF),
                 )
                 : Icon(
-                  icon,
-                  size: 20.sp,
-                  color: isSelected ? primaryColor : const Color(0xFF9CA3AF),
-                ),
-            SizedBox(height: 1.h),
+                    icon,
+                    size: 16.sp,
+                    color: isSelected ? primaryColor : const Color(0xFF9CA3AF),
+                  ),
+              SizedBox(height: 1.h),
             Text(
               label,
               style: TextStyle(

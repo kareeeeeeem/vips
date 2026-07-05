@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/gift_recap.dart';
 
@@ -34,14 +35,31 @@ class GiftController extends GetxController {
     // TODO: Open user selector dialog
   }
 
-  void proceed() {
+  Future<void> proceed() async {
+    if (userIdController.text.isEmpty) {
+      Get.snackbar('Error', 'Please enter a recipient ID/Phone');
+      return;
+    }
     isLoading.value = true;
 
-    Future.delayed(Duration(seconds: 1), () {
+    try {
+      final response = await ApiService().post('/rewards/send-gift', {
+        'recipientPhone': userIdController.text,
+        'amount': 50, // Hardcoded for now based on the UI flow, can be dynamic
+        'message': 'Gift from VIPs App',
+      });
+
+      if (response.success) {
+        Get.put(GiftRecapController());
+        Get.to(() => const GiftRecapView());
+      } else {
+        Get.snackbar('Error', response.message);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send gift: $e');
+    } finally {
       isLoading.value = false;
-      Get.put(GiftRecapController());
-      Get.to(() => GiftRecapView());
-    });
+    }
   }
 
   void cancel() {

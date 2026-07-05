@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
-import '../../main_app/views/main_app_view.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -32,17 +31,22 @@ class LoginView extends GetView<LoginController> {
                 SizedBox(height: 30.h),
                 _buildSocialLogins(),
                 SizedBox(height: 30.h),
-                _buildSignUpLink(),
               ],
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          child: _buildSignUpLink(),
         ),
       ),
     );
   }
 
   Widget _buildLogo() {
-    return Container(
+    return SizedBox(
       width: 70.w,
       height: 70.h,
       child: Center(
@@ -152,7 +156,7 @@ class LoginView extends GetView<LoginController> {
 
   Widget _buildLoginAsGuestButton() {
     return OutlinedButton(
-      onPressed: () => Get.to(() => MainAppView()),
+      onPressed: controller.guestLogin,
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: AppColors.AppPrimaryColor, width: 2),
         minimumSize: Size(double.infinity, 56.h),
@@ -185,7 +189,7 @@ class LoginView extends GetView<LoginController> {
 
   Widget _buildLoginButton() {
     return ElevatedButton(
-      onPressed: () => Get.to(() => MainAppView()),
+      onPressed: controller.emailLogin,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.AppPrimaryColor,
         minimumSize: Size(double.infinity, 56.h),
