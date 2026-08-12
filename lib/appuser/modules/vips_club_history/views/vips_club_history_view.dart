@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../controllers/vips_club_history_controller.dart';
 
 class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
-  const VipsClubHistoryView({Key? key}) : super(key: key);
+  const VipsClubHistoryView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
               width: 60.w,
               height: 60.w,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
@@ -162,7 +162,7 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -176,7 +176,7 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
             width: 32.w,
             height: 32.w,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -252,7 +252,7 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(
@@ -281,7 +281,7 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

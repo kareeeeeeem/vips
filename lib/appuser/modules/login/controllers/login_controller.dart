@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,6 +16,7 @@ class LoginController extends GetxController {
   // Reactive Variables
   final RxBool _rememberMe = false.obs;
   final RxBool _isPasswordVisible = false.obs;
+  final RxBool isLoading = false.obs;
 
   // Getters
   bool get rememberMe => _rememberMe.value;
@@ -40,53 +42,54 @@ class LoginController extends GetxController {
 
   // Phone Login Method
   void login() async {
+    if (isLoading.value) return;
     if (!canLogin) {
-      Get.defaultDialog(
-        title: 'Validation Error',
-        middleText: 'Please enter a valid phone and password.',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        buttonColor: Colors.redAccent,
-        onConfirm: () => Get.back(),
+      safeSnackbar(
+        'Validation Error',
+        'Please enter a valid phone and password.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
       );
       return;
     }
 
+    isLoading.value = true;
     try {
       final response = await ApiService().post('/auth/login', {
-        'email':
-            '${phoneController.text}@example.com', // Adapting phone to email for now or change backend
+        'phone': phoneController.text.trim(),
         'password': passwordController.text,
       });
 
       if (response.success && response.data != null) {
         final token = response.data['token'];
         await ApiService().setToken(token);
-        _handleSuccessfulLogin(
-          null,
-        ); // Passing null since we don't use Firebase User anymore
+        _handleSuccessfulLogin(null);
       } else {
         _handleLoginError(response.message);
       }
     } catch (e) {
       _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 
   // Email Login Method
   void emailLogin() async {
+    if (isLoading.value) return;
     if (!canEmailLogin) {
-      Get.defaultDialog(
-        title: 'Validation Error',
-        middleText: 'Please enter a valid email and password.',
-        textConfirm: 'OK',
-        confirmTextColor: Colors.white,
-        buttonColor: Colors.redAccent,
-        onConfirm: () => Get.back(),
+      safeSnackbar(
+        'Validation Error',
+        'Please enter a valid email and password.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
       );
       return;
     }
 
+    isLoading.value = true;
     try {
       final response = await ApiService().post('/auth/login', {
         'email': emailController.text.trim(),
@@ -102,6 +105,8 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -120,12 +125,7 @@ class LoginController extends GetxController {
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      // If backend has a social login endpoint, you should call it here with userCredential.user
-      // final idToken = await userCredential.user?.getIdToken();
-      // final response = await ApiService().post('/auth/social', {'token': idToken});
-      // await ApiService().setToken(response.data['token']);
-
-      _handleSuccessfulLogin(userCredential.user);
+      await _loginWithBackend(userCredential.user, 'google');
     } catch (e) {
       _handleLoginError(e.toString());
     }
@@ -134,22 +134,19 @@ class LoginController extends GetxController {
   // Facebook Login Method
   Future<void> facebookLogin() async {
     try {
-      // Trigger the Facebook Authentication flow
       final LoginResult loginResult = await FacebookAuth.instance.login();
 
       if (loginResult.status != LoginStatus.success) {
         return;
       }
 
-      // Create a credential from the access token
       final OAuthCredential facebookAuthCredential =
           FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
 
-      // Sign in to Firebase with the credential
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(facebookAuthCredential);
 
-      _handleSuccessfulLogin(userCredential.user);
+      await _loginWithBackend(userCredential.user, 'facebook');
     } catch (e) {
       _handleLoginError(e);
     }
@@ -158,7 +155,6 @@ class LoginController extends GetxController {
   // Apple Login Method
   Future<void> appleLogin() async {
     try {
-      // Perform Apple Sign In
       final AuthorizationCredentialAppleID appleCredential =
           await SignInWithApple.getAppleIDCredential(
             scopes: [
@@ -167,17 +163,15 @@ class LoginController extends GetxController {
             ],
           );
 
-      // Create an OAuthCredential from the Apple ID credential
       final OAuthCredential credential = OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
 
-      // Sign in to Firebase with the credential
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      _handleSuccessfulLogin(userCredential.user);
+      await _loginWithBackend(userCredential.user, 'apple');
     } catch (e) {
       _handleLoginError(e);
     }
@@ -188,9 +182,24 @@ class LoginController extends GetxController {
     Get.offAllNamed('/main-app');
   }
 
+  // Exchange Firebase social credentials for a VIPs JWT token
+  Future<void> _loginWithBackend(User? firebaseUser, String provider) async {
+    try {
+      final response = await ApiService().post('/auth/social', {
+        'email'      : firebaseUser?.email,
+        'name'       : firebaseUser?.displayName,
+        'providerUid': firebaseUser?.uid,
+        'provider'   : provider,
+      });
+      if (response.success && response.data != null) {
+        await ApiService().setToken(response.data['token']);
+      }
+    } catch (_) {}
+    _handleSuccessfulLogin(firebaseUser);
+  }
+
   // Handle Successful Login
   void _handleSuccessfulLogin(User? user) {
-    // Navigate to main app shell after login so bottom navigation is shown
     Get.offAllNamed('/main-app');
   }
 
@@ -200,13 +209,18 @@ class LoginController extends GetxController {
         ? error
         : (error?.toString() ?? 'An unknown error occurred');
 
-    Get.defaultDialog(
-      title: 'Login Error',
-      middleText: errorMessage,
-      textConfirm: 'OK',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.redAccent,
-      onConfirm: () => Get.back(),
+    // Backend cold-starts can take up to a minute (see ApiService.baseUrl),
+    // so a login attempt can fail after a long silent wait — the default
+    // ~3s snackbar was easy to miss, leaving the button-reset as the only
+    // visible feedback (looks exactly like "nothing happened"). Longer
+    // duration + top position make the failure impossible to miss.
+    safeSnackbar(
+      'Login Error',
+      errorMessage,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 5),
     );
   }
 
@@ -219,14 +233,5 @@ class LoginController extends GetxController {
   // Navigate to Sign Up
   void navigateToSignUp() {
     Get.toNamed('/signup');
-  }
-
-  @override
-  void onClose() {
-    // Dispose controllers when the controller is closed
-    phoneController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
   }
 }

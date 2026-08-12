@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../controllers/bills_controller.dart';
 
 class HistoryListWidget extends GetView<BillsController> {
-  const HistoryListWidget({Key? key}) : super(key: key);
+  const HistoryListWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +49,10 @@ class HistoryListWidget extends GetView<BillsController> {
                 ),
               ),
               Spacer(),
-              Text(
-                '7 Result Found',
+              Obx(() => Text(
+                '${controller.orders.length} Result Found',
                 style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
-              ),
+              )),
             ],
           ),
         ),
@@ -84,7 +84,7 @@ class HistoryListWidget extends GetView<BillsController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -199,7 +199,7 @@ class HistoryListWidget extends GetView<BillsController> {
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                           ],
@@ -267,7 +267,10 @@ class HistoryListWidget extends GetView<BillsController> {
                       // Menu Icon
                       GestureDetector(
                         onTap: () {
-                          // Show options menu
+                          // TODO: implement options menu (share/download receipt)
+                          Get.snackbar('Options', 'Order #${order.orderId}',
+                              snackPosition: SnackPosition.BOTTOM,
+                              duration: const Duration(seconds: 2));
                         },
                         child: Container(
                           padding: EdgeInsets.all(8.w),
@@ -288,7 +291,7 @@ class HistoryListWidget extends GetView<BillsController> {
             // EXPANDABLE DETAILS (Fond blanc)
             // ══════════════════════════════════════════════
             Obx(() {
-              final isExpanded = controller.expandedOrders[index] ?? false;
+              final isExpanded = controller.expandedOrders[index];
               return AnimatedCrossFade(
                 firstChild: const SizedBox.shrink(),
                 secondChild: Container(
@@ -315,7 +318,7 @@ class HistoryListWidget extends GetView<BillsController> {
                         height: 50.h,
                         child: ElevatedButton(
                           onPressed: () {
-                            print('View product: ${order.orderId}');
+                            Get.toNamed('/deal-details', arguments: {'orderId': order.orderId});
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6B35),

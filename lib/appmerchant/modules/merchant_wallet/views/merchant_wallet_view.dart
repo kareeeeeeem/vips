@@ -115,7 +115,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                   _buildVipCoin(24.sp),
                   SizedBox(width: 8.w),
                   Text(
-                    '112',
+                    controller.walletPoints.value.toInt().toString(),
                     style: TextStyle(
                       fontSize: 48.sp,
                       fontWeight: FontWeight.bold,
@@ -139,16 +139,18 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '200 points expiring on 31/12/2025',
+                    controller.pendingPoints.value > 0
+                        ? '${controller.pendingPoints.value.toInt()} points pending'
+                        : 'No pending points',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                   SizedBox(width: 4.w),
                   Icon(
                     Icons.help_outline,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     size: 14.sp,
                   ),
                 ],
@@ -176,7 +178,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -260,12 +262,12 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                         width: 100.w,
                         height: 100.w,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.arrow_downward,
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           size: 40.sp,
                         ),
                       ),
@@ -318,7 +320,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                       _buildVipCoin(16.sp, color: Colors.white),
                       SizedBox(width: 4.w),
                       Text(
-                        '861',
+                        controller.dormantPoints.value.toInt().toString(),
                         style: TextStyle(
                           fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
@@ -400,7 +402,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               size: 20.sp,
             ),
           ),
-          ...controller.tabs.map((tab) => _buildTabItem(tab)).toList(),
+          ...controller.tabs.map((tab) => _buildTabItem(tab)),
         ],
       ),
     );
@@ -463,28 +465,44 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               ],
             ),
           ),
-          Text(
-            '21 Result Found',
+          Obx(() => Text(
+            '${controller.filteredTransactions.length} Result Found',
             style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500),
-          ),
+          )),
         ],
       ),
     );
   }
 
   Widget _buildTransactionList() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: controller.transactions.length,
-        separatorBuilder: (context, index) => SizedBox(height: 12.h),
-        itemBuilder: (context, index) {
-          return _buildTransactionItem(controller.transactions[index]);
-        },
-      ),
-    );
+    return Obx(() {
+      final items = controller.filteredTransactions;
+      if (items.isEmpty) {
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.h),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.receipt_long_outlined, size: 48.sp, color: Colors.grey.shade400),
+                SizedBox(height: 12.h),
+                Text('No transactions found',
+                    style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500)),
+              ],
+            ),
+          ),
+        );
+      }
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          separatorBuilder: (context, index) => SizedBox(height: 12.h),
+          itemBuilder: (context, index) => _buildTransactionItem(items[index]),
+        ),
+      );
+    });
   }
 
   Widget _buildTransactionItem(TransactionItem item) {
@@ -497,16 +515,17 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
       }
 
       String titlePrefix = '';
-      if (item.type == TransactionType.reward)
+      if (item.type == TransactionType.reward) {
         titlePrefix = 'Reward ID: ';
-      else if (item.type == TransactionType.credit)
+      } else if (item.type == TransactionType.credit) {
         titlePrefix = 'Credit ID: ';
-      else if (item.type == TransactionType.recovery)
+      } else if (item.type == TransactionType.recovery) {
         titlePrefix = 'Recovery ID: ';
+      }
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade200.withOpacity(0.5),
+          color: Colors.grey.shade200.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(
@@ -682,21 +701,21 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                 padding: EdgeInsets.all(12.w),
                 child: Column(
                   children: [
-                    _buildDetailRow('Trans ID:', item.transId!),
+                    _buildDetailRow('Trans ID:', item.transId ?? ''),
                     SizedBox(height: 8.h),
-                    _buildDetailRow('Type:', item.transTypeDetails!),
+                    _buildDetailRow('Type:', item.transTypeDetails ?? ''),
                     SizedBox(height: 8.h),
                     _buildDetailRowWithCoin(
                       'Wallet Points',
-                      item.walletPointsTotal!,
+                      item.walletPointsTotal ?? 0,
                     ),
                     SizedBox(height: 8.h),
                     _buildDetailRowWithCoin(
                       'Service Charge',
-                      item.serviceCharge!,
+                      item.serviceCharge ?? 0,
                     ),
                     SizedBox(height: 8.h),
-                    _buildDetailRow('Date', item.fullDateStr!),
+                    _buildDetailRow('Date', item.fullDateStr ?? ''),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../domain/models/merchant_order_details_model.dart';
 import '../domain/models/merchant_order_model.dart';
 import '../domain/services/merchant_order_service_interface.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum MerchantOrderViewStatus { initial, loading, success, error, empty }
 
@@ -172,12 +173,12 @@ class MerchantOrderController extends GetxController {
         }
         return true;
       } else {
-        Get.snackbar('Error', response.message ?? "");
+        safeSnackbar('Error', response.message);
         return false;
       }
     } catch (e) {
       debugPrint('Error updating order status: $e');
-      Get.snackbar('Error', 'Failed to update order status');
+      safeSnackbar('Error', 'Failed to update order status');
       return false;
     }
   }
@@ -322,8 +323,4 @@ class MerchantOrderController extends GetxController {
     await loadOrderStats();
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 }

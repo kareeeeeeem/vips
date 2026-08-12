@@ -1,72 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class VIPsRankController extends GetxController {
-  // Observable variables
-  var currentUserRank = 218.obs;
-  var currentUserScore = 103.0.obs;
-
-  // Top 3 users
-  var topUsers =
-      <Map<String, dynamic>>[
-        {
-          'rank': 1,
-          'username': 'Username',
-          'score': 144.0,
-          'diamonds': 25000,
-          'avatar': 'assets/avatar1.png',
-        },
-        {
-          'rank': 2,
-          'username': 'Username',
-          'score': 144.0,
-          'diamonds': 15000,
-          'avatar': 'assets/avatar2.png',
-        },
-        {
-          'rank': 3,
-          'username': 'Username',
-          'score': 144.0,
-          'diamonds': 10000,
-          'avatar': 'assets/avatar3.png',
-        },
-      ].obs;
-
-  // Other ranked users
-  var rankedUsers =
-      <Map<String, dynamic>>[
-        {
-          'rank': 4,
-          'username': 'Username',
-          'score': 143.0,
-          'avatar': 'assets/avatar4.png',
-        },
-        {
-          'rank': 5,
-          'username': 'Username',
-          'score': 143.0,
-          'avatar': 'assets/avatar5.png',
-        },
-        {
-          'rank': 6,
-          'username': 'Username',
-          'score': 143.0,
-          'avatar': 'assets/avatar6.png',
-        },
-        {
-          'rank': 7,
-          'username': 'Username',
-          'score': 143.0,
-          'avatar': 'assets/avatar7.png',
-        },
-        {
-          'rank': 8,
-          'username': 'Username',
-          'score': 143.0,
-          'avatar': 'assets/avatar8.png',
-        },
-      ].obs;
+  var currentUserRank = 0.obs;
+  var currentUserScore = 0.0.obs;
+  var topUsers = <Map<String, dynamic>>[].obs;
+  var rankedUsers = <Map<String, dynamic>>[].obs;
+  var isLoading = true.obs;
 
   @override
   void onInit() {
@@ -74,19 +16,30 @@ class VIPsRankController extends GetxController {
     fetchRankings();
   }
 
-  void fetchRankings() {
-    // Simulate API call to fetch rankings
-    // In a real app, this would make an HTTP request
+  Future<void> fetchRankings() async {
+    isLoading.value = true;
+    try {
+      final res = await ApiService().get('/user/leaderboard', queryParams: {'limit': '20'});
+      if (res.success && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        final List<dynamic> board = data['leaderboard'] ?? [];
+        currentUserRank.value = (data['currentUserRank'] ?? 0).toInt();
+        currentUserScore.value = (data['currentUserScore'] ?? 0).toDouble();
+        final all = board.map((e) => Map<String, dynamic>.from(e)).toList();
+        topUsers.value = all.take(3).toList();
+        rankedUsers.value = all.skip(3).toList();
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  void refreshRankings() {
-    // Refresh rankings data
-    fetchRankings();
-  }
+  void refreshRankings() => fetchRankings();
 }
 
 class VIPsRankView extends GetView<VIPsRankController> {
-  const VIPsRankView({Key? key}) : super(key: key);
+  const VIPsRankView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -110,29 +63,25 @@ class VIPsRankView extends GetView<VIPsRankController> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            SizedBox(height: 20.h),
-
-            // Top 3 Podium - Clean & Minimal
-            _buildMinimalPodium(),
-
-            SizedBox(height: 32.h),
-
-            // Your Current Rank Card - Subtle elevation
-            _buildCurrentRankCard(),
-
-            SizedBox(height: 24.h),
-
-            // Rankings List - Clean cards
-            _buildRankingsList(),
-
-            SizedBox(height: 40.h),
-          ],
-        ),
-      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              SizedBox(height: 20.h),
+              _buildMinimalPodium(),
+              SizedBox(height: 32.h),
+              _buildCurrentRankCard(),
+              SizedBox(height: 24.h),
+              _buildRankingsList(),
+              SizedBox(height: 40.h),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -142,50 +91,50 @@ class VIPsRankView extends GetView<VIPsRankController> {
   // ════════════════════════════════════════════════════════════════
 
   Widget _buildMinimalPodium() {
+    final top = controller.topUsers;
+    if (top.isEmpty) return SizedBox(height: 20.h);
+    final first = top.isNotEmpty ? top[0] : <String, dynamic>{};
+    final second = top.length > 1 ? top[1] : <String, dynamic>{};
+    final third = top.length > 2 ? top[2] : <String, dynamic>{};
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Position 2 - Left (Silver)
           Expanded(
             child: _buildPodiumPosition(
-              rank: 2,
-              username: 'Username',
-              score: '144₀₀',
-              diamonds: '15000',
-              avatarUrl: 'https://i.pravatar.cc/150?img=2',
+              rank: second['rank'] ?? 2,
+              username: second['username'] ?? '-',
+              score: '${(second['score'] ?? 0).toInt()}',
+              diamonds: '${(second['score'] ?? 0).toInt()}',
+              avatarUrl: second['avatar'] ?? 'https://i.pravatar.cc/150?img=2',
               height: 160.h,
-              medalColor: Color(0xFFC0C0C0),
+              medalColor: const Color(0xFFC0C0C0),
             ),
           ),
           SizedBox(width: 12.w),
-
-          // Position 1 - Center (Gold) - Le plus haut
           Expanded(
             child: _buildPodiumPosition(
-              rank: 1,
-              username: 'Username',
-              score: '144₀₀',
-              diamonds: '25000',
-              avatarUrl: 'https://i.pravatar.cc/150?img=1',
+              rank: first['rank'] ?? 1,
+              username: first['username'] ?? '-',
+              score: '${(first['score'] ?? 0).toInt()}',
+              diamonds: '${(first['score'] ?? 0).toInt()}',
+              avatarUrl: first['avatar'] ?? 'https://i.pravatar.cc/150?img=1',
               height: 200.h,
-              medalColor: Color(0xFFFFD700),
+              medalColor: const Color(0xFFFFD700),
               isWinner: true,
             ),
           ),
           SizedBox(width: 12.w),
-
-          // Position 3 - Right (Bronze)
           Expanded(
             child: _buildPodiumPosition(
-              rank: 3,
-              username: 'Username',
-              score: '144₀₀',
-              diamonds: '10000',
-              avatarUrl: 'https://i.pravatar.cc/150?img=3',
+              rank: third['rank'] ?? 3,
+              username: third['username'] ?? '-',
+              score: '${(third['score'] ?? 0).toInt()}',
+              diamonds: '${(third['score'] ?? 0).toInt()}',
+              avatarUrl: third['avatar'] ?? 'https://i.pravatar.cc/150?img=3',
               height: 140.h,
-              medalColor: Color(0xFFCD7F32),
+              medalColor: const Color(0xFFCD7F32),
             ),
           ),
         ],
@@ -272,7 +221,7 @@ class VIPsRankView extends GetView<VIPsRankController> {
             border: Border.all(color: Color(0xFFE8E8E8), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 15,
                 offset: Offset(0, 2),
               ),
@@ -366,158 +315,6 @@ class VIPsRankView extends GetView<VIPsRankController> {
     );
   }
 
-  Widget _buildRunnerUpCard({
-    required int rank,
-    required String username,
-    required String score,
-    required String diamonds,
-    required String avatarUrl,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Color(0xFFF0F0F0), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Avatar with rank badge
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Color(0xFFE8E8E8), width: 2),
-                ),
-                child: ClipOval(
-                  child: Image.network(
-                    avatarUrl,
-                    width: 70.w,
-                    height: 70.w,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        width: 70.w,
-                        height: 70.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFF5F5F5),
-                        ),
-                        child: Center(
-                          child: SizedBox(
-                            width: 16.w,
-                            height: 16.w,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.black),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 70.w,
-                        height: 70.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFFF5F5F5),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          size: 35.sp,
-                          color: Colors.grey.shade400,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: -4.h,
-                right: -4.w,
-                child: Container(
-                  width: 24.w,
-                  height: 24.w,
-                  decoration: BoxDecoration(
-                    color: rank == 2 ? Color(0xFF6B6B6B) : Color(0xFF9B9B9B),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$rank',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          Text(
-            username,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              letterSpacing: -0.3,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          SizedBox(height: 4.h),
-
-          Text(
-            score,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-              letterSpacing: -0.8,
-            ),
-          ),
-
-          SizedBox(height: 8.h),
-
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: Color(0xFFFAFAFA),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Text(
-              diamonds,
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCurrentRankCard() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 24.w),
@@ -528,7 +325,7 @@ class VIPsRankView extends GetView<VIPsRankController> {
         border: Border.all(color: Color(0xFFE8E8E8), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: Offset(0, 4),
           ),
@@ -545,15 +342,15 @@ class VIPsRankView extends GetView<VIPsRankController> {
               borderRadius: BorderRadius.circular(14.r),
             ),
             child: Center(
-              child: Text(
-                '218',
+              child: Obx(() => Text(
+                '${controller.currentUserRank.value}',
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                   letterSpacing: -0.5,
                 ),
-              ),
+              )),
             ),
           ),
 
@@ -586,36 +383,40 @@ class VIPsRankView extends GetView<VIPsRankController> {
           ),
 
           // Score
-          Text(
-            '103₀₀',
+          Obx(() => Text(
+            '${controller.currentUserScore.value.toInt()}',
             style: TextStyle(
               fontSize: 22.sp,
               fontWeight: FontWeight.w700,
               color: Colors.black,
               letterSpacing: -0.8,
             ),
-          ),
+          )),
         ],
       ),
     );
   }
 
   Widget _buildRankingsList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 24.w),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        int rank = index + 4;
-        return _buildRankItem(
-          rank: rank,
-          username: 'Username',
-          score: '143₀₀',
-          avatarUrl: 'https://i.pravatar.cc/150?img=$rank',
-        );
-      },
-    );
+    return Obx(() {
+      final users = controller.rankedUsers;
+      if (users.isEmpty) return const SizedBox.shrink();
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 24.w),
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final u = users[index];
+          return _buildRankItem(
+            rank: (u['rank'] ?? index + 4) as int,
+            username: u['username'] ?? '-',
+            score: '${(u['score'] ?? 0).toInt()}',
+            avatarUrl: u['avatar'] ?? 'https://i.pravatar.cc/150?img=${index + 4}',
+          );
+        },
+      );
+    });
   }
 
   Widget _buildRankItem({

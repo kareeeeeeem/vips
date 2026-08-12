@@ -1,43 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ShippingController extends GetxController {
-  final RxList<Map<String, dynamic>> trips =
-      <Map<String, dynamic>>[
-        {
-          'id': 1,
-          'title': 'You on McDonald\'s',
-          'location': 'McDonald\'s',
-          'time': '20:14',
-          'date': 'December 17, 2024',
-          'icon': Icons.fastfood,
-        },
-        {
-          'id': 2,
-          'title': 'Grocery Shopping',
-          'location': 'Carrefour',
-          'time': '18:30',
-          'date': 'December 17, 2024',
-          'icon': Icons.shopping_cart,
-        },
-        {
-          'id': 3,
-          'title': 'Coffee Break',
-          'location': 'Starbucks',
-          'time': '15:45',
-          'date': 'December 16, 2024',
-          'icon': Icons.coffee,
-        },
-      ].obs;
+  final RxList<Map<String, dynamic>> trips = <Map<String, dynamic>>[].obs;
+  final RxBool isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadTrips();
+  }
+
+  Future<void> loadTrips() async {
+    try {
+      isLoading.value = true;
+      final response = await ApiService().get('/order/trips');
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        trips.value = data.map((e) => {
+          ...e as Map<String, dynamic>,
+          'icon': Icons.directions_car
+        }).toList();
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to load trips: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   // Grouper les trips par date
   Map<String, List<Map<String, dynamic>>> get groupedTrips {
     Map<String, List<Map<String, dynamic>>> grouped = {};
     for (var trip in trips) {
-      String date = trip['date'];
+      final String date = (trip['date'] as String?) ?? 'Unknown Date';
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
       }
@@ -46,8 +47,41 @@ class ShippingController extends GetxController {
     return grouped;
   }
 
-  void showCalendar() {
-    // TODO: Implémenter le calendrier
+  Future<void> showCalendar() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: Get.context!,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: DateTimeRange(
+        start: now.subtract(const Duration(days: 30)),
+        end: now,
+      ),
+    );
+    if (picked != null) {
+      await loadTripsInRange(picked.start, picked.end);
+    }
+  }
+
+  Future<void> loadTripsInRange(DateTime from, DateTime to) async {
+    try {
+      isLoading.value = true;
+      final response = await ApiService().get('/order/trips', queryParams: {
+        'from': from.toIso8601String(),
+        'to': to.toIso8601String(),
+      });
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        trips.value = data.map((e) => {
+          ...e as Map<String, dynamic>,
+          'icon': Icons.directions_car
+        }).toList();
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to load trips');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void showFilter() {
@@ -71,12 +105,17 @@ class ShippingController extends GetxController {
     );
   }
 
-  void deleteTrip(int tripId) {
-    trips.removeWhere((trip) => trip['id'] == tripId);
+  void deleteTrip(String tripId) {
+    trips.removeWhere((trip) => trip['id']?.toString() == tripId);
     Get.back();
   }
 
-  void markTrip(int tripId) {
+  void markTrip(String tripId) {
+    final index = trips.indexWhere((t) => t['id']?.toString() == tripId);
+    if (index != -1) {
+      trips[index] = {...trips[index], 'isMarked': !(trips[index]['isMarked'] == true)};
+      trips.refresh();
+    }
     Get.back();
   }
 
@@ -104,7 +143,18 @@ class ShippingController extends GetxController {
             ),
           ),
           SizedBox(height: 20.h),
-          Text('Filter options coming soon...'),
+          Wrap(
+            spacing: 8,
+            children: ['All', 'Pending', 'Active', 'Completed', 'Cancelled'].map((s) {
+              return ActionChip(
+                label: Text(s),
+                onPressed: () {
+                  Get.back();
+                  loadTrips();
+                },
+              );
+            }).toList(),
+          ),
           SizedBox(height: 20.h),
         ],
       ),
@@ -141,7 +191,7 @@ class ShippingController extends GetxController {
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -156,7 +206,7 @@ class ShippingController extends GetxController {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        trip['title'],
+                        (trip['title'] as String?) ?? 'Trip',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -165,7 +215,7 @@ class ShippingController extends GetxController {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        '${trip['location']} • ${trip['time']}',
+                        '${(trip['location'] as String?) ?? ''} • ${(trip['time'] as String?) ?? ''}',
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: Colors.grey.shade600,
@@ -182,7 +232,7 @@ class ShippingController extends GetxController {
 
           // Mark button
           GestureDetector(
-            onTap: () => markTrip(trip['id']),
+            onTap: () => markTrip(trip['id']?.toString() ?? ''),
             child: Container(
               width: double.infinity,
               height: 54.h,
@@ -217,7 +267,7 @@ class ShippingController extends GetxController {
 
           // Delete button
           GestureDetector(
-            onTap: () => deleteTrip(trip['id']),
+            onTap: () => deleteTrip(trip['id']?.toString() ?? ''),
             child: Container(
               width: double.infinity,
               height: 54.h,

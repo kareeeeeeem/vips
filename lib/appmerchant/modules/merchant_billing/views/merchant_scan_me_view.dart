@@ -4,13 +4,11 @@ import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class MerchantScanMeView extends StatelessWidget {
-  const MerchantScanMeView({Key? key}) : super(key: key);
+  const MerchantScanMeView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> args = Get.arguments ?? {};
-    final String buttonText = args['buttonText'] ?? 'Close';
-    final String nextRoute = args['nextRoute'] ?? '/merchant-home';
     final double amount = args['amount'] ?? 0.0;
     final String orderId = args['orderId'] ?? 'ORD-000000';
     
@@ -115,7 +113,14 @@ class MerchantScanMeView extends StatelessWidget {
                         data: qrData,
                         version: QrVersions.auto,
                         size: 200.w,
-                        foregroundColor: const Color(0xFF1F2937),
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: Color(0xFF1F2937),
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Color(0xFF1F2937),
+                        ),
                       ),
                     ),
                   ),
@@ -140,26 +145,6 @@ class MerchantScanMeView extends StatelessWidget {
               padding: EdgeInsets.all(24.w),
               child: Column(
                 children: [
-                  // SIMULATION BUTTON: This mimics what happens when the User app scans the QR
-                  // and the server sends a socket event to the Merchant app saying "Payment Success"
-                  TextButton.icon(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Payment Received',
-                        'Customer paid \$${amount.toStringAsFixed(2)}. Points awarded!',
-                        backgroundColor: const Color(0xFF10B981),
-                        colorText: Colors.white,
-                        icon: const Icon(Icons.check_circle, color: Colors.white),
-                        duration: const Duration(seconds: 3),
-                      );
-                      Future.delayed(const Duration(seconds: 2), () {
-                        Get.offNamed(nextRoute); // Go back home
-                      });
-                    },
-                    icon: const Icon(Icons.bug_report, color: Color(0xFF9CA3AF)),
-                    label: Text('Simulate User Scan', style: TextStyle(color: const Color(0xFF9CA3AF))),
-                  ),
-                  SizedBox(height: 12.h),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

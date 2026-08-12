@@ -9,7 +9,7 @@ import 'widgets/category_sheet.dart';
 import 'widgets/time_schedule_widget.dart';
 
 class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
-  const BusinessRegistrationView({Key? key}) : super(key: key);
+  const BusinessRegistrationView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
                 border: Border.all(color: const Color(0xFF10B981)),
               ),
               child: Text(
-                '31%',
+                '33%',
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -142,9 +142,9 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
         ),
         SizedBox(height: 24.h),
 
-        _buildTextField('Full name', 'Auto Full name Latina'),
+        _buildTextField('Full name', 'Auto Full name Latina', ctrl: controller.fullNameLatinCtrl),
         SizedBox(height: 16.h),
-        _buildTextField('Full name', 'Auto Full name عربي', isArabic: true),
+        _buildTextField('Full name', 'Auto Full name عربي', isArabic: true, ctrl: controller.fullNameArabicCtrl),
         SizedBox(height: 16.h),
         
         // Job Title Dropdown
@@ -178,7 +178,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
         ),
         SizedBox(height: 16.h),
 
-        _buildTextField('Email address', 'Email address'),
+        _buildTextField('Email address', 'Email address', ctrl: controller.emailCtrl),
         SizedBox(height: 16.h),
 
         // Phone Number
@@ -216,6 +216,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
             SizedBox(width: 12.w),
             Expanded(
               child: TextFormField(
+                controller: controller.phoneCtrl,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: '0123456789',
@@ -250,9 +251,9 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
         children: [
           Row(
             children: [
-              Expanded(child: _buildTextField('Store name', 'Latina')),
+              Expanded(child: _buildTextField('Store name', 'Latina', ctrl: controller.storeNameLatinCtrl)),
               SizedBox(width: 12.w),
-              Expanded(child: _buildTextField('Store name', 'عربي', isArabic: true)),
+              Expanded(child: _buildTextField('Store name', 'عربي', isArabic: true, ctrl: controller.storeNameArabicCtrl)),
             ],
           ),
           SizedBox(height: 16.h),
@@ -362,7 +363,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField('Enter TIN *', ''),
+          _buildTextField('Enter TIN *', '', ctrl: controller.tinCtrl),
           SizedBox(height: 16.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -435,7 +436,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
               Switch(
                 value: !controller.isPrivetLoyalty.value, // True means Everywhere in this UI logic based on design
                 onChanged: (val) => controller.isPrivetLoyalty.value = !val,
-                activeColor: const Color(0xFF10B981),
+                activeThumbColor: const Color(0xFF10B981),
               ),
               SizedBox(width: 8.w),
               Text('Everywhere', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF10B981))),
@@ -446,7 +447,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
     );
   }
 
-  Widget _buildTextField(String label, String hint, {bool isArabic = false}) {
+  Widget _buildTextField(String label, String hint, {bool isArabic = false, TextEditingController? ctrl}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -455,6 +456,7 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
           SizedBox(height: 6.h),
         ],
         TextFormField(
+          controller: ctrl,
           textAlign: isArabic ? TextAlign.right : TextAlign.left,
           decoration: InputDecoration(
             hintText: hint,

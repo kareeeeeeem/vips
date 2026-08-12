@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import '../controllers/merchant_dues_controller.dart';
 
 class DueListView extends GetView<MerchantDuesController> {
-  const DueListView({Key? key}) : super(key: key);
+  const DueListView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +72,7 @@ class DueListView extends GetView<MerchantDuesController> {
   }
 
   Widget _buildSummaryHeader() {
-    return Container(
+    return Obx(() => Container(
       padding: EdgeInsets.all(24.w),
       child: Row(
         children: [
@@ -82,7 +81,7 @@ class DueListView extends GetView<MerchantDuesController> {
           _buildStatBox('Payable', controller.totalPayable, const Color(0xFFEF4444)),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildStatBox(String label, RxDouble amount, Color color) {
@@ -90,9 +89,9 @@ class DueListView extends GetView<MerchantDuesController> {
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,8 +121,8 @@ class DueListView extends GetView<MerchantDuesController> {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: due.isCustomer ? const Color(0xFF10B981).withOpacity(0.1) : const Color(0xFFEF4444).withOpacity(0.1),
-                child: Text(due.partyName[0], style: TextStyle(color: due.isCustomer ? const Color(0xFF10B981) : const Color(0xFFEF4444))),
+                backgroundColor: due.isCustomer ? const Color(0xFF10B981).withValues(alpha: 0.1) : const Color(0xFFEF4444).withValues(alpha: 0.1),
+                child: Text(due.partyName.isNotEmpty ? due.partyName[0].toUpperCase() : '?', style: TextStyle(color: due.isCustomer ? const Color(0xFF10B981) : const Color(0xFFEF4444))),
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -160,7 +159,7 @@ class DueListView extends GetView<MerchantDuesController> {
                 ],
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () => controller.collectPayment(due.id, due.remainingAmount),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: due.isCustomer ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -173,7 +172,7 @@ class DueListView extends GetView<MerchantDuesController> {
           ),
           SizedBox(height: 8.h),
           LinearProgressIndicator(
-            value: due.paidAmount / due.totalAmount,
+            value: due.totalAmount > 0 ? due.paidAmount / due.totalAmount : 0.0,
             backgroundColor: Colors.white,
             valueColor: AlwaysStoppedAnimation<Color>(due.isCustomer ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
             minHeight: 4,

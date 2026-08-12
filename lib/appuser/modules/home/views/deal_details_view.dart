@@ -1,13 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/widgets/custom_network_image.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
-class DealDetailsView extends StatelessWidget {
-  const DealDetailsView({Key? key}) : super(key: key);
+class DealDetailsView extends StatefulWidget {
+  const DealDetailsView({super.key});
+
+  @override
+  State<DealDetailsView> createState() => _DealDetailsViewState();
+}
+
+class _DealDetailsViewState extends State<DealDetailsView> {
+  bool _isLoading = false;
+
+  Future<void> _redeemDeal(String dealId) async {
+    if (dealId.isEmpty) {
+      safeSnackbar('Error', 'Invalid deal', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiService().post('/content/deals/$dealId/redeem', {});
+      if (response.success) {
+        safeSnackbar('Success', 'Deal added to your cart!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white);
+        Get.toNamed('/cart');
+      } else {
+        safeSnackbar(
+            'Error',
+            response.message.isNotEmpty ? response.message : 'Could not redeem deal',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to redeem deal: $e',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final deal = Get.arguments as Map<String, dynamic>?;
+    final dealId = deal?['_id']?.toString() ?? deal?['id']?.toString() ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -26,8 +67,8 @@ class DealDetailsView extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         height: 210.h,
-                        child: Image.network(
-                          deal['image'].toString(),
+                        child: CustomNetworkImage(
+                          imageUrl: deal['image'].toString(),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -57,7 +98,7 @@ class DealDetailsView extends StatelessWidget {
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35).withOpacity(0.12),
+                              color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Text(
@@ -76,14 +117,22 @@ class DealDetailsView extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 52.h),
                         backgroundColor: const Color(0xFFFF6B35),
+                        disabledBackgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.6),
                       ),
-                      onPressed: () {
-                        Get.back();
-                      },
-                      child: Text(
-                        'back'.tr,
-                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-                      ),
+                      onPressed: _isLoading ? null : () => _redeemDeal(dealId),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                            )
+                          : Text(
+                              'Redeem Deal',
+                              style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white),
+                            ),
                     ),
                   ],
                 ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_billing_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class PinVerificationView extends StatelessWidget {
-  const PinVerificationView({Key? key}) : super(key: key);
+  const PinVerificationView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +176,21 @@ class PinVerificationView extends StatelessWidget {
         if (item == 'fingerprint') {
           return IconButton(
             icon: Icon(Icons.fingerprint, color: const Color(0xFF1B6DF9), size: 32.sp),
-            onPressed: () => Get.snackbar('Biometric', 'Biometric flow not configured yet', snackPosition: SnackPosition.BOTTOM),
+            onPressed: () async {
+                final auth = LocalAuthentication();
+                final canCheck = await auth.canCheckBiometrics;
+                if (!canCheck) {
+                  safeSnackbar('Unavailable', 'Biometric authentication not available on this device', snackPosition: SnackPosition.BOTTOM);
+                  return;
+                }
+                final authenticated = await auth.authenticate(
+                  localizedReason: 'Authenticate to access billing',
+                  options: const AuthenticationOptions(biometricOnly: true),
+                );
+                if (authenticated && nextRoute != null) {
+                  Get.offAllNamed(nextRoute);
+                }
+              },
           );
         } else if (item == 'delete') {
           return IconButton(
@@ -186,7 +202,7 @@ class PinVerificationView extends StatelessWidget {
             onTap: () {
               controller?.addPinDigit(item);
               if (controller?.currentPin.value.length == 4) {
-                if (controller?.currentPin.value == '0000') {
+                if (controller?.currentPin.value == (controller?.merchantPin.value ?? '0000')) {
                   Get.offNamed(nextRoute ?? MerchantRoutes.INVOICE_RECEIPT);
                 } else {
                   Get.offNamed(errorRoute ?? MerchantRoutes.BILL_ERROR);

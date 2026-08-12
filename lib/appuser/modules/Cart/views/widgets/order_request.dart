@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../../core/services/api_service.dart';
+import '../../controllers/cart_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class OrderItem {
   final String id;
@@ -31,7 +33,7 @@ class OrderItem {
       id: json['id'],
       name: json['name'],
       image: json['image'],
-      price: json['price'].toDouble(),
+      price: (json['price'] ?? 0).toDouble(),
       quantity: json['quantity'] ?? 1,
       couponCount: json['couponCount'] ?? 0,
       addons: json['addons'],
@@ -271,19 +273,49 @@ class OrderRequestController extends GetxController {
   }
 
   void _addToCart(OrderItem item) {
-    Get.snackbar(
-      'Added to Cart',
-      '${item.name} has been added to your cart',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
+    try {
+      final cartController = Get.find<CartController>();
+      cartController.addItem(CartItem(
+        id: item.id,
+        name: item.name,
+        description: '',
+        image: item.image,
+        price: item.price,
+        type: CartItemType.food,
+        quantity: item.quantity,
+      ));
+      safeSnackbar(
+        'Added to Cart',
+        '${item.name} has been added to your cart',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (_) {
+      safeSnackbar('Error', 'Could not add to cart', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void viewItemDetails(OrderItem item) {
-    // TODO: Naviguer vers la page de détails de l'article
-    Get.toNamed('/item-details', arguments: {'item': item});
+    Get.dialog(
+      AlertDialog(
+        title: Text(item.name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Quantity: ${item.quantity}'),
+            Text('Price: \$${item.price.toStringAsFixed(2)}'),
+            if (item.addons != null && item.addons!.isNotEmpty)
+              Text('Add-ons: ${item.addons!.values.join(', ')}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
+        ],
+      ),
+    );
   }
 
   void acceptRequest() {
@@ -327,9 +359,9 @@ class OrderRequestController extends GetxController {
                   SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Get.back();
-                        _acceptOrder();
+                        await _acceptOrder();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF22C55E),
@@ -346,18 +378,11 @@ class OrderRequestController extends GetxController {
     );
   }
 
-  void _acceptOrder() {
-    orderStatus.value = 'Accepted';
-    currentOrderStep.value = 1; // Passer à "Picked"
-
-    Get.snackbar(
-      'Order Accepted',
-      'Order #${orderId.value} has been accepted',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
+  Future<void> _acceptOrder() async {
+    await updateOrderStatus('confirmed');
+    if (orderStatus.value == 'confirmed') {
+      currentOrderStep.value = 1; // Move to "Picked"
+    }
   }
 
   void updateOrderStep(int step) {
@@ -390,24 +415,20 @@ class OrderRequestController extends GetxController {
 
   Future<void> fetchOrderDetails(String orderId) async {
     try {
-      // TODO: Appel API pour récupérer les détails de la commande
-      final response = await ApiService().get('/order/\$orderId');
+      final response = await ApiService().get('/order/$orderId');
       if (response.success && response.data != null) {
-        // _updateFromResponse(response.data);
+        final data = response.data;
+        this.orderId.value = data['_id'] ?? orderId;
+        orderStatus.value = data['status'] ?? 'pending';
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
-      Get.snackbar(
-        'Error',
-        'Failed to load order details',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
-        colorText: Colors.white,
-      );
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to load order details',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
         colorText: Colors.white,
       );
     }
@@ -415,27 +436,22 @@ class OrderRequestController extends GetxController {
 
   Future<void> updateOrderStatus(String status) async {
     try {
-      // TODO: Appel API pour mettre à jour le statut
       final response = await ApiService().put(
-        '/order/\${orderId.value}/status',
+        '/order/${orderId.value}/cancel',
         {'status': status},
       );
       if (response.success) {
         orderStatus.value = status;
+        safeSnackbar('Success', 'Order status updated', snackPosition: SnackPosition.BOTTOM);
+        return;
       }
-      Get.snackbar(
-        'Error',
-        'Failed to update order status',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
-        colorText: Colors.white,
-      );
+      safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to update order status',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.9),
+        backgroundColor: Colors.red.withValues(alpha: 0.9),
         colorText: Colors.white,
       );
     }
@@ -443,7 +459,7 @@ class OrderRequestController extends GetxController {
 }
 
 class OrderRequestView extends GetView<OrderRequestController> {
-  const OrderRequestView({Key? key}) : super(key: key);
+  const OrderRequestView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -550,7 +566,7 @@ class OrderRequestView extends GetView<OrderRequestController> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF6B35).withOpacity(0.3),
+            color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -581,10 +597,10 @@ class OrderRequestView extends GetView<OrderRequestController> {
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           width: 1,
                         ),
                       ),
@@ -738,7 +754,7 @@ class OrderRequestView extends GetView<OrderRequestController> {
             width: 60.w,
             height: 60.h,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6B35).withOpacity(0.1),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
@@ -1183,42 +1199,44 @@ class OrderRequestView extends GetView<OrderRequestController> {
   }
 
   Widget _buildAcceptRequestButton() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Accept Request',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF9CA3AF),
-              fontFamily: 'SF Pro Display',
-            ),
-          ),
-          Row(
-            children: [
-              Icon(Icons.schedule, color: const Color(0xFFFF6B35), size: 20.sp),
-              SizedBox(width: 6.w),
-              Text(
-                'Pending',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFFFF6B35),
-                  fontFamily: 'SF Pro Display',
-                ),
+    return GestureDetector(
+      onTap: controller.acceptRequest,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF6B35),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Obx(() => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Accept Request',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                fontFamily: 'SF Pro Display',
               ),
-            ],
-          ),
-        ],
+            ),
+            Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.white, size: 20.sp),
+                SizedBox(width: 6.w),
+                Text(
+                  controller.orderStatus.value,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'SF Pro Display',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        )),
       ),
     );
   }

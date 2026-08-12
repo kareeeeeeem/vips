@@ -3,14 +3,22 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/merchant_splash_controller.dart';
 
-class MerchantSplashView extends GetView<MerchantSplashController> {
+class MerchantSplashView extends StatefulWidget {
   const MerchantSplashView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Initialize the controller explicitly if it's not bound yet
+  State<MerchantSplashView> createState() => _MerchantSplashViewState();
+}
+
+class _MerchantSplashViewState extends State<MerchantSplashView> {
+  @override
+  void initState() {
+    super.initState();
     Get.put(MerchantSplashController());
-    
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Center(

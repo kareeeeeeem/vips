@@ -81,7 +81,7 @@ class TeamsView extends GetView<TeamsController> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.AppBlackColor.withOpacity(0.06),
+              color: AppColors.AppBlackColor.withValues(alpha: 0.06),
               spreadRadius: 0,
               blurRadius: 12,
               offset: const Offset(0, 4),
@@ -92,7 +92,7 @@ class TeamsView extends GetView<TeamsController> {
           icon,
           width: 20.w,
           height: 20.h,
-          color: AppColors.AppBlackColor,
+          colorFilter: ColorFilter.mode(AppColors.AppBlackColor, BlendMode.srcIn),
         ),
       ),
     );
@@ -108,7 +108,7 @@ class TeamsView extends GetView<TeamsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.AppBlackColor.withOpacity(0.08),
+            color: AppColors.AppBlackColor.withValues(alpha: 0.08),
             spreadRadius: 0,
             blurRadius: 24,
             offset: const Offset(0, 4),
@@ -186,7 +186,7 @@ class TeamsView extends GetView<TeamsController> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                        color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                         spreadRadius: 0,
                         blurRadius: 12,
                         offset: const Offset(0, 4),
@@ -204,10 +204,7 @@ class TeamsView extends GetView<TeamsController> {
 
               // Operation button
               GestureDetector(
-                onTap: () {
-                  // Show operations for current admin
-                  // controller.showOperationsSheet(employee);
-                },
+                onTap: () => controller.showSettingsSheet(),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12.w,
@@ -256,7 +253,7 @@ class TeamsView extends GetView<TeamsController> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.AppBlackColor.withOpacity(0.04),
+              color: AppColors.AppBlackColor.withValues(alpha: 0.04),
               spreadRadius: 0,
               blurRadius: 12,
               offset: const Offset(0, 2),
@@ -268,9 +265,9 @@ class TeamsView extends GetView<TeamsController> {
           indicatorColor: Colors.transparent,
           controller: controller.tabController,
           labelPadding: EdgeInsets.symmetric(horizontal: 4.w),
-          overlayColor: const MaterialStatePropertyAll(Colors.transparent),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           labelColor: AppColors.appWhite,
-          unselectedLabelColor: AppColors.AppBlackColor.withOpacity(0.6),
+          unselectedLabelColor: AppColors.AppBlackColor.withValues(alpha: 0.6),
           dividerHeight: 0,
           tabs: [
             _buildTab('All', 0),
@@ -299,7 +296,7 @@ class TeamsView extends GetView<TeamsController> {
                     ? LinearGradient(
                       colors: [
                         AppColors.AppPrimaryColor,
-                        AppColors.AppPrimaryColor.withOpacity(0.8),
+                        AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                       ],
                     )
                     : null,
@@ -385,7 +382,7 @@ class TeamsView extends GetView<TeamsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.AppBlackColor.withOpacity(0.06),
+            color: AppColors.AppBlackColor.withValues(alpha: 0.06),
             spreadRadius: 0,
             blurRadius: 12,
             offset: const Offset(0, 2),
@@ -402,7 +399,7 @@ class TeamsView extends GetView<TeamsController> {
               gradient: LinearGradient(
                 colors: [
                   AppColors.AppPrimaryColor,
-                  AppColors.AppPrimaryColor.withOpacity(0.7),
+                  AppColors.AppPrimaryColor.withValues(alpha: 0.7),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -446,7 +443,7 @@ class TeamsView extends GetView<TeamsController> {
                         fontFamily: 'Poppins',
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.AppBlackColor.withOpacity(0.6),
+                        color: AppColors.AppBlackColor.withValues(alpha: 0.6),
                       ),
                     ),
                     SizedBox(width: 8.w),
@@ -456,7 +453,7 @@ class TeamsView extends GetView<TeamsController> {
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: employee.status.color.withOpacity(0.1),
+                        color: employee.status.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(

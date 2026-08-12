@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class EditProfileController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -19,6 +23,8 @@ class EditProfileController extends GetxController {
   final RxBool isMale = true.obs;
   final Rxn<String> selectedCity = Rxn<String>();
   final Rxn<String> selectedCivilStatus = Rxn<String>();
+  final Rxn<String> profileImageUrl = Rxn<String>();
+  final RxBool isUploadingImage = false.obs;
 
   final List<String> cities = ['Nabeul', 'Tunis', 'Gafsa', 'Sousse', 'Sfax'];
   final List<String> civilStatuses = [
@@ -42,9 +48,66 @@ class EditProfileController extends GetxController {
         nameController.text = user['fullName'] ?? '';
         emailController.text = user['email'] ?? '';
         phoneController.text = user['phone'] ?? '';
+        profileImageUrl.value = user['profileImage'];
       }
     } catch (e) {
-      print('Error fetching profile: $e');
+      debugPrint('Error fetching profile: $e');
+    }
+  }
+
+  Future<void> pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+
+    isUploadingImage.value = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      final dioClient = dio.Dio(
+        dio.BaseOptions(
+          baseUrl: ApiService.baseUrl,
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final formData = dio.FormData.fromMap({
+        'image': await dio.MultipartFile.fromFile(
+          picked.path,
+          filename: picked.name,
+        ),
+      });
+
+      final res = await dioClient.post('/upload', data: formData);
+      final body = res.data;
+
+      if (body['success'] == true) {
+        final url = body['data']['url'] as String;
+        profileImageUrl.value = url;
+        await ApiService().put('/auth/update-profile', {'profileImage': url});
+      } else {
+        safeSnackbar(
+          'Upload Failed',
+          body['message'] ?? 'Could not upload image',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      safeSnackbar(
+        'Upload Error',
+        'Failed to upload image: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isUploadingImage.value = false;
     }
   }
 
@@ -76,7 +139,7 @@ class EditProfileController extends GetxController {
   }
 
   void saveProfile() async {
-    if (formKey.currentState!.validate()) {
+    if (formKey.currentState?.validate() ?? false) {
       try {
         Get.dialog(
           const Center(child: CircularProgressIndicator()),
@@ -85,27 +148,29 @@ class EditProfileController extends GetxController {
         final response = await ApiService().put('/auth/update-profile', {
           'fullName': nameController.text.trim(),
           'phone': phoneController.text.trim(),
+          if (profileImageUrl.value != null)
+            'profileImage': profileImageUrl.value!,
         });
-        Get.back(); // close loading dialog
+        Get.back();
 
         if (response.success) {
-          Get.back(); // close the edit profile screen
-          Get.snackbar(
+          Get.back();
+          safeSnackbar(
             'Success',
             'Profile updated successfully!',
             snackPosition: SnackPosition.BOTTOM,
           );
         } else {
-          Get.snackbar(
+          safeSnackbar(
             'Error',
-            response.message ?? 'Unknown error',
+            response.message,
             snackPosition: SnackPosition.BOTTOM,
           );
         }
       } catch (e) {
-        if (Get.isDialogOpen == true) Get.back(); // close loading dialog
-        await Future.delayed(const Duration(milliseconds: 100)); // wait for dialog to close
-        Get.snackbar(
+        if (Get.isDialogOpen == true) Get.back();
+        await Future.delayed(const Duration(milliseconds: 100));
+        safeSnackbar(
           'Error',
           'Failed to update profile: $e',
           snackPosition: SnackPosition.BOTTOM,

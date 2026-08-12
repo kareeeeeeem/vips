@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VIPsClubController extends GetxController {
   // Observable variables
   var currentBannerIndex = 0.obs;
-  var convertibleDiamonds = 90.obs;
-  var pendingDiamonds = 600.obs;
-  var suspendedDiamonds = 600.obs;
-  var todayCoins = 10.obs;
-  var superBonus = 120.obs;
+  var convertibleDiamonds = 0.obs;
+  var pendingDiamonds = 0.obs;
+  var suspendedDiamonds = 0.obs;
+  var todayCoins = 0.obs;
+  var superBonus = 0.obs;
   var referrals = 0.obs;
-  var currentRank = 218.obs;
+  var currentRank = 0.obs;
 
   // Check-in status (7 days) - Updated rewards to match the image
   var checkInDays =
@@ -36,30 +38,7 @@ class VIPsClubController extends GetxController {
   var dailyCheckInTotal = 7.obs;
 
   // History
-  var transactionHistory =
-      <Map<String, dynamic>>[
-        {
-          'amount': -5800,
-          'type': 'diamant',
-          'description': 'diamant to VIPs Wallet',
-          'date': '27 Oct 2025 16:13',
-          'isDebit': true,
-        },
-        {
-          'amount': 80,
-          'type': 'diamant',
-          'description': 'Order Place N°: 118047',
-          'date': '27 Oct 2025 16:13',
-          'isDebit': false,
-        },
-        {
-          'amount': 10,
-          'type': 'diamant',
-          'description': 'Order Place N°: 118047',
-          'date': '27 Oct 2025 16:13',
-          'isDebit': false,
-        },
-      ].obs;
+  var transactionHistory = <Map<String, dynamic>>[].obs;
 
   // Spin wheel remaining spins
   var remainingSpins = 3.obs;
@@ -68,50 +47,92 @@ class VIPsClubController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkTodayStatus();
-    fetchWalletData();
+    fetchClubData();
+    loadReferralCode();
   }
 
-  Future<void> fetchWalletData() async {
+  Future<void> fetchClubData() async {
     try {
-      final response = await ApiService().get('/user/wallet');
+      final response = await ApiService().get('/user/vips-club');
       if (response.success && response.data != null) {
-        // Update diamonds with user's points
-        convertibleDiamonds.value = response.data['points'] ?? 0;
+        final data = response.data;
+        convertibleDiamonds.value = data['points'] ?? data['convertibleDiamonds'] ?? 0;
+        pendingDiamonds.value = data['pendingDiamonds'] ?? data['pending'] ?? 0;
+        suspendedDiamonds.value = data['suspendedDiamonds'] ?? data['suspended'] ?? 0;
+        superBonus.value = data['superBonus'] ?? data['bonus'] ?? 0;
+        referrals.value = data['referrals'] ?? data['referralCount'] ?? 0;
+        currentRank.value = data['rank'] ?? data['currentRank'] ?? 0;
+        todayCoins.value = data['todayCoins'] ?? data['dailyCoins'] ?? 0;
+        hasCheckedInToday.value = data['checkedInToday'] ?? false;
+        canClaimReward.value = !hasCheckedInToday.value;
+        checkInStreak.value = data['checkInStreak'] ?? 0;
 
-        // Also update the latest transactions
-        final List<dynamic> txList = response.data['recentTransactions'] ?? [];
-        if (txList.isNotEmpty) {
-          transactionHistory.value =
-              txList.map((tx) {
-                return {
-                  'amount': tx['amount'],
-                  'type': tx['type'], // debit/credit
-                  'description': tx['description'] ?? 'Transaction',
-                  'date':
-                      tx['createdAt'] != null
-                          ? DateTime.parse(tx['createdAt']).toString()
-                          : DateTime.now().toString(),
-                  'isDebit': tx['type'] == 'debit',
-                };
-              }).toList();
+        final List<dynamic> days = data['checkInDays'] ?? [];
+        if (days.isNotEmpty) {
+          checkInDays.value = days.map((d) => Map<String, dynamic>.from(d)).toList();
+          currentProgress.value = '${checkInStreak.value}/7';
         }
       }
-    } catch (e) {
-      print('Error fetching wallet data: $e');
+
+      final walletResponse = await ApiService().get('/user/wallet');
+      if (walletResponse.success && walletResponse.data != null) {
+        final List<dynamic> txList = walletResponse.data['recentTransactions'] ?? [];
+        if (txList.isNotEmpty) {
+          transactionHistory.value = txList.map((tx) => {
+            'amount': tx['amount'],
+            'type': tx['type'],
+            'description': tx['description'] ?? 'Transaction',
+            'date': tx['createdAt'] != null
+                ? DateTime.parse(tx['createdAt']).toString()
+                : DateTime.now().toString(),
+            'isDebit': tx['type'] == 'debit',
+          }).toList();
+        }
+      }
+    } catch (_) {
     }
   }
 
-  void checkTodayStatus() {
-    // Check if user already checked in today
-    var todayIndex = checkInDays.indexWhere((day) => day['isToday'] == true);
-    if (todayIndex != -1 && checkInDays[todayIndex]['checked'] == true) {
-      hasCheckedInToday.value = true;
-      canClaimReward.value = false;
+  Future<void> claimDailyReward() async {
+    if (hasCheckedInToday.value || !canClaimReward.value) return;
+    try {
+      final response = await ApiService().post('/user/vips-club/checkin', {});
+      if (response.success && response.data != null) {
+        final earned = response.data['pointsEarned'] ?? 0;
+        convertibleDiamonds.value = response.data['newPoints'] ?? convertibleDiamonds.value;
+        checkInStreak.value = response.data['streak'] ?? checkInStreak.value;
+        hasCheckedInToday.value = true;
+        canClaimReward.value = false;
+        _rebuildCheckInDays();
+        showSuccessDialog(earned);
+      } else {
+        safeSnackbar('Notice', response.message);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not claim reward');
     }
   }
 
-  void claimDailyReward() {}
+  var checkInStreak = 0.obs;
+
+  void _rebuildCheckInDays() {
+    final streak = checkInStreak.value;
+    checkInDays.value = [
+      {'day': 'Day 1', 'reward': 100},
+      {'day': 'Day 2', 'reward': 100},
+      {'day': 'Day 3', 'reward': 100},
+      {'day': 'Day 4', 'reward': 100},
+      {'day': 'Day 5', 'reward': 250},
+      {'day': 'Day 6', 'reward': 250},
+      {'day': 'Day 7', 'reward': 1000},
+    ].asMap().entries.map((e) => {
+      'day': e.value['day'],
+      'reward': e.value['reward'],
+      'checked': e.key < streak,
+      'isToday': e.key == streak,
+    }).toList();
+    currentProgress.value = '$streak/7';
+  }
 
   void showSuccessDialog(int coins) {
     Get.dialog(
@@ -177,7 +198,7 @@ class VIPsClubController extends GetxController {
   }
 
   void navigateToHistory() {
-    Get.toNamed('/vips-history');
+    Get.toNamed('/vips-club-history');
   }
 
   void navigateToSpinWheel() {
@@ -188,97 +209,114 @@ class VIPsClubController extends GetxController {
     if (remainingSpins.value <= 0 || isSpinning.value) return;
 
     isSpinning.value = true;
-    remainingSpins.value--;
 
-    // Simulate spinning
-    await Future.delayed(Duration(seconds: 3));
+    try {
+      final response = await ApiService().post('/rewards/spin-wheel', {});
+      
+      if (response.success && response.data != null) {
+        remainingSpins.value--;
+        final wonPrize = response.data['amount'] ?? 0;
+        
+        // Wait for UI animation (assuming 3 seconds spinner)
+        await Future.delayed(Duration(seconds: 3));
 
-    // Award random prize
-    var prizes = [100, 200, 500, 1000, 50, 150, 300, 2000];
-    var wonPrize = prizes[DateTime.now().millisecond % prizes.length];
+        todayCoins.value += (wonPrize as num).toInt();
+        
+        // Show prize dialog
+        safeSnackbar(
+          'Congratulations!',
+          'You won $wonPrize coins!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      } else {
+        safeSnackbar('Oops', response.message, backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to spin the wheel: $e');
+    } finally {
+      isSpinning.value = false;
+    }
+  }
 
-    todayCoins.value += wonPrize;
-    isSpinning.value = false;
+  final RxString referralCode = ''.obs;
 
-    // Show prize dialog
-    Get.snackbar(
-      'Congratulations!',
-      'You won $wonPrize coins!',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-    );
+  Future<void> loadReferralCode() async {
+    try {
+      final res = await ApiService().get('/user/referral');
+      if (res.success && res.data != null) {
+        referralCode.value = (res.data['referralCode'] ?? res.data['code'] ?? '').toString();
+      }
+    } catch (_) {}
   }
 
   void inviteFriends() {
-    // Handle invite friends logic
-    Get.snackbar(
-      'Invite Friends',
-      'Share your referral code to earn 25000 diamonds!',
-      backgroundColor: Colors.blue,
-      colorText: Colors.white,
-    );
+    final code = referralCode.value;
+    if (code.isNotEmpty) {
+      SharePlus.instance.share(ShareParams(
+        text: 'Join VIPs and earn rewards! Use my referral code: $code\nDownload the app and start earning today.',
+        subject: 'Join VIPs — Earn 25,000 diamonds!',
+      ));
+    } else {
+      loadReferralCode().then((_) {
+        if (referralCode.value.isNotEmpty) {
+          inviteFriends();
+        } else {
+          safeSnackbar('Invite Friends', 'Sign in to get your referral code',
+              backgroundColor: Colors.blue, colorText: Colors.white);
+        }
+      });
+    }
   }
 
-  void convertDiamonds() {
+  Future<void> convertDiamonds() async {
     if (convertibleDiamonds.value < 100) {
-      Get.snackbar(
-        'Error',
-        'Minimum 100 diamonds required to convert',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      safeSnackbar('Error', 'Minimum 100 diamonds required', backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // Navigate to conversion page
     Get.dialog(
       Dialog(
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Convert Diamonds',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Convert ${convertibleDiamonds.value} diamonds to wallet?',
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 20),
+              const Text('Convert Diamonds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Text('Convert ${convertibleDiamonds.value} diamonds to wallet?', textAlign: TextAlign.center),
+              const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      child: Text('Cancel'),
-                    ),
-                  ),
-                  SizedBox(width: 12),
+                  Expanded(child: OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel'))),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Process conversion
-                        transactionHistory.insert(0, {
-                          'amount': -convertibleDiamonds.value,
-                          'type': 'diamant',
-                          'description': 'diamant to VIPs Wallet',
-                          'date': DateTime.now().toString(),
-                          'isDebit': true,
-                        });
-                        convertibleDiamonds.value = 0;
+                      onPressed: () async {
                         Get.back();
-                        Get.snackbar(
-                          'Success',
-                          'Diamonds converted successfully!',
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                        );
+                        try {
+                          final response = await ApiService().post('/user/vips-club/convert', {
+                            'points': convertibleDiamonds.value,
+                          });
+                          if (response.success && response.data != null) {
+                            convertibleDiamonds.value = response.data['newPoints'] ?? 0;
+                            transactionHistory.insert(0, {
+                              'amount': -(response.data['walletAmount'] ?? 0),
+                              'type': 'diamant',
+                              'description': 'Diamonds converted to VIPs Wallet',
+                              'date': DateTime.now().toString(),
+                              'isDebit': true,
+                            });
+                            safeSnackbar('Success', 'Diamonds converted!', backgroundColor: Colors.green, colorText: Colors.white);
+                          } else {
+                            safeSnackbar('Error', response.message, backgroundColor: Colors.red, colorText: Colors.white);
+                          }
+                        } catch (_) {
+                          safeSnackbar('Error', 'Conversion failed');
+                        }
                       },
-                      child: Text('Convert'),
+                      child: const Text('Convert'),
                     ),
                   ),
                 ],
@@ -291,7 +329,7 @@ class VIPsClubController extends GetxController {
   }
 
   void joinMission(String missionType) {
-    Get.snackbar(
+    safeSnackbar(
       'Mission',
       'Joining $missionType mission...',
       backgroundColor: Colors.purple,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../design_system/atoms/app_colors.dart';
@@ -19,7 +21,7 @@ class BuildDiscoverPlacesCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -49,7 +51,7 @@ class BuildDiscoverPlacesCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.5),
+                        Colors.black.withValues(alpha: 0.5),
                       ],
                     ),
                   ),
@@ -124,7 +126,7 @@ class BuildDiscoverPlacesCard extends StatelessWidget {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12.r),
-                        onTap: () {},
+                        onTap: () => Get.find<HomeController>().onPickAgain(),
                         child: Container(
                           alignment: Alignment.center,
                           child: Text(
@@ -155,7 +157,7 @@ class BuildDiscoverPlacesCard extends StatelessWidget {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12.r),
-                        onTap: () {},
+                        onTap: () => Get.find<HomeController>().onNearestForYou(),
                         child: Container(
                           alignment: Alignment.center,
                           child: Text(

@@ -1,20 +1,26 @@
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
-import 'package:vip/appuser/modules/profile/views/profile_view.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class MerchantHomeController extends GetxController {
-  // --- Dashboard Statistics (Dummy data for now, will connect to API) ---
+  // --- Dashboard Statistics ---
   final RxDouble totalSales = 0.0.obs;
   final RxDouble totalExpenses = 0.0.obs;
   final RxDouble totalPurchases = 0.0.obs;
   final RxDouble totalSaleDue = 0.0.obs;
   final RxDouble totalDueCollect = 0.0.obs;
-  
+
   // VIPs Stats
   final RxDouble vipsIn = 0.0.obs;
   final RxDouble vipsOut = 0.0.obs;
   final RxDouble vipsRecovery = 0.0.obs;
-  
+
+  // --- Merchant Profile ---
+  final RxString storeName = ''.obs;
+  final RxString storePhone = ''.obs;
+  final RxString storeImageUrl = ''.obs;
+  final RxString merchantId = ''.obs;
+
   final RxBool isLoading = true.obs;
   final RxInt currentIndex = 0.obs;
 
@@ -27,14 +33,14 @@ class MerchantHomeController extends GetxController {
       case 1:
         Get.toNamed(MerchantRoutes.FINANCE_DASHBOARD);
         break;
-      case 2: // Center Scan button
+      case 2:
         Get.toNamed(MerchantRoutes.QR_RECEIVE);
         break;
       case 3:
         Get.toNamed(MerchantRoutes.WALLET);
         break;
       case 4:
-        Get.to(() => const ProfileView());
+        Get.toNamed(MerchantRoutes.BUSINESS_PLAN);
         break;
     }
   }
@@ -42,32 +48,50 @@ class MerchantHomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadDashboardStats();
+    _loadAll();
   }
 
-  void _loadDashboardStats() async {
+  Future<void> _loadAll() async {
     isLoading.value = true;
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Accounting Stats
-    totalSales.value = 1500.0;
-    totalExpenses.value = 450.0;
-    totalPurchases.value = 800.0;
-    totalSaleDue.value = 200.0;
-    totalDueCollect.value = 350.0;
-    
-    // VIPs Stats
-    vipsIn.value = 215.20;
-    vipsOut.value = 215.20;
-    vipsRecovery.value = 215.20;
-    
-    isLoading.value = false;
+    try {
+      await Future.wait([_loadDashboardStats(), _loadMerchantProfile()]);
+    } finally {
+      isLoading.value = false;
+    }
   }
-  
-  // Refresh stats (e.g. pull to refresh)
+
+  Future<void> _loadDashboardStats() async {
+    try {
+      final response = await ApiService().get('/merchant/dashboard');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        totalSales.value = (data['totalSales'] ?? 0).toDouble();
+        totalExpenses.value = (data['totalExpenses'] ?? 0).toDouble();
+        totalPurchases.value = (data['totalPurchases'] ?? 0).toDouble();
+        totalSaleDue.value = (data['totalSaleDue'] ?? data['totalDue'] ?? 0).toDouble();
+        totalDueCollect.value = (data['totalDueCollect'] ?? data['totalCollected'] ?? 0).toDouble();
+        vipsIn.value = (data['totalRewards'] ?? 0).toDouble();
+        vipsOut.value = (data['totalGiftBack'] ?? 0).toDouble();
+        vipsRecovery.value = (data['netProfit'] ?? 0).toDouble();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadMerchantProfile() async {
+    try {
+      final response = await ApiService().get('/merchant/profile');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        storeName.value = data['storeName'] ?? data['fullName'] ?? '';
+        storePhone.value = data['phone'] ?? '';
+        storeImageUrl.value = data['profileImageUrl'] ?? data['logoUrl'] ?? '';
+        merchantId.value = data['_id']?.toString() ?? '';
+      }
+    } catch (_) {}
+  }
+
   Future<void> refreshStats() async {
-    _loadDashboardStats();
+    await _loadAll();
   }
 }
+

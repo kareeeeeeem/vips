@@ -5,7 +5,7 @@ import '../controllers/merchant_subscription_controller.dart';
 import '../../../routes/merchant_routes.dart';
 
 class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
-  const SubscriptionPackagesView({Key? key}) : super(key: key);
+  const SubscriptionPackagesView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,176 +19,194 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'My Business Plan', // Title from image
+          'Business Plans',
           style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          SizedBox(height: 24.h),
-          Text(
-            'Commission Base Plan',
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: const Color(0xFFF59E0B)),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            '0.3%',
-            style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF59E0B)),
-          ),
-          SizedBox(height: 24.h),
-          
-          Expanded(
-            child: Stack(
-              children: [
-                // Bottom Sheet background style
-                Positioned.fill(
-                  top: 50.h,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
-                      ],
-                    ),
-                  ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+        }
+
+        final current = controller.currentPlan;
+        final currentPlanCode = (current['planCode'] ?? current['plan'] ?? 'free').toString().toLowerCase();
+
+        return Column(
+          children: [
+            SizedBox(height: 16.h),
+
+            // ── Current plan badge ──────────────────────────
+            if (current.isNotEmpty) ...[
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 24.w),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                 ),
-                
-                Column(
+                child: Row(
                   children: [
-                    SizedBox(height: 16.h),
-                    Container(
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(color: const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2.r)),
-                    ),
-                    SizedBox(height: 32.h),
-                    Text(
-                      'Change Subscription Plan',
-                      style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      'Renew or shift your plan to get better experience!',
-                      style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF)),
-                    ),
-                    SizedBox(height: 32.h),
-                    
-                    // Package Cards Carousel
+                    const Icon(Icons.verified_outlined, color: Color(0xFF10B981), size: 20),
+                    SizedBox(width: 10.w),
                     Expanded(
-                      child: PageView(
-                        controller: PageController(viewportFraction: 0.8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildPlanCard(
-                            title: 'Commission Base',
-                            price: '0.3%',
-                            duration: 'Forever',
-                            color: const Color(0xFF10B981),
-                            isCurrent: true,
-                          ),
-                          _buildPlanCard(
-                            title: 'Basic',
-                            price: 'D 99.00',
-                            duration: '120 Days',
-                            color: const Color(0xFF10B981),
-                            isCurrent: false,
-                          ),
-                          _buildPlanCard(
-                            title: 'Commission Base 2.5%',
-                            price: '2.5%',
-                            duration: 'Forever',
-                            color: const Color(0xFF10B981),
-                            isCurrent: false,
-                          ),
+                          Text('Current Plan: ${current['planName'] ?? currentPlanCode.toUpperCase()}',
+                              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: const Color(0xFF065F46))),
+                          if (current['endDate'] != null)
+                            Text(
+                              'Renews: ${(current['endDate'] as String).split('T').first}',
+                              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                            ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
+              SizedBox(height: 16.h),
+            ],
+
+            Text('Choose a Plan', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
+            SizedBox(height: 4.h),
+            Text('Upgrade for more features & better experience',
+                style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
+            SizedBox(height: 20.h),
+
+            // ── Plans from API ──────────────────────────────
+            Expanded(
+              child: controller.availablePlans.isEmpty
+                  ? _buildFallbackPlans(currentPlanCode)
+                  : PageView.builder(
+                      controller: PageController(viewportFraction: 0.82),
+                      itemCount: controller.availablePlans.length,
+                      itemBuilder: (_, i) {
+                        final plan = controller.availablePlans[i];
+                        final planCode = (plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
+                        final isCurrent = planCode == currentPlanCode;
+                        return _buildPlanCard(plan: plan, isCurrent: isCurrent);
+                      },
+                    ),
             ),
-          ),
-        ],
-      ),
+            SizedBox(height: 16.h),
+          ],
+        );
+      }),
     );
   }
 
-  Widget _buildPlanCard({
-    required String title,
-    required String price,
-    required String duration,
-    required Color color,
-    bool isCurrent = false,
-  }) {
+  // Shown while API returns empty or on error
+  Widget _buildFallbackPlans(String currentPlanCode) {
+    final plans = [
+      {'id': 'free', 'name': 'Free', 'price': 0.0, 'currency': 'D', 'features': ['10 Products', '1 Cashier', 'Basic POS']},
+      {'id': 'basic', 'name': 'Basic', 'price': 9.99, 'currency': 'D', 'features': ['50 Products', '3 Cashiers', 'Analytics', 'POS']},
+      {'id': 'pro', 'name': 'Pro', 'price': 29.99, 'currency': 'D', 'features': ['500 Products', '10 Cashiers', 'Ads', 'Priority Support']},
+      {'id': 'enterprise', 'name': 'Enterprise', 'price': 99.99, 'currency': 'D', 'features': ['Unlimited', 'All Features', 'API Access']},
+    ];
+    return PageView.builder(
+      controller: PageController(viewportFraction: 0.82),
+      itemCount: plans.length,
+      itemBuilder: (_, i) {
+        final plan = plans[i];
+        final planCode = (plan['id'] as String).toLowerCase();
+        final isCurrent = planCode == currentPlanCode;
+        return _buildPlanCard(plan: plan, isCurrent: isCurrent, isFallback: true);
+      },
+    );
+  }
+
+  Widget _buildPlanCard({required Map<dynamic, dynamic> plan, required bool isCurrent, bool isFallback = false}) {
+    final planName = (plan['name'] ?? plan['planName'] ?? plan['id'] ?? 'Plan').toString();
+    final price = ((plan['price'] ?? plan['monthlyPrice'] ?? 0) as num?) ?? 0;
+    final currency = (plan['currency'] ?? 'D').toString();
+    final features = plan['features'] as List? ?? _extractFeatures(plan);
+    final planCode = (plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
+
+    final Color planColor = _planColor(planCode);
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 12, offset: const Offset(0, 4)),
         ],
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: isCurrent ? Border.all(color: const Color(0xFF10B981), width: 2) : null,
       ),
       child: Column(
         children: [
-          // Header Part
+          // ── Header ────────────────────────────────────────
           Container(
             padding: EdgeInsets.all(24.w),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: color,
+              color: planColor,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
             child: Column(
               children: [
-                Text(title, style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600)),
+                if (isCurrent)
+                  Container(
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text('CURRENT', style: TextStyle(fontSize: 10.sp, color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                  ),
+                Text(planName, style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600)),
                 SizedBox(height: 8.h),
-                Text(price, style: TextStyle(color: Colors.white, fontSize: 28.sp, fontWeight: FontWeight.w800)),
-                SizedBox(height: 4.h),
-                Text(duration, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12.sp)),
+                price == 0
+                    ? Text('Free', style: TextStyle(color: Colors.white, fontSize: 28.sp, fontWeight: FontWeight.w800))
+                    : RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: Colors.white, fontSize: 28.sp, fontWeight: FontWeight.w800),
+                          children: [
+                            TextSpan(text: '$currency '),
+                            TextSpan(text: price.toStringAsFixed(2)),
+                            TextSpan(text: '/mo', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400)),
+                          ],
+                        ),
+                      ),
               ],
             ),
           ),
-          
-          // Features List
+
+          // ── Features ──────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.all(20.w),
               child: Column(
-                children: [
-                   _buildFeatureRow('Inactive Gift Back', false),
-                   _buildFeatureRow('Max SMS (500)', true),
-                   _buildFeatureRow('Max Product (50)', true),
-                   _buildFeatureRow('POS', true),
-                   _buildFeatureRow('Mobile App', true),
-                   _buildFeatureRow('Review', true),
-                   if (isCurrent) _buildFeatureRow('Current Plan', true),
-                ],
+                children: features
+                    .map((f) => _buildFeatureRow(f.toString()))
+                    .toList(),
               ),
             ),
           ),
-          
-          // Button
+
+          // ── Button ────────────────────────────────────────
           Padding(
-            padding: EdgeInsets.all(24.w),
+            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  if (!isCurrent) {
-                    Get.toNamed(MerchantRoutes.PLAN_MIGRATION);
-                  }
-                },
+                onPressed: isCurrent
+                    ? null
+                    : () => Get.toNamed(MerchantRoutes.PLAN_MIGRATION, arguments: plan),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isCurrent ? const Color(0xFF9CA3AF) : const Color(0xFFF97316), // Orange for "Shift in this plan"
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  backgroundColor: isCurrent ? const Color(0xFF9CA3AF) : const Color(0xFFF97316),
+                  disabledBackgroundColor: const Color(0xFF9CA3AF),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   elevation: 0,
                 ),
                 child: Text(
-                  isCurrent ? 'Current plan' : 'Shift in this plan',
+                  isCurrent ? 'Current Plan' : 'Select Plan',
                   style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -199,30 +217,44 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
     );
   }
 
-  Widget _buildFeatureRow(String text, bool isActive) {
+  List<String> _extractFeatures(Map plan) {
+    final features = plan['features'];
+    if (features is Map) {
+      return [
+        if ((features['maxProducts'] as int?) != null)
+          '${features['maxProducts']} Products',
+        if ((features['maxCashiers'] as int?) != null)
+          '${features['maxCashiers']} Cashiers',
+        if (features['analytics'] == true) 'Analytics',
+        if (features['adsEnabled'] == true) 'Advertisements',
+        if (features['prioritySupport'] == true) 'Priority Support',
+        if (features['apiAccess'] == true) 'API Access',
+      ];
+    }
+    return [];
+  }
+
+  Widget _buildFeatureRow(String text) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(bottom: 10.h),
       child: Row(
         children: [
-          Icon(
-            isActive ? Icons.check_circle : Icons.cancel,
-            color: isActive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-            size: 16.sp,
-          ),
+          Icon(Icons.check_circle, color: const Color(0xFF10B981), size: 16.sp),
           SizedBox(width: 10.w),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: isActive ? const Color(0xFF4B5563) : const Color(0xFFEF4444), // Red for commission text cross
-                fontWeight: isActive ? FontWeight.w500 : FontWeight.normal,
-                decoration: isActive ? null : TextDecoration.lineThrough,
-              ),
-            ),
+            child: Text(text, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF4B5563), fontWeight: FontWeight.w500)),
           ),
         ],
       ),
     );
+  }
+
+  Color _planColor(String code) {
+    switch (code) {
+      case 'pro': return const Color(0xFF7C3AED);
+      case 'enterprise': return const Color(0xFF1F2937);
+      case 'basic': return const Color(0xFF1B6DF9);
+      default: return const Color(0xFF10B981);
+    }
   }
 }

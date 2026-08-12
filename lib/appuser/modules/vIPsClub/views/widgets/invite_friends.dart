@@ -3,18 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class InviteFriendsController extends GetxController {
-  // Referral code
-  var referralCode = 'VIPS2024'.obs;
-
-  // Stats
+  var referralCode = ''.obs;
   var totalInvited = 0.obs;
   var totalJoined = 0.obs;
   var totalEarned = 0.obs;
-
-  // Invited friends list
   var invitedFriends = <Map<String, dynamic>>[].obs;
+  var isLoading = true.obs;
 
   @override
   void onInit() {
@@ -22,23 +20,23 @@ class InviteFriendsController extends GetxController {
     loadUserData();
   }
 
-  void loadUserData() {
-    // Simulate loading user data
-    // Dans une vraie app, vous feriez un appel API ici
-
-    referralCode.value = 'VIPS2024'; // Code unique de l'utilisateur
-    totalInvited.value = 12;
-    totalJoined.value = 8;
-    totalEarned.value = 200; // 200K diamants
-
-    // Exemple de friends invités
-    invitedFriends.value = [
-      {'name': 'Sarah Johnson', 'joined': true, 'date': '2024-01-15'},
-      {'name': 'Mike Chen', 'joined': true, 'date': '2024-01-14'},
-      {'name': 'Emma Wilson', 'joined': false, 'date': '2024-01-10'},
-      {'name': 'Alex Rodriguez', 'joined': true, 'date': '2024-01-08'},
-      {'name': 'Lisa Brown', 'joined': false, 'date': '2024-01-05'},
-    ];
+  Future<void> loadUserData() async {
+    isLoading.value = true;
+    try {
+      final res = await ApiService().get('/user/referral');
+      if (res.success && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        referralCode.value = data['referralCode'] ?? '';
+        totalInvited.value = (data['totalInvited'] ?? 0).toInt();
+        totalJoined.value = (data['totalJoined'] ?? 0).toInt();
+        totalEarned.value = (data['totalEarned'] ?? 0).toInt();
+        final List<dynamic> friends = data['friends'] ?? [];
+        invitedFriends.value = friends.map((f) => Map<String, dynamic>.from(f)).toList();
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   String get shareMessage {
@@ -56,9 +54,9 @@ Download now: [App Link]
 
   void shareGeneric() async {
     try {
-      await Share.share(shareMessage, subject: 'Join VIPs Club');
+      await SharePlus.instance.share(ShareParams(text: shareMessage, subject: 'Join VIPs Club'));
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Unable to share at this time',
         snackPosition: SnackPosition.BOTTOM,
@@ -70,7 +68,7 @@ Download now: [App Link]
     try {
       // Pour WhatsApp, vous pouvez utiliser un package comme url_launcher
       // ou share_plus avec des paramètres spécifiques
-      await Share.share(shareMessage, subject: 'Join VIPs Club');
+      await SharePlus.instance.share(ShareParams(text: shareMessage, subject: 'Join VIPs Club'));
 
       // Alternative avec url_launcher:
       // final whatsappUrl = 'whatsapp://send?text=${Uri.encodeComponent(shareMessage)}';
@@ -78,7 +76,7 @@ Download now: [App Link]
       //   await launchUrl(Uri.parse(whatsappUrl));
       // }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'WhatsApp not available',
         snackPosition: SnackPosition.BOTTOM,
@@ -88,9 +86,9 @@ Download now: [App Link]
 
   void shareViaMessenger() async {
     try {
-      await Share.share(shareMessage, subject: 'Join VIPs Club');
+      await SharePlus.instance.share(ShareParams(text: shareMessage, subject: 'Join VIPs Club'));
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Messenger not available',
         snackPosition: SnackPosition.BOTTOM,
@@ -101,10 +99,10 @@ Download now: [App Link]
   void shareViaEmail() async {
     try {
       // Pour email, utilisez url_launcher ou mailto
-      await Share.share(
-        shareMessage,
+      await SharePlus.instance.share(ShareParams(
+        text: shareMessage,
         subject: 'Join VIPs Club - Get 10,000 Diamants!',
-      );
+      ));
 
       // Alternative avec url_launcher:
       // final emailUrl = 'mailto:?subject=${Uri.encodeComponent("Join VIPs Club")}&body=${Uri.encodeComponent(shareMessage)}';
@@ -112,7 +110,7 @@ Download now: [App Link]
       //   await launchUrl(Uri.parse(emailUrl));
       // }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Email not available',
         snackPosition: SnackPosition.BOTTOM,
@@ -125,10 +123,7 @@ Download now: [App Link]
     // mais vous pouvez aussi la mettre ici pour centraliser la logique
   }
 
-  void refreshData() {
-    // Rafraîchir les données depuis l'API
-    loadUserData();
-  }
+  void refreshData() => loadUserData();
 
   // Méthode pour inviter un ami par email
   void inviteByEmail(String email) async {
@@ -136,7 +131,7 @@ Download now: [App Link]
       // Appel API pour envoyer une invitation
       // await apiService.sendInvitation(email, referralCode.value);
 
-      Get.snackbar(
+      safeSnackbar(
         'Success',
         'Invitation sent to $email',
         snackPosition: SnackPosition.BOTTOM,
@@ -147,7 +142,7 @@ Download now: [App Link]
       // Rafraîchir la liste
       refreshData();
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to send invitation',
         snackPosition: SnackPosition.BOTTOM,
@@ -161,7 +156,7 @@ Download now: [App Link]
       // Appel API pour envoyer une invitation par SMS
       // await apiService.sendSMSInvitation(phone, referralCode.value);
 
-      Get.snackbar(
+      safeSnackbar(
         'Success',
         'Invitation sent to $phone',
         snackPosition: SnackPosition.BOTTOM,
@@ -171,7 +166,7 @@ Download now: [App Link]
 
       refreshData();
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to send invitation',
         snackPosition: SnackPosition.BOTTOM,
@@ -181,7 +176,7 @@ Download now: [App Link]
 }
 
 class InviteFriendsView extends GetView<InviteFriendsController> {
-  const InviteFriendsView({Key? key}) : super(key: key);
+  const InviteFriendsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +301,7 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
         border: Border.all(color: Color(0xFFE8E8E8), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: Offset(0, 4),
           ),
@@ -434,7 +429,7 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
                     Clipboard.setData(
                       ClipboardData(text: controller.referralCode.value),
                     );
-                    Get.snackbar(
+                    safeSnackbar(
                       'Copied!',
                       'Referral code copied to clipboard',
                       snackPosition: SnackPosition.BOTTOM,

@@ -4,8 +4,11 @@ import 'package:get/get.dart';
 
 import 'appuser/core/translations/app_translations.dart';
 import 'appuser/routes/app_pages.dart';
+import 'core/services/api_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService().init();
   runApp(MyApp());
 }
 

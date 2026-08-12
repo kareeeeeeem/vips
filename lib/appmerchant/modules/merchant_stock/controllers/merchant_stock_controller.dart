@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class StockItem {
   final String id;
@@ -18,74 +20,85 @@ class StockItem {
     required this.lowStockThreshold,
     required this.unitPrice,
   });
+
+  factory StockItem.fromJson(Map<String, dynamic> json) => StockItem(
+        id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+        name: json['name'] ?? '',
+        category: json['category'] ?? 'General',
+        currentStock: (json['currentStock'] ?? 0).toInt(),
+        lowStockThreshold: (json['lowStockThreshold'] ?? 10).toInt(),
+        unitPrice: (json['unitPrice'] ?? 0).toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'category': category,
+        'currentStock': currentStock,
+        'lowStockThreshold': lowStockThreshold,
+        'unitPrice': unitPrice,
+      };
 }
 
 class MerchantStockController extends GetxController {
   final stockItems = <StockItem>[].obs;
-  
+  final isLoading = false.obs;
   final totalInventoryValue = 0.0.obs;
   final lowStockCount = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadMockData();
-    _calculateStats();
+    loadStock();
   }
 
-  void _loadMockData() {
-    stockItems.assignAll([
-      StockItem(
-        id: '1',
-        name: 'Classic Pizza Dough',
-        category: 'Ingredients',
-        currentStock: 15,
-        lowStockThreshold: 20,
-        unitPrice: 2.5,
-      ),
-      StockItem(
-        id: '2',
-        name: 'Mozzarella Cheese',
-        category: 'Ingredients',
-        currentStock: 45,
-        lowStockThreshold: 10,
-        unitPrice: 15.0,
-      ),
-      StockItem(
-        id: '3',
-        name: 'Tomato Sauce (Large)',
-        category: 'Supplies',
-        currentStock: 8,
-        lowStockThreshold: 10,
-        unitPrice: 12.0,
-      ),
-    ]);
+  Future<void> loadStock() async {
+    isLoading.value = true;
+    try {
+      final res = await ApiService().get('/merchant/stock');
+      if (res.success && res.data != null) {
+        final List<dynamic> list = res.data is List ? res.data : [];
+        stockItems.value = list.map((e) => StockItem.fromJson(e)).toList();
+        _calculateStats();
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void _calculateStats() {
     double total = 0;
     int low = 0;
     for (var item in stockItems) {
-      total += (item.currentStock * item.unitPrice);
+      total += item.currentStock * item.unitPrice;
       if (item.isLowStock) low++;
     }
     totalInventoryValue.value = total;
     lowStockCount.value = low;
   }
 
-  void adjustStock(String id, int adjustment) {
-    int index = stockItems.indexWhere((element) => element.id == id);
-    if (index != -1) {
-      var old = stockItems[index];
-      stockItems[index] = StockItem(
-        id: old.id,
-        name: old.name,
-        category: old.category,
-        currentStock: old.currentStock + adjustment,
-        lowStockThreshold: old.lowStockThreshold,
-        unitPrice: old.unitPrice,
-      );
-      _calculateStats();
+  Future<void> adjustStock(String id, int adjustment) async {
+    final index = stockItems.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+    final old = stockItems[index];
+    final newStock = old.currentStock + adjustment;
+    try {
+      final res = await ApiService().put('/merchant/stock/$id', {'currentStock': newStock});
+      if (res.success) {
+        stockItems[index] = StockItem(
+          id: old.id,
+          name: old.name,
+          category: old.category,
+          currentStock: newStock,
+          lowStockThreshold: old.lowStockThreshold,
+          unitPrice: old.unitPrice,
+        );
+        _calculateStats();
+      } else {
+        safeSnackbar('Error', 'Failed to update stock', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Failed to update stock', snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

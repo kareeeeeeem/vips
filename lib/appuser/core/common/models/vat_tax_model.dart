@@ -8,7 +8,7 @@ class VatTaxModel {
   VatTaxModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     name = json['name'];
-    taxRate = double.tryParse(json['tax_rate'].toString()) ?? 0.0;
+    taxRate = double.tryParse((json['tax_rate'] ?? 0).toString()) ?? 0.0;
   }
 
   Map<String, dynamic> toJson() {

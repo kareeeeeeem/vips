@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class AddressDetailsView extends StatelessWidget {
-  const AddressDetailsView({Key? key}) : super(key: key);
+  const AddressDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class AddressDetailsView extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFFFB800)),
               ),
               child: Text(
-                '31%',
+                '66%',
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,

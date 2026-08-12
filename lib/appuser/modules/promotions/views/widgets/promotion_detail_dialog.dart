@@ -1,9 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vip/appuser/modules/promotions/views/widgets/promotion_info_bottomsheet.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum PromotionType { orderOffer, shippingOffer }
 
@@ -101,8 +103,7 @@ class PromotionDetailController extends GetxController {
   }
 
   String getQRData() {
-    final promo = promotion.value;
-    return 'V6i8P25s';
+    return promotion.value.id.isNotEmpty ? promotion.value.id : 'V6i8P25s';
   }
 
   // ==================== ACTIONS ====================
@@ -113,17 +114,10 @@ class PromotionDetailController extends GetxController {
 
   void sharePromotion() {
     final promo = promotion.value;
-
-    Get.snackbar(
-      'Shared!',
-      'Promotion shared successfully',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
-    );
+    SharePlus.instance.share(ShareParams(
+      text: '${promo.title} — ${promo.brandName}\nValid until ${promo.validUntil}\nGet it on VIPs!',
+      subject: promo.title,
+    ));
   }
 
   void showInfo() {
@@ -132,33 +126,6 @@ class PromotionDetailController extends GetxController {
       description: 'Enjoy free shipping on all orders throughout this month!',
       promoCode: 'V6i8P25s',
       discountText: '100% off shipping (Free shipping).',
-    );
-  }
-
-  Widget _buildInfoSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-            fontFamily: 'SF Pro Display',
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          content,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: const Color(0xFF6B7280),
-            fontFamily: 'SF Pro Text',
-            height: 1.5,
-          ),
-        ),
-      ],
     );
   }
 
@@ -181,7 +148,7 @@ class PromotionDetailController extends GetxController {
                 width: 80.w,
                 height: 80.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withOpacity(0.1),
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -284,24 +251,35 @@ class PromotionDetailController extends GetxController {
     );
   }
 
-  void saveToWallet() {
-    Get.snackbar(
-      'Coming Soon',
-      'Save to Wallet feature will be available soon!',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF3B82F6).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
-      icon: Icon(Icons.wallet_outlined, color: Colors.white, size: 24.sp),
-    );
+  Future<void> saveToWallet() async {
+    final promo = promotion.value;
+    if (promo.id.isEmpty) return;
+    try {
+      final response = await ApiService().post('/rewards/save-promotion', {'promotionId': promo.id});
+      if (response.success) {
+        safeSnackbar(
+          'Saved!',
+          '${promo.title} saved to your wallet.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.9),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 12.r,
+          icon: Icon(Icons.wallet_outlined, color: Colors.white, size: 24.sp),
+        );
+      } else {
+        safeSnackbar('Error', response.message);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Failed to save promotion');
+    }
   }
 }
 
 /// Page de détails d'une promotion - Design Ticket
 class PromotionDetailPage extends GetView<PromotionDetailController> {
-  const PromotionDetailPage({Key? key}) : super(key: key);
+  const PromotionDetailPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +319,7 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -391,7 +369,7 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: 2,
@@ -435,60 +413,8 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
     );
   }
 
-  Widget _buildBrandLogo() {
-    return Obx(() {
-      final promotion = controller.promotion.value;
-
-      if (promotion.brandLogo == null) {
-        return Container(
-          width: 80.w,
-          height: 80.h,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Icon(
-            Icons.local_offer,
-            color: const Color(0xFFFF6B35),
-            size: 40.sp,
-          ),
-        );
-      }
-
-      return CachedNetworkImage(
-        imageUrl: promotion.brandLogo!,
-        width: 100.w,
-        height: 70.h,
-        fit: BoxFit.contain,
-        alignment: Alignment.centerLeft,
-        placeholder:
-            (context, url) => Container(
-              width: 100.w,
-              height: 70.h,
-              child: Center(
-                child: SizedBox(
-                  width: 24.w,
-                  height: 24.h,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: const Color(0xFFFF6B35),
-                  ),
-                ),
-              ),
-            ),
-        errorWidget:
-            (context, url, error) => Icon(
-              Icons.local_offer,
-              color: const Color(0xFFFF6B35),
-              size: 40.sp,
-            ),
-      );
-    });
-  }
-
   Widget _buildDiscountBadge() {
     return Obx(() {
-      final promotion = controller.promotion.value;
       final badgeText = controller.getDiscountText();
 
       return Container(
@@ -501,7 +427,7 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF6B35).withOpacity(0.3),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -539,10 +465,8 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
 
   Widget _buildMainTitle() {
     return Obx(() {
-      final title = controller.getMainTitle();
-
       return Text(
-        'Get 25% at your next KFC buy',
+        controller.getMainTitle(),
         style: TextStyle(
           fontSize: 20.sp,
           fontWeight: FontWeight.w700,
@@ -708,7 +632,7 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -719,76 +643,6 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
     );
   }
 
-  // ==================== ACTION BUTTONS ====================
-
-  Widget _buildActionButtons() {
-    return Column(
-      children: [
-        // Bouton Apply
-        SizedBox(
-          width: double.infinity,
-          height: 54.h,
-          child: ElevatedButton(
-            onPressed: controller.applyPromotion,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B35),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              elevation: 0,
-              shadowColor: const Color(0xFFFF6B35).withOpacity(0.4),
-            ),
-            child: Text(
-              'Apply Promotion',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                fontFamily: 'SF Pro Display',
-              ),
-            ),
-          ),
-        ),
-
-        SizedBox(height: 12.h),
-
-        // Bouton Save to Wallet (optionnel)
-        SizedBox(
-          width: double.infinity,
-          height: 54.h,
-          child: OutlinedButton(
-            onPressed: controller.saveToWallet,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: const Color(0xFFE5E7EB), width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.wallet_outlined,
-                  color: const Color(0xFF6B7280),
-                  size: 20.sp,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Save to Wallet',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6B7280),
-                    fontFamily: 'SF Pro Display',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ==================== TICKET SHAPE CLIPPER ====================

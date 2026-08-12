@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:vip/core/services/api_service.dart';
 import '../views/widgets/WinDialogWidget.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class SpinWheelController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -96,6 +97,18 @@ class SpinWheelController extends GetxController
         _showWinDialog();
       }
     });
+
+    _loadRemainingSpins();
+  }
+
+  Future<void> _loadRemainingSpins() async {
+    try {
+      final res = await ApiService().get('/user/vips-club');
+      if (res.success && res.data != null) {
+        final spins = res.data['remainingSpins'] ?? res.data['spinsLeft'] ?? res.data['spins'];
+        if (spins != null) remainingSpins.value = (spins as num).toInt();
+      }
+    } catch (_) {}
   }
 
   void spinWheel() async {
@@ -148,12 +161,12 @@ class SpinWheelController extends GetxController
 
         animationController.forward(from: 0);
       } else {
-        Get.snackbar('Error', 'Failed to spin. Try again.');
+        safeSnackbar('Error', 'Failed to spin. Try again.');
         isSpinning.value = false;
         canSpin.value = true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'An error occurred.');
+      safeSnackbar('Error', 'An error occurred.');
       isSpinning.value = false;
       canSpin.value = true;
     }
@@ -167,8 +180,8 @@ class SpinWheelController extends GetxController
       () => WinDialogWidget(
         wonAmount: wonPrize.value!.value,
         onClaim: () {
-          Navigator.pop(Get.context!);
-          Navigator.pop(Get.context!);
+          Get.back();
+          Get.back();
           wonPrize.value = null;
         },
       ),

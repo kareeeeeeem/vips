@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 /// Controller for Report Screen using GetX
 class ReportController extends GetxController
@@ -62,92 +65,40 @@ class ReportController extends GetxController
   }
 
   /// Load all reports
-  Future<void> loadReports() async {
+  Future<void> loadReports({DateTime? startDate, DateTime? endDate}) async {
     try {
       _isLoading.value = true;
 
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(seconds: 1));
+      String url = '/user/reports';
+      if (startDate != null && endDate != null) {
+        url += '?startDate=${startDate.toIso8601String()}&endDate=${endDate.toIso8601String()}';
+      }
 
-      // Mock data
-      final now = DateTime.now();
-      _allReports.value = [
-        Report(
-          id: '1',
-          title: 'Monthly Sales Report',
-          type: ReportType.all,
-          date: now.subtract(const Duration(days: 1)),
-          amount: 15420.50,
-          status: ReportStatus.completed,
-          description: 'Complete sales overview for last month',
-        ),
-        Report(
-          id: '2',
-          title: 'Quarterly Revenue',
-          type: ReportType.all,
-          date: now.subtract(const Duration(days: 3)),
-          amount: 48920.00,
-          status: ReportStatus.completed,
-          description: 'Q1 revenue summary and analysis',
-        ),
-        Report(
-          id: '3',
-          title: 'Annual Summary',
-          type: ReportType.all,
-          date: now.subtract(const Duration(days: 7)),
-          amount: 125000.00,
-          status: ReportStatus.pending,
-          description: 'Year-end financial summary',
-        ),
-      ];
+      final response = await ApiService().get(url);
+      
+      if (response.success && response.data != null) {
+        final data = response.data;
 
-      _couponReports.value = [
-        Report(
-          id: '4',
-          title: 'Summer Discount Coupons',
-          type: ReportType.coupon,
-          date: now.subtract(const Duration(days: 2)),
-          amount: 3240.00,
-          status: ReportStatus.completed,
-          description: 'Total revenue from summer coupons',
-          itemCount: 124,
-        ),
-        Report(
-          id: '5',
-          title: 'Welcome Bonus Usage',
-          type: ReportType.coupon,
-          date: now.subtract(const Duration(days: 5)),
-          amount: 1890.50,
-          status: ReportStatus.completed,
-          description: 'New user welcome coupon statistics',
-          itemCount: 89,
-        ),
-      ];
-
-      _packageReports.value = [
-        Report(
-          id: '6',
-          title: 'Premium Package Sales',
-          type: ReportType.package,
-          date: now.subtract(const Duration(days: 1)),
-          amount: 8450.00,
-          status: ReportStatus.completed,
-          description: 'Premium tier package purchases',
-          itemCount: 45,
-        ),
-        Report(
-          id: '7',
-          title: 'Basic Package Revenue',
-          type: ReportType.package,
-          date: now.subtract(const Duration(days: 4)),
-          amount: 4200.00,
-          status: ReportStatus.completed,
-          description: 'Entry level package sales',
-          itemCount: 78,
-        ),
-      ];
+        // Handle array response (current backend returns array of all reports)
+        if (data is List) {
+          final allReportsList = data.map((e) => Report.fromJson(e)).toList();
+          _allReports.value = allReportsList.where((r) => r.type == ReportType.all).toList();
+          _couponReports.value = allReportsList.where((r) => r.type == ReportType.coupon).toList();
+          _packageReports.value = allReportsList.where((r) => r.type == ReportType.package).toList();
+        } else if (data is Map) {
+          if (data['all'] != null) {
+            _allReports.value = (data['all'] as List).map((e) => Report.fromJson(e)).toList();
+          }
+          if (data['coupon'] != null) {
+            _couponReports.value = (data['coupon'] as List).map((e) => Report.fromJson(e)).toList();
+          }
+          if (data['package'] != null) {
+            _packageReports.value = (data['package'] as List).map((e) => Report.fromJson(e)).toList();
+          }
+        }
+      }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to load reports: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -170,41 +121,16 @@ class ReportController extends GetxController
     try {
       _isLoading.value = true;
 
-      // TODO: Call API with date filter
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Call API with date filter
+      await loadReports(startDate: dateRange.start, endDate: dateRange.end);
 
-      // Filter existing data (in real app, this would be an API call)
-      _allReports.value =
-          _allReports.where((report) {
-            return report.date.isAfter(dateRange.start) &&
-                report.date.isBefore(
-                  dateRange.end.add(const Duration(days: 1)),
-                );
-          }).toList();
-
-      _couponReports.value =
-          _couponReports.where((report) {
-            return report.date.isAfter(dateRange.start) &&
-                report.date.isBefore(
-                  dateRange.end.add(const Duration(days: 1)),
-                );
-          }).toList();
-
-      _packageReports.value =
-          _packageReports.where((report) {
-            return report.date.isAfter(dateRange.start) &&
-                report.date.isBefore(
-                  dateRange.end.add(const Duration(days: 1)),
-                );
-          }).toList();
-
-      Get.snackbar(
+      safeSnackbar(
         'Filter Applied',
         'Showing reports from ${_formatDate(dateRange.start)} to ${_formatDate(dateRange.end)}',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to filter reports: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -238,54 +164,84 @@ class ReportController extends GetxController
     _selectedDateRange.value = null;
     await loadReports();
 
-    Get.snackbar(
+    safeSnackbar(
       'Filter Cleared',
       'Showing all reports',
       snackPosition: SnackPosition.BOTTOM,
     );
   }
 
-  /// Export current reports
+  /// Export current reports via OS share sheet
   Future<void> exportReports() async {
-    try {
-      _isLoading.value = true;
-
-      // TODO: Implement actual export logic
-      await Future.delayed(const Duration(seconds: 1));
-
-      final reports = currentReports;
-      if (reports.isEmpty) {
-        Get.snackbar(
-          'No Data',
-          'No reports to export',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      Get.snackbar(
-        'Export Success',
-        'Exported ${reports.length} reports',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to export: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      _isLoading.value = false;
+    final reports = currentReports;
+    if (reports.isEmpty) {
+      safeSnackbar('No Data', 'No reports to export', snackPosition: SnackPosition.BOTTOM);
+      return;
     }
+    final buffer = StringBuffer();
+    buffer.writeln('VIPs Report Export');
+    buffer.writeln('Generated: ${_formatDate(DateTime.now())}');
+    buffer.writeln('─' * 40);
+    for (final r in reports) {
+      buffer.writeln('${r.title}  |  ${_formatDate(r.date)}');
+      buffer.writeln('Amount: D ${r.amount.toStringAsFixed(3)}  |  Status: ${r.status.name}');
+      if (r.description.isNotEmpty) buffer.writeln(r.description);
+      buffer.writeln('─' * 40);
+    }
+    buffer.writeln('Total: D ${totalAmount.toStringAsFixed(3)}  (${reports.length} records)');
+    await SharePlus.instance.share(ShareParams(
+      text: buffer.toString(),
+      subject: 'VIPs Report — ${_formatDate(DateTime.now())}',
+    ));
   }
 
-  /// View report details
+  /// View report details in a dialog
   void viewReportDetails(Report report) {
-    Get.snackbar(
-      report.title,
-      report.description,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(report.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow('Date', _formatDate(report.date)),
+            _detailRow('Amount', 'D ${report.amount.toStringAsFixed(3)}'),
+            _detailRow('Status', report.status.name.toUpperCase()),
+            if (report.itemCount != null) _detailRow('Items', '${report.itemCount}'),
+            if (report.description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(report.description, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              SharePlus.instance.share(ShareParams(
+                text: '${report.title}\nD ${report.amount.toStringAsFixed(3)} — ${_formatDate(report.date)}\n${report.description}',
+                subject: report.title,
+              ));
+            },
+            child: const Text('Share'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        ],
+      ),
     );
   }
 
@@ -342,6 +298,27 @@ class Report {
 
   String get formattedAmount {
     return '\$${amount.toStringAsFixed(2)}';
+  }
+
+  factory Report.fromJson(Map<String, dynamic> json) {
+    ReportType typeEnum = ReportType.all;
+    if (json['type'] == 'coupon') typeEnum = ReportType.coupon;
+    if (json['type'] == 'package') typeEnum = ReportType.package;
+
+    ReportStatus statusEnum = ReportStatus.pending;
+    if (json['status'] == 'completed') statusEnum = ReportStatus.completed;
+    if (json['status'] == 'failed') statusEnum = ReportStatus.failed;
+
+    return Report(
+      id: json['id'] ?? json['_id'] ?? '',
+      title: json['title'] ?? '',
+      type: typeEnum,
+      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      status: statusEnum,
+      description: json['description'] ?? '',
+      itemCount: json['itemCount'],
+    );
   }
 }
 

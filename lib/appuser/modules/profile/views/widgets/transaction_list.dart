@@ -8,13 +8,12 @@ class TransactionListWidget extends StatelessWidget {
   final RxList<bool> expandedStates;
   final Function(int) onToggle;
 
-  const TransactionListWidget({
-    Key? key,
+  const TransactionListWidget({super.key,
     required this.transactions,
     required this.expandedStates,
     required this.onToggle,
     this.primaryColor = const Color(0xFFFF9B7A),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +57,6 @@ class TransactionListWidget extends StatelessWidget {
   }
 
   Widget _buildTransactionCard(Map<String, dynamic> transaction, int index) {
-    final isCredit = transaction['type'] == 'credit';
     final isPending = transaction['status'] == 'pending';
 
     return GestureDetector(
@@ -267,8 +265,10 @@ class TransactionListWidget extends StatelessWidget {
                       height: 44.h,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Handle view invoice
-                          print('View invoice: ${transaction['orderId']}');
+                          Get.toNamed(
+                            '/invoice',
+                            arguments: {'orderId': transaction['orderId']},
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,

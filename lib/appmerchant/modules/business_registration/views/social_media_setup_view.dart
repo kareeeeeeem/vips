@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class SocialMediaSetupView extends StatelessWidget {
-  const SocialMediaSetupView({Key? key}) : super(key: key);
+  const SocialMediaSetupView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class SocialMediaSetupView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Address Details',
+              'Social Media Setup',
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
@@ -35,7 +36,7 @@ class SocialMediaSetupView extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFFFB800)),
               ),
               child: Text(
-                '31%',
+                '99%',
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -66,7 +67,7 @@ class SocialMediaSetupView extends StatelessWidget {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        Get.snackbar(
+                        safeSnackbar(
                           'Added',
                           'New social media row can be configured next',
                           snackPosition: SnackPosition.BOTTOM,

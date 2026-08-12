@@ -5,7 +5,7 @@ import '../controllers/merchant_catalog_controller.dart';
 import '../../../routes/merchant_routes.dart';
 
 class MerchantCatalogView extends GetView<MerchantCatalogController> {
-  const MerchantCatalogView({Key? key}) : super(key: key);
+  const MerchantCatalogView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -145,57 +145,193 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
   }
 
   Widget _buildItemList() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16.w),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return _buildCatalogCard(
-          title: 'Premium Product ${index + 1}',
-          price: '\$${(index + 1) * 20}.00',
-          status: 'Active',
-          stock: '${(index + 1) * 15} in stock',
-          imageUrl: 'https://via.placeholder.com/150',
-          onEdit: () => Get.toNamed(MerchantRoutes.CREATE_ITEM),
-        );
-      },
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+      }
+      if (controller.items.isEmpty) {
+        return _buildEmptyState('No items yet', 'Tap + to add your first product', Icons.inventory_2_outlined);
+      }
+      return ListView.builder(
+        padding: EdgeInsets.all(16.w),
+        itemCount: controller.items.length,
+        itemBuilder: (context, index) {
+          final item = controller.items[index];
+          final isActive = item['isActive'] as bool? ?? true;
+          final itemId = (item['_id'] ?? item['id'])?.toString() ?? '';
+          return _buildCatalogCard(
+            itemId: itemId,
+            title: item['name']?.toString() ?? '',
+            price: 'D ${(item['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
+            status: isActive ? 'Active' : 'Inactive',
+            stock: '${item['stock'] ?? 0} in stock',
+            imageUrl: item['image']?.toString() ?? '',
+            onEdit: () => Get.toNamed(MerchantRoutes.CREATE_ITEM, arguments: item),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildVoucherList() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16.w),
-      itemCount: 2,
-      itemBuilder: (context, index) {
-        return _buildCatalogCard(
-          title: 'Discount Voucher ${index + 1}',
-          price: '20% OFF',
-          status: 'Active',
-          stock: 'Expires 31 Dec',
-          imageUrl: 'https://via.placeholder.com/150/10B981/FFFFFF?text=V',
-          onEdit: () => Get.toNamed(MerchantRoutes.CREATE_VOUCHER),
-        );
-      },
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+      }
+      if (controller.vouchers.isEmpty) {
+        return _buildEmptyState('No vouchers yet', 'Tap + to create a discount voucher', Icons.local_activity_outlined);
+      }
+      return RefreshIndicator(
+        color: const Color(0xFF10B981),
+        onRefresh: controller.loadCouponsAndVouchers,
+        child: ListView.builder(
+          padding: EdgeInsets.all(16.w),
+          itemCount: controller.vouchers.length,
+          itemBuilder: (context, index) {
+            final v = controller.vouchers[index];
+            final id = (v['_id'] ?? v['id'])?.toString() ?? '';
+            final isActive = v['isActive'] as bool? ?? true;
+            return _buildDiscountCard(
+              code: v['code']?.toString() ?? '',
+              discount: '${v['discountPercentage'] ?? v['discount'] ?? 0}% OFF',
+              expiry: v['expiryDate']?.toString().split('T').first ?? 'No expiry',
+              isActive: isActive,
+              isVoucher: true,
+              onDelete: () => _confirmDelete(id, 'voucher'),
+            );
+          },
+        ),
+      );
+    });
   }
 
   Widget _buildCouponList() {
-    return ListView.builder(
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+      }
+      if (controller.coupons.isEmpty) {
+        return _buildEmptyState('No coupons yet', 'Tap + to create a promotional coupon', Icons.card_giftcard_outlined);
+      }
+      return RefreshIndicator(
+        color: const Color(0xFF10B981),
+        onRefresh: controller.loadCouponsAndVouchers,
+        child: ListView.builder(
+          padding: EdgeInsets.all(16.w),
+          itemCount: controller.coupons.length,
+          itemBuilder: (context, index) {
+            final c = controller.coupons[index];
+            final id = (c['_id'] ?? c['id'])?.toString() ?? '';
+            final isActive = c['isActive'] as bool? ?? true;
+            return _buildDiscountCard(
+              code: c['code']?.toString() ?? '',
+              discount: '${c['discountPercentage'] ?? c['discount'] ?? 0}% OFF',
+              expiry: c['expiryDate']?.toString().split('T').first ?? 'No expiry',
+              isActive: isActive,
+              isVoucher: false,
+              onDelete: () => _confirmDelete(id, 'coupon'),
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  void _confirmDelete(String id, String type) {
+    Get.dialog(AlertDialog(
+      title: Text('Delete $type'),
+      content: Text('Are you sure you want to delete this $type?'),
+      actions: [
+        TextButton(onPressed: Get.back, child: const Text('Cancel')),
+        TextButton(
+          onPressed: () { Get.back(); controller.deleteCoupon(id); },
+          child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+        ),
+      ],
+    ));
+  }
+
+  Widget _buildDiscountCard({
+    required String code,
+    required String discount,
+    required String expiry,
+    required bool isActive,
+    required bool isVoucher,
+    required VoidCallback onDelete,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),
-      itemCount: 1,
-      itemBuilder: (context, index) {
-        return _buildCatalogCard(
-          title: 'Summer Coupon',
-          price: '\$10 OFF',
-          status: 'Draft',
-          stock: 'Unlimited',
-          imageUrl: 'https://via.placeholder.com/150/F59E0B/FFFFFF?text=C',
-          onEdit: () => Get.toNamed(MerchantRoutes.CREATE_COUPON),
-        );
-      },
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: (isVoucher ? const Color(0xFF8B5CF6) : const Color(0xFF10B981)).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              isVoucher ? Icons.local_activity_outlined : Icons.card_giftcard_outlined,
+              color: isVoucher ? const Color(0xFF8B5CF6) : const Color(0xFF10B981),
+              size: 22.sp,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(code, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
+                SizedBox(height: 2.h),
+                Text(discount, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600)),
+                Text('Expires: $expiry', style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF))),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(isActive ? 'Active' : 'Off',
+                style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold,
+                    color: isActive ? const Color(0xFF059669) : const Color(0xFFDC2626))),
+          ),
+          SizedBox(width: 8.w),
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: const Color(0xFFEF4444), size: 20.sp),
+            onPressed: onDelete,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String title, String subtitle, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 64.sp, color: const Color(0xFFD1D5DB)),
+          SizedBox(height: 16.h),
+          Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: const Color(0xFF4B5563))),
+          SizedBox(height: 8.h),
+          Text(subtitle, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF))),
+        ],
+      ),
     );
   }
 
   Widget _buildCatalogCard({
+    required String itemId,
     required String title,
     required String price,
     required String status,
@@ -212,7 +348,7 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -259,8 +395,8 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
                       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? const Color(0xFF10B981).withOpacity(0.1)
-                            : const Color(0xFFF59E0B).withOpacity(0.1),
+                            ? const Color(0xFF10B981).withValues(alpha: 0.1)
+                            : const Color(0xFFF59E0B).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Row(
@@ -312,10 +448,8 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
                           scale: 0.7,
                           child: Switch(
                             value: isActive,
-                            onChanged: (val) {
-                              // Toggle logic
-                            },
-                            activeColor: const Color(0xFF10B981),
+                            onChanged: (val) => controller.updateItemStatus(itemId, val),
+                            activeThumbColor: const Color(0xFF10B981),
                           ),
                         ),
                         GestureDetector(

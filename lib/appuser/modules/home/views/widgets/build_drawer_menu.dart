@@ -14,39 +14,7 @@ class DrawerMenu extends StatefulWidget {
   State<DrawerMenu> createState() => _DrawerMenuState();
 }
 
-class _DrawerMenuState extends State<DrawerMenu>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.3, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+class _DrawerMenuState extends State<DrawerMenu> {
 
   List<MenuSection> get menuSections => [
     MenuSection(
@@ -234,7 +202,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                   width: 80.w,
                   height: 80.h,
                   decoration: BoxDecoration(
-                    color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Center(
@@ -548,7 +516,7 @@ class _DrawerMenuState extends State<DrawerMenu>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -563,7 +531,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                 width: 48.w,
                 height: 48.h,
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Center(
@@ -667,7 +635,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                 border: Border.all(color: const Color(0xFFE8ECF4), width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.04),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -718,7 +686,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                 width: 40.w,
                 height: 40.h,
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Center(
@@ -733,7 +701,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                             item.icon,
                             width: 20.w,
                             height: 20.h,
-                            color: AppColors.AppPrimaryColor,
+                            colorFilter: ColorFilter.mode(AppColors.AppPrimaryColor, BlendMode.srcIn),
                           ),
                 ),
               ),
@@ -775,7 +743,7 @@ class _DrawerMenuState extends State<DrawerMenu>
             width: 32.w,
             height: 32.h,
             decoration: BoxDecoration(
-              color: AppColors.AppPrimaryColor.withOpacity(0.1),
+              color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Center(
@@ -819,7 +787,7 @@ class _DrawerMenuState extends State<DrawerMenu>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -837,7 +805,7 @@ class _DrawerMenuState extends State<DrawerMenu>
               color: const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: const Color(0xFFEF4444).withOpacity(0.2),
+                color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -848,7 +816,7 @@ class _DrawerMenuState extends State<DrawerMenu>
                   width: 32.w,
                   height: 32.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withOpacity(0.1),
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(

@@ -8,11 +8,10 @@ class WinDialogWidget extends StatefulWidget {
   final int wonAmount;
   final VoidCallback onClaim;
 
-  const WinDialogWidget({
-    Key? key,
+  const WinDialogWidget({super.key,
     required this.wonAmount,
     required this.onClaim,
-  }) : super(key: key);
+  });
 
   @override
   State<WinDialogWidget> createState() => _WinDialogWidgetState();
@@ -105,7 +104,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.white,
-                  Color(0xFFFF6B35).withOpacity(0.03),
+                  Color(0xFFFF6B35).withValues(alpha: 0.03),
                   Colors.white,
                 ],
               ),
@@ -180,13 +179,13 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFFF6B35).withOpacity(0.5),
+                    color: Color(0xFFFF6B35).withValues(alpha: 0.5),
                     blurRadius: 40,
                     spreadRadius: 5,
                     offset: Offset(0, 15),
                   ),
                   BoxShadow(
-                    color: Color(0xFFFF6B35).withOpacity(0.3),
+                    color: Color(0xFFFF6B35).withValues(alpha: 0.3),
                     blurRadius: 60,
                     spreadRadius: 10,
                     offset: Offset(0, 25),
@@ -206,7 +205,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            Colors.white.withOpacity(0.4),
+                            Colors.white.withValues(alpha: 0.4),
                             Colors.transparent,
                           ],
                         ),
@@ -268,7 +267,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                   Paint()
                     ..style = PaintingStyle.stroke
                     ..strokeWidth = 8
-                    ..color = Color(0xFFFF6B35).withOpacity(0.1),
+                    ..color = Color(0xFFFF6B35).withValues(alpha: 0.1),
               letterSpacing: -2,
             ),
           ),
@@ -282,7 +281,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
               letterSpacing: -2,
               shadows: [
                 Shadow(
-                  color: Color(0xFFFF6B35).withOpacity(0.3),
+                  color: Color(0xFFFF6B35).withValues(alpha: 0.3),
                   offset: Offset(0, 4),
                   blurRadius: 12,
                 ),
@@ -311,7 +310,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
           borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFFFF6B35).withOpacity(0.4),
+              color: Color(0xFFFF6B35).withValues(alpha: 0.4),
               blurRadius: 16,
               offset: Offset(0, 6),
             ),
@@ -337,7 +336,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
               ),
             ),
           ],
@@ -396,14 +395,14 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      Color(0xFFFF8C42).withOpacity(opacities[index]),
-                      Color(0xFFFF6B35).withOpacity(opacities[index] * 0.5),
+                      Color(0xFFFF8C42).withValues(alpha: opacities[index]),
+                      Color(0xFFFF6B35).withValues(alpha: opacities[index] * 0.5),
                     ],
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFFF6B35).withOpacity(0.3),
+                      color: Color(0xFFFF6B35).withValues(alpha: 0.3),
                       blurRadius: 8,
                     ),
                   ],
@@ -436,7 +435,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFFFF6B35).withOpacity(0.3),
+              color: Color(0xFFFF6B35).withValues(alpha: 0.3),
               blurRadius: 20,
               offset: Offset(0, 10),
             ),
@@ -458,9 +457,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(
-                            0.2 * _pulseController.value,
-                          ),
+                          Colors.white.withValues(alpha: 0.2 * _pulseController.value),
                           Colors.transparent,
                         ],
                       ),
@@ -471,7 +468,7 @@ class _WinDialogWidgetState extends State<WinDialogWidget>
             ),
             InkWell(
               onTap: () {
-                print('*************');
+                
                 widget.onClaim();
               },
               child: Container(

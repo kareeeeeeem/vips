@@ -84,13 +84,13 @@ class _CustomLanguageOnState extends State<CustomLanguageOn>
             decoration: BoxDecoration(
               color:
                   isSelected
-                      ? AppColors.AppPrimaryColor.withOpacity(0.06)
+                      ? AppColors.AppPrimaryColor.withValues(alpha: 0.06)
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
                 color:
                     isSelected
-                        ? AppColors.AppPrimaryColor.withOpacity(0.2)
+                        ? AppColors.AppPrimaryColor.withValues(alpha: 0.2)
                         : Colors.transparent,
                 width: 1.5,
               ),
@@ -110,7 +110,7 @@ class _CustomLanguageOnState extends State<CustomLanguageOn>
                     borderRadius: BorderRadius.circular(3.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/widgets/custom_network_image.dart';
 
 import '../controllers/merchant_customers_controller.dart';
 
@@ -65,7 +66,7 @@ class MerchantCustomersView extends GetView<MerchantCustomersController> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -76,8 +77,8 @@ class MerchantCustomersView extends GetView<MerchantCustomersController> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(40.r),
-            child: Image.network(
-              customer.imageUrl,
+            child: CustomNetworkImage(
+              imageUrl: customer.imageUrl,
               width: 56.w,
               height: 56.w,
               fit: BoxFit.cover,

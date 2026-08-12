@@ -22,7 +22,7 @@ class BuildTrendingMerchants extends GetView<HomeController> {
                 Container(
                   padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.1),
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
@@ -89,12 +89,12 @@ class BuildTrendingMerchants extends GetView<HomeController> {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(color: Colors.grey.withOpacity(0.1), width: 1),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.1), width: 1),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16.r),
@@ -154,7 +154,7 @@ class BuildTrendingMerchants extends GetView<HomeController> {
           SizedBox(
             width: 80.w,
             child: Text(
-              merchant['name']?.toString() ?? '',
+              (merchant['storeName'] ?? merchant['name'] ?? '').toString(),
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,

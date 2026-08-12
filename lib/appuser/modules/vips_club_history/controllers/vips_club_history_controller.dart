@@ -1,40 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
-
-// =====================================================
-// CONTROLLER
-// Fichier: vips_club_history_controller.dart
-// =====================================================
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VipsClubHistoryController extends GetxController {
-  // Convertible diamonds balance
-  final RxInt convertibleDiamants = 90.obs;
+  final RxInt convertibleDiamants = 0.obs;
+  final RxBool isLoading = false.obs;
 
-  // Transaction history
-  final RxList<DiamantTransaction> transactions =
-      <DiamantTransaction>[
-        DiamantTransaction(
-          amount: -5800,
-          type: 'debit',
-          description: 'diamant to VIPs Wallet',
-          date: DateTime(2025, 10, 27, 16, 13),
-          orderNumber: null,
-        ),
-        DiamantTransaction(
-          amount: 80,
-          type: 'credit',
-          description: null,
-          date: DateTime(2025, 10, 27, 16, 13),
-          orderNumber: '118047',
-        ),
-        DiamantTransaction(
-          amount: 10,
-          type: 'credit',
-          description: null,
-          date: DateTime(2025, 10, 27, 16, 13),
-          orderNumber: '118047',
-        ),
-      ].obs;
+  final RxList<DiamantTransaction> transactions = <DiamantTransaction>[].obs;
 
   @override
   void onInit() {
@@ -43,77 +16,71 @@ class VipsClubHistoryController extends GetxController {
   }
 
   Future<void> loadHistory() async {
+    isLoading.value = true;
     try {
-      final response = await ApiService().get('/user/transactions');
-      if (response.success && response.data != null) {
-        final List<dynamic> txList = response.data['transactions'] ?? [];
-        transactions.value =
-            txList.map((tx) {
-              return DiamantTransaction(
-                amount: (tx['amount'] as num).toInt(),
-                type: tx['type'] ?? 'credit',
-                description: tx['description'],
-                date:
-                    tx['createdAt'] != null
-                        ? DateTime.parse(tx['createdAt'])
-                        : DateTime.now(),
-                orderNumber: tx['reference'],
-              );
-            }).toList();
+      final walletRes = await ApiService().get('/user/wallet');
+      if (walletRes.success && walletRes.data != null) {
+        convertibleDiamants.value = (walletRes.data['points'] as num?)?.toInt() ?? 0;
       }
-    } catch (e) {
-      print('Error loading history: $e');
+
+      final txRes = await ApiService().get('/user/transactions');
+      if (txRes.success && txRes.data != null) {
+        final List<dynamic> txList = txRes.data['transactions'] ?? [];
+        transactions.value = txList.map((tx) {
+          return DiamantTransaction(
+            amount: (tx['amount'] as num).toInt(),
+            type: tx['type'] ?? 'credit',
+            description: tx['description'],
+            date: tx['createdAt'] != null
+                ? DateTime.parse(tx['createdAt'])
+                : DateTime.now(),
+            orderNumber: tx['reference'],
+          );
+        }).toList();
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void onConvertNow() {
-    // TODO: Navigate to conversion page or show conversion dialog
-    print('Convert Now tapped');
-    Get.snackbar(
-      'Convert Diamants',
-      'Converting ${convertibleDiamants.value} diamants...',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  Future<void> onConvertNow() async {
+    final points = convertibleDiamants.value;
+    if (points < 100) {
+      safeSnackbar('Insufficient Points', 'You need at least 100 points to convert', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    try {
+      final response = await ApiService().post('/user/vips-club/convert', {'points': points});
+      Get.back();
+      if (response.success) {
+        final earned = response.data['walletAmount'];
+        safeSnackbar('Converted!', '$points points → $earned TND added to wallet', snackPosition: SnackPosition.BOTTOM);
+        await loadHistory();
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      if (Get.isDialogOpen == true) Get.back();
+      safeSnackbar('Error', 'Failed to convert points', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   String formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     final day = date.day.toString().padLeft(2, '0');
     final month = months[date.month - 1];
-    final year = date.year;
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
-
-    return '$day $month $year $hour:$minute';
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
+    return '$day $month ${date.year} $hour:$minute';
   }
 }
 
-// =====================================================
-// MODEL
-// =====================================================
-
 class DiamantTransaction {
   final int amount;
-  final String type; // 'credit' or 'debit'
+  final String type;
   final String? description;
   final DateTime date;
   final String? orderNumber;

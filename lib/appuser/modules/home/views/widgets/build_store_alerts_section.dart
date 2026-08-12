@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 
@@ -22,13 +25,13 @@ class BuildStoreAlertsSection extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8ECF4), width: 1),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: -4,
           ),
           BoxShadow(
-            color: AppColors.AppPrimaryColor.withOpacity(0.06),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.06),
             blurRadius: 32,
             offset: const Offset(0, 16),
             spreadRadius: -8,
@@ -47,13 +50,13 @@ class BuildStoreAlertsSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.AppPrimaryColor.withOpacity(0.1),
-                      AppColors.AppPrimaryColor.withOpacity(0.05),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.1),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.05),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: AppColors.AppPrimaryColor.withOpacity(0.2),
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -168,13 +171,11 @@ class BuildStoreAlertsSection extends StatelessWidget {
                       width: 1.5,
                     ),
                   ),
-                  child: Material(
+                      child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.r),
-                      onTap: () {
-                        // Navigate to browse stores
-                      },
+                      onTap: () => Get.find<HomeController>().onStoreAlertsBrowse(),
                       child: Container(
                         alignment: Alignment.center,
                         child: Row(
@@ -215,25 +216,23 @@ class BuildStoreAlertsSection extends StatelessWidget {
                       end: Alignment.bottomRight,
                       colors: [
                         AppColors.AppPrimaryColor,
-                        AppColors.AppPrimaryColor.withOpacity(0.8),
+                        AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                        color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                  child: Material(
+                    child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12.r),
-                      onTap: () {
-                        // Enable alerts action
-                      },
+                      onTap: () => Get.find<HomeController>().onStoreAlertsEnable(),
                       child: Container(
                         alignment: Alignment.center,
                         child: Row(
@@ -270,10 +269,10 @@ class BuildStoreAlertsSection extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: AppColors.AppPrimaryColor.withOpacity(0.05),
+              color: AppColors.AppPrimaryColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),

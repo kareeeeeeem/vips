@@ -255,7 +255,7 @@ class RedeemController extends GetxController {
 }
 
 class RedeemView extends GetView<RedeemController> {
-  const RedeemView({Key? key}) : super(key: key);
+  const RedeemView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +307,7 @@ class RedeemView extends GetView<RedeemController> {
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFE5E7EB).withOpacity(0.5),
+            color: const Color(0xFFE5E7EB).withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -364,13 +364,13 @@ class RedeemView extends GetView<RedeemController> {
                       end: Alignment.bottomRight,
                       colors: [
                         banner.backgroundColor,
-                        banner.backgroundColor.withOpacity(0.8),
+                        banner.backgroundColor.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(24.r),
                     boxShadow: [
                       BoxShadow(
-                        color: banner.backgroundColor.withOpacity(0.3),
+                        color: banner.backgroundColor.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -382,7 +382,7 @@ class RedeemView extends GetView<RedeemController> {
                       Positioned.fill(
                         child: CustomPaint(
                           painter: WavePatternPainter(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
                       ),
@@ -417,7 +417,7 @@ class RedeemView extends GetView<RedeemController> {
                                 vertical: 6.h,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
+                                color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(20.r),
                               ),
                               child: Text(
@@ -483,7 +483,7 @@ class RedeemView extends GetView<RedeemController> {
                       ? [
                         BoxShadow(
                           color: controller.promoBanners[index].backgroundColor
-                              .withOpacity(0.4),
+                              .withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -504,8 +504,8 @@ class RedeemView extends GetView<RedeemController> {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            Colors.white.withOpacity(opacity),
-            Colors.white.withOpacity(0),
+            Colors.white.withValues(alpha: opacity),
+            Colors.white.withValues(alpha: 0),
           ],
         ),
       ),
@@ -514,13 +514,13 @@ class RedeemView extends GetView<RedeemController> {
           width: size * 0.6,
           height: size * 0.6,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(opacity * 1.5),
+            color: Colors.white.withValues(alpha: opacity * 1.5),
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Icon(
               Icons.auto_awesome,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               size: size * 0.3,
             ),
           ),
@@ -545,7 +545,7 @@ class RedeemView extends GetView<RedeemController> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () => Get.toNamed('/coupon'),
             child: Text(
               'See All',
               style: TextStyle(
@@ -597,7 +597,7 @@ class RedeemView extends GetView<RedeemController> {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: voucher.primaryColor.withOpacity(0.3),
+              color: voucher.primaryColor.withValues(alpha: 0.3),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -611,7 +611,7 @@ class RedeemView extends GetView<RedeemController> {
                 borderRadius: BorderRadius.circular(20.r),
                 child: CustomPaint(
                   painter: WavePatternPainter(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -643,7 +643,7 @@ class RedeemView extends GetView<RedeemController> {
                       vertical: 6.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
@@ -755,7 +755,7 @@ class RedeemView extends GetView<RedeemController> {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: voucher.primaryColor.withOpacity(0.4),
+            color: voucher.primaryColor.withValues(alpha: 0.4),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
@@ -767,7 +767,7 @@ class RedeemView extends GetView<RedeemController> {
           Positioned.fill(
             child: CustomPaint(
               painter: WavePatternPainter(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -789,7 +789,7 @@ class RedeemView extends GetView<RedeemController> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -965,7 +965,7 @@ class RedeemView extends GetView<RedeemController> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -986,7 +986,7 @@ class RedeemView extends GetView<RedeemController> {
                 borderRadius: BorderRadius.circular(16.r),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF9B3D).withOpacity(0.4),
+                    color: const Color(0xFFFF9B3D).withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),

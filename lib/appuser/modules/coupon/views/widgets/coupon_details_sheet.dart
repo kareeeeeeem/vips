@@ -8,7 +8,7 @@ import '../../controllers/coupon_controller.dart';
 class CouponDetailsSheet extends StatelessWidget {
   final Coupon coupon;
 
-  const CouponDetailsSheet({Key? key, required this.coupon}) : super(key: key);
+  const CouponDetailsSheet({super.key, required this.coupon});
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +51,7 @@ class CouponDetailsSheet extends StatelessWidget {
                                 : (isActive
                                     ? [
                                       AppColors.AppPrimaryColor,
-                                      AppColors.AppPrimaryColor.withOpacity(
-                                        0.7,
-                                      ),
+                                      AppColors.AppPrimaryColor.withValues(alpha: 0.7),
                                     ]
                                     : [
                                       Colors.grey.shade400,
@@ -70,7 +68,7 @@ class CouponDetailsSheet extends StatelessWidget {
                                   : (isActive
                                       ? AppColors.AppPrimaryColor
                                       : Colors.grey))
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: Offset(0, 10),
                         ),
@@ -90,7 +88,7 @@ class CouponDetailsSheet extends StatelessWidget {
                                     fontFamily: 'Poppins',
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     letterSpacing: 1.5,
                                   ),
                                 ),
@@ -110,7 +108,7 @@ class CouponDetailsSheet extends StatelessWidget {
                             Container(
                               padding: EdgeInsets.all(16.w),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -134,7 +132,7 @@ class CouponDetailsSheet extends StatelessWidget {
                                     fontFamily: 'Poppins',
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     letterSpacing: 1.2,
                                   ),
                                 ),
@@ -158,7 +156,7 @@ class CouponDetailsSheet extends StatelessWidget {
                                 vertical: 8.h,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20.r),
                               ),
                               child: Row(
@@ -370,7 +368,7 @@ class CouponDetailsSheet extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Icon(
@@ -458,44 +456,4 @@ class CouponDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 14.h),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(14.r),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 20.sp),
-            SizedBox(width: 8.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

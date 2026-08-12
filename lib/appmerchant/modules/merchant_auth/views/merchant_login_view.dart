@@ -3,16 +3,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/merchant_auth_controller.dart';
 
-class MerchantLoginView extends GetView<MerchantAuthController> {
+class MerchantLoginView extends StatefulWidget {
   const MerchantLoginView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Inject controller if not already present
-    if (!Get.isRegistered<MerchantAuthController>()) {
-      Get.put(MerchantAuthController());
-    }
+  State<MerchantLoginView> createState() => _MerchantLoginViewState();
+}
 
+class _MerchantLoginViewState extends State<MerchantLoginView> {
+  late final MerchantAuthController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.isRegistered<MerchantAuthController>()
+        ? Get.find<MerchantAuthController>()
+        : Get.put(MerchantAuthController());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -27,7 +37,7 @@ class MerchantLoginView extends GetView<MerchantAuthController> {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF97316).withOpacity(0.1),
+                  color: const Color(0xFFF97316).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Icon(

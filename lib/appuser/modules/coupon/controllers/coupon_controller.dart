@@ -5,7 +5,9 @@ import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/coupon_details_sheet.dart';
 import '../views/widgets/coupon_sheet.dart';
+import '../views/widgets/edit_coupon_sheet.dart';
 import '../views/widgets/package_sheet.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CouponController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -36,47 +38,53 @@ class CouponController extends GetxController
       final response = await ApiService().get('/rewards/coupons');
       if (response.success && response.data != null) {
         final List<dynamic> data = response.data;
-        coupons.value =
-            data.map((c) {
-              final isExpired = DateTime.parse(
-                c['expiryDate'],
-              ).isBefore(DateTime.now());
-              return Coupon(
-                id: c['_id'],
-                code: c['code'],
-                discount: (c['discount'] as num).toDouble(),
-                type: CouponType.percentage, // Defaulting as example
-                status:
-                    isExpired
-                        ? CouponStatus.expired
-                        : (c['isActive']
-                            ? CouponStatus.active
-                            : CouponStatus.inactive),
-                expiryDate: DateTime.parse(c['expiryDate']),
-                usageCount: 0, // Placeholder
-                maxUsage: 100, // Placeholder
-              );
-            }).toList();
+        coupons.value = data.map((c) {
+          final expiryRaw = c['expiryDate'] ?? c['expiresAt'];
+          final expiry = expiryRaw != null
+              ? (DateTime.tryParse(expiryRaw.toString()) ?? DateTime.now().add(const Duration(days: 365)))
+              : DateTime.now().add(const Duration(days: 365));
+          final isExpired = expiry.isBefore(DateTime.now());
+          final discount = ((c['discountPercentage'] ?? c['discount'] ?? 0) as num).toDouble();
+          return Coupon(
+            id: (c['_id'] ?? c['id'] ?? '').toString(),
+            code: (c['code'] ?? '').toString(),
+            discount: discount,
+            type: c['type'] == 'fixed' ? CouponType.fixed : CouponType.percentage,
+            status: isExpired
+                ? CouponStatus.expired
+                : ((c['isActive'] == true) ? CouponStatus.active : CouponStatus.inactive),
+            expiryDate: expiry,
+            usageCount: ((c['usageCount'] ?? c['usageLimit'] ?? 0) as num).toInt(),
+            maxUsage: ((c['maxUsage'] ?? c['limit'] ?? 100) as num).toInt(),
+          );
+        }).toList();
       }
     } catch (e) {
-      print('Error fetching coupons: $e');
+      debugPrint('Error fetching coupons: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
+  final Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
+
   // Ouvrir le date picker
-  void openDatePicker() {
-    Get.snackbar(
-      'Date Picker',
-      'Opening date picker...',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.black87,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
+  Future<void> openDatePicker() async {
+    final picked = await showDatePicker(
+      context: Get.context!,
+      initialDate: selectedDate.value ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: Color(0xFF10B981)),
+        ),
+        child: child!,
+      ),
     );
+    if (picked != null) {
+      selectedDate.value = picked;
+    }
   }
 
   // Créer un coupon
@@ -108,15 +116,13 @@ class CouponController extends GetxController
 
   // Actions sur un coupon
   void editCoupon(Coupon coupon) {
-    Get.snackbar(
-      'Edit',
-      'Editing coupon ${coupon.code}',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
+    Get.bottomSheet(
+      EditCouponSheet(
+        coupon: coupon,
+        onSuccess: loadData,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -218,23 +224,35 @@ class CouponController extends GetxController
                   SizedBox(width: 12.w),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        coupons.remove(coupon);
+                      onTap: () async {
                         Get.back();
-                        Get.snackbar(
-                          'Deleted',
-                          'Coupon deleted successfully',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          duration: Duration(seconds: 2),
-                          margin: EdgeInsets.all(16.w),
-                          borderRadius: 12.r,
-                          icon: Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                          ),
-                        );
+                        final res = await ApiService().delete('/rewards/coupons/${coupon.id}');
+                        if (res.success) {
+                          coupons.remove(coupon);
+                          safeSnackbar(
+                            'Deleted',
+                            'Coupon deleted successfully',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.green,
+                            colorText: Colors.white,
+                            duration: Duration(seconds: 2),
+                            margin: EdgeInsets.all(16.w),
+                            borderRadius: 12.r,
+                            icon: Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                            ),
+                          );
+                        } else {
+                          safeSnackbar(
+                            'Error',
+                            'Failed to delete coupon',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            duration: Duration(seconds: 2),
+                          );
+                        }
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 14.h),

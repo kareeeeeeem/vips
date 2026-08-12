@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import '../controllers/merchant_gift_back_controller.dart';
 import '../../../routes/merchant_routes.dart';
 
 class GiftBackStatusView extends StatefulWidget {
-  const GiftBackStatusView({Key? key}) : super(key: key);
+  const GiftBackStatusView({super.key});
 
   @override
   State<GiftBackStatusView> createState() => _GiftBackStatusViewState();
@@ -37,12 +39,17 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
         centerTitle: isInvoice,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Color(0xFF1F2937)),
-          onPressed: () => Get.offAllNamed(MerchantRoutes.BUSINESS_PLAN),
+          onPressed: () => Get.offAllNamed(MerchantRoutes.HOME),
         ),
         actions: isInvoice
             ? [
                 IconButton(
-                  onPressed: () => Get.snackbar('Saved', 'Invoice bookmarked', snackPosition: SnackPosition.BOTTOM),
+                  onPressed: () {
+                    final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    SharePlus.instance.share(ShareParams(
+                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
+                    ));
+                  },
                   icon: Icon(Icons.bookmark_border_rounded, size: 20.sp, color: const Color(0xFF9CA3AF)),
                 )
               ]
@@ -58,37 +65,47 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 child: Column(
                   children: [
-                    _buildInvoiceCard(
-                      title: isRequest ? 'REQUEST' : 'INVOICE',
-                      amount: isRequest ? 'D 50.000' : 'D 51.000',
-                    ),
-                    SizedBox(height: 18.h),
-                    _buildAmountRow('Gift Back Amount', 'D 50.000'),
-                    _buildAmountRow('Addon Cost', 'D 0.000'),
-                    SizedBox(height: 8.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                      decoration: BoxDecoration(color: const Color(0xFFFED7AA), borderRadius: BorderRadius.circular(6.r)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Subtotal', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF7C2D12), fontWeight: FontWeight.w700)),
-                          Text('D 50.000', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF7C2D12), fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildAmountRow('VIPs Gift', 'Vr 100'),
-                    _buildAmountRow('Service Charge', 'D 0.000'),
-                    _buildAmountRow('Vat/Tax', 'D 1.000'),
-                    SizedBox(height: 18.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Grand Total', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800)),
-                        Text('D 51.000', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800)),
-                      ],
-                    ),
+                    Builder(builder: (_) {
+                      final amt = double.tryParse(controller.amountController.text) ?? 0;
+                      final amtStr = 'D ${amt.toStringAsFixed(3)}';
+                      final vat = amt * 0.02;
+                      final total = amt + vat;
+                      final totalStr = 'D ${total.toStringAsFixed(3)}';
+                      final pts = (amt * 100).toInt();
+                      return Column(children: [
+                        _buildInvoiceCard(
+                          title: isRequest ? 'REQUEST' : 'INVOICE',
+                          amount: isRequest ? amtStr : totalStr,
+                        ),
+                        SizedBox(height: 18.h),
+                        _buildAmountRow('Gift Back Amount', amtStr),
+                        _buildAmountRow('Addon Cost', 'D 0.000'),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                          decoration: BoxDecoration(color: const Color(0xFFFED7AA), borderRadius: BorderRadius.circular(6.r)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Subtotal', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF7C2D12), fontWeight: FontWeight.w700)),
+                              Text(amtStr, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF7C2D12), fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        _buildAmountRow('VIPs Gift', 'Vr $pts'),
+                        _buildAmountRow('Service Charge', 'D 0.000'),
+                        _buildAmountRow('Vat/Tax', 'D ${vat.toStringAsFixed(3)}'),
+                        SizedBox(height: 18.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Grand Total', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800)),
+                            Text(totalStr, style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                      ]);
+                    }),
                     SizedBox(height: 14.h),
                     if (_step == _GiftBackStatusStep.thankYou) ...[
                       Divider(height: 28.h),
@@ -132,7 +149,10 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
           SizedBox(height: 10.h),
           _buildDetailRow('Trans Type', 'Gift Back'),
           _buildDetailRow('Trans ID', '10013'),
-          _buildDetailRow('Brand Name', 'Pizza Hut'),
+          Obx(() => _buildDetailRow('Brand Name',
+              Get.find<MerchantHomeController>().storeName.value.isNotEmpty
+                  ? Get.find<MerchantHomeController>().storeName.value
+                  : 'My Store')),
           _buildDetailRow('Phone', '95910000'),
           _buildDetailRow('Trans Address', 'House: 80, Road: 00, Test City'),
           SizedBox(height: 10.h),
@@ -178,14 +198,14 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
           SizedBox(height: 26.h),
           Text('Congrats!', style: TextStyle(fontSize: 44.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF97316))),
           SizedBox(height: 8.h),
-          Text('Account Registed\nSuccessfully', textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF9CA3AF))),
+          Text('Gift Back Sent\nSuccessfully', textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF9CA3AF))),
           SizedBox(height: 30.h),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => setState(() => _step = _GiftBackStatusStep.invoice),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: const Color(0xFFF97316).withOpacity(0.5), style: BorderStyle.solid),
+                side: BorderSide(color: const Color(0xFFF97316).withValues(alpha: 0.5), style: BorderStyle.solid),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                 padding: EdgeInsets.symmetric(vertical: 14.h),
               ),
@@ -212,7 +232,7 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: const Color(0xFFF97316).withOpacity(0.6), style: BorderStyle.solid),
+                        side: BorderSide(color: const Color(0xFFF97316).withValues(alpha: 0.6), style: BorderStyle.solid),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
@@ -222,16 +242,26 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                   SizedBox(width: 10.w),
                   Expanded(
                     flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () => setState(() => _step = _GiftBackStatusStep.success),
+                    child: Obx(() => ElevatedButton(
+                      onPressed: controller.isSending.value
+                          ? null
+                          : () async {
+                              await controller.onAcceptRequest();
+                              if (mounted) {
+                                setState(() => _step = _GiftBackStatusStep.success);
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFF97316),
+                        disabledBackgroundColor: const Color(0xFFF97316).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         elevation: 0,
                       ),
-                      child: Text('Accept', style: TextStyle(fontSize: 15.sp, color: Colors.white, fontWeight: FontWeight.w700)),
-                    ),
+                      child: controller.isSending.value
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text('Accept', style: TextStyle(fontSize: 15.sp, color: Colors.white, fontWeight: FontWeight.w700)),
+                    )),
                   ),
                 ],
               ),
@@ -257,9 +287,33 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(onPressed: () => Get.snackbar('Download', 'Invoice download queued', snackPosition: SnackPosition.BOTTOM), icon: Icon(Icons.file_download_outlined, size: 18.sp, color: const Color(0xFFF97316))),
-                IconButton(onPressed: () => Get.snackbar('Print', 'Invoice print started', snackPosition: SnackPosition.BOTTOM), icon: Icon(Icons.print_outlined, size: 18.sp)),
-                IconButton(onPressed: () => Get.snackbar('Share', 'Invoice shared', snackPosition: SnackPosition.BOTTOM), icon: Icon(Icons.share_outlined, size: 18.sp)),
+                IconButton(
+                  onPressed: () {
+                    final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    SharePlus.instance.share(ShareParams(
+                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
+                    ));
+                  },
+                  icon: Icon(Icons.file_download_outlined, size: 18.sp, color: const Color(0xFFF97316)),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    SharePlus.instance.share(ShareParams(
+                      text: 'VIPs Gift Back Invoice — Amount: D ${amt.toStringAsFixed(3)} | Total (incl. VAT): D ${(amt * 1.02).toStringAsFixed(3)}',
+                    ));
+                  },
+                  icon: Icon(Icons.print_outlined, size: 18.sp),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    SharePlus.instance.share(ShareParams(
+                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
+                    ));
+                  },
+                  icon: Icon(Icons.share_outlined, size: 18.sp),
+                ),
               ],
             ),
             SizedBox(height: 4.h),

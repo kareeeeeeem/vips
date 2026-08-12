@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../controllers/bills_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final ProductItem product;
 
-  const ProductDetailPage({Key? key, required this.product}) : super(key: key);
+  const ProductDetailPage({super.key, required this.product});
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -15,6 +18,51 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int _selectedTabIndex = 0;
+  int _cartCount = 0;
+  bool _addingToCart = false;
+  final _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCartCount();
+  }
+
+  Future<void> _loadCartCount() async {
+    try {
+      final r = await ApiService().get('/cart');
+      if (r.success && mounted) {
+        final items = r.data?['items'] as List? ?? [];
+        setState(() => _cartCount = items.length);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _addToCart() async {
+    setState(() => _addingToCart = true);
+    try {
+      await ApiService().post('/cart/add', {
+        'itemId': widget.product.id,
+        'itemType': 'product',
+        'name': widget.product.title,
+        'price': widget.product.price,
+        'quantity': 1,
+      });
+      if (mounted) setState(() => _cartCount++);
+    } catch (_) {}
+    if (mounted) setState(() => _addingToCart = false);
+    safeSnackbar('Added to Cart', 'Item added to your cart',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF0066FF),
+        colorText: Colors.white);
+    Get.toNamed('/cart');
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +78,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () => Get.toNamed('/search'),
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () => Get.toNamed('/notifications'),
           ),
           IconButton(
             icon: const Icon(Icons.shopping_bag_outlined, color: Colors.grey),
-            onPressed: () {},
+            onPressed: () => Get.toNamed('/cart'),
           ),
         ],
       ),
@@ -119,7 +167,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     _buildTab('VIPs Certificate', 4),
                     IconButton(
                       icon: const Icon(Icons.share_outlined, size: 20),
-                      onPressed: () {},
+                      onPressed: () => SharePlus.instance.share(ShareParams(
+                        text: '${widget.product.title} — Check it out on VIPs!\nPrice: \$${widget.product.price.toStringAsFixed(2)}',
+                        subject: widget.product.title,
+                      )),
                     ),
                   ],
                 ),
@@ -141,7 +192,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -161,28 +212,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.shopping_cart_outlined),
-                    onPressed: () {},
+                    onPressed: () => Get.toNamed('/cart'),
                   ),
                 ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text(
-                      '2',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                if (_cartCount > 0)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$_cartCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(width: 12),
@@ -190,22 +242,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             // Add to Cart Button
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _addingToCart ? null : _addToCart,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0066FF),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  disabledBackgroundColor: const Color(0xFF0066FF).withValues(alpha: 0.6),
                 ),
-                child: const Text(
-                  'Add To Cart',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _addingToCart
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text(
+                        'Add To Cart',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -387,6 +442,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
               const SizedBox(height: 12),
               TextField(
+                controller: _commentController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'leave a comment',
@@ -406,7 +462,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final text = _commentController.text.trim();
+                    if (text.isEmpty) return;
+                    try {
+                      await ApiService().post('/content/products/${widget.product.id}/comment', {'comment': text});
+                    } catch (_) {}
+                    _commentController.clear();
+                    safeSnackbar('Comment Submitted', 'Thank you for your feedback!',
+                        backgroundColor: const Color(0xFF10B981), colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0066FF),
                     shape: RoundedRectangleBorder(
@@ -714,7 +780,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => SharePlus.instance.share(ShareParams(
+                        text: 'VIPs Certificate\nProduct: ${widget.product.title}\nRating: ${widget.product.rating}/5',
+                        subject: 'VIPs Certificate — ${widget.product.title}',
+                      )),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.grey),
                         shape: RoundedRectangleBorder(
@@ -734,7 +803,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => Get.toNamed('/contact'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0066FF),
                         shape: RoundedRectangleBorder(
@@ -845,7 +914,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => SharePlus.instance.share(ShareParams(
+                    text: 'VIPs Verified Certificate\nProduct: ${widget.product.title}\nSeller Rating: ${widget.product.rating}/5\n✓ Certified by VIPs Platform',
+                    subject: 'VIPs Certificate',
+                  )),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -898,7 +970,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         tag,
         style: const TextStyle(fontSize: 11, color: Color(0xFF0066FF)),
       ),
-      backgroundColor: const Color(0xFF0066FF).withOpacity(0.1),
+      backgroundColor: const Color(0xFF0066FF).withValues(alpha: 0.1),
       padding: EdgeInsets.zero,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );

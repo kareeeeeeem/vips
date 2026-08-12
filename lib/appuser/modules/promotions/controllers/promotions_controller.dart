@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../QR_scanner/views/q_r_scanner_view.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum PromotionType { orderOffer, shippingOffer }
 
@@ -48,6 +50,8 @@ class PromotionsController extends GetxController
   // Loading state
   var isLoading = false.obs;
 
+  final codeController = TextEditingController();
+
   @override
   void onInit() {
     super.onInit();
@@ -61,107 +65,56 @@ class PromotionsController extends GetxController
   @override
   void onClose() {
     tabController.dispose();
+    codeController.dispose();
     super.onClose();
   }
 
-  void _loadPromotions() {
+  Future<void> _loadPromotions() async {
     isLoading.value = true;
+    try {
+      final response = await ApiService().get('/content/promotions');
+      if (response.success && response.data != null) {
+        final List<dynamic> raw = response.data;
+        final all = raw.map((p) => Promotion(
+          id: p['id'] ?? '',
+          title: p['title'] ?? '',
+          brandName: p['subtitle'] ?? '',
+          validUntil: p['expiresAt'] != null
+              ? DateTime.parse(p['expiresAt']).toString().substring(0, 10)
+              : '',
+          type: p['type'] == 'shipping' ? PromotionType.shippingOffer : PromotionType.orderOffer,
+          description: p['subtitle'],
+          discountPercentage: (p['discount'] ?? 0) > 0 ? (p['discount'] as num).toDouble() : null,
+        )).toList();
 
-    // Simuler le chargement depuis une API
-    Future.delayed(const Duration(milliseconds: 500), () {
-      // Order Offers avec images réseau
-      orderOffers.value = [
-        Promotion(
-          id: '1',
-          title: 'D 10',
-          brandName: 'McDonalds',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/1200px-McDonald%27s_Golden_Arches.svg.png',
-          validUntil: '01 February 2025',
-          type: PromotionType.orderOffer,
-          description: 'Get D 10 discount on your order',
-          discountAmount: 10.0,
-        ),
-        Promotion(
-          id: '2',
-          title: '25% OFF',
-          brandName: 'KFC',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/KFC_logo.svg/1200px-KFC_logo.svg.png',
-          validUntil: '03 March 2025',
-          type: PromotionType.orderOffer,
-          description: '25% discount on all menu items',
-          discountPercentage: 25.0,
-        ),
-        Promotion(
-          id: '3',
-          title: '1 Free Coffee',
-          brandName: 'Starbucks',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png',
-          validUntil: '11 September',
-          type: PromotionType.orderOffer,
-          description: 'Get one free coffee with any purchase',
-        ),
-        Promotion(
-          id: '4',
-          title: 'Pay 1 take 2',
-          brandName: 'Vapiano',
-          brandLogo: 'https://companieslogo.com/img/orig/vapiano-logo.png',
-          validUntil: '03 October 2025',
-          type: PromotionType.orderOffer,
-          description: 'Buy one get one free on all pasta dishes',
-        ),
-        Promotion(
-          id: '5',
-          title: '30% OFF',
-          brandName: 'Burger King',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Burger_King_logo_%281999%29.svg/2024px-Burger_King_logo_%281999%29.svg.png',
-          validUntil: '15 March 2025',
-          type: PromotionType.orderOffer,
-          description: '30% discount on Whopper meals',
-          discountPercentage: 30.0,
-        ),
-      ];
+        orderOffers.value = all.where((p) => p.type == PromotionType.orderOffer).toList();
+        shippingOffers.value = all.where((p) => p.type == PromotionType.shippingOffer).toList();
+      }
+    } catch (_) {}
+    isLoading.value = false;
+  }
 
-      // Shipping Offers
-      shippingOffers.value = [
-        Promotion(
-          id: 's1',
-          title: 'FREE DELIVERY',
-          brandName: 'All Restaurants',
-          brandLogo: 'https://cdn-icons-png.flaticon.com/512/3097/3097169.png',
-          validUntil: '31 December 2025',
-          type: PromotionType.shippingOffer,
-          description: 'Free delivery on orders above D 20',
-        ),
-        Promotion(
-          id: 's2',
-          title: 'D 5 OFF Delivery',
-          brandName: 'Pizza Hut',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Pizza_Hut_logo.svg/1200px-Pizza_Hut_logo.svg.png',
-          validUntil: '20 April 2025',
-          type: PromotionType.shippingOffer,
-          description: 'D 5 discount on delivery fees',
-          discountAmount: 5.0,
-        ),
-        Promotion(
-          id: 's3',
-          title: '50% OFF Delivery',
-          brandName: 'Dominos',
-          brandLogo:
-              'https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Dominos_pizza_logo.svg/1200px-Dominos_pizza_logo.svg.png',
-          validUntil: '30 June 2025',
-          type: PromotionType.shippingOffer,
-          description: 'Half price delivery on all orders',
-          discountPercentage: 50.0,
-        ),
-      ];
-
-      isLoading.value = false;
-    });
+  Future<void> applyPromoCode(String code) async {
+    if (code.isEmpty) return;
+    try {
+      final response = await ApiService().post('/rewards/apply-coupon', {'code': code});
+      if (response.success) {
+        safeSnackbar(
+          'Promo Code Applied',
+          response.message,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 12.r,
+        );
+      } else {
+        safeSnackbar('Invalid Code', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not apply code', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   // Get promotions based on selected tab
@@ -266,7 +219,7 @@ class PromotionsController extends GetxController
                 width: 48.w,
                 height: 48.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withOpacity(0.1),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(icon, color: const Color(0xFFFF6B35), size: 24.sp),
@@ -322,6 +275,7 @@ class PromotionsController extends GetxController
               ),
               SizedBox(height: 20.h),
               TextField(
+                controller: codeController,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24.sp,
@@ -347,8 +301,11 @@ class PromotionsController extends GetxController
                   ),
                 ),
                 onSubmitted: (code) {
-                  Get.back();
-                  applyPromoCode(code);
+                  if (code.trim().isNotEmpty) {
+                    Get.back();
+                    applyPromoCode(code.trim());
+                    codeController.clear();
+                  }
                 },
               ),
               SizedBox(height: 20.h),
@@ -370,8 +327,12 @@ class PromotionsController extends GetxController
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Get.back();
-                        // TODO: Valider le code
+                        final code = codeController.text.trim();
+                        if (code.isNotEmpty) {
+                          Get.back();
+                          applyPromoCode(code);
+                          codeController.clear();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF6B35),
@@ -396,21 +357,6 @@ class PromotionsController extends GetxController
           ),
         ),
       ),
-    );
-  }
-
-  // Apply promo code
-  void applyPromoCode(String code) {
-    // TODO: Valider le code avec l'API
-    Get.snackbar(
-      'Promo Code Applied',
-      'Code "$code" has been applied successfully',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
     );
   }
 
@@ -451,7 +397,7 @@ class PromotionsController extends GetxController
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

@@ -15,8 +15,8 @@ class PaginatedMerchantOrderModel {
 
   PaginatedMerchantOrderModel.fromJson(Map<String, dynamic> json) {
     totalSize = json['total_size'];
-    limit = json['limit'].toString();
-    offset = json['offset'].toString();
+    limit = (json['limit'] ?? 0).toString();
+    offset = (json['offset'] ?? 0).toString();
     if (json['orders'] != null) {
       orders = [];
       json['orders'].forEach((v) {
@@ -216,7 +216,7 @@ class MerchantOrder {
         json['delivery_man'] != null
             ? MerchantDeliveryMan.fromJson(json['delivery_man'])
             : null;
-    taxStatus = json['tax_status'] == 'included' ? true : false;
+    taxStatus = (json['tax_status'] as String?) == 'included';
     cutlery = json['cutlery'];
     unavailableItemNote = json['unavailable_item_note'];
     deliveryInstruction = json['delivery_instruction'];

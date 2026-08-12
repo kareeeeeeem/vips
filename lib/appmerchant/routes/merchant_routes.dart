@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 abstract class MerchantRoutes {
   MerchantRoutes._();
   static const LOGIN = _MerchantPaths.LOGIN;

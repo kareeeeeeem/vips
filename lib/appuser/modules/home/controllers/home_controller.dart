@@ -1,11 +1,13 @@
 import 'package:carousel_slider/carousel_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vip/appuser/modules/search/views/search_view.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../models/gift_voucher.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class HomeController extends GetxController {
   // Observables
@@ -66,10 +68,17 @@ class HomeController extends GetxController {
     refreshOutings();
     refreshTrendingMerchants();
     refreshBillTypes();
+    refreshBillServices();
+    // Load favorites and cart state
+    refreshFavorites();
+    refreshCart();
   }
+
+  bool _disposed = false;
 
   @override
   void onClose() {
+    _disposed = true;
     pageController.dispose();
     super.onClose();
   }
@@ -105,6 +114,7 @@ class HomeController extends GetxController {
   // Auto-scroll du carousel
   void _startAutoScroll() {
     Future.delayed(const Duration(seconds: 3), () {
+      if (_disposed) return;
       if (pageController.hasClients) {
         int nextPage = (currentPage.value + 1) % carouselImages.length;
         pageController.animateToPage(
@@ -131,15 +141,15 @@ class HomeController extends GetxController {
   }
 
   void navigateToOffers() {
-    Get.toNamed('/offers');
+    Get.toNamed(Routes.PROMOTIONS);
   }
 
   void navigateToBills() {
-    Get.toNamed('/bills');
+    Get.toNamed(Routes.PAY_BILLS);
   }
 
   void navigateToGaming() {
-    Get.toNamed('/gaming');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToGiftVouchers() {
@@ -148,96 +158,84 @@ class HomeController extends GetxController {
 
   // Nouvelles méthodes pour le carousel
   void navigateToElectronics() {
-    Get.toNamed('/electronics');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToFashion() {
-    Get.toNamed('/fashion');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToFood() {
-    Get.toNamed('/food');
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
-  void onFavoriteToggle(int index) {
-    // Logique pour gérer les favoris
-    // Vous pouvez ajouter une liste observable des favoris
-  }
+  void onFavoriteToggle(int index) {}
 
   void onStoreAlertsBrowse() {
-    // Navigation vers la liste des magasins
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void onStoreAlertsEnable() {
-    // Activer les alertes
+    Get.toNamed(Routes.NOTIFICATIONS);
   }
 
   void onPickAgain() {
-    // Logique pour "Pick Again"
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void onNearestForYou() {
-    // Logique pour "Nearest for you"
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void navigateToFavorites() {
-    Get.toNamed('/favorites');
+    Get.toNamed(Routes.SEARCH);
   }
 
   void navigateToFitness() {
-    Get.toNamed('/fitness');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToEducation() {
-    Get.toNamed('/education');
+    Get.toNamed(Routes.PAY_BILLS);
   }
 
   void navigateToEntertainment() {
-    Get.toNamed('/entertainment');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void onSeeAllPressed(String section) {
-    // Navigation basée sur la section
     switch (section) {
-      case 'Top Categories':
-        Get.toNamed('/categories');
-        break;
       case 'Best Deals':
-        Get.toNamed('/deals');
-        break;
-      case 'Recommended For You':
-        Get.toNamed('/recommended');
-        break;
-      case 'Gaming Cards':
-        Get.toNamed('/gaming');
+        Get.toNamed(Routes.HOT_DEALS);
         break;
       default:
+        Get.toNamed(Routes.HOT_DEALS);
         break;
     }
   }
 
   void navigateToNearestPlaces() {
-    Get.toNamed('/nearest-places');
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void navigateToFoodBeverage() {
-    Get.toNamed('/food-beverage');
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void navigateToFunActivities() {
-    Get.toNamed('/fun-activities');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToShopping() {
-    Get.toNamed('/shopping');
+    Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
   void navigateToTravel() {
-    Get.toNamed('/travel');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToHealth() {
-    Get.toNamed('/health-wellness');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   List<Map<String, dynamic>> hotDeals = [];
@@ -283,7 +281,7 @@ class HomeController extends GetxController {
         endingSoonDeals = List<Map<String, dynamic>>.from(response.data);
       }
     } catch (e) {
-      print('Error fetching ending soon deals: $e');
+      debugPrint('Error fetching ending soon deals: $e');
     }
     update();
   }
@@ -296,19 +294,16 @@ class HomeController extends GetxController {
         hotDeals = List<Map<String, dynamic>>.from(response.data);
       }
     } catch (e) {
-      print('Error fetching hot deals: $e');
+      debugPrint('Error fetching hot deals: $e');
     }
     update(); // Met à jour l'UI
   }
 
-  // Méthode pour ajouter aux favoris
   void toggleFavorite(Map<String, dynamic> deal) {
-    // Logic pour ajouter/supprimer des favoris
-    // Vous pouvez utiliser une liste de favoris dans le controller
-    // ou faire un appel API
-
     deal['isFavorite'] = !(deal['isFavorite'] ?? false);
     update();
+    final id = deal['_id']?.toString() ?? deal['id']?.toString() ?? '';
+    if (id.isNotEmpty) toggleFavoriteServer(id);
   }
 
   // Méthode pour partager un deal
@@ -323,7 +318,7 @@ Prix: ${deal['currentPrice']} TN
 Réduction: ${deal['discount']}%
 ''';
 
-    // Share.share(shareText);
+    SharePlus.instance.share(ShareParams(text: shareText));
   }
 
   List<Map<String, dynamic>> outings = [];
@@ -332,11 +327,11 @@ Réduction: ${deal['discount']}%
 
   // Nouvelles méthodes pour Outings
   void navigateToAllOutings() {
-    Get.toNamed('/outings');
+    Get.toNamed(Routes.HOT_DEALS);
   }
 
   void navigateToOuting(Map<String, dynamic> outing) {
-    Get.toNamed('/outing-details', arguments: outing);
+    Get.toNamed(Routes.DEAL_DETAILS, arguments: outing);
   }
 
   // Méthode pour filtrer les outings par type
@@ -367,7 +362,7 @@ Réduction: ${deal['discount']}%
         outings = List<Map<String, dynamic>>.from(response.data);
       }
     } catch (e) {
-      print('Error fetching outings: $e');
+      debugPrint('Error fetching outings: $e');
     }
     update(); // Met à jour l'UI
   }
@@ -416,6 +411,7 @@ ${outing['subtitle']}
 Localisation: ${outing['location']}
 Catégorie: ${outing['category']}
 ''';
+    SharePlus.instance.share(ShareParams(text: shareText));
   }
 
   // Méthode pour obtenir les recommendations
@@ -426,6 +422,79 @@ Catégorie: ${outing['category']}
 
   List<Map<String, dynamic>> trendingMerchants = [];
 
+  List<Map<String, dynamic>> favorites = [];
+
+  // Refresh favorites from backend
+  Future<void> refreshFavorites() async {
+    try {
+      final response = await ApiService().get('/favorites');
+      if (response.success) {
+        favorites = List<Map<String, dynamic>>.from(response.data ?? []);
+      }
+    } catch (e) {
+      debugPrint('Error fetching favorites: $e');
+    }
+    update();
+  }
+
+  // Toggle favorite (calls backend)
+  Future<void> toggleFavoriteServer(String itemId, {String itemType = 'Deal'}) async {
+    try {
+      final response = await ApiService().post('/favorites/toggle', {'itemId': itemId, 'itemType': itemType});
+      if (response.success) {
+        favorites = List<Map<String, dynamic>>.from(response.data ?? []);
+      }
+    } catch (e) {
+      debugPrint('Error toggling favorite: $e');
+    }
+    update();
+  }
+
+  // Cart handling
+  List<Map<String, dynamic>> cart = [];
+
+  Future<void> refreshCart() async {
+    try {
+      final response = await ApiService().get('/cart');
+      if (response.success) {
+        cart = List<Map<String, dynamic>>.from(response.data ?? []);
+        int count = 0;
+        for (var it in cart) {
+          count += (it['quantity'] ?? 0) as int;
+        }
+        cartItemCount.value = count;
+      }
+    } catch (e) {
+      debugPrint('Error fetching cart: $e');
+    }
+    update();
+  }
+
+  Future<void> addToCartServer({required String itemId, String itemType = 'product', String? name, double price = 0, int quantity = 1, String? merchantId}) async {
+    try {
+      final response = await ApiService().post('/cart/add', {
+        'itemId': itemId,
+        'itemType': itemType,
+        'name': name,
+        'price': price,
+        'quantity': quantity,
+        'merchantId': merchantId,
+      });
+
+      if (response.success) {
+        cart = List<Map<String, dynamic>>.from(response.data ?? []);
+        int count = 0;
+        for (var it in cart) {
+          count += (it['quantity'] ?? 0) as int;
+        }
+        cartItemCount.value = count;
+      }
+    } catch (e) {
+      debugPrint('Error adding to cart: $e');
+    }
+    update();
+  }
+
   Future<void> refreshTrendingMerchants() async {
     try {
       final response = await ApiService().get('/content/trending-merchants');
@@ -433,7 +502,7 @@ Catégorie: ${outing['category']}
         trendingMerchants = List<Map<String, dynamic>>.from(response.data);
       }
     } catch (e) {
-      print('Error fetching merchants: $e');
+      debugPrint('Error fetching merchants: $e');
     }
     update();
   }
@@ -520,7 +589,7 @@ Catégorie: ${merchant['category']}
 Réduction jusqu'à ${merchant['discountPercentage']}%
 ''';
 
-    // Share.share(shareText);
+    SharePlus.instance.share(ShareParams(text: shareText));
   }
 
   List<Map<String, dynamic>> billServices = [
@@ -600,11 +669,11 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // Nouvelles méthodes pour Bill Services
   void navigateToBillService(Map<String, dynamic> service) {
-    Get.toNamed('/bill-service', arguments: service);
+    Get.toNamed(Routes.PAY_BILLS, arguments: service);
   }
 
   void navigateToAllBillServices() {
-    Get.toNamed('/all-bill-services');
+    Get.toNamed(Routes.PAY_BILLS);
   }
 
   // Méthode pour filtrer les services par type
@@ -679,36 +748,28 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
         .toList();
   }
 
-  // Méthode pour rafraîchir les services (API call)
   Future<void> refreshBillServices() async {
-    // Simulation d'un appel API
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Ici vous feriez appel à votre API
     try {
       final response = await ApiService().get('/services/bills');
-      if (response.success) {
-        billServices = List<Map<String, dynamic>>.from(response.data);
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        if (data.isNotEmpty) {
+          billServices = List<Map<String, dynamic>>.from(data);
+          update();
+        }
       }
     } catch (e) {
-      print('Error fetching bill services: $e');
+      // Keep hardcoded fallback on error
     }
-    update(); // Met à jour l'UI
   }
 
   // Méthode pour payer une facture
   void payBill(Map<String, dynamic> service, double amount) {
-    // Logic pour le paiement
-    // Redirection vers la page de paiement
-    Get.toNamed(
-      '/bill-payment',
-      arguments: {'service': service, 'amount': amount},
-    );
+    Get.toNamed(Routes.PAY_BILLS, arguments: {'service': service, 'amount': amount});
   }
 
-  // Méthode pour consulter l'historique des factures
   void viewBillHistory(Map<String, dynamic> service) {
-    Get.toNamed('/bill-history', arguments: service);
+    Get.toNamed(Routes.BILLS, arguments: service);
   }
 
   // Méthode pour configurer des rappels de factures
@@ -732,11 +793,13 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     }).toList();
   }
 
-  // Méthode pour calculer le total des factures du mois
+  // Calculates the sum of all active bill service amounts for the current user
   double getMonthlyBillsTotal() {
-    // Logic pour calculer le total
-    // Peut être basé sur des données réelles de l'utilisateur
-    return 1250.0; // Exemple
+    if (billServices.isEmpty) return 0.0;
+    return billServices.fold(0.0, (sum, s) {
+      final amount = (s['amount'] ?? s['price'] ?? s['cost'] ?? 0);
+      return sum + (amount is num ? amount.toDouble() : 0.0);
+    });
   }
 
   List<Map<String, dynamic>> billTypes = [
@@ -944,19 +1007,18 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // Méthode pour rafraîchir les types (API call)
   Future<void> refreshBillTypes() async {
-    // Simulation d'un appel API
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Ici vous feriez appel à votre API
     try {
       final response = await ApiService().get('/services/bills');
-      if (response.success) {
-        billTypes = List<Map<String, dynamic>>.from(response.data);
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        if (data.isNotEmpty) {
+          billTypes = List<Map<String, dynamic>>.from(data);
+        }
       }
     } catch (e) {
-      print('Error fetching bill types: $e');
+      // keep fallback
     }
-    update(); // Met à jour l'UI
+    update();
   }
 
   final giftVouchers = <GiftVoucher>[].obs;
@@ -1006,20 +1068,27 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // Acheter un gift voucher
   Future<void> purchaseVoucher() async {
-    if (selectedVoucher.value == null) {
-      return;
-    }
+    if (selectedVoucher.value == null) return;
 
+    isLoading.value = true;
     try {
-      isLoading.value = true;
-
-      // Simulation d'un achat
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Réinitialiser la sélection
-      selectedVoucher.value = null;
-      selectedAmount.value = 0;
-    } catch (e) {
+      final response = await ApiService().post('/rewards/purchase-voucher', {
+        'voucherId': selectedVoucher.value!.id,
+        'amount': selectedAmount.value,
+      });
+      if (response.success) {
+        selectedVoucher.value = null;
+        selectedAmount.value = 0;
+        safeSnackbar(
+          'Success',
+          'Gift voucher purchased successfully!',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not complete purchase', snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }

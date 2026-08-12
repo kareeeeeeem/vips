@@ -9,12 +9,12 @@ class ShippingOptions extends StatelessWidget {
   final RxString selectedTime;
 
   const ShippingOptions({
-    Key? key,
+    super.key,
     required this.isDelivery,
     required this.isTakeaway,
     required this.isDineIn,
     required this.selectedTime,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

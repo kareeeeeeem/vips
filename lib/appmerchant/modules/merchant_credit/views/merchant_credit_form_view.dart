@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_credit_controller.dart';
 
 class MerchantCreditFormView extends GetView<MerchantCreditController> {
-  const MerchantCreditFormView({Key? key}) : super(key: key);
+  const MerchantCreditFormView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
         ),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () => _showHelpSheet(),
             child: Text('Help !', style: TextStyle(color: const Color(0xFF1F2937), fontSize: 13.sp)),
           ),
         ],
@@ -41,17 +41,17 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
                 child: Column(
                   children: [
                     SizedBox(height: 16.h),
-                    // Top Balance Cards
-                    Padding(
+                    // Top Balance Cards — live from API
+                    Obx(() => Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24.w),
                       child: Row(
                         children: [
-                          _buildBalanceCard('Dormant', '81.50'),
+                          _buildBalanceCard('Overdue', controller.dormantAmount.value.toStringAsFixed(2)),
                           SizedBox(width: 12.w),
-                          _buildBalanceCard('Approved', '600'),
+                          _buildBalanceCard('Active', controller.approvedAmount.value.toStringAsFixed(2)),
                         ],
                       ),
-                    ),
+                    )),
                     SizedBox(height: 32.h),
 
                     // Amount Display
@@ -179,6 +179,44 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
     );
   }
 
+  void _showHelpSheet() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Credit Help', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            const Text('• Minimum amount: D 25\n• Maximum amount: D 1000\n• Exchange rate: D 1 = VIP 100\n• Service charge & tax: 10%',
+                style: TextStyle(fontSize: 14, height: 1.6)),
+            const SizedBox(height: 16),
+            const Text('Need support?', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.phone, color: Color(0xFFF97316)),
+              title: const Text('Call Support'),
+              subtitle: const Text('+220 000 0000'),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => Get.back(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.email_outlined, color: Color(0xFFF97316)),
+              title: const Text('Email Support'),
+              subtitle: const Text('support@vipsapp.com'),
+              contentPadding: EdgeInsets.zero,
+              onTap: () => Get.back(),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
   Widget _buildBalanceCard(String title, String val) {
     return Expanded(
       child: Container(
@@ -187,7 +225,7 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
           color: const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
@@ -206,7 +244,7 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
       padding: EdgeInsets.only(bottom: 4.h),
       child: Text(
         text,
-        style: TextStyle(fontSize: 12.sp, color: const Color(0xFF10B981).withOpacity(0.7), fontWeight: FontWeight.w500),
+        style: TextStyle(fontSize: 12.sp, color: const Color(0xFF10B981).withValues(alpha: 0.7), fontWeight: FontWeight.w500),
       ),
     );
   }

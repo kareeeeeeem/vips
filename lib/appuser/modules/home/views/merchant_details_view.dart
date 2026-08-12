@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/widgets/custom_network_image.dart';
 
 class MerchantDetailsView extends StatelessWidget {
-  const MerchantDetailsView({Key? key}) : super(key: key);
+  const MerchantDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +36,8 @@ class MerchantDetailsView extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       height: 180.h,
-                      child: Image.network(
-                        merchant['logo'].toString(),
+                      child: CustomNetworkImage(
+                        imageUrl: merchant['logo'].toString(),
                         fit: BoxFit.contain,
                       ),
                     ),

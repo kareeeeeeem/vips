@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_ads_controller.dart';
 
 class NewAdvertisementView extends GetView<MerchantAdsController> {
-  const NewAdvertisementView({Key? key}) : super(key: key);
+  const NewAdvertisementView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final categories = ['Auto Promotion', 'Banner', 'Sponsored', 'Flash Sale'];
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -20,11 +21,7 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
         ),
         title: Text(
           'New Advertisement',
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1F2937),
-          ),
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
         ),
         centerTitle: true,
       ),
@@ -36,85 +33,125 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDropdown('Category info', controller.selectedCategory.value),
-                  SizedBox(height: 16.h),
-                  _buildDateField('Validity'),
-                  SizedBox(height: 24.h),
-                  
-                  // Language Tabs
-                  Obx(() => Row(
-                    children: [
-                      _buildLangTab('English', !controller.isArabicSelected.value, false),
-                      _buildLangTab('Arabic - عربي', controller.isArabicSelected.value, true),
-                    ],
+                  // ── Category Dropdown ───────────────────────
+                  _label('Category'),
+                  SizedBox(height: 6.h),
+                  Obx(() => DropdownButtonFormField<String>(
+                    key: ValueKey(controller.selectedCategory.value),
+                    initialValue: controller.selectedCategory.value,
+                    decoration: _inputDeco(),
+                    items: categories
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) => controller.selectedCategory.value = v!,
                   )),
                   SizedBox(height: 16.h),
-                  
-                  // Text Inputs
-                  _buildTextField('Title (English)'),
-                  SizedBox(height: 16.h),
-                  _buildTextField('Description (English)', maxLines: 4, maxLength: 200),
-                  
-                  SizedBox(height: 24.h),
-                  Text('Show Review Rating', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Obx(() => _buildCheckbox('Review', controller.showReview.value, (val) => controller.showReview.value = val!)),
-                      SizedBox(width: 24.w),
-                      Obx(() => _buildCheckbox('Rating', controller.showRating.value, (val) => controller.showRating.value = val!)),
-                    ],
+
+                  // ── Title ───────────────────────────────────
+                  _label('Title'),
+                  SizedBox(height: 6.h),
+                  TextFormField(
+                    controller: controller.titleController,
+                    decoration: _inputDeco(hint: 'Enter ad title'),
                   ),
-                  
+                  SizedBox(height: 16.h),
+
+                  // ── Description ─────────────────────────────
+                  _label('Description'),
+                  SizedBox(height: 6.h),
+                  TextFormField(
+                    controller: controller.descriptionController,
+                    maxLines: 4,
+                    maxLength: 200,
+                    decoration: _inputDeco(hint: 'Describe your ad campaign'),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // ── Budget ──────────────────────────────────
+                  _label('Budget (D)'),
+                  SizedBox(height: 6.h),
+                  TextFormField(
+                    controller: controller.budgetController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: _inputDeco(hint: '0.00'),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // ── Date Range ──────────────────────────────
+                  Row(children: [
+                    Expanded(child: _buildDateTile('Start Date', isStart: true, context: context)),
+                    SizedBox(width: 12.w),
+                    Expanded(child: _buildDateTile('End Date', isStart: false, context: context)),
+                  ]),
                   SizedBox(height: 24.h),
-                  Text('Upload Files', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                  SizedBox(height: 16.h),
-                  
-                  // Upload Boxes
-                  _buildUploadBox('Profile Image'),
-                  SizedBox(height: 16.h),
-                  _buildUploadBox('Cover Image'),
-                  
+
+                  // ── Language Tabs ───────────────────────────
+                  _label('Language'),
+                  SizedBox(height: 8.h),
+                  Obx(() => Row(children: [
+                    _buildLangTab('English', !controller.isArabicSelected.value, false),
+                    _buildLangTab('Arabic - عربي', controller.isArabicSelected.value, true),
+                  ])),
+                  SizedBox(height: 24.h),
+
+                  // ── Review/Rating checkboxes ─────────────────
+                  _label('Show in Ad'),
+                  SizedBox(height: 8.h),
+                  Row(children: [
+                    Obx(() => _buildCheckbox('Review', controller.showReview.value,
+                        (v) => controller.showReview.value = v!)),
+                    SizedBox(width: 24.w),
+                    Obx(() => _buildCheckbox('Rating', controller.showRating.value,
+                        (v) => controller.showRating.value = v!)),
+                  ]),
                   SizedBox(height: 40.h),
                 ],
               ),
             ),
           ),
-          
-          // Bottom Buttons
+
+          // ── Bottom Buttons ───────────────────────────────
           SafeArea(
             child: Padding(
               padding: EdgeInsets.all(24.w),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.snackbar('Reset', 'Form cleared for re-entry', snackPosition: SnackPosition.BOTTOM),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        backgroundColor: const Color(0xFFF3F4F6),
-                        side: BorderSide.none,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                      child: Text('Reset', style: TextStyle(color: const Color(0xFF6B7280), fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              child: Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: controller.resetForm,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     ),
+                    child: Text('Reset',
+                        style: TextStyle(color: const Color(0xFF6B7280), fontSize: 16.sp, fontWeight: FontWeight.w700)),
                   ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () => Get.offNamed(MerchantRoutes.HOME),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        elevation: 0,
-                      ),
-                      child: Text('Create Ads', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  flex: 2,
+                  child: Obx(() => ElevatedButton(
+                    onPressed: controller.isCreating.value
+                        ? null
+                        : () => controller.submitAdForm(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      disabledBackgroundColor: const Color(0xFF10B981).withValues(alpha: 0.5),
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      elevation: 0,
                     ),
-                  ),
-                ],
-              ),
+                    child: controller.isCreating.value
+                        ? SizedBox(
+                            width: 20.w,
+                            height: 20.h,
+                            child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text('Create Ad',
+                            style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                  )),
+                ),
+              ]),
             ),
           ),
         ],
@@ -122,54 +159,61 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
     );
   }
 
-  Widget _buildDropdown(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151))),
-        SizedBox(height: 6.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(value, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF1F2937))),
-              Icon(Icons.keyboard_arrow_down, color: const Color(0xFF6B7280), size: 20.sp),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _label(String text) => Text(text,
+      style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151)));
 
-  Widget _buildDateField(String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151))),
-        SizedBox(height: 6.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+  InputDecoration _inputDeco({String? hint}) => InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp),
+        filled: true,
+        fillColor: const Color(0xFFF9FAFB),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Validity', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF9CA3AF))),
-              Icon(Icons.calendar_today_outlined, color: const Color(0xFF10B981), size: 20.sp),
-            ],
-          ),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: const BorderSide(color: Color(0xFF10B981))),
+      );
+
+  Widget _buildDateTile(String label, {required bool isStart, required BuildContext context}) {
+    return Obx(() {
+      final date = isStart ? controller.startDate.value : controller.endDate.value;
+      final display = date == null
+          ? 'Select'
+          : '${date.day}/${date.month}/${date.year}';
+      return GestureDetector(
+        onTap: () => isStart ? controller.pickStartDate(context) : controller.pickEndDate(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _label(label),
+            SizedBox(height: 6.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(display,
+                      style: TextStyle(
+                          fontSize: 14.sp,
+                          color: date == null ? const Color(0xFF9CA3AF) : const Color(0xFF1F2937))),
+                  Icon(Icons.calendar_today_outlined, color: const Color(0xFF10B981), size: 18.sp),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
-    );
+      );
+    });
   }
 
   Widget _buildLangTab(String text, bool isSelected, bool isArabic) {
@@ -187,37 +231,12 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
             ),
           ),
           child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF10B981) : const Color(0xFF6B7280),
-              ),
-            ),
+            child: Text(text,
+                style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? const Color(0xFF10B981) : const Color(0xFF6B7280))),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String hint, {int maxLines = 1, int? maxLength}) {
-    return TextFormField(
-      maxLines: maxLines,
-      maxLength: maxLength,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp),
-        filled: true,
-        fillColor: const Color(0xFFF9FAFB),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
       ),
     );
@@ -242,60 +261,4 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
       ],
     );
   }
-
-  Widget _buildUploadBox(String label) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 32.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFF10B981), style: BorderStyle.none),
-      ),
-      child: CustomPaint(
-        painter: DashedRectPainter(color: const Color(0xFF10B981), strokeWidth: 1, gap: 5),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_upload_outlined, color: const Color(0xFF9CA3AF), size: 32.sp),
-            SizedBox(height: 12.h),
-            Text(
-              'Upload $label\nor Video',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF1F2937)),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Format Jpeg, Png only, Max Size 2MB',
-              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9CA3AF)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DashedRectPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double gap;
-
-  DashedRectPainter({required this.color, required this.strokeWidth, required this.gap});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-    
-    // Simple dashed border logic, skipped drawing actual dashes for simplicity,
-    // usually requires a dedicated package like `dotted_border` or math.
-    // For now, drawing a continuous thin border just to satisfy UI outline.
-    canvas.drawRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(12)), paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

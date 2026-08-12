@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/merchant_order_controller.dart';
 
 class OrderStatusTabs extends GetView<MerchantOrderController> {
-  const OrderStatusTabs({Key? key}) : super(key: key);
+  const OrderStatusTabs({super.key});
 
   @override
   Widget build(BuildContext context) {

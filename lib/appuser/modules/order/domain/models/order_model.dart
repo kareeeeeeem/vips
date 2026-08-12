@@ -8,8 +8,8 @@ class PaginatedOrderModel {
 
   PaginatedOrderModel.fromJson(Map<String, dynamic> json) {
     totalSize = json['total_size'];
-    limit = json['limit'].toString();
-    offset = json['offset'].toString();
+    limit = (json['limit'] ?? 0).toString();
+    offset = (json['offset'] ?? 0).toString();
     if (json['orders'] != null) {
       orders = [];
       json['orders'].forEach((v) {
@@ -198,7 +198,7 @@ class OrderModel {
     dmTips = json['dm_tips']?.toDouble();
     processingTime = json['processing_time'];
     deliveryMan = json['delivery_man'] != null ? DeliveryMan.fromJson(json['delivery_man']) : null;
-    taxStatus = json['tax_status'] == 'included' ? true : false;
+    taxStatus = (json['tax_status'] as String?) == 'included';
     cutlery = json['cutlery'];
     unavailableItemNote = json['unavailable_item_note'];
     deliveryInstruction = json['delivery_instruction'];
@@ -272,7 +272,8 @@ class OrderModel {
       data['customer'] = customer!.toJson();
     }
     data['dm_tips'] = dmTips;
-    data['dm_tips'] = dmTips;
+    if (deliveryMan != null) data['delivery_man'] = deliveryMan!.toJson();
+    data['tax_status'] = (taxStatus == true) ? 'included' : 'excluded';
     data['processing_time'] = processingTime;
     data['cutlery'] = cutlery;
     data['unavailable_item_note'] = unavailableItemNote;

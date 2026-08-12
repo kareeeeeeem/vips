@@ -7,12 +7,11 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/verification_controller.dart';
 
 class VerificationView extends GetView<VerificationController> {
-  const VerificationView(this.fromReset, {Key? key}) : super(key: key);
+  const VerificationView(this.fromReset, {super.key});
   final bool fromReset;
 
   @override
   Widget build(BuildContext context) {
-    Get.put(VerificationController());
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -67,7 +66,7 @@ class VerificationView extends GetView<VerificationController> {
       width: 80.w,
       height: 80.h,
       decoration: BoxDecoration(
-        color: AppColors.AppPrimaryColor.withOpacity(0.1),
+        color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -142,7 +141,7 @@ class VerificationView extends GetView<VerificationController> {
 
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
-        color: AppColors.AppPrimaryColor.withOpacity(0.1),
+        color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.AppPrimaryColor, width: 1.5),
       ),
@@ -182,7 +181,7 @@ class VerificationView extends GetView<VerificationController> {
   Widget _buildVerifyButton() {
     return Obx(() {
       final isLoading = controller.isVerifying.value;
-      final hasCode = controller.pinController.text.length == 6;
+      final hasCode = controller.pinController.text.length == 5;
 
       return SizedBox(
         width: double.infinity,

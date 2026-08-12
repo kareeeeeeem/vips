@@ -22,7 +22,7 @@ class UpdateStatusBodyModel {
   Map<String, String> toJson() {
     final Map<String, String> data = <String, String>{};
     data['token'] = token ?? '';
-    data['order_id'] = orderId.toString();
+    data['order_id'] = (orderId ?? 0).toString();
     data['status'] = status!;
     data['otp'] = otp ?? '';
     data['processing_time'] = processingTime ?? '';

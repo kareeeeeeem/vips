@@ -55,7 +55,7 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
           ),
           SizedBox(height: 12.h),
           Text(
-            'Account Registred\nSuccessfully',
+            'Account Registered\nSuccessfully',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15.sp,
@@ -116,7 +116,7 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
           SizedBox(height: 32.h),
 
           Text(
-            'Loyalty Points is Ready to us',
+            'Loyalty Points is Ready to Use',
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,
@@ -125,7 +125,7 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
           ),
           SizedBox(height: 8.h),
           Text(
-            'Points will start getting added to the parties.',
+            'Points will start getting added to customer transactions.',
             style: TextStyle(
               fontSize: 13.sp,
               color: const Color(0xFF6B7280),
@@ -145,7 +145,7 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Get.offNamed(MerchantRoutes.LOGIN);
+                Get.offAllNamed(MerchantRoutes.HOME);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
@@ -168,12 +168,12 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => Get.toNamed(MerchantRoutes.ONBOARDING),
-                  icon: const Icon(Icons.play_circle_outline, color: Color(0xFFEF4444)),
-                  label: const Text('Watch Video', style: TextStyle(color: Color(0xFFEF4444))),
+                  onPressed: () => Get.toNamed(MerchantRoutes.BUSINESS_REGISTRATION),
+                  icon: const Icon(Icons.business_center_outlined, color: Color(0xFF10B981)),
+                  label: const Text('Setup Business', style: TextStyle(color: Color(0xFF10B981))),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 12.h),
-                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    side: const BorderSide(color: Color(0xFF10B981)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   ),
                 ),
@@ -181,7 +181,7 @@ class MerchantPartnershipSuccessView extends GetView<MerchantPartnershipControll
               SizedBox(width: 16.w),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => Get.toNamed(MerchantRoutes.BUSINESS_REGISTRATION),
+                  onPressed: () => Get.toNamed(MerchantRoutes.SETTINGS),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B7280),
                     padding: EdgeInsets.symmetric(vertical: 12.h),

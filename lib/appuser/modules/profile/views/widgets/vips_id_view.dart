@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VipsIdDialog {
   static void show({
@@ -30,12 +33,11 @@ class VipsIdContent extends StatelessWidget {
   final String userId;
   final String userName;
 
-  const VipsIdContent({
-    Key? key,
+  const VipsIdContent({super.key,
     required this.primaryColor,
     required this.userId,
     this.userName = 'User',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,7 @@ class VipsIdContent extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -71,7 +73,7 @@ class VipsIdContent extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -112,7 +114,7 @@ class VipsIdContent extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24.r),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 20,
                           offset: const Offset(0, 4),
                         ),
@@ -159,7 +161,7 @@ class VipsIdContent extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -183,7 +185,7 @@ class VipsIdContent extends StatelessWidget {
                           child: InkWell(
                             onTap: () {
                               Clipboard.setData(ClipboardData(text: userId));
-                              Get.snackbar(
+                              safeSnackbar(
                                 'Copied',
                                 'ID copied to clipboard',
                                 snackPosition: SnackPosition.BOTTOM,
@@ -198,7 +200,7 @@ class VipsIdContent extends StatelessWidget {
                             child: Container(
                               padding: EdgeInsets.all(10.w),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.1),
+                                color: primaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Icon(
@@ -219,10 +221,10 @@ class VipsIdContent extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(18.w),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.05),
+                      color: primaryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         width: 1,
                       ),
                     ),
@@ -269,7 +271,7 @@ class VipsIdContent extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -283,28 +285,37 @@ class VipsIdContent extends StatelessWidget {
                   label: 'Download',
                   color: Colors.grey.shade700,
                   primaryColor: primaryColor,
-                  onTap: () {},
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: 'VIPs ID: $userId\nName: $userName'));
+                    safeSnackbar('Saved', 'VIPs ID details copied to clipboard', snackPosition: SnackPosition.BOTTOM);
+                  },
                 ),
                 _buildActionButton(
                   icon: Icons.qr_code_scanner_rounded,
                   label: 'Scan',
                   color: Colors.grey.shade700,
                   primaryColor: primaryColor,
-                  onTap: () {},
+                  onTap: () => Get.toNamed(Routes.Q_R_SCANNER),
                 ),
                 _buildActionButton(
                   icon: Icons.print_rounded,
                   label: 'Print',
                   color: Colors.grey.shade700,
                   primaryColor: primaryColor,
-                  onTap: () {},
+                  onTap: () => SharePlus.instance.share(ShareParams(
+                    text: 'VIPs Membership ID\nID: $userId\nName: $userName',
+                    subject: 'VIPs ID Card — $userName',
+                  )),
                 ),
                 _buildActionButton(
                   icon: Icons.share_rounded,
                   label: 'Share',
                   color: primaryColor,
                   primaryColor: primaryColor,
-                  onTap: () {},
+                  onTap: () => SharePlus.instance.share(ShareParams(
+                    text: 'My VIPs Membership ID: $userId\nName: $userName\nJoin VIPs App to earn diamonds and enjoy exclusive rewards!',
+                    subject: 'VIPs ID Card — $userName',
+                  )),
                 ),
               ],
             ),
@@ -329,7 +340,7 @@ class VipsIdContent extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(icon, color: color, size: 24.sp),

@@ -135,12 +135,10 @@ class OrderRepository implements OrderRepositoryInterface {
     return sharedPreferences.getString(AppConstants.token) ?? "";
   }
 
-  @override
   Future add(value) {
     throw UnimplementedError();
   }
 
-  @override
   Future delete(int? id) {
     throw UnimplementedError();
   }

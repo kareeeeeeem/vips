@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_catalog_controller.dart';
 import 'widgets/uploads_banner.dart';
 import 'widgets/tags_input.dart';
 import 'widgets/shipping_options.dart';
 import 'widgets/form_widgets.dart';
-import 'widgets/product_preview_card.dart';
 
 class CreateCouponView extends GetView<MerchantCatalogController> {
-  const CreateCouponView({Key? key}) : super(key: key);
+  const CreateCouponView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +46,7 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
                       'Coupon Code',
                       hint: 'Coupon Code',
                       maxLines: 3,
+                      controller: controller.couponCodeCtrl,
                     ),
                     SizedBox(height: 16.h),
 
@@ -167,11 +166,11 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
                             color: const Color(0xFF374151),
                           ),
                         ),
-                        Switch(
-                          value: true,
-                          onChanged: (val) {},
-                          activeColor: const Color(0xFF10B981),
-                        ),
+                        Obx(() => Switch(
+                          value: controller.isPublishedCoupon.value,
+                          onChanged: (val) => controller.isPublishedCoupon.value = val,
+                          activeThumbColor: const Color(0xFF10B981),
+                        )),
                       ],
                     ),
                     SizedBox(height: 32.h),
@@ -185,7 +184,7 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Get.offNamed(MerchantRoutes.CATALOG),
+                  onPressed: controller.createCouponFromForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),

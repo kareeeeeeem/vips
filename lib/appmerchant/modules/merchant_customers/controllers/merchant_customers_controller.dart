@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CustomerModel {
   final String id;
@@ -18,59 +20,58 @@ class CustomerModel {
     required this.lastVisit,
     required this.imageUrl,
   });
+
+  factory CustomerModel.fromJson(Map<String, dynamic> json) {
+    final name = json['fullName'] ?? json['name'] ?? 'Unknown';
+    return CustomerModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      name: name,
+      totalVisits: (json['totalVisits'] ?? 0) as int,
+      pointsEarned: (json['walletPoints'] ?? 0) as int,
+      pointsSpent: 0,
+      lastVisit: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt']).toLocal().toString().split('.')[0]
+          : 'Unknown',
+      imageUrl: 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=10B981&color=fff',
+    );
+  }
 }
 
 class MerchantCustomersController extends GetxController {
   final RxList<CustomerModel> customers = <CustomerModel>[].obs;
   final RxBool isLoading = true.obs;
+  final RxString searchQuery = ''.obs;
+
+  List<CustomerModel> get filteredCustomers {
+    if (searchQuery.value.isEmpty) return customers;
+    return customers
+        .where((c) => c.name.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
 
   @override
   void onInit() {
     super.onInit();
-    _loadMockCustomers();
+    loadCustomers();
   }
 
-  void _loadMockCustomers() async {
+  Future<void> loadCustomers() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-    customers.value = [
-      CustomerModel(
-        id: 'CUS-001',
-        name: 'Ahmed Mahmoud',
-        totalVisits: 12,
-        pointsEarned: 1500,
-        pointsSpent: 500,
-        lastVisit: 'Today, 2:30 PM',
-        imageUrl: 'https://ui-avatars.com/api/?name=Ahmed+Mahmoud&background=10B981&color=fff',
-      ),
-      CustomerModel(
-        id: 'CUS-002',
-        name: 'Sarah Khaled',
-        totalVisits: 5,
-        pointsEarned: 450,
-        pointsSpent: 0,
-        lastVisit: 'Yesterday, 6:15 PM',
-        imageUrl: 'https://ui-avatars.com/api/?name=Sarah+Khaled&background=F59E0B&color=fff',
-      ),
-      CustomerModel(
-        id: 'CUS-003',
-        name: 'Omar Tarek',
-        totalVisits: 1,
-        pointsEarned: 50,
-        pointsSpent: 0,
-        lastVisit: '2 days ago',
-        imageUrl: 'https://ui-avatars.com/api/?name=Omar+Tarek&background=3B82F6&color=fff',
-      ),
-      CustomerModel(
-        id: 'CUS-004',
-        name: 'Nour Ali',
-        totalVisits: 28,
-        pointsEarned: 3200,
-        pointsSpent: 2800,
-        lastVisit: '1 week ago',
-        imageUrl: 'https://ui-avatars.com/api/?name=Nour+Ali&background=8B5CF6&color=fff',
-      ),
-    ];
-    isLoading.value = false;
+    try {
+      final response = await ApiService().get('/merchant/customers');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        final List<dynamic> list = data['customers'] ?? data ?? [];
+        customers.value = list.map((e) => CustomerModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to load customers: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void updateSearch(String q) {
+    searchQuery.value = q;
   }
 }

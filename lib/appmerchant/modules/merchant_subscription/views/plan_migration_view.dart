@@ -5,10 +5,21 @@ import '../controllers/merchant_subscription_controller.dart';
 import '../../../routes/merchant_routes.dart';
 
 class PlanMigrationView extends GetView<MerchantSubscriptionController> {
-  const PlanMigrationView({Key? key}) : super(key: key);
+  const PlanMigrationView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final plan = (Get.arguments as Map<dynamic, dynamic>?) ?? {};
+    final planName = (plan['name'] ?? plan['planName'] ?? plan['id'] ?? 'Plan').toString();
+    final price = (((plan['price'] ?? plan['monthlyPrice'] ?? 0) as num?) ?? 0).toDouble();
+    final currency = (plan['currency'] ?? 'D').toString();
+    final planId = (plan['id'] ?? plan['planCode'] ?? planName).toString();
+
+    // Sync controller with selected plan from arguments
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.selectPackage(planId, price, 30);
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -36,7 +47,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                     style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
                   ),
                   SizedBox(height: 24.h),
-                  
+
                   // Comparison Row
                   Row(
                     children: [
@@ -45,7 +56,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
                         child: Icon(Icons.swap_horiz, color: const Color(0xFFEF4444), size: 32.sp),
                       ),
-                      Expanded(child: _buildComparisonCard('Basic', 'D 99.00', subtitle: '120 days', isGreen: true)),
+                      Expanded(child: _buildComparisonCard(planName, '$currency ${price.toStringAsFixed(2)}', subtitle: '30 days', isGreen: true)),
                     ],
                   ),
                   SizedBox(height: 32.h),
@@ -57,8 +68,8 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildMetaItem('Validity', '120 days'),
-                        _buildMetaItem('Price', 'D 99.00'),
+                        _buildMetaItem('Validity', '30 days'),
+                        _buildMetaItem('Price', '$currency ${price.toStringAsFixed(2)}'),
                         _buildMetaItem('Bill Status', 'Migrate', isBold: true),
                       ],
                     ),
@@ -86,11 +97,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                           ),
                         ),
                         ElevatedButton(
-                          onPressed: () => Get.snackbar(
-                            'Wallet applied',
-                            'Wallet points selected for payment',
-                            snackPosition: SnackPosition.BOTTOM,
-                          ),
+                          onPressed: () => controller.subscribe(controller.selectedPackageName.value),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF10B981),
                             elevation: 0,
@@ -133,7 +140,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                   SizedBox(width: 16.w),
                   Expanded(
                     flex: 2,
-                    child: ElevatedButton(
+                    child: Obx(() => ElevatedButton(
                       onPressed: () => Get.toNamed(
                         MerchantRoutes.BILL_PIN,
                         arguments: {
@@ -143,12 +150,12 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                             'nextRoute': MerchantRoutes.INVOICE_RECEIPT,
                             'nextArgs': {
                               'headerTitle': 'REQUEST',
-                              'transType': 'Upgrade Package',
-                              'grandTotal': 'D 25.000',
+                              'transType': 'Upgrade to ${controller.selectedPackageName.value}',
+                              'grandTotal': '$currency ${controller.selectedPackagePrice.value.toStringAsFixed(3)}',
                             },
                           },
                         },
-                      ), 
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -156,7 +163,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                         elevation: 0,
                       ),
                       child: Text('Shift Subscription Plan', style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w700)),
-                    ),
+                    )),
                   ),
                 ],
               ),
@@ -186,7 +193,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: isGreen ? Colors.white.withOpacity(0.2) : const Color(0xFFEFF6FF),
+              color: isGreen ? Colors.white.withValues(alpha: 0.2) : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Text(
@@ -196,7 +203,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
           ),
           if (subtitle != null) ...[
              SizedBox(height: 8.h),
-             Text(subtitle, style: TextStyle(fontSize: 10.sp, color: Colors.white.withOpacity(0.8))),
+             Text(subtitle, style: TextStyle(fontSize: 10.sp, color: Colors.white.withValues(alpha: 0.8))),
           ],
         ],
       ),
@@ -238,8 +245,8 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
           Radio<String>(
             value: method,
             groupValue: controller.paymentMethod.value,
-            activeColor: const Color(0xFF10B981),
             onChanged: (val) => controller.paymentMethod.value = val!,
+            activeColor: const Color(0xFF10B981),
           ),
         ],
       ),

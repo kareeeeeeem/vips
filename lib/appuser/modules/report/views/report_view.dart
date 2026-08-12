@@ -57,7 +57,7 @@ class ReportView extends GetView<ReportController> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppBlackColor.withOpacity(0.04),
+                  color: AppColors.AppBlackColor.withValues(alpha: 0.04),
                   spreadRadius: 0,
                   blurRadius: 24,
                   offset: const Offset(0, 4),
@@ -90,7 +90,7 @@ class ReportView extends GetView<ReportController> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppBlackColor.withOpacity(0.04),
+                  color: AppColors.AppBlackColor.withValues(alpha: 0.04),
                   spreadRadius: 0,
                   blurRadius: 24,
                   offset: const Offset(0, 4),
@@ -114,7 +114,7 @@ class ReportView extends GetView<ReportController> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.AppBlackColor.withOpacity(0.06),
+              color: AppColors.AppBlackColor.withValues(alpha: 0.06),
               spreadRadius: 0,
               blurRadius: 12,
               offset: const Offset(0, 2),
@@ -239,7 +239,7 @@ class ReportView extends GetView<ReportController> {
         labelColor: AppColors.AppPrimaryColor,
         unselectedLabelColor: Colors.grey,
         padding: EdgeInsets.zero,
-        overlayColor: const MaterialStatePropertyAll(Colors.transparent),
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
         unselectedLabelStyle: TextStyle(
           fontWeight: FontWeight.w500,
           fontFamily: 'Poppins',
@@ -315,7 +315,7 @@ class ReportView extends GetView<ReportController> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.AppBlackColor.withOpacity(0.06),
+              color: AppColors.AppBlackColor.withValues(alpha: 0.06),
               spreadRadius: 0,
               blurRadius: 12,
               offset: const Offset(0, 2),

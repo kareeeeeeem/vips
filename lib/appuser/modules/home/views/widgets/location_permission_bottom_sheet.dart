@@ -5,11 +5,10 @@ class LocationPermissionBottomSheet extends StatelessWidget {
   final VoidCallback? onAllowActivation;
   final VoidCallback? onNoThanks;
 
-  const LocationPermissionBottomSheet({
-    Key? key,
+  const LocationPermissionBottomSheet({super.key,
     this.onAllowActivation,
     this.onNoThanks,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +20,10 @@ class LocationPermissionBottomSheet extends StatelessWidget {
           topRight: Radius.circular(20.r),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Handle bar
           Container(
             margin: EdgeInsets.only(top: 12.h),
@@ -131,6 +131,7 @@ class LocationPermissionBottomSheet extends StatelessWidget {
 
           SizedBox(height: 30.h),
         ],
+        ),
       ),
     );
   }

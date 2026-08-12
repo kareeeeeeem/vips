@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/gift_recap.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class GiftController extends GetxController {
   final TextEditingController offerIdController = TextEditingController();
@@ -11,6 +12,8 @@ class GiftController extends GetxController {
   final RxBool isUserIdEnabled = true.obs;
   final RxBool isExpressSelected = false.obs;
   final RxBool isLoading = false.obs;
+  final TextEditingController amountController = TextEditingController(text: '');
+  final RxDouble giftAmount = 0.0.obs;
 
   void toggleUserIdInput() {
     isUserIdEnabled.value = !isUserIdEnabled.value;
@@ -24,20 +27,49 @@ class GiftController extends GetxController {
   }
 
   void scanOfferQR() {
-    // TODO: Implement QR scanner
+    Get.toNamed('/q-r-scanner')?.then((result) {
+      if (result != null && result is String) {
+        offerIdController.text = result;
+      }
+    });
   }
 
   void scanUserQR() {
-    // TODO: Implement QR scanner
+    Get.toNamed('/q-r-scanner')?.then((result) {
+      if (result != null && result is String) {
+        userIdController.text = result;
+      }
+    });
   }
 
   void openUserSelector() {
-    // TODO: Open user selector dialog
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Enter Recipient'),
+        content: TextField(
+          controller: userIdController,
+          decoration: const InputDecoration(hintText: 'Phone number or user ID'),
+          keyboardType: TextInputType.phone,
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> proceed() async {
     if (userIdController.text.isEmpty) {
-      Get.snackbar('Error', 'Please enter a recipient ID/Phone');
+      safeSnackbar('Error', 'Please enter a recipient ID/Phone');
+      return;
+    }
+    final amount = double.tryParse(amountController.text.trim()) ?? giftAmount.value;
+    if (amount <= 0) {
+      safeSnackbar('Error', 'Please enter a valid gift amount');
       return;
     }
     isLoading.value = true;
@@ -45,7 +77,7 @@ class GiftController extends GetxController {
     try {
       final response = await ApiService().post('/rewards/send-gift', {
         'recipientPhone': userIdController.text,
-        'amount': 50, // Hardcoded for now based on the UI flow, can be dynamic
+        'amount': amount,
         'message': 'Gift from VIPs App',
       });
 
@@ -53,10 +85,10 @@ class GiftController extends GetxController {
         Get.put(GiftRecapController());
         Get.to(() => const GiftRecapView());
       } else {
-        Get.snackbar('Error', response.message);
+        safeSnackbar('Error', response.message);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to send gift: $e');
+      safeSnackbar('Error', 'Failed to send gift: $e');
     } finally {
       isLoading.value = false;
     }
@@ -70,6 +102,7 @@ class GiftController extends GetxController {
   void onClose() {
     offerIdController.dispose();
     userIdController.dispose();
+    amountController.dispose();
     super.onClose();
   }
 }

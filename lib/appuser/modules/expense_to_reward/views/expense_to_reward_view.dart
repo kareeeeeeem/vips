@@ -38,7 +38,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                     borderRadius: BorderRadius.circular(24.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 20,
                         offset: Offset(0, 4),
                       ),
@@ -92,7 +92,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -136,10 +136,10 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
           decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withOpacity(0.05),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.AppPrimaryColor.withOpacity(0.2),
+              color: AppColors.AppPrimaryColor.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
@@ -264,7 +264,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                   gradient: LinearGradient(
                     colors: [
                       AppColors.AppPrimaryColor,
-                      AppColors.AppPrimaryColor.withOpacity(0.8),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -272,7 +272,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                      color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: Offset(0, 4),
                     ),
@@ -282,7 +282,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                   AppIcons.QRCode,
                   width: 24.w,
                   height: 24.h,
-                  color: Colors.white,
+                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 ),
               ),
             ),
@@ -305,8 +305,8 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
           border: Border.all(
             color:
                 isLowTime
-                    ? Colors.red.withOpacity(0.3)
-                    : Colors.blue.withOpacity(0.3),
+                    ? Colors.red.withValues(alpha: 0.3)
+                    : Colors.blue.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -360,7 +360,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                     ? LinearGradient(
                       colors: [
                         AppColors.AppPrimaryColor,
-                        AppColors.AppPrimaryColor.withOpacity(0.8),
+                        AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                       ],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
@@ -373,7 +373,7 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
                 isValid
                     ? [
                       BoxShadow(
-                        color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                        color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                         blurRadius: 16,
                         offset: Offset(0, 6),
                       ),

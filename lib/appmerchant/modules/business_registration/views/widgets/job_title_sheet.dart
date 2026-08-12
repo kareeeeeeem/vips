@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/business_registration_controller.dart';
 
 class JobTitleSheet extends GetView<BusinessRegistrationController> {
-  const JobTitleSheet({Key? key}) : super(key: key);
+  const JobTitleSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

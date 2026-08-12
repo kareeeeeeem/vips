@@ -6,7 +6,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/shipping_controller.dart';
 
 class ShippingView extends GetView<ShippingController> {
-  const ShippingView({Key? key}) : super(key: key);
+  const ShippingView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +99,7 @@ class ShippingView extends GetView<ShippingController> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 15,
               offset: Offset(0, 4),
             ),
@@ -110,10 +110,10 @@ class ShippingView extends GetView<ShippingController> {
             Container(
               padding: EdgeInsets.all(10.w),
               decoration: BoxDecoration(
-                color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.2),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -129,7 +129,7 @@ class ShippingView extends GetView<ShippingController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    trip['title'],
+                    (trip['title'] as String?) ?? 'Trip',
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -140,7 +140,7 @@ class ShippingView extends GetView<ShippingController> {
                   Row(
                     children: [
                       Text(
-                        trip['location'],
+                        (trip['location'] as String?) ?? '',
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
@@ -149,7 +149,7 @@ class ShippingView extends GetView<ShippingController> {
                       ),
                       SizedBox(width: 12.w),
                       Text(
-                        'at ${trip['time']}',
+                        'at ${(trip['time'] as String?) ?? ''}',
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,

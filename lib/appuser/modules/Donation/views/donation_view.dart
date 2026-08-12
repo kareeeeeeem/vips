@@ -6,7 +6,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/donation_controller.dart';
 
 class DonationView extends GetView<DonationController> {
-  const DonationView({Key? key}) : super(key: key);
+  const DonationView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +91,7 @@ class DonationView extends GetView<DonationController> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: Offset(0, 4),
                   ),
@@ -106,7 +106,7 @@ class DonationView extends GetView<DonationController> {
                       color: (selectedOrg != null
                               ? AppColors.AppPrimaryColor
                               : Colors.grey.shade400)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Icon(
@@ -231,7 +231,7 @@ class DonationView extends GetView<DonationController> {
                         decoration: BoxDecoration(
                           color:
                               isSelected
-                                  ? AppColors.AppPrimaryColor.withOpacity(0.08)
+                                  ? AppColors.AppPrimaryColor.withValues(alpha: 0.08)
                                   : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
@@ -250,9 +250,7 @@ class DonationView extends GetView<DonationController> {
                               decoration: BoxDecoration(
                                 color:
                                     isSelected
-                                        ? AppColors.AppPrimaryColor.withOpacity(
-                                          0.15,
-                                        )
+                                        ? AppColors.AppPrimaryColor.withValues(alpha: 0.15)
                                         : Colors.white,
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
@@ -422,27 +420,34 @@ class DonationView extends GetView<DonationController> {
   }
 
   Widget _buildProceedButton() {
-    return SizedBox(
+    return Obx(() => SizedBox(
       width: double.infinity,
       height: 56.h,
       child: ElevatedButton(
-        onPressed: controller.proceed,
+        onPressed: controller.isLoading.value ? null : controller.proceed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.AppPrimaryColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),
           elevation: 0,
+          disabledBackgroundColor: AppColors.AppPrimaryColor.withValues(alpha: 0.6),
         ),
-        child: Text(
-          'Proceed',
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: controller.isLoading.value
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              )
+            : Text(
+                'Proceed',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
-    );
+    ));
   }
 }

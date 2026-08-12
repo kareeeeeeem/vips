@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/admin_bottomsheet.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 /// Controller for TeamSync screen using GetX
 class TeamsController extends GetxController
@@ -50,48 +53,15 @@ class TeamsController extends GetxController
   Future<void> loadEmployees() async {
     try {
       _isLoading.value = true;
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Mock data
-      _employees.value = [
-        Employee(
-          id: '1',
-          name: 'John Doe',
-          role: 'Admin',
-          status: EmployeeStatus.active,
-          email: 'john.doe@example.com',
-          joinDate: DateTime.now().subtract(const Duration(days: 30)),
-        ),
-        Employee(
-          id: '2',
-          name: 'Jane Smith',
-          role: 'Manager',
-          status: EmployeeStatus.pending,
-          email: 'jane.smith@example.com',
-          joinDate: DateTime.now().subtract(const Duration(days: 10)),
-        ),
-        Employee(
-          id: '3',
-          name: 'Bob Johnson',
-          role: 'Staff',
-          status: EmployeeStatus.active,
-          email: 'bob.johnson@example.com',
-          joinDate: DateTime.now().subtract(const Duration(days: 60)),
-        ),
-        Employee(
-          id: '4',
-          name: 'Alice Brown',
-          role: 'Admin',
-          status: EmployeeStatus.removed,
-          email: 'alice.brown@example.com',
-          joinDate: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-      ];
-
-      filterEmployees();
+      
+      final response = await ApiService().get('/user/teams');
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        _employees.value = data.map((json) => Employee.fromJson(json)).toList();
+        filterEmployees();
+      }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to load employees: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -130,20 +100,24 @@ class TeamsController extends GetxController
   Future<void> addEmployee(Employee employee) async {
     try {
       _isLoading.value = true;
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final response = await ApiService().post('/user/teams', employee.toJson());
+      
+      if (response.success && response.data != null) {
+        _employees.insert(0, Employee.fromJson(response.data));
+        filterEmployees();
 
-      _employees.add(employee);
-      filterEmployees();
-
-      Get.back();
-      Get.snackbar(
-        'Success',
-        'Employee added successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+        Get.back();
+        safeSnackbar(
+          'Success',
+          'Employee added successfully',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        safeSnackbar('Error', response.message);
+      }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to add employee: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -157,22 +131,28 @@ class TeamsController extends GetxController
   Future<void> updateEmployeeStatus(String id, EmployeeStatus status) async {
     try {
       _isLoading.value = true;
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final response = await ApiService().put('/user/teams/$id/status', {
+        'status': status.name,
+      });
 
-      final index = _employees.indexWhere((e) => e.id == id);
-      if (index != -1) {
-        _employees[index] = _employees[index].copyWith(status: status);
-        filterEmployees();
+      if (response.success) {
+        final index = _employees.indexWhere((e) => e.id == id);
+        if (index != -1) {
+          _employees[index] = _employees[index].copyWith(status: status);
+          filterEmployees();
 
-        Get.snackbar(
-          'Success',
-          'Employee status updated',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+          safeSnackbar(
+            'Success',
+            'Employee status updated',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      } else {
+        safeSnackbar('Error', response.message);
       }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to update status: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -186,10 +166,18 @@ class TeamsController extends GetxController
   Future<void> removeEmployee(String id) async {
     try {
       _isLoading.value = true;
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      await updateEmployeeStatus(id, EmployeeStatus.removed);
+      
+      final response = await ApiService().delete('/user/teams/$id');
+      
+      if (response.success) {
+        _employees.removeWhere((e) => e.id == id);
+        filterEmployees();
+        safeSnackbar('Success', 'Employee removed');
+      } else {
+        safeSnackbar('Error', response.message);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to remove employee: $e');
     } finally {
       _isLoading.value = false;
     }
@@ -216,6 +204,120 @@ class TeamsController extends GetxController
   void showOperationsSheet(Employee employee) {
     Get.bottomSheet(
       OperationAdminBottomSheet(employee: employee),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void showFilterSheet() {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Filter Employees', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: ['All', 'Active', 'Pending', 'Removed'].map((f) {
+                return ActionChip(
+                  label: Text(f),
+                  onPressed: () {
+                    Get.back();
+                    final idx = ['All', 'Active', 'Pending', 'Removed'].indexOf(f);
+                    tabController.animateTo(idx);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void exportEmployees() {
+    final list = _employees.toList();
+    if (list.isEmpty) {
+      safeSnackbar('No Data', 'No employees to export');
+      return;
+    }
+    final buffer = StringBuffer('VIPs Teams Export\n${'─' * 40}\n');
+    for (final e in list) {
+      buffer.writeln('${e.name} | ${e.role} | ${e.status.displayName} | ${e.email}');
+    }
+    buffer.writeln('${'─' * 40}\nTotal: ${list.length} employees');
+    SharePlus.instance.share(ShareParams(text: buffer.toString(), subject: 'VIPs Teams Export'));
+  }
+
+  void showEditEmployeeSheet(Employee employee) {
+    final nameCtrl = TextEditingController(text: employee.name);
+    final emailCtrl = TextEditingController(text: employee.email);
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20,
+          bottom: MediaQuery.of(Get.context!).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Edit Employee', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  Get.back();
+                  try {
+                    final response = await ApiService().put('/admin/employees/${employee.id}', {
+                      'name': nameCtrl.text.trim(),
+                      'email': emailCtrl.text.trim(),
+                    });
+                    if (response.success) {
+                      safeSnackbar('Success', 'Employee updated', backgroundColor: Colors.green, colorText: Colors.white);
+                      loadEmployees();
+                    } else {
+                      safeSnackbar('Error', response.message);
+                    }
+                  } catch (_) {
+                    safeSnackbar('Error', 'Failed to update employee');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
@@ -256,6 +358,32 @@ class Employee {
       email: email ?? this.email,
       joinDate: joinDate ?? this.joinDate,
     );
+  }
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    EmployeeStatus statusEnum = EmployeeStatus.pending;
+    if (json['status'] == 'active') statusEnum = EmployeeStatus.active;
+    if (json['status'] == 'removed') statusEnum = EmployeeStatus.removed;
+
+    return Employee(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      role: json['role'] ?? '',
+      status: statusEnum,
+      email: json['email'] ?? '',
+      joinDate: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'role': role,
+      'status': status.name,
+      'email': email,
+    };
   }
 }
 

@@ -72,7 +72,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -105,7 +105,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -128,7 +128,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -172,7 +172,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
                     icon: Icons.south_west_rounded,
                     gradient: [
                       AppColors.AppPrimaryColor,
-                      AppColors.AppPrimaryColor.withOpacity(0.8),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -212,7 +212,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: gradient[0].withOpacity(0.2),
+            color: gradient[0].withValues(alpha: 0.2),
             blurRadius: 16,
             offset: Offset(0, 6),
           ),
@@ -230,7 +230,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
                   fontFamily: 'Poppins',
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
               Icon(icon, color: Colors.white, size: 20.sp),
@@ -323,7 +323,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: Offset(0, 4),
             ),
@@ -448,8 +448,12 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
 
 // Filter Bottom Sheet
 class FilterBottomSheet extends StatelessWidget {
+  static const _filters = ['All Transactions', 'Rewards Only', 'Extracts Only', 'Pending'];
+  static const _filterValues = ['All', 'reward', 'extract', 'pending'];
+
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<TransactionsExtractController>();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -477,48 +481,57 @@ class FilterBottomSheet extends StatelessWidget {
             ),
           ),
           SizedBox(height: 24.h),
-          _buildFilterOption('All Transactions', true),
-          _buildFilterOption('Rewards Only', false),
-          _buildFilterOption('Extracts Only', false),
-          _buildFilterOption('Pending', false),
+          Obx(() => Column(
+            children: List.generate(_filters.length, (i) {
+              final selected = controller.selectedFilter.value == _filterValues[i];
+              return _buildFilterOption(_filters[i], selected, () {
+                controller.selectedFilter.value = _filterValues[i];
+                Get.back();
+                controller.loadTransactions();
+              });
+            }),
+          )),
           SizedBox(height: 16.h),
         ],
       ),
     );
   }
 
-  Widget _buildFilterOption(String title, bool selected) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color:
-            selected
-                ? AppColors.AppPrimaryColor.withOpacity(0.1)
-                : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade200,
-          width: 1.5,
+  Widget _buildFilterOption(String title, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color:
+              selected
+                  ? AppColors.AppPrimaryColor.withValues(alpha: 0.1)
+                  : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade200,
+            width: 1.5,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-            color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade400,
-            size: 24.sp,
-          ),
-          SizedBox(width: 12.w),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: selected ? AppColors.AppPrimaryColor : Colors.black87,
+        child: Row(
+          children: [
+            Icon(
+              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade400,
+              size: 24.sp,
             ),
-          ),
-        ],
+            SizedBox(width: 12.w),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppColors.AppPrimaryColor : Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -585,7 +598,7 @@ class TransactionActionsSheet extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(icon, color: AppColors.AppPrimaryColor, size: 20.sp),

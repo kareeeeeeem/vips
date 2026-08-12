@@ -8,7 +8,7 @@ import '../../models/gift_voucher.dart';
 
 // Vue principale des Gift Vouchers avec liste horizontale
 class GiftVoucherView extends GetView<HomeController> {
-  const GiftVoucherView({Key? key}) : super(key: key);
+  const GiftVoucherView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,7 @@ class GiftVoucherView extends GetView<HomeController> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -79,7 +79,7 @@ class GiftVoucherView extends GetView<HomeController> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF06B6D4).withOpacity(0.4),
+        color: const Color(0xFF06B6D4).withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(0),
       ),
       child: Column(
@@ -95,7 +95,7 @@ class GiftVoucherView extends GetView<HomeController> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withOpacity(0.1),
+                        color: const Color(0xFF06B6D4).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -318,7 +318,7 @@ class GiftVoucherView extends GetView<HomeController> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     spreadRadius: 1,
                                     blurRadius: 5,
                                   ),

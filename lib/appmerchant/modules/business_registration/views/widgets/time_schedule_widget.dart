@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/business_registration_controller.dart';
 
 class TimeScheduleWidget extends GetView<BusinessRegistrationController> {
-  const TimeScheduleWidget({Key? key}) : super(key: key);
+  const TimeScheduleWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class TimeScheduleWidget extends GetView<BusinessRegistrationController> {
             children: controller.schedule.keys.map((day) {
               final data = controller.schedule[day]!;
               final isEnabled = data['enabled'] as bool;
-              final timeString = data['time'] as String;
+              final timeString = '${data['open']} - ${data['close']}';
 
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),

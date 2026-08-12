@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class VendorHomeController extends GetxController {
   // Observable states
@@ -12,19 +13,25 @@ class VendorHomeController extends GetxController {
   final _selectedOrderIndex = 0.obs;
   final _selectedOfferTab = 0.obs; // 0: All, 1: Discount, 2: Voucher
 
-  // Static data
-  final _todayEarning = 1250.50.obs;
-  final _weekEarning = 8750.25.obs;
-  final _monthEarning = 35420.80.obs;
-  final _cashInHand = 5.00.obs;
+  final _todayEarning = 0.0.obs;
+  final _weekEarning = 0.0.obs;
+  final _monthEarning = 0.0.obs;
+  final _cashInHand = 0.0.obs;
   final _hasNotification = true.obs;
 
   // Store info
-  final _storeName = 'Pizza Hub'.obs;
-  final _storeCategory = 'Restaurant'.obs;
-  final _currentPackage = 'Platinum'.obs;
-  final _uploadLimit = '5000 time(s)'.obs;
-  final _packageExpiry = '2030-03-01'.obs;
+  final _storeName = ''.obs;
+  final _storeCategory = ''.obs;
+  final _currentPackage = ''.obs;
+  final _uploadLimit = ''.obs;
+  final _packageExpiry = ''.obs;
+  final _storePhone = ''.obs;
+  final _storeAddress = ''.obs;
+  final _storeWebsite = ''.obs;
+  final _storeEmail = ''.obs;
+
+  // Recent orders from API
+  final _recentOrders = <Map<String, dynamic>>[].obs;
   // Remplacer offerTabs par orderTabs
   final orderTabs = ['Last Running Order', 'Recent Running Order'];
   int selectedOrderTab = 0;
@@ -35,7 +42,7 @@ class VendorHomeController extends GetxController {
   }
 
   int getRecentOrdersCount() {
-    return 3; // Nombre de commandes récentes
+    return _recentOrders.length;
   }
 
   List<Map<String, dynamic>> getFilteredOrders() {
@@ -47,30 +54,15 @@ class VendorHomeController extends GetxController {
   }
 
   List<Map<String, dynamic>> getLastRunningOrders() {
-    return [
-      {
-        'orderId': 'SP 0023900',
-        'itemsCount': 3,
-        'status': 'Unpaid',
-        'paymentMethod': 'COD',
-        'brandName': 'Brand Name',
-        'address': '222222222222222222222...',
-        'deliveryTime': 30,
-        'timeLess': 16,
-        'restaurantName': 'Uttora Coffee House',
-        'orderedAt': '06 Sept, 10:00pm',
-        'images': [
-          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-          'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400',
-        ],
-      },
-    ];
+    return _recentOrders
+        .where(
+          (o) => o['status'] != 'delivered' && o['status'] != 'cancelled',
+        )
+        .toList();
   }
 
   List<Map<String, dynamic>> getRecentRunningOrders() {
-    return [
-      // Vos commandes récentes ici
-    ];
+    return _recentOrders.toList();
   }
 
   // AppLifecycleListener
@@ -95,6 +87,10 @@ class VendorHomeController extends GetxController {
   String get currentPackage => _currentPackage.value;
   String get uploadLimit => _uploadLimit.value;
   String get packageExpiry => _packageExpiry.value;
+  String get storePhone => _storePhone.value;
+  String get storeAddress => _storeAddress.value;
+  String get storeWebsite => _storeWebsite.value;
+  String get storeEmail => _storeEmail.value;
 
   // Static order data
   final List<String> orderStatuses = [
@@ -107,56 +103,9 @@ class VendorHomeController extends GetxController {
 
   final List<String> offerTabs = ['All', 'Discount', 'Voucher'];
 
-  final List<Map<String, dynamic>> orders = [
-    {
-      'id': '#12345',
-      'customerName': 'John Doe',
-      'items': 3,
-      'amount': 45.50,
-      'status': 'Pending',
-      'time': '10:30 AM',
-    },
-    {
-      'id': '#12346',
-      'customerName': 'Jane Smith',
-      'items': 2,
-      'amount': 32.00,
-      'status': 'Pending',
-      'time': '10:45 AM',
-    },
-    {
-      'id': '#12347',
-      'customerName': 'Bob Johnson',
-      'items': 5,
-      'amount': 67.25,
-      'status': 'Pending',
-      'time': '11:00 AM',
-    },
-  ];
+  final List<Map<String, dynamic>> orders = [];
 
-  // Offers/Products data
-  final List<Map<String, dynamic>> offers = [
-    {
-      'id': '1',
-      'name': 'Mcdonald\'s happy meal',
-      'rating': 4.5,
-      'type': 'Free',
-      'distance': '20 m',
-      'discount': '+3.00 off',
-      'image': '', // Add your image URL
-      'category': 'discount',
-    },
-    {
-      'id': '2',
-      'name': 'Big Mac Combo',
-      'rating': 4.8,
-      'type': 'Premium',
-      'distance': '15 m',
-      'discount': '+5.00 off',
-      'image': '',
-      'category': 'voucher',
-    },
-  ];
+  final List<Map<String, dynamic>> offers = [];
 
   @override
   void onInit() {
@@ -175,19 +124,56 @@ class VendorHomeController extends GetxController {
 
   Future<void> loadData() async {
     _isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    _todayEarning.value = 1250.50;
-    _weekEarning.value = 8750.25;
-    _monthEarning.value = 35420.80;
-    _cashInHand.value = 5.00;
-    _hasNotification.value = true;
+    try {
+      final api = ApiService();
+      final results = await Future.wait([
+        api.get('/merchant/stats'),
+        api.get('/merchant/profile'),
+        api.get('/merchant/orders', queryParams: {'status': 'all', 'limit': 10}),
+      ]);
+
+      // Stats
+      final statsRes = results[0];
+      if (statsRes.success && statsRes.data != null) {
+        final d = statsRes.data as Map<String, dynamic>;
+        _todayEarning.value =
+            ((d['today'] as Map?)?['sales'] as num?)?.toDouble() ?? 0.0;
+        _monthEarning.value =
+            ((d['month'] as Map?)?['sales'] as num?)?.toDouble() ?? 0.0;
+        _weekEarning.value =
+            ((d['week'] as Map?)?['sales'] as num?)?.toDouble() ?? (_monthEarning.value / 4);
+      }
+
+      // Profile
+      final profileRes = results[1];
+      if (profileRes.success && profileRes.data != null) {
+        final p = profileRes.data as Map<String, dynamic>;
+        _storeName.value = p['storeName'] ?? p['fullName'] ?? '';
+        _storeCategory.value = p['storeCategory'] ?? '';
+        _currentPackage.value = p['packageName'] ?? '';
+        _storePhone.value = p['phone'] ?? '';
+        _storeAddress.value = p['address'] ?? '';
+        _storeWebsite.value = p['website'] ?? '';
+        _storeEmail.value = p['email'] ?? '';
+      }
+
+      // Recent orders
+      final ordersRes = results[2];
+      if (ordersRes.success && ordersRes.data != null) {
+        final d = ordersRes.data as Map<String, dynamic>;
+        final orders = (d['orders'] as List?) ?? [];
+        _recentOrders.assignAll(
+          orders.map((o) => Map<String, dynamic>.from(o as Map)).toList(),
+        );
+      }
+    } catch (_) {}
     _isLoading.value = false;
   }
 
   Future<void> _checkSystemNotification() async {
     if (await Permission.notification.status.isDenied ||
         await Permission.notification.status.isPermanentlyDenied) {
-      print('Notification is disabled');
+      debugPrint('Notification is disabled');
     }
   }
 

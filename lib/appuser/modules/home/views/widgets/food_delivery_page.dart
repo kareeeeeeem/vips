@@ -6,6 +6,7 @@ import 'auth_bottom_sheet.dart';
 import 'build_appbar.dart';
 import 'build_drawer_menu.dart';
 import 'build_section_category_filter.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 // ============================================================
 // CONTROLLER (Pour GetX)
@@ -118,7 +119,7 @@ class FoodDeliveryController extends GetxController {
   // Changer de catégorie
   void changeCategory(int index) {
     selectedCategory.value = index;
-    print('Category changed to: $index');
+    debugPrint('Category changed to: $index');
     // Rechargez vos produits selon la catégorie
     filterProductsByCategory(index);
   }
@@ -126,7 +127,7 @@ class FoodDeliveryController extends GetxController {
   // Changer de filtre
   void changeFilter(String filter) {
     selectedFilter.value = filter;
-    print('Filter changed to: $filter');
+    debugPrint('Filter changed to: $filter');
     // Appliquez le filtre
     applyFilter(filter);
   }
@@ -158,9 +159,9 @@ class FoodDeliveryController extends GetxController {
 
   // Ajouter au panier
   void addToCart(FoodItem item) {
-    print('Added to cart: ${item.name}');
+    debugPrint('Added to cart: ${item.name}');
     // Votre logique panier ici
-    Get.snackbar(
+    safeSnackbar(
       'Ajouté au panier',
       item.name,
       snackPosition: SnackPosition.BOTTOM,
@@ -170,7 +171,7 @@ class FoodDeliveryController extends GetxController {
 
   // Ouvrir les détails
   void openProductDetails(FoodItem item) {
-    print('Opening details for: ${item.name}');
+    debugPrint('Opening details for: ${item.name}');
     // Naviguer vers la page de détails
     // Get.to(() => ProductDetailPage(product: item));
   }
@@ -237,8 +238,8 @@ class FoodItem {
 }
 
 class FoodDeliveryPage extends GetView<FoodDeliveryController> {
-  FoodDeliveryPage({Key? key}) : super(key: key);
-  GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  FoodDeliveryPage({super.key});
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -269,246 +270,6 @@ class FoodDeliveryPage extends GetView<FoodDeliveryController> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildIconButton(Icons.menu, Colors.white, Colors.black87, () {}),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'What are you l...',
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildIconButton(
-            Icons.notifications_outlined,
-            Colors.white,
-            Colors.black87,
-            () {},
-          ),
-          const SizedBox(width: 12),
-          _buildIconButton(
-            Icons.shopping_bag_outlined,
-            const Color(0xFFFF6B35),
-            Colors.white,
-            () {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton(
-    IconData icon,
-    Color bgColor,
-    Color iconColor,
-    VoidCallback onPressed,
-  ) {
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color:
-                bgColor == const Color(0xFFFF6B35)
-                    ? bgColor.withOpacity(0.3)
-                    : Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: iconColor),
-        onPressed: onPressed,
-      ),
-    );
-  }
-
-  Widget _buildCategoriesSection() {
-    return SizedBox(
-      height: 100,
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          _buildPromoBadge(),
-          const SizedBox(width: 16),
-          Container(width: 1, height: 60, color: Colors.grey[300]),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Obx(
-              () => ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _buildCategory(0, 'Category 1', true),
-                  _buildCategory(1, 'Category 2', false),
-                  _buildCategory(2, 'Category 3', false),
-                  _buildCategory(3, 'Category 4', false),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPromoBadge() {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFF6B35),
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(Icons.percent, color: Colors.white, size: 32),
-    );
-  }
-
-  Widget _buildCategory(int index, String title, bool hasTopBadge) {
-    return Obx(() {
-      final isSelected = controller.selectedCategory.value == index;
-
-      return GestureDetector(
-        onTap: () => controller.changeCategory(index),
-        child: Container(
-          width: 90,
-          margin: const EdgeInsets.only(right: 16),
-          child: Column(
-            children: [
-              Container(
-                width: 65,
-                height: 65,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color:
-                        isSelected
-                            ? const Color(0xFFFF6B35)
-                            : Colors.transparent,
-                    width: 3,
-                  ),
-                ),
-                child: const Icon(Icons.restaurant_menu, size: 30),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color:
-                      isSelected ? const Color(0xFFFF6B35) : Colors.grey[700],
-                ),
-              ),
-              if (hasTopBadge && index == 0)
-                const Text(
-                  'TOP',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF6B35),
-                  ),
-                ),
-              if (isSelected)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  width: 50,
-                  height: 3,
-                  color: const Color(0xFFFF6B35),
-                ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildFiltersSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _buildFilterIcon(Icons.tune),
-          const SizedBox(width: 12),
-          _buildFilterIcon(Icons.sort),
-          const SizedBox(width: 16),
-          Container(width: 1, height: 30, color: Colors.grey[300]),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Obx(
-              () => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildFilterTab('Hot Deals'),
-                  _buildFilterTab('Nearest'),
-                  _buildFilterTab('Recent'),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterIcon(IconData icon) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, size: 20, color: Colors.grey[600]),
-    );
-  }
-
-  Widget _buildFilterTab(String title) {
-    final isSelected = controller.selectedFilter.value == title;
-
-    return GestureDetector(
-      onTap: () => controller.changeFilter(title),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? Colors.black : Colors.grey[600],
-        ),
-      ),
-    );
-  }
 
   Widget _buildProductsGrid() {
     return Obx(
@@ -537,7 +298,7 @@ class FoodDeliveryPage extends GetView<FoodDeliveryController> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class DeliveryOrderDetailsView extends StatelessWidget {
   const DeliveryOrderDetailsView({super.key});
@@ -108,7 +110,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20.r),
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
@@ -174,7 +176,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -330,7 +332,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -422,7 +424,15 @@ class DeliveryOrderDetailsView extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final order = Get.arguments as Map<String, dynamic>? ?? {};
+                    final phone = order['sellerPhone'] ?? order['merchantPhone'] ?? order['merchant']?['phone'] ?? '';
+                    if (phone.toString().isNotEmpty) {
+                      launchUrl(Uri.parse('tel:$phone'));
+                    } else {
+                      Get.toNamed('/contact');
+                    }
+                  },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey.shade400, width: 1.5),
                     padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -443,7 +453,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
               SizedBox(width: 12.w),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () => Get.back(),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.orange.shade300, width: 1.5),
                     padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -582,7 +592,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -714,7 +724,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
           GestureDetector(
             onTap: () {
               // Open camera or gallery
-              Get.snackbar('Camera', 'Opening camera to take delivery picture');
+              safeSnackbar('Camera', 'Opening camera to take delivery picture');
             },
             child: Container(
               width: 80.w,
@@ -751,7 +761,7 @@ class DeliveryOrderDetailsView extends StatelessWidget {
             onConfirm: () {
               Get.back();
               Get.back();
-              Get.snackbar(
+              safeSnackbar(
                 'Success',
                 'Delivery completed successfully',
                 backgroundColor: Colors.green,

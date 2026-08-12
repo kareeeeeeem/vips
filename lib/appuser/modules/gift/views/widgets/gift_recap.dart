@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import '../../../../design_system/organisms/pin/pin.dart';
@@ -9,12 +10,22 @@ import '../../../mobile/views/widgets/order_details.dart';
 
 class GiftRecapController extends GetxController {
   // Gift details
-  final String transferTo = '#12355866'; // User ID of recipient
+  final String transferTo = '#12355866';
   final String offerId = '#123456';
   final bool isExpressDelivery = true;
   final double giftAmount = 2000.0;
   final double fees = 200.0;
   final double vpToAwards = 1000.0;
+
+  String _userPin = '0000';
+
+  @override
+  void onInit() {
+    super.onInit();
+    SharedPreferences.getInstance().then((prefs) {
+      _userPin = prefs.getString('user_pin') ?? '0000';
+    });
+  }
 
   double get totalVP => vpToAwards + fees;
 
@@ -22,10 +33,9 @@ class GiftRecapController extends GetxController {
     Get.to(
       () => PinValidator(
         pinLength: 4,
-        primaryColor:
-            Colors.orange, // Utilisez la couleur primaire de votre app
+        primaryColor: Colors.orange,
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -51,7 +61,7 @@ class GiftRecapController extends GetxController {
 }
 
 class GiftRecapView extends GetView<GiftRecapController> {
-  const GiftRecapView({Key? key}) : super(key: key);
+  const GiftRecapView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +121,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
         borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 28,
             offset: Offset(0, 8),
           ),
@@ -142,7 +152,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
           width: 61.w,
           height: 58.h,
           decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withOpacity(0.1),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Icon(
@@ -183,7 +193,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
   Widget _buildDivider() {
     return Container(
       height: 1,
-      decoration: BoxDecoration(color: Colors.grey.withOpacity(0.2)),
+      decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.2)),
     );
   }
 
@@ -217,7 +227,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
         ),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: AppColors.AppPrimaryColor.withOpacity(0.3),
+          color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),

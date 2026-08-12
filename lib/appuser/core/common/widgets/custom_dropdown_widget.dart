@@ -136,7 +136,7 @@ class CustomDropdownState<T> extends State<CustomDropdown<T?>>
                     borderRadius: widget.dropdownStyle.borderRadius ?? BorderRadius.zero,
                     color: widget.dropdownStyle.color,
                     child: SizeTransition(
-                      axisAlignment: 1,
+                      axisAlignment: 1.0,
                       sizeFactor: _expandAnimation,
                       child: ConstrainedBox(
                         constraints: widget.dropdownStyle.constraints ??

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/modules/merchant_auth/controllers/merchant_auth_controller.dart';
+import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class MerchantDrawer extends StatelessWidget {
@@ -72,7 +73,7 @@ class MerchantDrawer extends StatelessWidget {
                   _drawerItem(
                     icon: Icons.help_outline_rounded,
                     label: 'Help & Support',
-                    onTap: () {},
+                    onTap: () => _showHelp(),
                   ),
                 ],
               ),
@@ -86,6 +87,7 @@ class MerchantDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader() {
+    final homeCtrl = Get.find<MerchantHomeController>();
     return Container(
       padding: EdgeInsets.fromLTRB(20.w, 60.h, 20.w, 24.h),
       decoration: const BoxDecoration(
@@ -94,19 +96,25 @@ class MerchantDrawer extends StatelessWidget {
           topRight: Radius.circular(24),
         ),
       ),
-      child: Row(
+      child: Obx(() => Row(
         children: [
           Container(
-            padding: EdgeInsets.all(8.w),
+            width: 56.w,
+            height: 56.w,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: Image.asset(
-              'assets/icons/iconmerchant.png',
-              width: 40.w,
-              height: 40.w,
-            ),
+            child: homeCtrl.storeImageUrl.value.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: Image.network(homeCtrl.storeImageUrl.value, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset('assets/icons/iconmerchant.png', width: 40.w, height: 40.w)),
+                  )
+                : Padding(
+                    padding: EdgeInsets.all(8.w),
+                    child: Image.asset('assets/icons/iconmerchant.png', width: 40.w, height: 40.w),
+                  ),
           ),
           SizedBox(width: 16.w),
           Expanded(
@@ -114,21 +122,14 @@ class MerchantDrawer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "McDonald's",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  homeCtrl.storeName.value.isNotEmpty ? homeCtrl.storeName.value : 'My Store',
+                  style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  "merchant@mcdonalds.com",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12.sp,
-                  ),
+                  homeCtrl.storePhone.value.isNotEmpty ? homeCtrl.storePhone.value : 'Merchant',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12.sp),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -136,7 +137,7 @@ class MerchantDrawer extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -156,7 +157,7 @@ class MerchantDrawer extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF10B981).withOpacity(0.1) : Colors.transparent,
+              color: isActive ? const Color(0xFF10B981).withValues(alpha: 0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Row(
@@ -180,6 +181,48 @@ class MerchantDrawer extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showHelp() {
+    Get.back();
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.support_agent_rounded, size: 48, color: Color(0xFF10B981)),
+            const SizedBox(height: 12),
+            const Text('Help & Support', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Contact our merchant support team.',
+                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.email_outlined, color: Color(0xFF10B981)),
+              ),
+              title: const Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('merchant@vips.tn'),
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.phone_outlined, color: Color(0xFF10B981)),
+              ),
+              title: const Text('Phone Support', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text('+216 71 000 000'),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
     );
   }
 

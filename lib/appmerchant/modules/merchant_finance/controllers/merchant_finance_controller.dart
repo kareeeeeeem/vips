@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum FinanceType { income, expense }
 
@@ -10,7 +12,7 @@ class FinanceTransaction {
   final double amount;
   final DateTime date;
   final FinanceType type;
-  final String account; // 'Cash' or 'Bank'
+  final String account;
 
   FinanceTransaction({
     required this.id,
@@ -21,16 +23,33 @@ class FinanceTransaction {
     required this.type,
     required this.account,
   });
+
+  factory FinanceTransaction.fromJson(Map<String, dynamic> json) {
+    return FinanceTransaction(
+      id: json['_id'] ?? json['id'] ?? '',
+      title: json['description'] ?? json['title'] ?? '',
+      category: json['category'] ?? 'Other',
+      amount: (json['amount'] ?? 0).toDouble(),
+      date: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      type: json['type'] == 'income' || json['type'] == 'reward' || json['type'] == 'gift_back'
+          ? FinanceType.income
+          : FinanceType.expense,
+      account: json['account'] ?? 'Cash',
+    );
+  }
 }
 
 class MerchantFinanceController extends GetxController {
   final transactions = <FinanceTransaction>[].obs;
-  
+  final isLoading = false.obs;
+
   // Stats
   final totalIncome = 0.0.obs;
   final totalExpense = 0.0.obs;
-  final cashBalance = 1500.0.obs;
-  final bankBalance = 5400.0.obs;
+  final cashBalance = 0.0.obs;
+  final bankBalance = 0.0.obs;
 
   final categories = [
     'Sale',
@@ -45,84 +64,53 @@ class MerchantFinanceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadMockData();
-    _calculateStats();
+    loadFinanceData();
   }
 
-  void _loadMockData() {
-    transactions.assignAll([
-      FinanceTransaction(
-        id: '1',
-        title: 'Monthly Rent',
-        category: 'Rent',
-        amount: 500.0,
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        type: FinanceType.expense,
-        account: 'Bank',
-      ),
-      FinanceTransaction(
-        id: '2',
-        title: 'Cash Sale - Item A',
-        category: 'Sale',
-        amount: 150.0,
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        type: FinanceType.income,
-        account: 'Cash',
-      ),
-      FinanceTransaction(
-        id: '3',
-        title: 'Electricity Bill',
-        category: 'Utilities',
-        amount: 80.0,
-        date: DateTime.now(),
-        type: FinanceType.expense,
-        account: 'Cash',
-      ),
-    ]);
-  }
-
-  void _calculateStats() {
-    double income = 0;
-    double expense = 0;
-    for (var tx in transactions) {
-      if (tx.type == FinanceType.income) {
-        income += tx.amount;
-      } else {
-        expense += tx.amount;
+  Future<void> loadFinanceData() async {
+    isLoading.value = true;
+    try {
+      final response = await ApiService().get('/merchant/finance');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        final List<dynamic> txList = data['transactions'] ?? [];
+        transactions.value = txList.map((e) => FinanceTransaction.fromJson(e)).toList();
+        totalIncome.value = (data['totalIncome'] ?? 0).toDouble();
+        totalExpense.value = (data['totalExpense'] ?? 0).toDouble();
+        cashBalance.value = (data['cashBalance'] ?? 0).toDouble();
       }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to load finance data: $e');
+    } finally {
+      isLoading.value = false;
     }
-    totalIncome.value = income;
-    totalExpense.value = expense;
   }
 
-  void addTransaction({
+  Future<void> addTransaction({
     required String title,
     required String category,
     required double amount,
     required FinanceType type,
     required String account,
-  }) {
-    final newTx = FinanceTransaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      category: category,
-      amount: amount,
-      date: DateTime.now(),
-      type: type,
-      account: account,
-    );
-    
-    transactions.insert(0, newTx);
-    
-    if (type == FinanceType.income) {
-      if (account == 'Cash') cashBalance.value += amount;
-      else bankBalance.value += amount;
-    } else {
-      if (account == 'Cash') cashBalance.value -= amount;
-      else bankBalance.value -= amount;
+  }) async {
+    try {
+      final response = await ApiService().post('/merchant/finance', {
+        'title': title,
+        'category': category,
+        'amount': amount,
+        'type': type == FinanceType.income ? 'income' : 'expense',
+        'account': account,
+      });
+
+      if (response.success) {
+        await loadFinanceData();
+        Get.back();
+        safeSnackbar('Success', 'Transaction added', backgroundColor: Colors.green, colorText: Colors.white);
+      } else {
+        safeSnackbar('Error', response.message);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to add transaction: $e');
     }
-    
-    _calculateStats();
-    Get.back();
   }
 }

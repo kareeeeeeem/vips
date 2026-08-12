@@ -14,7 +14,7 @@ void showGiftBackErrorPopup(BuildContext context) {
 }
 
 class GiftBackErrorPopup extends StatelessWidget {
-  const GiftBackErrorPopup({Key? key}) : super(key: key);
+  const GiftBackErrorPopup({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/edit_profile_controller.dart';
 
 class EditProfileView extends GetView<EditProfileController> {
-  const EditProfileView({Key? key}) : super(key: key);
+  const EditProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(EditProfileController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -59,7 +58,7 @@ class EditProfileView extends GetView<EditProfileController> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -67,39 +66,63 @@ class EditProfileView extends GetView<EditProfileController> {
       ),
       child: Row(
         children: [
-          Stack(
-            children: [
-              Container(
-                width: 80.w,
-                height: 80.h,
-                decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppColors.AppPrimaryColor,
-                  size: 36.sp,
-                ),
-              ),
-              Positioned(
-                right: -4,
-                bottom: -4,
-                child: Container(
-                  padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.AppPrimaryColor,
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: Colors.white, width: 2),
+          GestureDetector(
+            onTap: controller.pickAndUploadImage,
+            child: Obx(() {
+              final url = controller.profileImageUrl.value;
+              final uploading = controller.isUploadingImage.value;
+              return Stack(
+                children: [
+                  Container(
+                    width: 80.w,
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: uploading
+                        ? const Center(child: CircularProgressIndicator())
+                        : (url != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(20.r),
+                                child: Image.network(
+                                  url,
+                                  width: 80.w,
+                                  height: 80.h,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.person_rounded,
+                                    color: AppColors.AppPrimaryColor,
+                                    size: 36.sp,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.person_rounded,
+                                color: AppColors.AppPrimaryColor,
+                                size: 36.sp,
+                              )),
                   ),
-                  child: Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.white,
-                    size: 14.sp,
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.AppPrimaryColor,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        color: Colors.white,
+                        size: 14.sp,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            }),
           ),
           SizedBox(width: 16.w),
           Expanded(
@@ -138,7 +161,7 @@ class EditProfileView extends GetView<EditProfileController> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -292,54 +315,6 @@ class EditProfileView extends GetView<EditProfileController> {
     );
   }
 
-  Widget _buildDateField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'ID Expiry Date',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        TextFormField(
-          controller: controller.expireDateController,
-          readOnly: true,
-          onTap: () => controller.selectDate(Get.context!),
-          decoration: InputDecoration(
-            hintText: 'MM/YYYY',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            prefixIcon: Icon(Icons.calendar_today, color: Colors.grey.shade600),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(
-                color: AppColors.AppPrimaryColor,
-                width: 2,
-              ),
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16.w,
-              vertical: 16.h,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildGenderSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +339,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     decoration: BoxDecoration(
                       color:
                           controller.isMale.value
-                              ? AppColors.AppPrimaryColor.withOpacity(0.1)
+                              ? AppColors.AppPrimaryColor.withValues(alpha: 0.1)
                               : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
@@ -430,7 +405,7 @@ class EditProfileView extends GetView<EditProfileController> {
                     decoration: BoxDecoration(
                       color:
                           !controller.isMale.value
-                              ? AppColors.AppPrimaryColor.withOpacity(0.1)
+                              ? AppColors.AppPrimaryColor.withValues(alpha: 0.1)
                               : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(

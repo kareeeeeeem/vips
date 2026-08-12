@@ -11,11 +11,10 @@ import 'package:vip/appuser/modules/promotions/views/widgets/promotion_detail_di
 import '../controllers/promotions_controller.dart';
 
 class PromotionsView extends GetView<PromotionsController> {
-  const PromotionsView({Key? key}) : super(key: key);
+  const PromotionsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(PromotionsController());
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -55,7 +54,7 @@ class PromotionsView extends GetView<PromotionsController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -228,16 +227,33 @@ class PromotionsView extends GetView<PromotionsController> {
   }
 
   Widget _buildPromotionsList() {
-    return Obx(
-      () => ListView.builder(
+    return Obx(() {
+      if (controller.currentPromotions.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.local_offer_outlined, size: 56.sp, color: Colors.grey.shade300),
+              SizedBox(height: 16.h),
+              Text('No promotions available',
+                  style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600)),
+              SizedBox(height: 8.h),
+              Text('Check back later for exclusive deals',
+                  style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade400)),
+            ],
+          ),
+        );
+      }
+      return ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         itemCount: controller.currentPromotions.length,
         itemBuilder: (context, index) {
           final promotion = controller.currentPromotions[index];
           return _buildRealisticTicket(promotion);
         },
-      ),
-    );
+      );
+    });
   }
 
   // ==================== ULTRA-REALISTIC TICKET ====================
@@ -261,14 +277,14 @@ class PromotionsView extends GetView<PromotionsController> {
                   boxShadow: [
                     // Ombre principale
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                       spreadRadius: 0,
                     ),
                     // Ombre secondaire pour plus de profondeur
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                       spreadRadius: 0,
@@ -448,7 +464,7 @@ class PromotionsView extends GetView<PromotionsController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -586,7 +602,7 @@ class PaperTexturePainter extends CustomPainter {
   void paint(Canvas canvas, Size sizes) {
     final paint =
         Paint()
-          ..color = const Color(0xFFFAFAFA).withOpacity(0.3)
+          ..color = const Color(0xFFFAFAFA).withValues(alpha: 0.3)
           ..style = PaintingStyle.fill;
 
     // Ajouter un grain très subtil

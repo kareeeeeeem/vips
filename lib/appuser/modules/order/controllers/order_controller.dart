@@ -111,7 +111,7 @@ class OrderController extends GetxController implements GetxService {
       );
       if (xFile != null) {
         _pickedPrescriptions.add(xFile);
-        if (Get.isDialogOpen!) {
+        if (Get.isDialogOpen == true) {
           Get.back();
         }
       }
@@ -294,7 +294,7 @@ class OrderController extends GetxController implements GetxService {
 
   Future<void> getOrderItemsDetails(int orderID) async {
     _orderDetailsModel = null;
-    if (_orderModel != null && !_orderModel!.prescriptionOrder!) {
+    if (_orderModel != null && !(_orderModel!.prescriptionOrder ?? false)) {
       List<OrderDetailsModel>? orderDetailsModel = await orderServiceInterface
           .getOrderDetails(orderID);
       if (orderDetailsModel != null) {

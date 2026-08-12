@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/onboarding_controller.dart';
 
 class OnboardingView extends GetView<OnboardingController> {
-  const OnboardingView({Key? key}) : super(key: key);
+  const OnboardingView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(OnboardingController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(child: Obx(() => _buildContent())),
@@ -126,7 +125,7 @@ class OnboardingView extends GetView<OnboardingController> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.AppPrimaryColor.withOpacity(0.7),
+                  AppColors.AppPrimaryColor.withValues(alpha: 0.7),
                   AppColors.AppPrimaryColor,
                 ],
                 begin: Alignment.topLeft,
@@ -135,7 +134,7 @@ class OnboardingView extends GetView<OnboardingController> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -265,41 +264,6 @@ class OnboardingView extends GetView<OnboardingController> {
     );
   }
 
-  Widget _buildSkipButton() {
-    return Align(
-      alignment: Alignment.topRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20.r),
-          onTap: controller.skipOnboarding,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(
-                color: Colors.grey.shade300,
-                width: 1.5,
-                style: BorderStyle.solid,
-              ),
-            ),
-            child: Text(
-              'Skip',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-                fontFamily: 'SF Pro Display',
-                letterSpacing: -0.1,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPageView() {
     return PageView.builder(
       controller: controller.pageController,
@@ -314,8 +278,6 @@ class OnboardingView extends GetView<OnboardingController> {
             return _buildStandardPage(page);
           case OnboardingPageType.conditions:
             return _buildConditionsPage(page);
-          default:
-            return _buildStandardPage(page);
         }
       },
     );
@@ -354,7 +316,7 @@ class OnboardingView extends GetView<OnboardingController> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withOpacity(0.1),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20.r),
           ),
           child: Text(
@@ -393,171 +355,6 @@ class OnboardingView extends GetView<OnboardingController> {
     );
   }
 
-  // Méthode pour afficher les CGU
-  void _showTermsAndConditions() {
-    Get.bottomSheet(
-      Container(
-        height: 0.8.sh,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            SizedBox(height: 12.h),
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // Title
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Terms and Conditions',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      fontFamily: 'SF Pro Display',
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, size: 24.sp),
-                    onPressed: () => Get.back(),
-                  ),
-                ],
-              ),
-            ),
-
-            Divider(height: 1, color: Colors.grey.shade200),
-
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(24.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTermSection(
-                      '1. Acceptance of Terms',
-                      'By accessing and using this application, you accept and agree to be bound by the terms and provision of this agreement.',
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildTermSection(
-                      '2. Use License',
-                      'Permission is granted to temporarily download one copy of the materials on VIPs App for personal, non-commercial transitory viewing only.',
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildTermSection(
-                      '3. Disclaimer',
-                      'The materials on VIPs App are provided on an \'as is\' basis. VIPs App makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.',
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildTermSection(
-                      '4. Limitations',
-                      'In no event shall VIPs App or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on VIPs App.',
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildTermSection(
-                      '5. Privacy Policy',
-                      'Your use of VIPs App is also governed by our Privacy Policy. Please review our Privacy Policy, which also governs the Site and informs users of our data collection practices.',
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildTermSection(
-                      '6. Modifications',
-                      'VIPs App may revise these terms of service for its app at any time without notice. By using this app you are agreeing to be bound by the then current version of these terms of service.',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Accept Button
-            Container(
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    // Auto-cocher la checkbox après avoir lu les CGU
-                    controller.toggleConditionsAcceptance(true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.AppPrimaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'I Understand',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontFamily: 'SF Pro Display',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
-  }
-
-  Widget _buildTermSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-            fontFamily: 'SF Pro Display',
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          content,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey.shade700,
-            fontFamily: 'SF Pro Text',
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildStandardPage(OnboardingPageData page) {
     return Column(
@@ -572,7 +369,7 @@ class OnboardingView extends GetView<OnboardingController> {
               borderRadius: BorderRadius.circular(32.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
                 ),
@@ -596,7 +393,7 @@ class OnboardingView extends GetView<OnboardingController> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Text(
@@ -746,13 +543,13 @@ class OnboardingView extends GetView<OnboardingController> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColors.AppPrimaryColor,
-                      AppColors.AppPrimaryColor.withOpacity(0.9),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.9),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(28.r),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                      color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),

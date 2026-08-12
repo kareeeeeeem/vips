@@ -45,7 +45,7 @@ class BuildCarousel extends GetView<HomeController> {
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                         spreadRadius: 0,
@@ -117,8 +117,8 @@ class BuildCarousel extends GetView<HomeController> {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.2),
-                                Colors.black.withOpacity(0.6),
+                                Colors.black.withValues(alpha: 0.2),
+                                Colors.black.withValues(alpha: 0.6),
                               ],
                               stops: const [0.0, 0.6, 1.0],
                             ),
@@ -147,7 +147,7 @@ class BuildCarousel extends GetView<HomeController> {
                                       Shadow(
                                         offset: const Offset(0, 1),
                                         blurRadius: 3,
-                                        color: Colors.black.withOpacity(0.5),
+                                        color: Colors.black.withValues(alpha: 0.5),
                                       ),
                                     ],
                                   ),
@@ -166,13 +166,13 @@ class BuildCarousel extends GetView<HomeController> {
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontFamily: 'SF Pro Text',
                                     shadows: [
                                       Shadow(
                                         offset: const Offset(0, 1),
                                         blurRadius: 2,
-                                        color: Colors.black.withOpacity(0.3),
+                                        color: Colors.black.withValues(alpha: 0.3),
                                       ),
                                     ],
                                   ),
@@ -201,7 +201,7 @@ class BuildCarousel extends GetView<HomeController> {
                                   BoxShadow(
                                     color: const Color(
                                       0xFFFF6B35,
-                                    ).withOpacity(0.4),
+                                    ).withValues(alpha: 0.4),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),

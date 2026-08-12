@@ -8,7 +8,7 @@ import '../../../../routes/merchant_routes.dart';
 class OrderCard extends GetView<MerchantOrderController> {
   final MerchantOrder order;
 
-  const OrderCard({Key? key, required this.order}) : super(key: key);
+  const OrderCard({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class OrderCard extends GetView<MerchantOrderController> {
           border: Border.all(color: const Color(0xFFE5E7EB)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -85,7 +85,7 @@ class OrderCard extends GetView<MerchantOrderController> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
+        color: statusColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6.r),
       ),
       child: Row(
@@ -115,7 +115,7 @@ class OrderCard extends GetView<MerchantOrderController> {
       children: [
         CircleAvatar(
           radius: 20.sp,
-          backgroundColor: const Color(0xFF10B981).withOpacity(0.1),
+          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.1),
           child: Text(
             '${order.customer?.fName?.substring(0, 1) ?? 'U'}${order.customer?.lName?.substring(0, 1) ?? ''}',
             style: TextStyle(

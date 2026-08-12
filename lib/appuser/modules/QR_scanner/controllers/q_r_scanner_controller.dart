@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class QRScannerController extends GetxController
     with GetTickerProviderStateMixin {
@@ -9,6 +12,7 @@ class QRScannerController extends GetxController
   final isFlashOn = false.obs;
   final scannedCode = ''.obs;
   final isScanning = true.obs;
+  final isValidating = false.obs;
 
   late AnimationController scanLineController;
   late Animation<double> scanLineAnimation;
@@ -65,47 +69,101 @@ class QRScannerController extends GetxController
     }
   }
 
-  void _handleScannedCode(String code) {
+  Future<void> _handleScannedCode(String code) async {
     isScanning.value = false;
+    isValidating.value = true;
     scannerController.stop();
 
-    Get.snackbar(
-      'QR Code Scanned',
-      code,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 16.r,
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-    );
+    try {
+      final response = await ApiService().post('/rewards/validate-qr', {'code': code});
+      if (response.success) {
+        final type = response.data?['type'] ?? 'unknown';
+        String message = response.message;
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      Get.back(result: code);
-    });
+        if (type == 'gift') {
+          message = 'Gift redeemed! ${response.data?['amount']} added to wallet';
+        } else if (type == 'merchant') {
+          message = 'Merchant: ${response.data?['merchant']?['name'] ?? code}';
+        } else if (type == 'coupon') {
+          message = 'Coupon valid: ${response.data?['coupon']?['code'] ?? code}';
+        }
+
+        safeSnackbar(
+          'QR Validated',
+          message,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 16.r,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+        );
+        Future.delayed(const Duration(milliseconds: 2000), () => Get.back(result: response.data));
+      } else {
+        safeSnackbar('Invalid QR', response.message,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 16.r,
+        );
+        Future.delayed(const Duration(milliseconds: 2000), () {
+          isScanning.value = true;
+          scannerController.start();
+        });
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not validate QR code',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        margin: EdgeInsets.all(16.w),
+      );
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        isScanning.value = true;
+        scannerController.start();
+      });
+    } finally {
+      isValidating.value = false;
+    }
   }
 
-  void pickImageFromGallery() {
-    Get.snackbar(
-      'Gallery',
-      'Pick image from gallery to scan QR code',
-      snackPosition: SnackPosition.BOTTOM,
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 16.r,
-    );
+  Future<void> pickImageFromGallery() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      isScanning.value = false;
+      scannerController.stop();
+
+      final result = await scannerController.analyzeImage(picked.path);
+      if (result != null && result.barcodes.isNotEmpty) {
+        final code = result.barcodes.first.rawValue ?? '';
+        if (code.isNotEmpty) {
+          scannedCode.value = code;
+          await _handleScannedCode(code);
+          return;
+        }
+      }
+      safeSnackbar('No QR Found', 'No QR code detected in the selected image',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 16.r);
+      isScanning.value = true;
+      scannerController.start();
+    } catch (_) {
+      safeSnackbar('Error', 'Could not read image',
+          snackPosition: SnackPosition.BOTTOM);
+      isScanning.value = true;
+      scannerController.start();
+    }
   }
 
   void showMyQRCode() {
     Get.back();
-    // Navigate to VIPsID or show QR dialog
-    Get.snackbar(
-      'My QR Code',
-      'Showing your QR code',
-      snackPosition: SnackPosition.BOTTOM,
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 16.r,
-    );
+    Get.toNamed('/vips-id');
   }
 
   @override

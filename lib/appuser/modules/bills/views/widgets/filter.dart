@@ -6,11 +6,10 @@ class BillsFilterWidget extends StatelessWidget {
   final RxString selectedFilter;
   final Function(String) onFilterChanged;
 
-  const BillsFilterWidget({
-    Key? key,
+  const BillsFilterWidget({super.key,
     required this.selectedFilter,
     required this.onFilterChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +28,13 @@ class BillsFilterWidget extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   const Color(0xFFFF6B35),
-                  const Color(0xFFFF6B35).withOpacity(0.85),
+                  const Color(0xFFFF6B35).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(6.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.4),
+                  color: Colors.orange.withValues(alpha: 0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                   spreadRadius: -2,
@@ -43,7 +42,12 @@ class BillsFilterWidget extends StatelessWidget {
               ],
             ),
             child: IconButton(
-              onPressed: () {},
+              onPressed: () {
+                final current = selectedFilter.value;
+                final filters = ['Products', 'Services', 'History'];
+                final next = filters[(filters.indexOf(current) + 1) % filters.length];
+                onFilterChanged(next);
+              },
               icon: Icon(Icons.sort_rounded, color: Colors.white, size: 28.sp),
               padding: EdgeInsets.zero,
             ),
@@ -94,7 +98,7 @@ class BillsFilterWidget extends StatelessWidget {
               isSelected
                   ? [
                     BoxShadow(
-                      color: const Color(0xFFFF6B35).withOpacity(0.3),
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

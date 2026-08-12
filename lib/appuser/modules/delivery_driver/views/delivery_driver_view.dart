@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../controllers/delivery_driver_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class DeliveryDriverView extends StatelessWidget {
   const DeliveryDriverView({super.key});
@@ -76,7 +77,7 @@ class DeliveryDriverView extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            Get.snackbar('Notifications', 'You have new notifications');
+            safeSnackbar('Notifications', 'You have new notifications');
           },
         ),
       ],
@@ -187,7 +188,7 @@ class DeliveryDriverView extends StatelessWidget {
               scale: 0.85,
               child: CupertinoSwitch(
                 value: controller.isOnline.value,
-                activeColor: Colors.green,
+                activeTrackColor: Colors.green,
                 onChanged: (bool value) {
                   controller.toggleOnlineStatus();
                 },
@@ -232,7 +233,7 @@ class DeliveryDriverView extends StatelessWidget {
                   Text(
                     'Today',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -264,7 +265,7 @@ class DeliveryDriverView extends StatelessWidget {
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16.r),
-                    color: driverYellow.withOpacity(0.85),
+                    color: driverYellow.withValues(alpha: 0.85),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +274,7 @@ class DeliveryDriverView extends StatelessWidget {
                       Text(
                         'This Week',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -339,7 +340,7 @@ class DeliveryDriverView extends StatelessWidget {
                       top: 0,
                       bottom: 0,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => Get.toNamed('/transactions-extract'),
                         child: Container(
                           width: 34.w,
                           decoration: BoxDecoration(
@@ -350,7 +351,7 @@ class DeliveryDriverView extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: driverYellow.withOpacity(0.3),
+                                color: driverYellow.withValues(alpha: 0.3),
                                 blurRadius: 6,
                                 offset: Offset(-2, 0),
                               ),
@@ -396,7 +397,7 @@ class DeliveryDriverView extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [driverYellow.withOpacity(0.2), Colors.orange.shade50],
+            colors: [driverYellow.withValues(alpha: 0.2), Colors.orange.shade50],
           ),
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: driverYellow, width: 2),
@@ -675,7 +676,7 @@ class DeliveryDriverView extends StatelessWidget {
               isExpanded
                   ? [
                     BoxShadow(
-                      color: driverYellow.withOpacity(0.1),
+                      color: driverYellow.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: Offset(0, 4),
                     ),
@@ -719,7 +720,7 @@ class DeliveryDriverView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: _getStatusColor(
                               order['status'],
-                            ).withOpacity(0.1),
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
@@ -888,7 +889,7 @@ class DeliveryDriverView extends StatelessWidget {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () => controller.declineOrder(order),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
                                   color: Colors.red.shade300,
@@ -1005,7 +1006,7 @@ class DeliveryDriverView extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: driverYellow.withOpacity(0.9)),
+      decoration: BoxDecoration(color: driverYellow.withValues(alpha: 0.9)),
       child: InkWell(
         onTap: onTap,
         child: Stack(

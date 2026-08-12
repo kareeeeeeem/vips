@@ -6,7 +6,7 @@ import '../../../../appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_finance_controller.dart';
 
 class FinanceDashboardView extends GetView<MerchantFinanceController> {
-  const FinanceDashboardView({Key? key}) : super(key: key);
+  const FinanceDashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +53,7 @@ class FinanceDashboardView extends GetView<MerchantFinanceController> {
                         style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => Get.toNamed(MerchantRoutes.ACCOUNTS),
                         child: Text('View All', style: TextStyle(color: const Color(0xFF10B981), fontSize: 13.sp, fontWeight: FontWeight.bold)),
                       ),
                     ],

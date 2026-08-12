@@ -10,14 +10,14 @@ class ProductPreviewCard extends StatelessWidget {
   final String tag;
 
   const ProductPreviewCard({
-    Key? key,
+    super.key,
     this.imageUrl = 'https://via.placeholder.com/150', // Mock burger image
     this.title = 'McDonald\'s Spicy meal',
     this.price = '250',
     this.points = '60',
     this.sales = '12K',
     this.tag = 'Recommended',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class ProductPreviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

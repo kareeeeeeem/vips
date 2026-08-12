@@ -14,7 +14,7 @@ class BuildRestorant extends GetView<HomeController> {
       margin: EdgeInsets.symmetric(vertical: 16.h),
       padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF3B82F6).withOpacity(0.2),
+        color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(0),
       ),
       child: Column(
@@ -30,7 +30,7 @@ class BuildRestorant extends GetView<HomeController> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -109,7 +109,14 @@ class BuildRestorant extends GetView<HomeController> {
                   child: BuildRestaurenCard(
                     deal: deal,
                     onTap: () => controller.navigateToHotDeal(deal),
-                    onAddToBasket: () {},
+                    onAddToBasket: () => controller.addToCartServer(
+                      itemId: (deal['_id'] ?? deal['id'])?.toString() ?? '',
+                      itemType: 'Deal',
+                      name: deal['title']?.toString(),
+                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
+                      quantity: 1,
+                      merchantId: deal['merchantId']?.toString(),
+                    ),
                   ),
                 );
               },

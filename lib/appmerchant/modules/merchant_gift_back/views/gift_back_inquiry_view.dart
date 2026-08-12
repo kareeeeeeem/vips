@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import '../controllers/merchant_gift_back_controller.dart';
 
 class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
-  const GiftBackInquiryView({Key? key}) : super(key: key);
+  const GiftBackInquiryView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -107,10 +107,15 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Pizza Hut', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
-                            Text('House: 80, Road: 00, Test City', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                            Text('01/Jun/2025: 10:47', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                            Text('Phone: 71******', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+                            Obx(() {
+                              final homeCtrl = Get.find<MerchantHomeController>();
+                              return Text(homeCtrl.storeName.value.isNotEmpty ? homeCtrl.storeName.value : 'My Store',
+                                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)));
+                            }),
+                            Obx(() => Text(Get.find<MerchantHomeController>().storePhone.value.isNotEmpty
+                                ? 'Phone: ${Get.find<MerchantHomeController>().storePhone.value}'
+                                : 'Merchant',
+                                style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)))),
                           ],
                         ),
                       ),
@@ -129,9 +134,9 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                       children: [
                         _buildDetailRow('Trans Type', 'Gift Back'),
                         const Divider(color: Color(0xFFF3F4F6)),
-                        _buildDetailRow('Customer Name', 'Jamil Test'),
-                        _buildDetailRow('Phone', '959190000'),
-                        _buildDetailRow('Trans Address', 'House: 80, Road: 00, Test City'),
+                        _buildDetailRow('Phone', controller.phoneController.text.isNotEmpty ? controller.phoneController.text : '—'),
+                        if (controller.messageController.text.isNotEmpty)
+                          _buildDetailRow('Message', controller.messageController.text),
                       ],
                     ),
                   ),
@@ -144,7 +149,7 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16.r),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
                       ],
                     ),
                     child: Row(
@@ -163,7 +168,7 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Back', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
-                            Text('D 50.000', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF10B981))),
+                            Text('D ${controller.amountController.text.isEmpty ? "0.000" : controller.amountController.text}', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF10B981))),
                           ],
                         ),
                       ],
@@ -172,33 +177,41 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                   SizedBox(height: 32.h),
 
                   // Totals
-                  _buildAmountRow('Gift Back Amount', 'D 50.000'),
-                  _buildAmountRow('Addon Cost', 'D 0.000'),
-                  SizedBox(height: 12.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                    decoration: BoxDecoration(color: const Color(0xFFF97316).withOpacity(0.15), borderRadius: BorderRadius.circular(20.r)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Builder(builder: (_) {
+                    final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    final amtStr = 'D ${amt.toStringAsFixed(3)}';
+                    final pts = (amt * 100).toInt();
+                    return Column(
                       children: [
-                        Text('Subtotal', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
-                        Text('D 50.000', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                        _buildAmountRow('Gift Back Amount', amtStr),
+                        _buildAmountRow('Addon Cost', 'D 0.000'),
+                        SizedBox(height: 12.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                          decoration: BoxDecoration(color: const Color(0xFFF97316).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20.r)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Subtotal', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                              Text(amtStr, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildAmountRow('VIPs Gift', 'VPt $pts', isVip: true),
+                        _buildAmountRow('Service Charge', 'D 0.000'),
+                        _buildAmountRow('Vat/Tax', 'D 0.000'),
+                        SizedBox(height: 32.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Grand Total', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
+                            Text(amtStr, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
+                          ],
+                        ),
                       ],
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildAmountRow('VIPs Gift', 'VPt 4900', isVip: true),
-                  _buildAmountRow('Service Charge', 'D 0.000'),
-                  _buildAmountRow('Vat/Tax', 'D 0.000'),
-                  SizedBox(height: 32.h),
-                  
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Grand Total', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
-                      Text('D 50.000', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
-                    ],
-                  ),
+                    );
+                  }),
                   SizedBox(height: 16.h),
                 ],
               ),

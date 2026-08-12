@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/gift_controller.dart';
 
 class GiftView extends GetView<GiftController> {
-  const GiftView({Key? key}) : super(key: key);
+  const GiftView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(GiftController());
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -90,7 +89,9 @@ class GiftView extends GetView<GiftController> {
               children: [
                 SizedBox(height: 20.h),
                 _buildOfferIdSection(),
-                SizedBox(height: 30.h),
+                SizedBox(height: 20.h),
+                _buildAmountSection(),
+                SizedBox(height: 10.h),
                 Obx(
                   () =>
                       !controller.isExpressSelected.value
@@ -207,6 +208,39 @@ class GiftView extends GetView<GiftController> {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAmountSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Amount',
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.black87),
+        ),
+        SizedBox(height: 12.h),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          ),
+          child: TextField(
+            controller: controller.amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500, color: Colors.black87),
+            decoration: InputDecoration(
+              hintText: '0.00',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14.sp),
+              border: InputBorder.none,
+              suffixText: 'TND',
+              suffixStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14.sp),
+            ),
+          ),
         ),
       ],
     );
@@ -461,7 +495,7 @@ class GiftView extends GetView<GiftController> {
                     ),
                     elevation: 0,
                     disabledBackgroundColor: AppColors
-                        .AppPrimaryColor.withOpacity(0.5),
+                        .AppPrimaryColor.withValues(alpha: 0.5),
                   ),
                   child:
                       controller.isLoading.value

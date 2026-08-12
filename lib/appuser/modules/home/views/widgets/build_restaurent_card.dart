@@ -28,7 +28,7 @@ class BuildRestaurenCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF6B35).withOpacity(0.15),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8),
               spreadRadius: 0,
@@ -98,7 +98,7 @@ class BuildRestaurenCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withOpacity(0.3),
+                              Colors.black.withValues(alpha: 0.3),
                             ],
                           ),
                         ),
@@ -123,7 +123,7 @@ class BuildRestaurenCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12.r),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.4),
+                          color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -157,7 +157,7 @@ class BuildRestaurenCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -234,7 +234,7 @@ class BuildRestaurenCard extends StatelessWidget {
                             Container(
                               padding: EdgeInsets.all(4.w),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B35).withOpacity(0.1),
+                                color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Icon(
@@ -342,7 +342,7 @@ class BuildRestaurenCard extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6B35).withOpacity(0.3),
+                              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),

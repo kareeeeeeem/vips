@@ -47,10 +47,10 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Row(
+                  Obx(() => Row(
                     children: [
                       Text(
-                        "McDonald's", // This will eventually come from the profile controller
+                        controller.storeName.value.isNotEmpty ? controller.storeName.value : 'My Store',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w800,
@@ -63,7 +63,7 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                         color: const Color(0xFF10B981),
                       ),
                     ],
-                  ),
+                  )),
                 ],
               ),
             ],
@@ -117,16 +117,14 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         color: const Color(0xFF10B981),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 120.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 16.h),
-
               _sectionTitle('Performance'),
               SizedBox(height: 12.h),
 
-              // New Accounting Summary Card
+              // Accounting Summary Card
               Obx(() {
                 if (controller.isLoading.value) {
                   return const Center(
@@ -157,7 +155,7 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -504,7 +502,7 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -517,7 +515,7 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: (item['color'] as Color).withOpacity(0.1),
+                    color: (item['color'] as Color).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -544,35 +542,4 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
     );
   }
 
-  Widget _listTile(String title, String subtitle, IconData icon, String route) {
-    return ListTile(
-      onTap: () => Get.toNamed(route),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-      leading: Container(
-        padding: EdgeInsets.all(10.w),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        child: Icon(icon, color: const Color(0xFF4B5563), size: 20.sp),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF111827),
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
-      ),
-      trailing: const Icon(Icons.chevron_right, color: Color(0xFFD1D5DB)),
-    );
-  }
-
-  Widget _divider() {
-    return const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6));
-  }
 }

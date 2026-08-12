@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CreatepinController extends GetxController {
   final TextEditingController pinController = TextEditingController();
@@ -41,17 +43,15 @@ class CreatepinController extends GetxController {
 
   Future<void> createPin(String pin) async {
     isCreating.value = true;
-
-    // Simuler la création du PIN
-    await Future.delayed(const Duration(seconds: 1));
-
-    // TODO: Sauvegarder le PIN de manière sécurisée
-    print('PIN créé: $pin');
-
-    isCreating.value = false;
-
-    // Naviguer vers la page d'accueil
-    Get.offAllNamed('/success-account');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_pin', pin);
+      Get.offAllNamed('/success-account');
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to save PIN. Please try again.');
+    } finally {
+      isCreating.value = false;
+    }
   }
 
   void goBack() {

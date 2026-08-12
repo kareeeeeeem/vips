@@ -7,11 +7,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/splash_controller.dart';
 
 class SplashView extends GetView<SplashController> {
-  const SplashView({Key? key}) : super(key: key);
+  const SplashView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(SplashController());
     return Scaffold(
       backgroundColor: Colors.white, // Ou votre couleur de fond principale
       body: Center(
@@ -49,13 +48,13 @@ class SplashView extends GetView<SplashController> {
                 end: Alignment.bottomRight,
                 colors: [
                   AppColors.AppPrimaryColor,
-                  AppColors.AppPrimaryColor.withOpacity(0.8),
+                  AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                 ],
               ),
               borderRadius: BorderRadius.circular(32.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.2),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -68,28 +67,6 @@ class SplashView extends GetView<SplashController> {
                 width: 80.w,
                 height: 80.h,
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAppTitle() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(seconds: 1),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOut,
-      builder: (context, opacity, child) {
-        return Opacity(
-          opacity: opacity,
-          child: Text(
-            'Your App Name', // Remplacez par le nom de votre application
-            style: TextStyle(
-              fontSize: 32.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.AppPrimaryColor,
-              letterSpacing: -0.5,
             ),
           ),
         );

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class SettingsController extends GetxController {
   // Language settings
@@ -40,16 +44,43 @@ class SettingsController extends GetxController {
     checkBiometricAvailability();
   }
 
-  // Load settings from storage
-  void loadSettings() {
-    // TODO: Load from SharedPreferences or secure storage
-    print('Loading settings...');
+  Future<void> loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    isDarkMode.value = prefs.getBool('settings_dark_mode') ?? false;
+    isBiometricEnabled.value = prefs.getBool('settings_biometric_enabled') ?? false;
+    isTwoFactorEnabled.value = prefs.getBool('settings_two_factor_enabled') ?? false;
+    isPushNotificationsEnabled.value = prefs.getBool('settings_push_notifications') ?? true;
+    isEmailNotificationsEnabled.value = prefs.getBool('settings_email_notifications') ?? true;
+    isSmsNotificationsEnabled.value = prefs.getBool('settings_sms_notifications') ?? false;
+    isOrderUpdatesEnabled.value = prefs.getBool('settings_order_updates') ?? true;
+    isPromotionsEnabled.value = prefs.getBool('settings_promotions') ?? true;
+    isLocationEnabled.value = prefs.getBool('settings_location_enabled') ?? true;
+    isDataSharingEnabled.value = prefs.getBool('settings_data_sharing') ?? false;
+    final langCode = prefs.getString('settings_language') ?? 'en';
+    final lang = languages.firstWhere(
+      (l) => l['code'] == langCode,
+      orElse: () => languages.first,
+    );
+    selectedLanguage.value = lang['name']!;
   }
 
-  // Save settings to storage
-  void saveSettings() {
-    // TODO: Save to SharedPreferences or secure storage
-    print('Saving settings...');
+  Future<void> saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('settings_dark_mode', isDarkMode.value);
+    await prefs.setBool('settings_biometric_enabled', isBiometricEnabled.value);
+    await prefs.setBool('settings_two_factor_enabled', isTwoFactorEnabled.value);
+    await prefs.setBool('settings_push_notifications', isPushNotificationsEnabled.value);
+    await prefs.setBool('settings_email_notifications', isEmailNotificationsEnabled.value);
+    await prefs.setBool('settings_sms_notifications', isSmsNotificationsEnabled.value);
+    await prefs.setBool('settings_order_updates', isOrderUpdatesEnabled.value);
+    await prefs.setBool('settings_promotions', isPromotionsEnabled.value);
+    await prefs.setBool('settings_location_enabled', isLocationEnabled.value);
+    await prefs.setBool('settings_data_sharing', isDataSharingEnabled.value);
+    final lang = languages.firstWhere(
+      (l) => l['name'] == selectedLanguage.value,
+      orElse: () => languages.first,
+    );
+    await prefs.setString('settings_language', lang['code']!);
   }
 
   // Check if biometric authentication is available
@@ -64,7 +95,7 @@ class SettingsController extends GetxController {
         isBiometricEnabled.value = false;
       }
     } catch (e) {
-      print('Error checking biometric availability: $e');
+      debugPrint('Error checking biometric availability: $e');
     }
   }
 
@@ -84,20 +115,20 @@ class SettingsController extends GetxController {
         if (authenticated) {
           isBiometricEnabled.value = true;
           saveSettings();
-          Get.snackbar(
+          safeSnackbar(
             'Success',
             'Biometric authentication enabled',
-            backgroundColor: Colors.green.withOpacity(0.1),
+            backgroundColor: Colors.green.withValues(alpha: 0.1),
             colorText: Colors.green,
             snackPosition: SnackPosition.BOTTOM,
           );
         }
       } catch (e) {
-        print('Error enabling biometric: $e');
-        Get.snackbar(
+        debugPrint('Error enabling biometric: $e');
+        safeSnackbar(
           'Error',
           'Could not enable biometric authentication',
-          backgroundColor: Colors.red.withOpacity(0.1),
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
           colorText: Colors.red,
           snackPosition: SnackPosition.BOTTOM,
         );
@@ -132,10 +163,10 @@ class SettingsController extends GetxController {
     saveSettings();
 
     Get.back(); // Close language selector
-    Get.snackbar(
+    safeSnackbar(
       'Language Changed',
       'Language changed to $languageName',
-      backgroundColor: Colors.blue.withOpacity(0.1),
+      backgroundColor: Colors.blue.withValues(alpha: 0.1),
       colorText: Colors.blue,
       snackPosition: SnackPosition.BOTTOM,
     );
@@ -190,29 +221,53 @@ class SettingsController extends GetxController {
     saveSettings();
   }
 
-  // Navigation methods
   void navigateToChangePassword() {
-    Get.toNamed('/change-password');
+    Get.toNamed('/forgot-password');
   }
 
   void navigateToPrivacyPolicy() {
-    Get.toNamed('/privacy-policy');
+    _launchUrl('https://vips.com/privacy');
   }
 
   void navigateToTermsOfService() {
-    Get.toNamed('/terms-of-service');
+    _launchUrl('https://vips.com/terms');
   }
 
   void navigateToAbout() {
-    Get.toNamed('/about');
+    Get.dialog(AlertDialog(
+      title: const Text('About VIPs'),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('VIPs App — Premium Loyalty Platform'),
+          SizedBox(height: 8),
+          Text('Version: 1.0.0'),
+          SizedBox(height: 4),
+          Text('© 2026 VIPs. All rights reserved.'),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: Get.back, child: const Text('Close')),
+      ],
+    ));
   }
 
   void navigateToHelp() {
-    Get.toNamed('/help');
+    _launchUrl('mailto:support@vips.com?subject=VIPs Help');
   }
 
   void navigateToContactSupport() {
-    Get.toNamed('/contact-support');
+    _launchUrl('mailto:support@vips.com?subject=VIPs Support Request');
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      safeSnackbar('Error', 'Could not open link', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   // Logout
@@ -224,9 +279,18 @@ class SettingsController extends GetxController {
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Get.back(); // Close dialog
-              // TODO: Clear user data and navigate to login
+              
+              // Show loading
+              Get.dialog(
+                const Center(child: CircularProgressIndicator()),
+                barrierDismissible: false,
+              );
+              
+              await ApiService().clearToken();
+              
+              Get.back(); // Close loading
               Get.offAllNamed('/login');
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
@@ -247,10 +311,31 @@ class SettingsController extends GetxController {
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Get.back(); // Close dialog
-              // TODO: Delete account API call
-              Get.offAllNamed('/login');
+              
+              // Show loading
+              Get.dialog(
+                const Center(child: CircularProgressIndicator()),
+                barrierDismissible: false,
+              );
+              
+              try {
+                final response = await ApiService().delete('/user/account');
+                
+                Get.back(); // Close loading
+                
+                if (response.success) {
+                  await ApiService().clearToken();
+                  Get.offAllNamed('/login');
+                  safeSnackbar('Success', 'Account deleted successfully');
+                } else {
+                  safeSnackbar('Error', response.message);
+                }
+              } catch (e) {
+                if (Get.isDialogOpen ?? false) Get.back(); // Close loading
+                safeSnackbar('Error', 'An error occurred');
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -268,13 +353,17 @@ class SettingsController extends GetxController {
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Get.back();
-              // TODO: Clear cache
-              Get.snackbar(
+              final prefs = await SharedPreferences.getInstance();
+              final keys = prefs.getKeys().where((k) => k.startsWith('cache_')).toList();
+              for (final key in keys) {
+                await prefs.remove(key);
+              }
+              safeSnackbar(
                 'Success',
                 'Cache cleared successfully',
-                backgroundColor: Colors.green.withOpacity(0.1),
+                backgroundColor: Colors.green.withValues(alpha: 0.1),
                 colorText: Colors.green,
                 snackPosition: SnackPosition.BOTTOM,
               );

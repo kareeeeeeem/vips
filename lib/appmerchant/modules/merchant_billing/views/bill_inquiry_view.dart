@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class BillInquiryView extends StatelessWidget {
-  const BillInquiryView({Key? key}) : super(key: key);
+  const BillInquiryView({super.key});
 
   @override
   Widget build(BuildContext context) {

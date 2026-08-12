@@ -23,12 +23,13 @@ class BuildOfferCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -122,7 +123,7 @@ class BuildOfferCard extends StatelessWidget {
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Row(
@@ -158,7 +159,7 @@ class BuildOfferCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -182,88 +183,97 @@ class BuildOfferCard extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
-                  Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Titre
-                        Text(
-                          deal['title'],
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: const Color(0xFF1E293B),
-                            fontFamily: 'SF Pro Text',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        SizedBox(height: 6.h),
-
-                        // Description
-                        Text(
-                          deal['description'],
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF64748B),
-                            fontFamily: 'SF Pro Text',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        Spacer(),
-
-                        // Prix uniquement
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Prix actuel
-                            Row(
-                              children: [
-                                Text(
-                                  '${deal['currentPrice']}',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E293B),
-                                    fontFamily: 'SF Pro Text',
-                                  ),
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  'egp'.tr,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF64748B),
-                                    fontFamily: 'SF Pro Text',
-                                  ),
-                                ),
-                              ],
+                  // Positioned.fill gives the Column bounded constraints so Spacer works correctly
+                  Positioned.fill(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Titre
+                          Text(
+                            deal['title']?.toString() ?? '',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF1E293B),
+                              fontFamily: 'SF Pro Text',
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
 
-                            // Prix original (barré)
-                            if (deal['originalPrice'] != null)
-                              Padding(
-                                padding: EdgeInsets.only(top: 2.h),
-                                child: Text(
+                          SizedBox(height: 4.h),
+
+                          // Description
+                          Text(
+                            deal['description']?.toString() ?? '',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF64748B),
+                              fontFamily: 'SF Pro Text',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const Spacer(),
+
+                          // Prix uniquement
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Prix actuel
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      '${deal['currentPrice']}',
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E293B),
+                                        fontFamily: 'SF Pro Text',
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'egp'.tr,
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF64748B),
+                                      fontFamily: 'SF Pro Text',
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Prix original (barré)
+                              if (deal['originalPrice'] != null)
+                                Text(
                                   '${deal['originalPrice']}',
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 11.sp,
                                     fontWeight: FontWeight.w400,
                                     color: const Color(0xFF94A3B8),
                                     fontFamily: 'SF Pro Text',
                                     decoration: TextDecoration.lineThrough,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+
+                          // Space reserved for the add-to-basket button (40.h)
+                          SizedBox(height: 40.h),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -288,7 +298,7 @@ class BuildOfferCard extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6B35).withOpacity(0.3),
+                              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),

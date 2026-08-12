@@ -25,12 +25,11 @@ import '../controllers/home_controller.dart';
 class HomeView extends StatelessWidget {
   HomeView({super.key, required this.fromOffer});
   final bool fromOffer;
-  GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
-      init: HomeController(),
       builder: (controller) {
         return Scaffold(
           key: scaffoldKey,
@@ -82,11 +81,24 @@ class HomeView extends StatelessWidget {
                                 BuildEndingSoon(
                                   deals: controller.endingSoonDeals,
                                   onDealTap: (deal) {
-                                    Get.to(() => OfferDetailPage());
+                                    Get.to(() => OfferDetailPage(), arguments: deal);
                                   },
-                                  onViewAll: () {},
-                                  onAddToBasket: (deal) {},
-                                  onToggleFavorite: (deal) {},
+                                  onViewAll: () => controller.onSeeAllPressed('Best Deals'),
+                                  onAddToBasket: (deal) {
+                                    final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
+                                    controller.addToCartServer(
+                                      itemId: id,
+                                      itemType: 'Deal',
+                                      name: deal['title']?.toString(),
+                                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
+                                      quantity: 1,
+                                      merchantId: deal['merchantId']?.toString(),
+                                    );
+                                  },
+                                  onToggleFavorite: (deal) {
+                                    final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
+                                    controller.toggleFavoriteServer(id, itemType: 'Deal');
+                                  },
                                 ),
                                 BuildHotDeals(),
                                 BuildExploreSection(),
@@ -98,7 +110,7 @@ class HomeView extends StatelessWidget {
                                 SizedBox(height: 26.h),
                                 BuildSectionHeader(
                                   title: 'You May Also Like',
-                                  onSeeAll: () {},
+                                  onSeeAll: () => controller.onSeeAllPressed('Recommended For You'),
                                 ),
                                 SizedBox(height: 16.h),
                                 BuildDiscoverPlacesCard(),

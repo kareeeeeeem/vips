@@ -129,7 +129,7 @@ class MerchantAddOn {
   MerchantAddOn.fromJson(Map<String, dynamic> json) {
     name = json['name'];
     price = json['price'] != null ? json['price']?.toDouble() : 0.0;
-    quantity = int.parse(json['quantity'].toString());
+    quantity = int.tryParse((json['quantity'] ?? 0).toString()) ?? 0;
   }
 
   Map<String, dynamic> toJson() {

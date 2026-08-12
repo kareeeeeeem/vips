@@ -6,11 +6,11 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/contact_controller.dart';
 
 class ContactView extends GetView<ContactController> {
-  const ContactView({Key? key}) : super(key: key);
+  const ContactView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ContactController);
+    Get.put(ContactController());
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -70,7 +70,7 @@ class ContactView extends GetView<ContactController> {
 
   Widget _buildEmptyState() {
     return GestureDetector(
-      //onTap: controller.showAddContactSheet,
+      onTap: controller.showAddContactSheet,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -80,7 +80,7 @@ class ContactView extends GetView<ContactController> {
               height: 80.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
               ),
               child: Icon(
                 Icons.person_add_rounded,
@@ -106,7 +106,7 @@ class ContactView extends GetView<ContactController> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               decoration: BoxDecoration(
-                color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Row(
@@ -158,7 +158,7 @@ class ContactView extends GetView<ContactController> {
         children: [
           CircleAvatar(
             radius: 24.r,
-            backgroundColor: AppColors.AppPrimaryColor.withOpacity(0.1),
+            backgroundColor: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
             child: Icon(
               Icons.person,
               color: AppColors.AppPrimaryColor,
@@ -180,7 +180,7 @@ class ContactView extends GetView<ContactController> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  contact['phone'] ?? '+1 234 567 8900',
+                  contact['phone'] ?? '',
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: Colors.grey.shade600,

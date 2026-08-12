@@ -20,7 +20,7 @@ class BuildExploreSection extends GetView<HomeController> {
                 Container(
                   padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35).withOpacity(0.1),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
@@ -177,7 +177,7 @@ class BuildExploreSection extends GetView<HomeController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -231,8 +231,8 @@ class BuildExploreSection extends GetView<HomeController> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.3),
-                      Colors.black.withOpacity(0.8),
+                      Colors.black.withValues(alpha: 0.3),
+                      Colors.black.withValues(alpha: 0.8),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -260,7 +260,7 @@ class BuildExploreSection extends GetView<HomeController> {
                           Shadow(
                             offset: const Offset(0, 1),
                             blurRadius: 3,
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                           ),
                         ],
                       ),
@@ -277,13 +277,13 @@ class BuildExploreSection extends GetView<HomeController> {
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontFamily: 'SF Pro Text',
                           shadows: [
                             Shadow(
                               offset: const Offset(0, 1),
                               blurRadius: 2,
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                             ),
                           ],
                         ),
@@ -305,7 +305,7 @@ class BuildExploreSection extends GetView<HomeController> {
                       vertical: 4.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(

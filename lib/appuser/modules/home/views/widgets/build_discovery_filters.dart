@@ -169,7 +169,7 @@ class BuildDiscoveryFilters extends GetView<HomeController> {
                   : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -185,8 +185,8 @@ class BuildDiscoveryFilters extends GetView<HomeController> {
               decoration: BoxDecoration(
                 color:
                     iconColor == Colors.white
-                        ? Colors.white.withOpacity(0.2)
-                        : iconColor.withOpacity(0.1),
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(icon, size: 24.sp, color: iconColor),
@@ -214,7 +214,7 @@ class BuildDiscoveryFilters extends GetView<HomeController> {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w400,
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                       fontFamily: 'SF Pro Text',
                     ),
                     maxLines: 1,

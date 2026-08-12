@@ -9,12 +9,12 @@ class TagsInput extends StatelessWidget {
   final Function(String) onRemove;
 
   const TagsInput({
-    Key? key,
+    super.key,
     required this.tags,
     required this.controller,
     required this.onAdd,
     required this.onRemove,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +80,7 @@ class TagsInput extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: const Color(0xFFECFDF5),
-        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(

@@ -8,7 +8,7 @@ import 'widgets/order_list_widget.dart';
 import 'widgets/search_bar_widget.dart';
 
 class MerchantOrdersView extends GetView<MerchantOrderController> {
-  const MerchantOrdersView({Key? key}) : super(key: key);
+  const MerchantOrdersView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +208,7 @@ class MerchantOrdersView extends GetView<MerchantOrderController> {
                           controller.updateStatusFilter(status);
                         }
                       },
-                      selectedColor: const Color(0xFF10B981).withOpacity(0.2),
+                      selectedColor: const Color(0xFF10B981).withValues(alpha: 0.2),
                       checkmarkColor: const Color(0xFF10B981),
                     );
                   }).toList(),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vip/core/widgets/custom_network_image.dart';
 import '../controllers/merchant_store_profile_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
   const MerchantStoreProfileView({super.key});
@@ -74,7 +77,7 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
               isSelected
                   ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -95,48 +98,98 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
   }
 
   Widget _buildStoreBanner() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: double.infinity,
-          height: 200.h,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(
-                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
+    return Obx(
+      () => Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: controller.pickAndUploadBanner,
+            child: Container(
+              width: double.infinity,
+              height: 200.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                image:
+                    controller.bannerImage.value.isNotEmpty
+                        ? DecorationImage(
+                          image: NetworkImage(controller.bannerImage.value),
+                          fit: BoxFit.cover,
+                        )
+                        : null,
               ),
-              fit: BoxFit.cover,
+              child: controller.isUploadingBanner.value
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+                  : controller.bannerImage.value.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.store, size: 48.sp, color: Colors.grey.shade400),
+                            SizedBox(height: 8.h),
+                            Text('Tap to upload banner', style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500)),
+                          ],
+                        )
+                      : Align(
+                          alignment: Alignment.topRight,
+                          child: Padding(
+                            padding: EdgeInsets.all(8.w),
+                            child: Container(
+                              padding: EdgeInsets.all(6.w),
+                              decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: Icon(Icons.edit, color: Colors.white, size: 16.sp),
+                            ),
+                          ),
+                        ),
             ),
           ),
-        ),
-        Positioned(
-          bottom: -40.h,
-          left: 20.w,
-          child: Container(
-            width: 80.w,
-            height: 80.w,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 4),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          Positioned(
+            bottom: -40.h,
+            left: 20.w,
+            child: GestureDetector(
+              onTap: controller.pickAndUploadLogo,
+              child: Container(
+                width: 80.w,
+                height: 80.w,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: ClipOval(
-              child: Image.network(
-                'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Pizza_Hut_1967-1999_logo.svg/1024px-Pizza_Hut_1967-1999_logo.svg.png',
-                fit: BoxFit.contain,
+                child: ClipOval(
+                  child: controller.isUploadingLogo.value
+                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981), strokeWidth: 2))
+                      : controller.logoImage.value.isNotEmpty
+                          ? CustomNetworkImage(
+                            imageUrl: controller.logoImage.value,
+                            fit: BoxFit.cover,
+                          )
+                          : Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(Icons.storefront, size: 36.sp, color: Colors.grey.shade400),
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                                    child: const Icon(Icons.add, color: Colors.white, size: 10),
+                                  ),
+                                ),
+                              ],
+                            ),
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -148,44 +201,73 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
         children: [
           SizedBox(width: 90.w), // Space for logo
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Pizza Hut",
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 4.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1FAE5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Text(
-                    "Restoran",
+            child: Obx(
+              () => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    controller.storeName.value.isNotEmpty
+                        ? controller.storeName.value
+                        : 'My Store',
                     style: TextStyle(
-                      color: const Color(0xFF059669),
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF111827),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 4.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1FAE5),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      controller.category.value.isNotEmpty
+                          ? controller.category.value
+                          : 'General',
+                      style: TextStyle(
+                        color: const Color(0xFF059669),
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Row(
             children: [
-              _actionButton(Icons.send_rounded),
+              _actionButton(
+                Icons.send_rounded,
+                onTap: () {
+                  final addr = controller.address.value;
+                  if (addr.isNotEmpty) {
+                    safeSnackbar(
+                      'Address',
+                      addr,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                },
+              ),
               SizedBox(width: 12.w),
-              _actionButton(Icons.phone_enabled_rounded),
+              _actionButton(
+                Icons.phone_enabled_rounded,
+                onTap: () async {
+                  final phone = controller.phone.value;
+                  if (phone.isNotEmpty) {
+                    final uri = Uri.parse('tel:$phone');
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    }
+                  }
+                },
+              ),
             ],
           ),
         ],
@@ -193,15 +275,18 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
     );
   }
 
-  Widget _actionButton(IconData icon) {
-    return Container(
-      width: 44.w,
-      height: 44.w,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        shape: BoxShape.circle,
+  Widget _actionButton(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44.w,
+        height: 44.w,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF3F4F6),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: const Color(0xFF4B5563), size: 20.sp),
       ),
-      child: Icon(icon, color: const Color(0xFF4B5563), size: 20.sp),
     );
   }
 
@@ -239,13 +324,17 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Center(
-        child: Text(
-          "0.5% discount will be applicable when order amount exceeds is more than D 1",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
+        child: Obx(
+          () => Text(
+            controller.storeName.value.isNotEmpty
+                ? 'Exclusive offers from ${controller.storeName.value} — shop now to earn VIPs points!'
+                : 'Exclusive offers available — shop now to earn VIPs points!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -286,7 +375,7 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
                 isSelected
                     ? [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -360,7 +449,7 @@ class DashedRectPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    double dashWidth = 5, dashSpace = 3, startX = 0;
+    double dashWidth = 5, dashSpace = 3;
     final paint =
         Paint()
           ..color = color

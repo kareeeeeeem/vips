@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 
 class BuildHeroBanner extends StatefulWidget {
-  const BuildHeroBanner({Key? key}) : super(key: key);
+  const BuildHeroBanner({super.key});
 
   @override
   State<BuildHeroBanner> createState() => _BuildHeroBannerState();
@@ -142,7 +144,7 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         colors: [
-                          Colors.black.withOpacity(0.6),
+                          Colors.black.withValues(alpha: 0.6),
                           Colors.transparent,
                         ],
                       ),
@@ -169,10 +171,10 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4.r),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       width: 0.5,
                     ),
                   ),
@@ -205,40 +207,43 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w400,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     letterSpacing: 0.2,
                   ),
                 ),
                 SizedBox(height: 16.h),
                 // Bouton
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        banner.buttonText,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF1a1a1a),
-                          letterSpacing: 0.3,
+                GestureDetector(
+                  onTap: () => Get.toNamed(Routes.HOT_DEALS),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          banner.buttonText,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1a1a1a),
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 14.sp,
-                        color: Color(0xFF1a1a1a),
-                      ),
-                    ],
+                        SizedBox(width: 6.w),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 14.sp,
+                          color: Color(0xFF1a1a1a),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

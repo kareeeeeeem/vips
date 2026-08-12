@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_finance_controller.dart';
 
 class AccountsView extends GetView<MerchantFinanceController> {
-  const AccountsView({Key? key}) : super(key: key);
+  const AccountsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +57,9 @@ class AccountsView extends GetView<MerchantFinanceController> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [

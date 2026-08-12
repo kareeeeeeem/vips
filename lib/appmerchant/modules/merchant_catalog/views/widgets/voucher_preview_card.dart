@@ -6,10 +6,10 @@ class VoucherPreviewCard extends StatelessWidget {
   final String discount;
 
   const VoucherPreviewCard({
-    Key? key,
+    super.key,
     this.title = 'GET YOUR\nVOUCHER',
     this.discount = '25% OFF',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class VoucherPreviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFB800).withOpacity(0.3),
+            color: const Color(0xFFFFB800).withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -32,7 +32,7 @@ class VoucherPreviewCard extends StatelessWidget {
           Positioned(
             right: -20.w,
             top: -20.h,
-            child: Icon(Icons.star, size: 120.sp, color: Colors.white.withOpacity(0.2)),
+            child: Icon(Icons.star, size: 120.sp, color: Colors.white.withValues(alpha: 0.2)),
           ),
           
           Padding(

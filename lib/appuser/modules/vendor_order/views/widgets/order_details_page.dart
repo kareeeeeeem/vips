@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  const OrderDetailsPage({Key? key, required this.order}) : super(key: key);
+  const OrderDetailsPage({super.key, required this.order});
 
   @override
   State<OrderDetailsPage> createState() => _OrderDetailsPageState();
@@ -40,8 +39,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       _swipeOffset = 0;
     });
   }
-
-  void _openCustomerChat() {}
 
   @override
   Widget build(BuildContext context) {
@@ -159,8 +156,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                         BoxShadow(
                           color:
                               isCompleted
-                                  ? (step['color'] as Color).withOpacity(0.3)
-                                  : Colors.black.withOpacity(0.05),
+                                  ? (step['color'] as Color).withValues(alpha: 0.3)
+                                  : Colors.black.withValues(alpha: 0.05),
                           blurRadius: 12,
                           offset: Offset(0, 4),
                         ),
@@ -395,7 +392,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 spreadRadius: 1,
                                 blurRadius: 4,
                                 offset: Offset(0, 2),
@@ -613,12 +610,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         ),
         borderRadius: BorderRadius.circular(35.r),
         border: Border.all(
-          color: Color(0xFFE84C4F).withOpacity(0.3),
+          color: Color(0xFFE84C4F).withValues(alpha: 0.3),
           width: 2.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFFE84C4F).withOpacity(0.15),
+            color: Color(0xFFE84C4F).withValues(alpha: 0.15),
             blurRadius: 20,
             offset: Offset(0, 8),
           ),
@@ -690,7 +687,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFE84C4F).withOpacity(0.5),
+                      color: Color(0xFFE84C4F).withValues(alpha: 0.5),
                       blurRadius: 16,
                       offset: Offset(0, 4),
                     ),
@@ -730,12 +727,6 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
-  Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
-    }
-  }
 }
 
 class _CurvedLinePainter extends CustomPainter {

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 enum TransactionType { vipsIn, vipsOut, recovery, reward, credit }
 
@@ -61,74 +61,68 @@ class MerchantWalletController extends GetxController {
     _loadWalletData();
   }
 
-  void _loadWalletData() async {
+  Future<void> _loadWalletData() async {
     isLoading.value = true;
+    try {
+      final dashRes = await ApiService().get('/merchant/dashboard');
+      if (dashRes.success && dashRes.data != null) {
+        final d = dashRes.data;
+        totalVipsIn.value = (d['totalRewards'] ?? 0).toDouble();
+        totalVipsOut.value = (d['totalGiftBack'] ?? 0).toDouble();
+        totalVipsRecovery.value = (d['netProfit'] ?? 0).toDouble();
+        walletPoints.value = (d['totalSales'] ?? 0).toDouble();
+      }
 
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 600));
+      final txRes = await ApiService().get('/merchant/transactions', queryParams: {'limit': '20'});
+      if (txRes.success && txRes.data != null) {
+        final List<dynamic> list = txRes.data['transactions'] ?? [];
+        transactions.value = list.map((e) {
+          final type = e['type'] == 'income'
+              ? TransactionType.vipsIn
+              : e['type'] == 'gift_back'
+                  ? TransactionType.vipsOut
+                  : e['type'] == 'reward'
+                      ? TransactionType.reward
+                      : TransactionType.recovery;
+          final date = e['createdAt'] != null ? DateTime.parse(e['createdAt']) : DateTime.now();
+          final month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][date.month - 1];
+          return TransactionItem(
+            type: type,
+            displayId: (e['reference'] ?? e['_id'] ?? '').toString().replaceAll(RegExp(r'^[A-Z]+-'), ''),
+            location: e['type'] == 'income' ? 'Online' : 'On Store',
+            dateStr: '${date.day}\n$month',
+            subDetails: e['description'] ?? '',
+            user: '',
+            amount: type == TransactionType.vipsIn || type == TransactionType.reward
+                ? (e['amount'] ?? 0).toDouble()
+                : -(e['amount'] ?? 0).toDouble(),
+            fullDateStr: '${date.day} $month ${date.year}  ${date.hour}:${date.minute.toString().padLeft(2, '0')}',
+            statusLabel: e['status'],
+          );
+        }).toList();
+      }
+    } catch (e) {
+      // Keep empty state on failure
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-    walletPoints.value = 112.00;
-    pendingPoints.value = 600.00;
-    approvedPoints.value = 600.00;
-    suspendedPoints.value = 600.00;
-    dormantPoints.value = 861.00;
-
-    totalVipsIn.value = 2500.00;
-    totalVipsOut.value = 1200.00;
-    totalVipsRecovery.value = 450.00;
-
-    transactions.value = [
-      TransactionItem(
-        type: TransactionType.vipsOut,
-        displayId: '1123908',
-        location: 'On Store',
-        dateStr: '10\nMar',
-        subDetails: '4 item(s) D 5,000',
-        user: 'Admin | Mr Ali (0023900)',
-        amount: -80,
-        transId: '0023900',
-        transTypeDetails: 'Discount on Purchase',
-        walletPointsTotal: 18100,
-        serviceCharge: 0,
-        fullDateStr: '25 Oct 2025  16:13',
-        isExpanded: true,
-      ),
-      TransactionItem(
-        type: TransactionType.vipsIn,
-        displayId: '1123908',
-        location: 'Online',
-        dateStr: '10\nMar',
-        subDetails: 'Invoice D 215120',
-        user: 'Employee X | VIPs App',
-        amount: 2000,
-      ),
-      TransactionItem(
-        type: TransactionType.recovery,
-        displayId: '1123908',
-        location: 'Online',
-        dateStr: '10\nMar',
-        subDetails: 'Invoice D 215120',
-        user: '',
-        amount: -580,
-        statusLabel: 'Pending',
-      ),
-      TransactionItem(
-        type: TransactionType.vipsOut,
-        displayId: '1123908',
-        location: 'On Store',
-        dateStr: '10\nMar',
-        subDetails: '2 item(s) D 1,000',
-        user: 'Admin | Mr Ali',
-        amount: -110,
-      ),
-    ];
-
-    isLoading.value = false;
+  List<TransactionItem> get filteredTransactions {
+    switch (selectedTab.value) {
+      case 'Vips In':
+        return transactions.where((t) => t.type == TransactionType.vipsIn || t.type == TransactionType.reward).toList();
+      case 'Vips Out':
+        return transactions.where((t) => t.type == TransactionType.vipsOut).toList();
+      case 'Recovery':
+        return transactions.where((t) => t.type == TransactionType.recovery).toList();
+      default:
+        return transactions.toList();
+    }
   }
 
   void selectTab(String tab) {
     selectedTab.value = tab;
-    // Here you would filter transactions based on tab
   }
 
   void toggleExpand(TransactionItem item) {

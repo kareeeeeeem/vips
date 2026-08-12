@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_assets.dart';
-import '../../login/views/login_view.dart';
+import '../../../routes/app_pages.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 // Enum for page types
 enum OnboardingPageType { welcome, standard, conditions }
@@ -97,16 +99,26 @@ class OnboardingController extends GetxController {
     super.onClose();
   }
 
-  // Load saved language from storage
-  void loadSavedLanguage() {
-    // TODO: Load from SharedPreferences
-    // final prefs = await SharedPreferences.getInstance();
-    // final savedLang = prefs.getString('language') ?? 'en';
-    // selectedLanguage.value = savedLang;
+  Future<void> loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedLang = prefs.getString('language') ?? 'en';
+    selectedLanguage.value = savedLang;
+
+    Locale locale;
+    switch (savedLang) {
+      case 'fr':
+        locale = const Locale('fr', 'FR');
+        break;
+      case 'ar':
+        locale = const Locale('ar', 'TN');
+        break;
+      default:
+        locale = const Locale('en', 'US');
+    }
+    Get.updateLocale(locale);
   }
 
-  // Change language
-  void changeLanguage(String languageCode) {
+  Future<void> changeLanguage(String languageCode) async {
     selectedLanguage.value = languageCode;
 
     // Update app locale
@@ -124,11 +136,8 @@ class OnboardingController extends GetxController {
 
     Get.updateLocale(locale);
 
-    // TODO: Save to SharedPreferences
-    // final prefs = await SharedPreferences.getInstance();
-    // prefs.setString('language', languageCode);
-
-    print('Language changed to: $languageCode');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', languageCode);
   }
 
   // Method to go to the next page
@@ -139,11 +148,11 @@ class OnboardingController extends GetxController {
         // Vérifier si les conditions ont été acceptées
         if (!(pages[currentIndex].isConditionsChecked ?? false)) {
           // Conditions non acceptées, ne pas naviguer
-          Get.snackbar(
+          safeSnackbar(
             'Required',
             'Please accept the terms and conditions to continue',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red.withOpacity(0.1),
+            backgroundColor: Colors.red.withValues(alpha: 0.1),
             colorText: Colors.red,
           );
           return;
@@ -184,14 +193,10 @@ class OnboardingController extends GetxController {
     _currentIndex.value = pages.length - 1;
   }
 
-  // Method to complete onboarding
-  void completeOnboarding() {
-    // TODO: Mark onboarding as completed
-    // final prefs = await SharedPreferences.getInstance();
-    // prefs.setBool('onboarding_completed', true);
-
-    // Navigate to login
-    Get.offAll(() => LoginView());
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
+    Get.offAllNamed(Routes.LOGIN);
   }
 
   // Method to update current index when page changes

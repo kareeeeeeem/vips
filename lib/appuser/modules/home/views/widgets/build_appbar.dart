@@ -14,7 +14,6 @@ class BuildAppbar extends GetView<HomeController> {
   static const _borderColor = Color(0xFFE2E8F0);
   static const _iconColor = Color(0xFF475569);
   static const _hintColor = Color(0xFF94A3B8);
-  static const _textColor = Color(0xFF1E293B);
   static const _primaryGradientStart = Color(0xFFFF6B35);
   static const _primaryGradientEnd = Color(0xFFE55100);
 
@@ -189,7 +188,7 @@ class BuildAppbar extends GetView<HomeController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: _primaryGradientStart.withOpacity(0.35),
+            color: _primaryGradientStart.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -224,7 +223,7 @@ class BuildAppbar extends GetView<HomeController> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

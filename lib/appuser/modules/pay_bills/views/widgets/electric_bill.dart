@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import 'Electric_bill_amount.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ElectricBillController extends GetxController {
   final TextEditingController subscriberNumberController =
@@ -12,33 +14,61 @@ class ElectricBillController extends GetxController {
 
   final RxBool isLoading = false.obs;
 
-  final String operatorName = 'Tunisia Electric Company';
-  final String operatorIcon =
-      'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
+  late final String billServiceId;
+  late final String operatorName;
+  late final String operatorIcon;
 
-  void proceed() {
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    billServiceId = args['billServiceId']?.toString() ?? '';
+    operatorName = args['title']?.toString() ?? 'Bill Payment';
+    operatorIcon = args['logo']?.toString().isNotEmpty == true
+        ? args['logo'].toString()
+        : 'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
+  }
+
+  Future<void> proceed() async {
     if (subscriberNumberController.text.isEmpty) {
+      safeSnackbar('Required', 'Please enter your subscriber number', snackPosition: SnackPosition.BOTTOM);
       return;
     }
-
     if (accountNumberController.text.isEmpty) {
+      safeSnackbar('Required', 'Please enter your account number', snackPosition: SnackPosition.BOTTOM);
       return;
     }
 
     isLoading.value = true;
+    try {
+      final response = await ApiService().post('/services/bill-inquiry', {
+        'billServiceId': billServiceId,
+        'subscriberNumber': subscriberNumberController.text.trim(),
+        'accountNumber': accountNumberController.text.trim(),
+      });
 
-    // Simulate API call
-    Future.delayed(Duration(seconds: 1), () {
+      if (response.success && response.data != null) {
+        Get.to(
+          () => ElectricBillAmountView(),
+          arguments: {
+            'billServiceId': billServiceId,
+            'subscriberNumber': subscriberNumberController.text.trim(),
+            'accountNumber': accountNumberController.text.trim(),
+            'operator': operatorName,
+            'dueDate': response.data['dueDate'] ?? '',
+            'amountDue': response.data['amountDue']?.toString() ?? '',
+            'billStatus': response.data['status'] ?? 'Unpaid',
+          },
+        );
+      } else {
+        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Could not fetch bill details',
+            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to look up bill: $e', snackPosition: SnackPosition.BOTTOM);
+    } finally {
       isLoading.value = false;
-      Get.to(
-        () => ElectricBillAmountView(),
-        arguments: {
-          'subscriberNumber': subscriberNumberController.text,
-          'accountNumber': accountNumberController.text,
-          'operator': operatorName,
-        },
-      );
-    });
+    }
   }
 
   @override
@@ -50,7 +80,7 @@ class ElectricBillController extends GetxController {
 }
 
 class ElectricBillView extends GetView<ElectricBillController> {
-  const ElectricBillView({Key? key}) : super(key: key);
+  const ElectricBillView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -122,12 +152,12 @@ class ElectricBillView extends GetView<ElectricBillController> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16.r),
             border: Border.all(
-              color: AppColors.AppPrimaryColor.withOpacity(0.3),
+              color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -140,7 +170,7 @@ class ElectricBillView extends GetView<ElectricBillController> {
                 height: 44.h,
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Image.network(
@@ -218,7 +248,7 @@ class ElectricBillView extends GetView<ElectricBillController> {
             border: Border.all(color: Colors.grey.shade300, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -275,7 +305,7 @@ class ElectricBillView extends GetView<ElectricBillController> {
             border: Border.all(color: Colors.grey.shade300, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -325,7 +355,7 @@ class ElectricBillView extends GetView<ElectricBillController> {
               borderRadius: BorderRadius.circular(12.r),
             ),
             elevation: 0,
-            disabledBackgroundColor: AppColors.AppPrimaryColor.withOpacity(0.6),
+            disabledBackgroundColor: AppColors.AppPrimaryColor.withValues(alpha: 0.6),
           ),
           child:
               controller.isLoading.value

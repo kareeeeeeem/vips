@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 import 'package:get/get.dart';
 
 import '../modules/Cart/bindings/cart_binding.dart';
@@ -9,7 +10,7 @@ import '../modules/QR_scanner/views/q_r_scanner_view.dart';
 import '../modules/bills/bindings/bills_binding.dart';
 import '../modules/bills/views/bills_view.dart';
 import '../modules/checkout/bindings/checkout_binding.dart';
-import '../modules/checkout/views/checkout_view.dart' hide CheckoutBinding;
+import '../modules/checkout/views/checkout_view.dart';
 import '../modules/contact/bindings/contact_binding.dart';
 import '../modules/contact/views/contact_view.dart';
 import '../modules/home/views/all_merchants_view.dart';
@@ -148,7 +149,11 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.VERIFICATION,
-      page: () => const VerificationView(false),
+      page: () {
+        final args = Get.arguments;
+        final fromReset = (args is Map && args['fromReset'] == true);
+        return VerificationView(fromReset);
+      },
       binding: VerificationBinding(),
     ),
     GetPage(
@@ -204,18 +209,22 @@ class AppPages {
     GetPage(
       name: _Paths.HOT_DEALS,
       page: () => const HotDealsView(),
+      binding: HomeBinding(),
     ),
     GetPage(
       name: _Paths.DEAL_DETAILS,
       page: () => const DealDetailsView(),
+      binding: HomeBinding(),
     ),
     GetPage(
       name: _Paths.ALL_MERCHANTS,
       page: () => const AllMerchantsView(),
+      binding: HomeBinding(),
     ),
     GetPage(
       name: _Paths.MERCHANT_DETAILS,
       page: () => const MerchantDetailsView(),
+      binding: HomeBinding(),
     ),
     GetPage(
       name: _Paths.GIFT,

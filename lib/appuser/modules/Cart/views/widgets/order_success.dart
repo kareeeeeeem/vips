@@ -108,7 +108,7 @@ class OrderSuccessController extends GetxController {
 }
 
 class OrderSuccessView extends GetView<OrderSuccessController> {
-  const OrderSuccessView({Key? key}) : super(key: key);
+  const OrderSuccessView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +178,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -202,7 +202,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF06B6D4).withOpacity(0.3),
+            color: const Color(0xFF06B6D4).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -226,7 +226,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
           borderRadius: BorderRadius.circular(100.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -378,7 +378,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 25,
                   offset: const Offset(0, 10),
                 ),
@@ -467,7 +467,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
       width: 220.w,
       height: 220.h,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.97),
+        color: Colors.white.withValues(alpha: 0.97),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Stack(
@@ -621,7 +621,7 @@ class OrderSuccessView extends GetView<OrderSuccessController> {
               borderRadius: BorderRadius.circular(14.r),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF6B35).withOpacity(0.3),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 6),
                 ),

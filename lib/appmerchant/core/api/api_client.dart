@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' as foundation;
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -11,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../routes/merchant_routes.dart';
 import '../util/app_constants.dart';
 
 class ApiClient extends GetxService {
@@ -27,8 +27,6 @@ class ApiClient extends GetxService {
   ApiClient({required this.appBaseUrl, required this.sharedPreferences}) {
     token = sharedPreferences.getString(AppConstants.token);
     type = sharedPreferences.getString(AppConstants.type);
-    debugPrint('Token: $token');
-    debugPrint('Type: $type');
     updateHeader(
       token,
       sharedPreferences.getString(AppConstants.languageCode),
@@ -59,7 +57,6 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       http.Response response = await http
           .get(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
           .timeout(Duration(seconds: timeoutInSeconds));
@@ -76,10 +73,28 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
-      debugPrint('====> API Body: $body');
       http.Response response = await http
           .post(
+            Uri.parse(appBaseUrl + uri),
+            body: jsonEncode(body),
+            headers: headers ?? _mainHeaders,
+          )
+          .timeout(Duration(seconds: timeoutInSeconds));
+      return handleResponse(response, uri, handleError);
+    } catch (e) {
+      return const Response(statusCode: 1, statusText: noInternetMessage);
+    }
+  }
+
+  Future<Response> putData(
+    String uri,
+    dynamic body, {
+    Map<String, String>? headers,
+    bool handleError = true,
+  }) async {
+    try {
+      http.Response response = await http
+          .put(
             Uri.parse(appBaseUrl + uri),
             body: jsonEncode(body),
             headers: headers ?? _mainHeaders,
@@ -99,7 +114,6 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
       var request = http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
       request.headers.addAll(_mainHeaders);
 
@@ -141,20 +155,24 @@ class ApiClient extends GetxService {
     String uri,
     bool handleError,
   ) {
-    debugPrint('====> API Response: [${response.statusCode}] ${response.body}');
-
     if (handleError) {
       if (response.statusCode == 401) {
-        // Handle unauthorized
-        debugPrint('Unauthorized access to $uri');
-      } else if (response.statusCode == 500) {
-        debugPrint('Server error on $uri');
+        token = null;
+        sharedPreferences.remove(AppConstants.token);
+        Get.offAllNamed(MerchantRoutes.LOGIN);
       }
+    }
+
+    dynamic decodedBody;
+    try {
+      decodedBody = jsonDecode(response.body);
+    } catch (_) {
+      decodedBody = response.body;
     }
 
     return Response(
       statusCode: response.statusCode,
-      body: response.body,
+      body: decodedBody,
       statusText: response.reasonPhrase,
     );
   }

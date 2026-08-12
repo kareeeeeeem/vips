@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 
 // Section Ending Soon
 class BuildEndingSoon extends StatelessWidget {
@@ -31,8 +32,8 @@ class BuildEndingSoon extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFFEC4899).withOpacity(0.15), // Rose fuchsia
-            const Color(0xFFF43F5E).withOpacity(0.15), // Rose rouge
+            const Color(0xFFEC4899).withValues(alpha: 0.15), // Rose fuchsia
+            const Color(0xFFF43F5E).withValues(alpha: 0.15), // Rose rouge
           ],
         ),
       ),
@@ -49,7 +50,7 @@ class BuildEndingSoon extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEC4899).withOpacity(0.2),
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -136,6 +137,12 @@ class BuildEndingSoon extends StatelessWidget {
               itemCount: deals.length,
               itemBuilder: (context, index) {
                 final deal = deals[index];
+                final homeController = Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
+                final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
+                final isFav = homeController != null
+                    ? homeController.favorites.any((f) => (f['itemId']?.toString() ?? '') == id)
+                    : (deal['isFavorite'] ?? false);
+
                 return Container(
                   width: 180.w,
                   margin: EdgeInsets.only(right: 12.w),
@@ -143,7 +150,7 @@ class BuildEndingSoon extends StatelessWidget {
                     deal: deal,
                     onTap: () => onDealTap(deal),
                     onAddToBasket: () => onAddToBasket(deal),
-                    isFavorite: deal['isFavorite'] ?? false,
+                    isFavorite: isFav,
                     onToggleFavorite: () => onToggleFavorite(deal),
                     endTime: deal['endTime'],
                   ),
@@ -226,12 +233,12 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: const Color(0xFFFF3B30).withOpacity(0.3),
+            color: const Color(0xFFFF3B30).withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF3B30).withOpacity(0.15),
+              color: const Color(0xFFFF3B30).withValues(alpha: 0.15),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -312,7 +319,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -350,7 +357,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF3B30).withOpacity(0.1),
+                            color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Row(
@@ -456,7 +463,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF3B30).withOpacity(0.3),
+                              color: const Color(0xFFFF3B30).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),

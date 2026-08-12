@@ -1,27 +1,34 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class DeliveryDriverController extends GetxController {
-  // Loading state
+  final _api = ApiService();
+
   final RxBool isLoading = false.obs;
 
   // Driver info
-  final RxString driverName = 'John Doe'.obs;
-  final RxString driverPhone = '+1 234 567 8900'.obs;
-  final RxString driverPhoto = 'https://i.pravatar.cc/150?img=33'.obs;
+  final RxString driverName = ''.obs;
+  final RxString driverPhone = ''.obs;
+  final RxString driverPhoto = ''.obs;
 
   // Earnings
-  final RxDouble todayEarning = 1250.50.obs;
-  final RxDouble weekEarning = 8750.25.obs;
-  final RxDouble cashInHand = 450.00.obs;
+  final RxDouble todayEarning = 0.0.obs;
+  final RxDouble weekEarning = 0.0.obs;
+  final RxDouble cashInHand = 0.0.obs;
 
-  // Online status
   final RxBool isOnline = true.obs;
 
   // Current order
-  final RxBool hasActiveOrder = true.obs;
+  final RxBool hasActiveOrder = false.obs;
   final Rx<Map<String, dynamic>?> currentOrder = Rx<Map<String, dynamic>?>(
     null,
   );
+
+  // Orders from API
+  final _allOrders = <Map<String, dynamic>>[].obs;
 
   // Orders tabs
   final orderTabs = ['Request', 'Active History', 'History'];
@@ -39,44 +46,57 @@ class DeliveryDriverController extends GetxController {
   void onInit() {
     super.onInit();
     loadData();
-    loadCurrentOrder();
   }
 
   Future<void> loadData() async {
     isLoading.value = true;
     try {
-      await Future.delayed(Duration(seconds: 1));
-      // Load data from API
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to load data');
-    } finally {
-      isLoading.value = false;
-    }
-  }
+      final results = await Future.wait([
+        _api.get('/merchant/profile'),
+        _api.get('/merchant/stats'),
+        _api.get('/merchant/orders', queryParams: {'status': 'all', 'limit': 20}),
+      ]);
 
-  void loadCurrentOrder() {
-    if (hasActiveOrder.value) {
-      currentOrder.value = {
-        'orderId': 'SP 0023900',
-        'storeName': 'Pizza Hut',
-        'storeAddress': 'Rd 12, Uttara, Dhaka',
-        'customerName': 'John Smith',
-        'customerAddress': '123 Main Street, Apt 4B',
-        'itemsCount': 3,
-        'deliveryTime': 30,
-        'timeLess': 16,
-        'totalAmount': 127.00,
-        'deliveryFee': 5.00,
-        'status': 'picking_up', // picking_up, delivering, delivered
-        'paymentMethod': 'COD',
-        'distance': '2.5 km',
-        'orderTime': '06 Sept, 10:00pm',
-        'items': [
-          {'name': 'Pepperoni Pizza', 'quantity': 2, 'price': 45.00},
-          {'name': 'Garlic Bread', 'quantity': 1, 'price': 12.00},
-        ],
-      };
-    }
+      // Profile → driver identity
+      final profileRes = results[0];
+      if (profileRes.success && profileRes.data != null) {
+        final p = profileRes.data as Map<String, dynamic>;
+        driverName.value = p['storeName'] ?? p['fullName'] ?? '';
+        driverPhone.value = p['phone'] ?? '';
+        driverPhoto.value = p['profileImageUrl'] ?? '';
+      }
+
+      // Stats → earnings
+      final statsRes = results[1];
+      if (statsRes.success && statsRes.data != null) {
+        final d = statsRes.data as Map<String, dynamic>;
+        todayEarning.value =
+            ((d['today'] as Map?)?['sales'] as num?)?.toDouble() ?? 0.0;
+        weekEarning.value =
+            ((d['month'] as Map?)?['sales'] as num?)?.toDouble() ?? 0.0;
+      }
+
+      // Orders
+      final ordersRes = results[2];
+      if (ordersRes.success && ordersRes.data != null) {
+        final d = ordersRes.data as Map<String, dynamic>;
+        final orders = (d['orders'] as List?) ?? [];
+        _allOrders.assignAll(
+          orders.map((o) => Map<String, dynamic>.from(o as Map)).toList(),
+        );
+        final active = _allOrders.firstWhereOrNull(
+          (o) =>
+              o['status'] == 'processing' ||
+              o['status'] == 'confirmed' ||
+              o['status'] == 'pending',
+        );
+        if (active != null) {
+          hasActiveOrder.value = true;
+          currentOrder.value = active;
+        }
+      }
+    } catch (_) {}
+    isLoading.value = false;
   }
 
   void setOrderTab(int index) {
@@ -95,14 +115,14 @@ class DeliveryDriverController extends GetxController {
   void toggleOnlineStatus() {
     isOnline.value = !isOnline.value;
     if (!isOnline.value) {
-      Get.snackbar(
+      safeSnackbar(
         'Status Changed',
         'You are now offline',
         backgroundColor: Get.theme.colorScheme.error,
         colorText: Get.theme.colorScheme.onError,
       );
     } else {
-      Get.snackbar(
+      safeSnackbar(
         'Status Changed',
         'You are now online',
         backgroundColor: Get.theme.colorScheme.primary,
@@ -125,85 +145,25 @@ class DeliveryDriverController extends GetxController {
   }
 
   List<Map<String, dynamic>> getRequestOrders() {
-    return [
-      {
-        'orderId': 'SP 0023901',
-        'storeName': 'KFC Restaurant',
-        'storeAddress': 'Gulshan 2, Dhaka',
-        'customerName': 'Sarah Johnson',
-        'customerAddress': '456 Park Avenue',
-        'itemsCount': 4,
-        'deliveryFee': 6.00,
-        'totalAmount': 89.50,
-        'distance': '3.2 km',
-        'status': 'pending',
-        'paymentMethod': 'COD',
-      },
-      {
-        'orderId': 'SP 0023902',
-        'storeName': 'Burger King',
-        'storeAddress': 'Banani, Dhaka',
-        'customerName': 'Mike Brown',
-        'customerAddress': '789 Oak Street',
-        'itemsCount': 2,
-        'deliveryFee': 4.00,
-        'totalAmount': 56.00,
-        'distance': '1.8 km',
-        'status': 'pending',
-        'paymentMethod': 'Paid',
-      },
-    ];
+    return _allOrders
+        .where((o) => o['status'] == 'pending')
+        .toList();
   }
 
   List<Map<String, dynamic>> getActiveHistoryOrders() {
-    return [
-      {
-        'orderId': 'SP 0023900',
-        'storeName': 'Pizza Hut',
-        'storeAddress': 'Rd 12, Uttara, Dhaka',
-        'customerName': 'John Smith',
-        'customerAddress': '123 Main Street',
-        'itemsCount': 3,
-        'deliveryFee': 5.00,
-        'totalAmount': 127.00,
-        'distance': '2.5 km',
-        'status': 'delivering',
-        'paymentMethod': 'COD',
-      },
-    ];
+    return _allOrders
+        .where(
+          (o) => o['status'] == 'confirmed' || o['status'] == 'processing',
+        )
+        .toList();
   }
 
   List<Map<String, dynamic>> getHistoryOrders() {
-    return [
-      {
-        'orderId': 'SP 0023899',
-        'storeName': 'Subway',
-        'storeAddress': 'Dhanmondi, Dhaka',
-        'customerName': 'Emily Davis',
-        'customerAddress': '321 Elm Street',
-        'itemsCount': 2,
-        'deliveryFee': 4.50,
-        'totalAmount': 45.00,
-        'distance': '2.1 km',
-        'status': 'delivered',
-        'paymentMethod': 'Paid',
-        'completedAt': '05 Sept, 8:30pm',
-      },
-      {
-        'orderId': 'SP 0023898',
-        'storeName': "McDonald's",
-        'storeAddress': 'Mirpur, Dhaka',
-        'customerName': 'David Wilson',
-        'customerAddress': '654 Pine Street',
-        'itemsCount': 5,
-        'deliveryFee': 7.00,
-        'totalAmount': 156.00,
-        'distance': '4.5 km',
-        'status': 'delivered',
-        'paymentMethod': 'COD',
-        'completedAt': '05 Sept, 7:15pm',
-      },
-    ];
+    return _allOrders
+        .where(
+          (o) => o['status'] == 'delivered' || o['status'] == 'cancelled',
+        )
+        .toList();
   }
 
   void acceptOrder(Map<String, dynamic> order) {
@@ -213,15 +173,55 @@ class DeliveryDriverController extends GetxController {
       textConfirm: 'Accept',
       textCancel: 'Decline',
       confirmTextColor: Get.theme.colorScheme.onPrimary,
-      onConfirm: () {
+      onConfirm: () async {
         Get.back();
+        final orderId = order['id'] ?? order['_id'] ?? order['orderId'];
+        try {
+          await _api.put('/merchant/orders/$orderId/status', {'status': 'confirmed'});
+        } catch (_) {}
+        final idx = _allOrders.indexWhere((o) =>
+            (o['id'] ?? o['_id'] ?? o['orderId']) == orderId);
+        if (idx != -1) {
+          _allOrders[idx] = {..._allOrders[idx], 'status': 'confirmed'};
+          _allOrders.refresh();
+        }
         hasActiveOrder.value = true;
-        currentOrder.value = order;
-        Get.snackbar(
+        currentOrder.value = {...order, 'status': 'confirmed'};
+        safeSnackbar(
           'Order Accepted',
-          'You have accepted order ${order['orderId']}',
+          'You have accepted order ${order['orderNumber'] ?? order['orderId']}',
           backgroundColor: Get.theme.colorScheme.primary,
           colorText: Get.theme.colorScheme.onPrimary,
+        );
+      },
+    );
+  }
+
+  void declineOrder(Map<String, dynamic> order) {
+    Get.defaultDialog(
+      title: 'Decline Order',
+      middleText: 'Are you sure you want to decline this order?',
+      textConfirm: 'Decline',
+      textCancel: 'Cancel',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red.shade400,
+      onConfirm: () async {
+        Get.back();
+        final orderId = order['id'] ?? order['_id'] ?? order['orderId'];
+        try {
+          await _api.put('/merchant/orders/$orderId/status', {'status': 'rejected'});
+        } catch (_) {}
+        final idx = _allOrders.indexWhere((o) =>
+            (o['id'] ?? o['_id'] ?? o['orderId']) == orderId);
+        if (idx != -1) {
+          _allOrders.removeAt(idx);
+          _allOrders.refresh();
+        }
+        safeSnackbar(
+          'Order Declined',
+          'You have declined order ${order['orderNumber'] ?? order['orderId']}',
+          backgroundColor: Colors.red.shade400,
+          colorText: Colors.white,
         );
       },
     );
@@ -232,30 +232,35 @@ class DeliveryDriverController extends GetxController {
   }
 
   void startNavigation() {
-    Get.snackbar(
-      'Navigation',
-      'Starting navigation to destination',
-      backgroundColor: Get.theme.colorScheme.primary,
-      colorText: Get.theme.colorScheme.onPrimary,
-    );
+    final order = currentOrder.value;
+    final address = order?['deliveryAddress'] ?? order?['address'] ?? '';
+    if (address.isNotEmpty) {
+      final encoded = Uri.encodeComponent(address.toString());
+      final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encoded');
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      safeSnackbar('No Address', 'Delivery address not available');
+    }
   }
 
   void callCustomer() {
-    Get.snackbar(
-      'Calling',
-      'Calling customer...',
-      backgroundColor: Get.theme.colorScheme.primary,
-      colorText: Get.theme.colorScheme.onPrimary,
-    );
+    final order = currentOrder.value;
+    final phone = order?['customerPhone'] ?? order?['customer']?['phone'] ?? '';
+    if (phone.toString().isNotEmpty) {
+      launchUrl(Uri.parse('tel:$phone'));
+    } else {
+      safeSnackbar('No Phone', 'Customer phone not available');
+    }
   }
 
   void callStore() {
-    Get.snackbar(
-      'Calling',
-      'Calling store...',
-      backgroundColor: Get.theme.colorScheme.primary,
-      colorText: Get.theme.colorScheme.onPrimary,
-    );
+    final order = currentOrder.value;
+    final phone = order?['storePhone'] ?? order?['merchant']?['phone'] ?? order?['merchantPhone'] ?? '';
+    if (phone.toString().isNotEmpty) {
+      launchUrl(Uri.parse('tel:$phone'));
+    } else {
+      safeSnackbar('No Phone', 'Store phone not available');
+    }
   }
 
   void completeDelivery() {
@@ -265,11 +270,24 @@ class DeliveryDriverController extends GetxController {
       textConfirm: 'Yes, Complete',
       textCancel: 'Cancel',
       confirmTextColor: Get.theme.colorScheme.onPrimary,
-      onConfirm: () {
+      onConfirm: () async {
         Get.back();
+        final order = currentOrder.value;
+        if (order != null) {
+          final orderId = order['id'] ?? order['_id'] ?? order['orderId'];
+          try {
+            await _api.put('/merchant/orders/$orderId/status', {'status': 'delivered'});
+          } catch (_) {}
+          final idx = _allOrders.indexWhere((o) =>
+              (o['id'] ?? o['_id'] ?? o['orderId']) == orderId);
+          if (idx != -1) {
+            _allOrders[idx] = {..._allOrders[idx], 'status': 'delivered'};
+            _allOrders.refresh();
+          }
+        }
         hasActiveOrder.value = false;
         currentOrder.value = null;
-        Get.snackbar(
+        safeSnackbar(
           'Delivery Completed',
           'Order has been marked as delivered',
           backgroundColor: Get.theme.colorScheme.primary,
@@ -281,12 +299,12 @@ class DeliveryDriverController extends GetxController {
 
   void requestNotificationPermission() async {
     // Implement notification permission request
-    Get.snackbar('Permission', 'Requesting notification permission...');
+    safeSnackbar('Permission', 'Requesting notification permission...');
   }
 
   void requestBatteryOptimization() async {
     // Implement battery optimization request
-    Get.snackbar('Permission', 'Requesting battery optimization...');
+    safeSnackbar('Permission', 'Requesting battery optimization...');
   }
 
   void closeNotificationPermissionWarning() {

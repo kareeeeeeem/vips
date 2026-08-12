@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_credit_controller.dart';
 
 class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
-  const MerchantCreditInquiryView({Key? key}) : super(key: key);
+  const MerchantCreditInquiryView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +143,7 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16.r),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
                       ],
                     ),
                     child: Row(
@@ -161,8 +161,8 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Pack Go Up', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
-                            Text('D 100.000', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF10B981))),
+                            Text('Credit Amount', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
+                            Obx(() => Text('D ${controller.amount.value}', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF10B981)))),
                           ],
                         ),
                       ],
@@ -171,32 +171,43 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                   SizedBox(height: 32.h),
 
                   // Totals
-                  _buildAmountRow('Credit Amount', 'D 100.000'),
-                  _buildAmountRow('Addon Cost', 'D 0.000'),
-                  SizedBox(height: 12.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                    decoration: BoxDecoration(color: const Color(0xFFF97316).withOpacity(0.15), borderRadius: BorderRadius.circular(20.r)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Obx(() {
+                    final amt = double.tryParse(controller.amount.value) ?? 0;
+                    final serviceCharge = amt * controller.serviceChargeRate;
+                    final total = amt + serviceCharge;
+                    final amtStr = 'D ${amt.toStringAsFixed(3)}';
+                    final scStr = 'D ${serviceCharge.toStringAsFixed(3)}';
+                    final totalStr = 'D ${total.toStringAsFixed(3)}';
+                    return Column(
                       children: [
-                        Text('Subtotal', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
-                        Text('D 100.000', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                        _buildAmountRow('Credit Amount', amtStr),
+                        _buildAmountRow('Addon Cost', 'D 0.000'),
+                        SizedBox(height: 12.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                          decoration: BoxDecoration(color: const Color(0xFFF97316).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20.r)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Subtotal', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                              Text(amtStr, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildAmountRow('Service Charge', scStr),
+                        _buildAmountRow('Vat/Tax', 'D 0.000'),
+                        SizedBox(height: 32.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Grand Total', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
+                            Text(totalStr, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
+                          ],
+                        ),
                       ],
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildAmountRow('Service Charge', 'D 0.000'),
-                  _buildAmountRow('Vat/Tax', 'D 10.000'),
-                  SizedBox(height: 32.h),
-                  
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Grand Total', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
-                      Text('D 110.000', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w900, color: const Color(0xFF1F2937))),
-                    ],
-                  ),
+                    );
+                  }),
                   SizedBox(height: 16.h),
                 ],
               ),
@@ -223,7 +234,7 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => controller.confirmCredit(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF97316),
                       padding: EdgeInsets.symmetric(vertical: 16.h),

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_tax_controller.dart';
 
 class TaxRatesView extends GetView<MerchantTaxController> {
-  const TaxRatesView({Key? key}) : super(key: key);
+  const TaxRatesView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,25 @@ class TaxRatesView extends GetView<MerchantTaxController> {
             ),
           ),
           Expanded(
-            child: Obx(() => ListView.builder(
+            child: Obx(() {
+              if (controller.taxRates.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long_outlined, size: 56.sp, color: Colors.grey.shade300),
+                      SizedBox(height: 16.h),
+                      Text('No tax rates configured',
+                          style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w600)),
+                      SizedBox(height: 8.h),
+                      Text('Tap "Add Tax" to configure your tax rates',
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade400)),
+                    ],
+                  ),
+                );
+              }
+              return ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: 24.w),
               itemCount: controller.taxRates.length,
               itemBuilder: (context, index) {
@@ -59,7 +77,7 @@ class TaxRatesView extends GetView<MerchantTaxController> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Row(
@@ -67,7 +85,7 @@ class TaxRatesView extends GetView<MerchantTaxController> {
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withOpacity(0.1),
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.receipt_long, color: const Color(0xFFF59E0B), size: 24.sp),
@@ -85,13 +103,14 @@ class TaxRatesView extends GetView<MerchantTaxController> {
                       Switch(
                         value: tax.isActive,
                         onChanged: (val) => controller.toggleTaxStatus(index),
-                        activeColor: const Color(0xFF10B981),
+                        activeThumbColor: const Color(0xFF10B981),
                       ),
                     ],
                   ),
                 );
               },
-            )),
+            );
+            }),
           ),
         ],
       ),
@@ -117,8 +136,9 @@ class TaxRatesView extends GetView<MerchantTaxController> {
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
-              if (nameController.text.isNotEmpty && rateController.text.isNotEmpty) {
-                controller.addTaxRate(nameController.text, double.parse(rateController.text));
+              final rate = double.tryParse(rateController.text);
+              if (nameController.text.isNotEmpty && rate != null && rate > 0) {
+                controller.addTaxRate(nameController.text, rate);
                 Get.back();
               }
             },

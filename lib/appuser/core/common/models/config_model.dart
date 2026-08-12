@@ -149,12 +149,12 @@ class ConfigModel {
     toggleVegNonVeg = json['toggle_veg_non_veg'];
     toggleDmRegistration = json['toggle_dm_registration'];
     toggleStoreRegistration = json['toggle_store_registration'];
-    scheduleOrderSlotDuration = json['schedule_order_slot_duration'] == 0 ? 30 : json['schedule_order_slot_duration'];
+    scheduleOrderSlotDuration = (json['schedule_order_slot_duration'] as int?) == 0 ? 30 : (json['schedule_order_slot_duration'] as int?);
     digitAfterDecimalPoint = json['digit_after_decimal_point'];
     canceledByStore = json['canceled_by_store'];
     moduleConfig = json['module_config'] != null ? ModuleConfig.fromJson(json['module_config']) : null;
     prescriptionOrderStatus = json['prescription_order_status'];
-    dmPictureUploadStatus = json['dm_picture_upload_status'] == 1 ? true : false;
+    dmPictureUploadStatus = (json['dm_picture_upload_status'] as int?) == 1;
     additionalChargeName = json['additional_charge_name'];
     disbursementType = json['disbursement_type'];
     if (json['active_payment_method_list'] != null) {
@@ -164,18 +164,18 @@ class ConfigModel {
       });
     }
     minAmountToPayStore = json['min_amount_to_pay_store']?.toDouble();
-    storeReviewReply = json['store_review_reply'] == 1 ? true : false;
+    storeReviewReply = (json['store_review_reply'] as int?) == 1;
     adminCommission = json['admin_commission']?.toDouble();
     subscriptionDeadlineWarningDays = json['subscription_deadline_warning_days'];
     subscriptionDeadlineWarningMessage = json['subscription_deadline_warning_message'];
     subscriptionFreeTrialDays = json['subscription_free_trial_days'];
-    subscriptionFreeTrialStatus = json['subscription_free_trial_status'] == 1 ? true : false;
+    subscriptionFreeTrialStatus = (json['subscription_free_trial_status'] as int?) == 1;
     subscriptionBusinessModel = json['subscription_business_model'];
     commissionBusinessModel = json['commission_business_model'];
     subscriptionFreeTrialType = json['subscription_free_trial_type'];
     systemTaxType = json['system_tax_type'];
     systemTaxIncludeStatus = json['system_tax_include_status'];
-    openAiStatus = json['open_ai_status'] == 1 ? true : false;
+    openAiStatus = (json['open_ai_status'] as int?) == 1;
   }
 
   Map<String, dynamic> toJson() {
@@ -289,8 +289,9 @@ class ModuleConfig {
   ModuleConfig({this.moduleType, this.module});
 
   ModuleConfig.fromJson(Map<String, dynamic> json) {
-    moduleType = json['module_type'].cast<String>();
-    module = json[moduleType![0]] != null ? Module.fromJson(json[moduleType![0]]) : null;
+    moduleType = (json['module_type'] as List?)?.cast<String>();
+    final firstType = (moduleType != null && moduleType!.isNotEmpty) ? moduleType![0] : null;
+    module = (firstType != null && json[firstType] != null) ? Module.fromJson(json[firstType]) : null;
   }
 
   Map<String, dynamic> toJson() {

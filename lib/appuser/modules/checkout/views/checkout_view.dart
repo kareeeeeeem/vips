@@ -5,11 +5,10 @@ import 'package:get/get.dart';
 import '../controllers/checkout_controller.dart';
 
 class CheckoutView extends GetView<CheckoutController> {
-  const CheckoutView({Key? key}) : super(key: key);
+  const CheckoutView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(CheckoutController());
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -52,7 +51,7 @@ class CheckoutView extends GetView<CheckoutController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -163,7 +162,7 @@ class CheckoutView extends GetView<CheckoutController> {
         decoration: BoxDecoration(
           color:
               isSelected
-                  ? const Color(0xFFFF6B35).withOpacity(0.1)
+                  ? const Color(0xFFFF6B35).withValues(alpha: 0.1)
                   : Colors.white,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
@@ -219,7 +218,7 @@ class CheckoutView extends GetView<CheckoutController> {
                 fontWeight: FontWeight.w500,
                 color:
                     isSelected
-                        ? const Color(0xFFFF6B35).withOpacity(0.8)
+                        ? const Color(0xFFFF6B35).withValues(alpha: 0.8)
                         : const Color(0xFF6B7280),
                 fontFamily: 'SF Pro Text',
               ),
@@ -687,7 +686,7 @@ class CheckoutView extends GetView<CheckoutController> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -773,13 +772,5 @@ class CheckoutView extends GetView<CheckoutController> {
         ],
       ),
     );
-  }
-}
-
-// Binding
-class CheckoutBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<CheckoutController>(() => CheckoutController());
   }
 }

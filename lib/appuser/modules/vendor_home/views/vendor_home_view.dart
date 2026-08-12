@@ -3,9 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../routes/app_pages.dart';
 import '../../delivery_order_details/views/delivery_order_details_view.dart';
 import '../controllers/vendor_home_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VendorHomeView extends StatelessWidget {
   const VendorHomeView({super.key});
@@ -74,7 +77,7 @@ class VendorHomeView extends StatelessWidget {
             ),
           ),
           onPressed: () {
-            Get.snackbar('Notifications', 'You have new notifications');
+            safeSnackbar('Notifications', 'You have new notifications');
           },
         ),
       ],
@@ -183,7 +186,7 @@ class VendorHomeView extends StatelessWidget {
               scale: 0.85,
               child: CupertinoSwitch(
                 value: !controller.isStoreActive,
-                activeColor: vendorGreen,
+                activeTrackColor: vendorGreen,
                 onChanged: (bool value) {
                   if (value) {
                     _showCloseStoreDialog(controller);
@@ -232,7 +235,7 @@ class VendorHomeView extends StatelessWidget {
                   Text(
                     'Today',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -264,7 +267,7 @@ class VendorHomeView extends StatelessWidget {
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16.r),
-                    color: vendorGreen.withOpacity(0.85),
+                    color: vendorGreen.withValues(alpha: 0.85),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +276,7 @@ class VendorHomeView extends StatelessWidget {
                       Text(
                         'This Week',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -339,7 +342,7 @@ class VendorHomeView extends StatelessWidget {
                       top: 0,
                       bottom: 0,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => Get.toNamed('/merchant-wallet'),
                         child: Container(
                           width: 34.w,
                           decoration: BoxDecoration(
@@ -350,7 +353,7 @@ class VendorHomeView extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.orange.withOpacity(0.3),
+                                color: Colors.orange.withValues(alpha: 0.3),
                                 blurRadius: 6,
                                 offset: Offset(-2, 0),
                               ),
@@ -467,7 +470,7 @@ class VendorHomeView extends StatelessWidget {
             top: 0,
             bottom: 0,
             child: GestureDetector(
-              onTap: () {},
+              onTap: () => Get.toNamed(Routes.PACKAGES),
               child: Container(
                 width: 36.w,
                 decoration: BoxDecoration(
@@ -478,7 +481,7 @@ class VendorHomeView extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2196F3).withOpacity(0.3),
+                      color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: Offset(-2, 0),
                     ),
@@ -532,13 +535,7 @@ class VendorHomeView extends StatelessWidget {
                 top: 8.h,
                 right: 8.w,
                 child: GestureDetector(
-                  onTap:
-                      () => Get.snackbar(
-                        'Edit',
-                        'Edit store image',
-                        backgroundColor: vendorGreen,
-                        colorText: Colors.white,
-                      ),
+                  onTap: () => Get.toNamed('/merchant-profile'),
                   child: Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
@@ -546,7 +543,7 @@ class VendorHomeView extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: Offset(0, 2),
                         ),
@@ -570,7 +567,7 @@ class VendorHomeView extends StatelessWidget {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: Offset(0, 3),
                 ),
@@ -625,7 +622,7 @@ class VendorHomeView extends StatelessWidget {
                               vertical: 3.h,
                             ),
                             decoration: BoxDecoration(
-                              color: vendorGreen.withOpacity(0.1),
+                              color: vendorGreen.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6.r),
                             ),
                             child: Text(
@@ -644,18 +641,25 @@ class VendorHomeView extends StatelessWidget {
                     SizedBox(width: 8.w),
 
                     // Action icons in row
-                    _buildIconButton(Icons.location_on, () {}),
+                    _buildIconButton(Icons.location_on, () async {
+                      final addr = controller.storeAddress;
+                      if (addr.isNotEmpty) {
+                        final uri = Uri.parse('https://maps.google.com/?q=${Uri.encodeComponent(addr)}');
+                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    }),
                     SizedBox(width: 6.w),
-                    _buildIconButton(Icons.phone, () {}),
+                    _buildIconButton(Icons.phone, () async {
+                      final phone = controller.storePhone;
+                      if (phone.isNotEmpty) {
+                        final uri = Uri.parse('tel:$phone');
+                        if (await canLaunchUrl(uri)) await launchUrl(uri);
+                      }
+                    }),
                     SizedBox(width: 6.w),
                     _buildIconButton(
                       Icons.edit,
-                      () => Get.snackbar(
-                        'Edit',
-                        'Edit store info',
-                        backgroundColor: vendorGreen,
-                        colorText: Colors.white,
-                      ),
+                      () => Get.toNamed('/merchant-profile'),
                       color: vendorGreen,
                     ),
                   ],
@@ -671,9 +675,28 @@ class VendorHomeView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildIconButton(Icons.language, () {}),
-                    _buildIconButton(Icons.email, () {}),
-                    _buildIconButton(Icons.facebook, () {}),
+                    _buildIconButton(Icons.language, () async {
+                      final site = controller.storeWebsite;
+                      if (site.isNotEmpty) {
+                        final url = site.startsWith('http') ? site : 'https://$site';
+                        final uri = Uri.parse(url);
+                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    }),
+                    _buildIconButton(Icons.email, () async {
+                      final email = controller.storeEmail;
+                      if (email.isNotEmpty) {
+                        final uri = Uri.parse('mailto:$email');
+                        if (await canLaunchUrl(uri)) await launchUrl(uri);
+                      }
+                    }),
+                    _buildIconButton(Icons.facebook, () async {
+                      final website = controller.storeWebsite;
+                      if (website.isNotEmpty) {
+                        final uri = Uri.parse(website.startsWith('http') ? website : 'https://$website');
+                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    }),
                   ],
                 ),
               ],
@@ -709,7 +732,7 @@ class VendorHomeView extends StatelessWidget {
                 SizedBox(width: 8.w),
                 GestureDetector(
                   onTap:
-                      () => Get.snackbar(
+                      () => safeSnackbar(
                         'Edit',
                         'Edit promotion',
                         backgroundColor: Colors.red.shade700,
@@ -718,7 +741,7 @@ class VendorHomeView extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.all(6.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.edit, size: 14.sp, color: Colors.white),
@@ -738,7 +761,7 @@ class VendorHomeView extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
-          color: color?.withOpacity(0.1) ?? Colors.grey.shade100,
+          color: color?.withValues(alpha: 0.1) ?? Colors.grey.shade100,
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 18.sp, color: color ?? Colors.grey.shade700),
@@ -839,7 +862,7 @@ class VendorHomeView extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: Offset(0, 2),
             ),
@@ -1356,7 +1379,7 @@ class VendorHomeView extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: vendorGreen.withOpacity(0.9)),
+      decoration: BoxDecoration(color: vendorGreen.withValues(alpha: 0.9)),
       child: InkWell(
         onTap: onTap,
         child: Stack(
@@ -1420,7 +1443,7 @@ class VendorHomeView extends StatelessWidget {
 class AdsCarousel extends StatefulWidget {
   final Color primaryColor;
 
-  const AdsCarousel({Key? key, required this.primaryColor}) : super(key: key);
+  const AdsCarousel({super.key, required this.primaryColor});
 
   @override
   State<AdsCarousel> createState() => _AdsCarouselState();
@@ -1468,7 +1491,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
                   color:
                       _currentPage == index
                           ? widget.primaryColor
-                          : widget.primaryColor.withOpacity(0.3),
+                          : widget.primaryColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(4.r),
                 ),
               ),
@@ -1484,11 +1507,11 @@ class _AdsCarouselState extends State<AdsCarousel> {
       margin: EdgeInsets.symmetric(horizontal: 4.w),
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: widget.primaryColor.withOpacity(0.08),
+        color: widget.primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1520,7 +1543,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
                 SizedBox(height: 16.h),
                 ElevatedButton(
                   onPressed: () {
-                    Get.snackbar(
+                    safeSnackbar(
                       'Ads',
                       'Create new advertisement',
                       backgroundColor: widget.primaryColor,
@@ -1573,7 +1596,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1607,7 +1630,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
                 SizedBox(height: 12.h),
                 ElevatedButton(
                   onPressed: () {
-                    Get.snackbar(
+                    safeSnackbar(
                       'Push Announcement',
                       'Send push notification to customers',
                       backgroundColor: widget.primaryColor,
@@ -1624,7 +1647,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
                       vertical: 14.h,
                     ),
                     elevation: 0,
-                    shadowColor: widget.primaryColor.withOpacity(0.3),
+                    shadowColor: widget.primaryColor.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14.r),
                     ),
@@ -1652,7 +1675,7 @@ class _AdsCarouselState extends State<AdsCarousel> {
                   Container(
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color: widget.primaryColor.withOpacity(0.15),
+                      color: widget.primaryColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(

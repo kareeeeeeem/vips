@@ -6,6 +6,7 @@ import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/order_success.dart';
 import '../views/widgets/payment_method_bottomsheet.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum CartItemType { food, product, service }
 
@@ -63,7 +64,7 @@ class CartItem {
       name: json['name'],
       description: json['description'],
       image: json['image'],
-      price: json['price'].toDouble(),
+      price: (json['price'] ?? 0).toDouble(),
       oldPrice: json['oldPrice']?.toDouble(),
       merchantId: json['merchantId'],
       type: CartItemType.values.firstWhere(
@@ -123,10 +124,13 @@ class CartController extends GetxController
   var deliveryOption = 'standard'.obs;
   var deliveryNote = ''.obs;
 
+  // Wallet points loaded from API
+  var walletPoints = 0.obs;
+
   // Order Type Management
   var selectedOrderType = 0.obs; // 0: Delivery, 1: Takeaway, 2: In Store
-  var deliveryAddress = '221B Baker Street, London, United K...'.obs;
-  var selectedDate = 'Today (26 Nov, 2025)'.obs;
+  var deliveryAddress = ''.obs;
+  var selectedDate = ''.obs;
   var selectedTime = ''.obs;
 
   // Tip Management
@@ -141,11 +145,10 @@ class CartController extends GetxController
       cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
   double get deliveryFee => _calculateDeliveryFee();
   double get discount => _calculateDiscount();
-  double get vipsDiscount => 0.1; // 100 VIPs points
-  double get couponDiscount => 0.4; // 400 VIPs points
+  double get vipsDiscount => 0.0;
+  double get couponDiscount => _calculateDiscount();
   double get serviceCharge => 0.0;
-  double get vatTax =>
-      (subtotal - vipsDiscount - couponDiscount) * 0.07; // 7% tax
+  double get vatTax => subtotal * 0.07;
   double get tipAmount =>
       selectedTipAmount.value > 0
           ? selectedTipAmount.value
@@ -153,7 +156,6 @@ class CartController extends GetxController
   double get total =>
       subtotal +
       deliveryFee -
-      vipsDiscount -
       couponDiscount +
       serviceCharge +
       vatTax +
@@ -165,6 +167,8 @@ class CartController extends GetxController
     super.onInit();
     _initializeAnimations();
     _loadCartItems();
+    _loadWalletPoints();
+    selectedDate.value = 'Today (${DateFormat('dd MMM, yyyy').format(DateTime.now())})';
   }
 
   @override
@@ -195,80 +199,49 @@ class CartController extends GetxController
     animationController.forward();
   }
 
-  void _loadCartItems() {
+  Future<void> _loadCartItems() async {
     isLoading.value = true;
+    try {
+      final response = await ApiService().get('/cart');
+      if (response.success && response.data != null) {
+        final List<dynamic> raw = response.data;
+        cartItems.value = raw.map((item) => CartItem(
+          id: item['itemId']?.toString() ?? item['_id']?.toString() ?? '',
+          merchantId: item['merchantId']?.toString(),
+          name: item['name'] ?? 'Product',
+          description: '',
+          price: (item['price'] ?? 0).toDouble(),
+          type: CartItemType.product,
+          quantity: item['quantity'] ?? 1,
+        )).toList();
+      }
+    } catch (_) {}
+    isLoading.value = false;
+  }
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      cartItems.value = [
-        CartItem(
-          id: '1',
-          merchantId: '64abcd1234567890abcdef12',
-          name: 'Pizza Hub happy meal',
-          description: 'Delicious combo with pizza, fries and drink',
-          image:
-              'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop',
-          price: 6.0,
-          oldPrice: 10.0,
-          type: CartItemType.food,
-          quantity: 1,
-          category: 'Pizza Hub',
-          isFavorite: false,
-        ),
-        CartItem(
-          id: '2',
-          name: 'Cherry Tomato Salad',
-          description: 'Fresh salad with cherry tomatoes and greens',
-          image:
-              'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
-          price: 6.0,
-          oldPrice: 10.0,
-          type: CartItemType.food,
-          quantity: 2,
-          category: 'Pizza Hub',
-          isFavorite: true,
-        ),
-        CartItem(
-          id: '3',
-          name: 'Margherita Pizza',
-          description: 'Classic Italian pizza with fresh mozzarella',
-          image:
-              'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=400&fit=crop',
-          price: 8.5,
-          oldPrice: 12.0,
-          type: CartItemType.food,
-          quantity: 1,
-          category: 'Pizza Hub',
-          isFavorite: false,
-        ),
-        CartItem(
-          id: '4',
-          name: 'Chicken Burger Deluxe',
-          description: 'Juicy chicken patty with special sauce',
-          image:
-              'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&h=400&fit=crop',
-          price: 7.5,
-          oldPrice: 11.0,
-          type: CartItemType.food,
-          quantity: 1,
-          category: 'Burger King',
-          isFavorite: false,
-        ),
-        CartItem(
-          id: '5',
-          name: 'Caesar Salad',
-          description: 'Crispy romaine with parmesan and croutons',
-          image:
-              'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&h=400&fit=crop',
-          price: 5.5,
-          oldPrice: 8.0,
-          type: CartItemType.food,
-          quantity: 1,
-          category: 'Salad Bar',
-          isFavorite: true,
-        ),
-      ];
-      isLoading.value = false;
-    });
+  Future<void> _loadWalletPoints() async {
+    try {
+      final res = await ApiService().get('/user/wallet');
+      if (res.success && res.data != null) {
+        final d = res.data as Map<String, dynamic>;
+        walletPoints.value = ((d['walletPoints'] ?? d['points'] ?? 0) as num).toInt();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> syncCartToServer() async {
+    try {
+      for (var item in cartItems) {
+        await ApiService().post('/cart/add', {
+          'itemId': item.id,
+          'itemType': 'product',
+          'name': item.name,
+          'price': item.price,
+          'quantity': item.quantity,
+          'merchantId': item.merchantId,
+        });
+      }
+    } catch (_) {}
   }
 
   // ==================== TIP MANAGEMENT ====================
@@ -353,14 +326,9 @@ class CartController extends GetxController
 
               SizedBox(height: 8.h),
               _buildBreakdownRow(
-                'VIPs Discount',
-                'V₽+ ${(vipsDiscount * 1000).toInt()}',
-                isDiscount: true,
-              ),
-              _buildBreakdownRow(
                 'Coupon Discount',
-                'V₽+ ${(couponDiscount * 1000).toInt()}',
-                isDiscount: true,
+                couponDiscount > 0 ? '- D ${couponDiscount.toStringAsFixed(3)}' : 'None',
+                isDiscount: couponDiscount > 0,
               ),
               _buildBreakdownRow(
                 'Service Charge',
@@ -521,16 +489,79 @@ class CartController extends GetxController
   }
 
   void selectDeliveryAddress() {
-    // TODO: Navigate to address selection page
-    Get.snackbar(
-      'Select Address',
-      'Address selection page coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFFFF6B35).withOpacity(0.9),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: EdgeInsets.all(16.w),
-      borderRadius: 12.r,
+    final TextEditingController addressController = TextEditingController(text: deliveryAddress.value);
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Enter Delivery Address',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              TextField(
+                controller: addressController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. 221B Baker Street...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B35), width: 2),
+                  ),
+                ),
+                maxLines: 2,
+              ),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (addressController.text.trim().isNotEmpty) {
+                          deliveryAddress.value = addressController.text.trim();
+                        }
+                        Get.back();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: const Text('Save', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -629,7 +660,7 @@ class CartController extends GetxController
   }
 
   void selectPaymentMethod() {
-    Get.put(PaymentMethodController(totalBill: total, walletPoints: 28560));
+    Get.put(PaymentMethodController(totalBill: total, walletPoints: walletPoints.value));
     showModalBottomSheet(
       context: Get.context!,
       backgroundColor: Colors.transparent,
@@ -639,7 +670,7 @@ class CartController extends GetxController
           children: [
             PaymentMethodBottomSheet(
               totalBill: total,
-              walletPoints: 28560,
+              walletPoints: walletPoints.value,
               selectedMethod: selectedPaymentMethod.value,
               onMethodSelected: (method) {
                 selectedPaymentMethod.value = method;
@@ -669,7 +700,7 @@ class CartController extends GetxController
 
   void placeOrder() async {
     if (cartItems.isEmpty) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Your cart is empty',
         snackPosition: SnackPosition.BOTTOM,
@@ -695,7 +726,7 @@ class CartController extends GetxController
           .toList();
 
       final response = await ApiService().post('/order/create', {
-        'merchantId': cartItems.first.merchantId ?? '64abcd1234567890abcdef12',
+        'merchantId': cartItems.first.merchantId ?? '',
         'items': items,
         'paymentMethod': normalizedPaymentMethod,
         'deliveryAddress':
@@ -708,7 +739,7 @@ class CartController extends GetxController
         Get.to(() => const OrderSuccessView());
         clearCartLocally();
       } else {
-        Get.snackbar(
+        safeSnackbar(
           'Error',
           response.message,
           snackPosition: SnackPosition.BOTTOM,
@@ -716,7 +747,7 @@ class CartController extends GetxController
       }
     } catch (e) {
       Get.back(); // close loading dialog
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to place order: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -728,15 +759,17 @@ class CartController extends GetxController
 
   void addItems() {
     Get.back();
+    Get.toNamed('/all-merchants');
   }
 
   void updateNote(String note) {
     deliveryNote.value = note;
   }
 
-  void clearCartLocally() {
+  Future<void> clearCartLocally() async {
     cartItems.clear();
     selectedItems.clear();
+    try { await ApiService().post('/cart/clear', {}); } catch (_) {}
   }
 
   void toggleFavorite(CartItem item) {
@@ -752,6 +785,18 @@ class CartController extends GetxController
     if (index != -1) {
       cartItems[index].quantity++;
       cartItems.refresh();
+      final updatedQuantity = cartItems[index].quantity;
+      ApiService().put('/cart/update', {'itemId': item.id, 'quantity': updatedQuantity}).then((res) {
+        if (!res.success) {
+          cartItems[index].quantity = updatedQuantity - 1;
+          cartItems.refresh();
+          safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
+        }
+      }, onError: (_) {
+        cartItems[index].quantity = updatedQuantity - 1;
+        cartItems.refresh();
+        safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
+      });
     }
   }
 
@@ -760,6 +805,18 @@ class CartController extends GetxController
     if (index != -1 && cartItems[index].quantity > 1) {
       cartItems[index].quantity--;
       cartItems.refresh();
+      final updatedQuantity = cartItems[index].quantity;
+      ApiService().put('/cart/update', {'itemId': item.id, 'quantity': updatedQuantity}).then((res) {
+        if (!res.success) {
+          cartItems[index].quantity = updatedQuantity + 1;
+          cartItems.refresh();
+          safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
+        }
+      }, onError: (_) {
+        cartItems[index].quantity = updatedQuantity + 1;
+        cartItems.refresh();
+        safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
+      });
     }
   }
 
@@ -775,7 +832,7 @@ class CartController extends GetxController
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -788,7 +845,7 @@ class CartController extends GetxController
                 width: 60.w,
                 height: 60.h,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -849,10 +906,11 @@ class CartController extends GetxController
                   SizedBox(width: 12.w),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         cartItems.remove(item);
                         selectedItems.remove(item.id);
                         Get.back();
+                        try { await ApiService().delete('/cart/remove/${item.id}'); } catch (_) {}
                       },
                       child: Container(
                         height: 48.h,
@@ -861,7 +919,7 @@ class CartController extends GetxController
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withOpacity(0.3),
+                              color: Colors.red.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -903,7 +961,7 @@ class CartController extends GetxController
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -916,7 +974,7 @@ class CartController extends GetxController
                 width: 60.w,
                 height: 60.h,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -977,12 +1035,13 @@ class CartController extends GetxController
                   SizedBox(width: 12.w),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         cartItems.clear();
                         selectedItems.clear();
                         isSelectionMode.value = false;
                         deliveryNote.value = '';
                         Get.back();
+                        try { await ApiService().post('/cart/clear', {}); } catch (_) {}
                       },
                       child: Container(
                         height: 48.h,
@@ -991,7 +1050,7 @@ class CartController extends GetxController
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withOpacity(0.3),
+                              color: Colors.red.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -1054,11 +1113,15 @@ class CartController extends GetxController
         actions: [
           TextButton(onPressed: () => Get.back(), child: Text('Cancel')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              final toDelete = List<String>.from(selectedItems);
               cartItems.removeWhere((item) => selectedItems.contains(item.id));
               selectedItems.clear();
               isSelectionMode.value = false;
               Get.back();
+              for (final id in toDelete) {
+                try { await ApiService().delete('/cart/remove/$id'); } catch (_) {}
+              }
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -1071,29 +1134,54 @@ class CartController extends GetxController
     deliveryOption.value = option;
   }
 
-  void applyCoupon(String code) {
-    couponCode.value = code;
-  }
-
   void removeCoupon() {
     couponCode.value = '';
+    appliedCouponDiscount.value = 0.0;
   }
+
+  final RxDouble appliedCouponDiscount = 0.0.obs;
+  final RxBool isCouponLoading = false.obs;
 
   double _calculateDeliveryFee() {
     if (selectedOrderType.value == 0) {
-      // Delivery
-      return 6.0;
-    } else {
-      // Takeaway or In Store
-      return 0.0;
+      return _deliveryFeeRate.value;
+    }
+    return 0.0;
+  }
+
+  final RxDouble _deliveryFeeRate = 6.0.obs;
+
+  double _calculateDiscount() {
+    return appliedCouponDiscount.value;
+  }
+
+  Future<void> validateAndApplyCoupon(String code) async {
+    if (code.isEmpty) return;
+    isCouponLoading.value = true;
+    try {
+      final res = await ApiService().post('/rewards/validate-qr', {'code': code});
+      if (res.success && res.data != null && res.data['type'] == 'coupon') {
+        final coupon = res.data['coupon'];
+        final pct = ((coupon['discountPercentage'] ?? 0) as num).toDouble();
+        appliedCouponDiscount.value = subtotal * (pct / 100);
+        couponCode.value = code;
+        safeSnackbar('Coupon Applied', '${pct.toInt()}% discount applied!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF10B981),
+            colorText: Colors.white);
+      } else {
+        safeSnackbar('Invalid Coupon', res.message.isNotEmpty ? res.message : 'Coupon not found',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not validate coupon', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isCouponLoading.value = false;
     }
   }
 
-  double _calculateDiscount() {
-    if (couponCode.value == 'SAVE10') {
-      return subtotal * 0.1;
-    }
-    return 0.0;
+  void applyCoupon(String code) {
+    validateAndApplyCoupon(code);
   }
 
   void goBack() {

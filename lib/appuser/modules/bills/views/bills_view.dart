@@ -11,8 +11,8 @@ import '../../home/views/widgets/build_drawer_menu.dart';
 import '../controllers/bills_controller.dart';
 
 class BillsView extends GetView<BillsController> {
-  BillsView({Key? key}) : super(key: key);
-  GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  BillsView({super.key});
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +204,7 @@ class BillsView extends GetView<BillsController> {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => Get.toNamed('/hot-deals'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF0066FF),
@@ -244,7 +244,7 @@ class BillsView extends GetView<BillsController> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => Get.toNamed('/hot-deals'),
                   child: const Text(
                     'See All',
                     style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -286,7 +286,7 @@ class BillsView extends GetView<BillsController> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => Get.toNamed('/hot-deals'),
                   child: const Text(
                     'See All',
                     style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -335,7 +335,7 @@ class BillsView extends GetView<BillsController> {
                 border: Border.all(color: const Color(0xFFFF6B35), width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -346,7 +346,7 @@ class BillsView extends GetView<BillsController> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35).withOpacity(0.15),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -384,7 +384,7 @@ class BillsView extends GetView<BillsController> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -519,23 +519,6 @@ class BillsView extends GetView<BillsController> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const TextField(
-        decoration: InputDecoration(
-          hintText: 'What are you looking for?',
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCarousel() {
     return Column(
       children: [
@@ -545,7 +528,7 @@ class BillsView extends GetView<BillsController> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -586,8 +569,8 @@ class BillsView extends GetView<BillsController> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.blue.withOpacity(0.7),
-                            Colors.purple.withOpacity(0.7),
+                            Colors.blue.withValues(alpha: 0.7),
+                            Colors.purple.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -662,10 +645,7 @@ class BillsView extends GetView<BillsController> {
       itemBuilder: (context, index) {
         final service = controller.services[index];
         return GestureDetector(
-          onTap: () {
-            // Handle tap
-            print('Tapped on ${service.title}');
-          },
+          onTap: () => controller.onServiceTap(service.title),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

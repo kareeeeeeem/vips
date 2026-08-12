@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/notifications_controller.dart';
 
 class NotificationsView extends GetView<NotificationsController> {
-  const NotificationsView({Key? key}) : super(key: key);
+  const NotificationsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(NotificationsController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -59,7 +58,7 @@ class NotificationsView extends GetView<NotificationsController> {
         Container(
           margin: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withOpacity(0.1),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: IconButton(
@@ -95,7 +94,7 @@ class NotificationsView extends GetView<NotificationsController> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -301,12 +300,12 @@ class NotificationsView extends GetView<NotificationsController> {
           color:
               notification.isRead
                   ? const Color(0xFFE8ECF4)
-                  : AppColors.AppPrimaryColor.withOpacity(0.2),
+                  : AppColors.AppPrimaryColor.withValues(alpha: 0.2),
           width: notification.isRead ? 1 : 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -383,7 +382,7 @@ class NotificationsView extends GetView<NotificationsController> {
                       decoration: BoxDecoration(
                         color: controller
                             .getTypeColor(notification.type)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
@@ -420,7 +419,7 @@ class NotificationsView extends GetView<NotificationsController> {
                       child: Container(
                         padding: EdgeInsets.all(6.w),
                         decoration: BoxDecoration(
-                          color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                          color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
@@ -464,7 +463,7 @@ class NotificationsView extends GetView<NotificationsController> {
       width: 48.w,
       height: 48.h,
       decoration: BoxDecoration(
-        color: controller.getTypeColor(notification.type).withOpacity(0.1),
+        color: controller.getTypeColor(notification.type).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Icon(

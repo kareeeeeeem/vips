@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class OfferDetailPage extends StatefulWidget {
   const OfferDetailPage({super.key});
@@ -14,6 +16,16 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   bool isFavorite = false;
   final PageController _pageController = PageController();
   int _currentImageIndex = 0;
+
+  HomeController? get homeController =>
+      Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
+
+  String get offerId {
+    final passed = Get.arguments;
+    return passed != null && passed['_id'] != null
+        ? passed['_id'].toString()
+        : (offer['_id'] ?? offer['id'])?.toString() ?? '';
+  }
 
   final Map<String, dynamic> offer = {
     'title': '3 Hours fun package with 30% off @Snow City, Riyadh',
@@ -58,7 +70,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
             leading: Padding(
               padding: EdgeInsets.all(8.w),
               child: CircleAvatar(
-                backgroundColor: Colors.white.withOpacity(0.9),
+                backgroundColor: Colors.white.withValues(alpha: 0.9),
                 child: IconButton(
                   icon: Icon(
                     Icons.arrow_back,
@@ -74,17 +86,26 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
               Padding(
                 padding: EdgeInsets.all(8.w),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.9),
+                  backgroundColor: Colors.white.withValues(alpha: 0.9),
                   child: IconButton(
                     icon: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       color: isFavorite ? Colors.red : Colors.black87,
                       size: 20.sp,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        isFavorite = !isFavorite;
-                      });
+                    onPressed: () async {
+                      final id = offerId;
+                      if (homeController != null && id.isNotEmpty) {
+                        await homeController!.toggleFavoriteServer(id, itemType: 'Deal');
+                        setState(() {
+                          isFavorite = homeController!.favorites
+                              .any((f) => (f['itemId']?.toString() ?? '') == id);
+                        });
+                      } else {
+                        setState(() {
+                          isFavorite = !isFavorite;
+                        });
+                      }
                     },
                     padding: EdgeInsets.zero,
                   ),
@@ -129,7 +150,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                             color:
                                 _currentImageIndex == index
                                     ? Colors.white
-                                    : Colors.white.withOpacity(0.5),
+                                    : Colors.white.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(3.r),
                           ),
                         ),
@@ -333,8 +354,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          const Color(0xFFFF6B35).withOpacity(0.05),
-                          const Color(0xFFFF8C42).withOpacity(0.05),
+                          const Color(0xFFFF6B35).withValues(alpha: 0.05),
+                          const Color(0xFFFF8C42).withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16.r),
@@ -344,7 +365,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                         Container(
                           padding: EdgeInsets.all(10.w),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF6B35).withOpacity(0.1),
+                            color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Icon(
@@ -415,7 +436,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                                 decoration: BoxDecoration(
                                   color: const Color(
                                     0xFF10B981,
-                                  ).withOpacity(0.1),
+                                  ).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -545,7 +566,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF10B981).withOpacity(0.3),
+                              color: const Color(0xFF10B981).withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -558,7 +579,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                               style: TextStyle(
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontFamily: 'SF Pro Text',
                                 letterSpacing: 0.5,
                               ),
@@ -579,7 +600,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                               style: TextStyle(
                                 fontSize: 11.sp,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontFamily: 'SF Pro Text',
                               ),
                             ),
@@ -604,7 +625,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       borderRadius: BorderRadius.circular(14.r),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.3),
+                          color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 6),
                         ),
@@ -614,8 +635,27 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14.r),
-                        onTap: () {
-                          // Action d'ajout au panier
+                        onTap: () async {
+                          final id = offerId;
+                          if (homeController != null && id.isNotEmpty) {
+                            final coupon = offer['coupons'] != null && offer['coupons'].isNotEmpty
+                                ? offer['coupons'][0]
+                                : null;
+                            final double price = coupon != null && coupon['currentPrice'] is num
+                                ? (coupon['currentPrice'] as num).toDouble()
+                                : 0.0;
+                            await homeController!.addToCartServer(
+                              itemId: id,
+                              itemType: 'Deal',
+                              name: offer['title']?.toString(),
+                              price: price,
+                              quantity: 1,
+                              merchantId: null,
+                            );
+                            safeSnackbar('Added', 'Added to cart');
+                          } else {
+                            safeSnackbar('Error', 'Unable to add to cart');
+                          }
                         },
                         child: Center(
                           child: Row(

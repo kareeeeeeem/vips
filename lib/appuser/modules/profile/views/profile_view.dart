@@ -10,11 +10,10 @@ import '../controllers/profile_controller.dart';
 import 'widgets/account_switcher_widget.dart';
 
 class ProfileView extends GetView<ProfileController> {
-  const ProfileView({Key? key}) : super(key: key);
+  const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ProfileController());
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -60,13 +59,13 @@ class ProfileView extends GetView<ProfileController> {
                                     end: Alignment.bottomRight,
                                     colors: [
                                       Colors.orange,
-                                      Colors.orange.withOpacity(0.85),
+                                      Colors.orange.withValues(alpha: 0.85),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(6.r),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.orange.withOpacity(0.4),
+                                      color: Colors.orange.withValues(alpha: 0.4),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                       spreadRadius: -2,
@@ -74,7 +73,7 @@ class ProfileView extends GetView<ProfileController> {
                                   ],
                                 ),
                                 child: IconButton(
-                                  onPressed: () {},
+                                  onPressed: controller.showSortDialog,
                                   icon: Icon(
                                     Icons.sort_rounded,
                                     color: Colors.white,
@@ -212,7 +211,7 @@ class ProfileView extends GetView<ProfileController> {
                   onTap: () => Get.to(() => const VipsClubHistoryView()),
                   child: CircleAvatar(
                     radius: 40.r,
-                    backgroundColor: primaryColor.withOpacity(0.1),
+                    backgroundColor: primaryColor.withValues(alpha: 0.1),
                     child: Icon(
                       isBusiness ? Icons.business : Icons.person,
                       size: 38.sp,
@@ -248,13 +247,13 @@ class ProfileView extends GetView<ProfileController> {
                             ),
                           ),
                           SizedBox(height: 2.h),
-                          Text(
-                            'today 4:10 PM',
+                          Obx(() => Text(
+                            controller.lastLogin.value,
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: Colors.grey.shade600,
                             ),
-                          ),
+                          )),
                         ],
                       ),
 
@@ -285,7 +284,7 @@ class ProfileView extends GetView<ProfileController> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                isBusiness ? 'Business Name' : controller.userName.value,
+                controller.userName.value,
                 style: TextStyle(
                   fontSize: 22.sp,
                   fontWeight: FontWeight.w700,
@@ -317,7 +316,7 @@ class ProfileView extends GetView<ProfileController> {
                         Container(
                           padding: EdgeInsets.all(8.w),
                           decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
+                            color: primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Icon(
@@ -342,14 +341,14 @@ class ProfileView extends GetView<ProfileController> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                Text(
-                                  'Platinum',
+                                Obx(() => Text(
+                                  controller.packageName.value,
                                   style: TextStyle(
                                     fontSize: 13.sp,
                                     color: primaryColor,
                                     fontWeight: FontWeight.w700,
                                   ),
-                                ),
+                                )),
                               ],
                             ),
                           ),
@@ -366,7 +365,7 @@ class ProfileView extends GetView<ProfileController> {
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Column(
@@ -426,7 +425,7 @@ class ProfileView extends GetView<ProfileController> {
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Column(
@@ -493,7 +492,7 @@ class ProfileView extends GetView<ProfileController> {
                                 Row(
                                   children: [
                                     Text(
-                                      'expiring on 31/12/2025',
+                                      'expiring on 31/12/${DateTime.now().year}',
                                       style: TextStyle(
                                         fontSize: 10.sp,
                                         color: Colors.grey.shade600,
@@ -593,7 +592,7 @@ class ProfileView extends GetView<ProfileController> {
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withOpacity(0.3),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.3),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -674,7 +673,7 @@ class ProfileView extends GetView<ProfileController> {
                             'Customer  •  Merchant',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: Colors.white.withOpacity(0.45),
+                              color: Colors.white.withValues(alpha: 0.45),
                             ),
                           ),
                         ],
@@ -714,9 +713,9 @@ class ProfileView extends GetView<ProfileController> {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.05),
+        color: primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withOpacity(0.3)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,14 +752,14 @@ class ProfileView extends GetView<ProfileController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('45', 'Products', primaryColor),
-              _buildStatColumn('234', 'Sales', primaryColor),
-              _buildStatColumnWithSuffix(
-                '12.5K',
+              Obx(() => _buildStatColumn(controller.vendorProducts.value, 'Products', primaryColor)),
+              Obx(() => _buildStatColumn(controller.vendorSales.value, 'Sales', primaryColor)),
+              Obx(() => _buildStatColumnWithSuffix(
+                controller.vendorRevenue.value,
                 'Revenue',
                 'TND',
                 primaryColor,
-              ),
+              )),
             ],
           ),
         ],
@@ -772,9 +771,9 @@ class ProfileView extends GetView<ProfileController> {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.05),
+        color: primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withOpacity(0.3)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,9 +800,9 @@ class ProfileView extends GetView<ProfileController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('24', 'Total', primaryColor),
-              _buildStatColumn('18', 'Completed', primaryColor),
-              _buildStatColumn('6', 'Pending', primaryColor),
+              Obx(() => _buildStatColumn(controller.agentTotal.value, 'Total', primaryColor)),
+              Obx(() => _buildStatColumn(controller.agentCompleted.value, 'Completed', primaryColor)),
+              Obx(() => _buildStatColumn(controller.agentPending.value, 'Pending', primaryColor)),
             ],
           ),
         ],
@@ -815,9 +814,9 @@ class ProfileView extends GetView<ProfileController> {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.05),
+        color: primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withOpacity(0.3)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -840,9 +839,9 @@ class ProfileView extends GetView<ProfileController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('5', 'Stores', primaryColor),
-              _buildStatColumn('12', 'Drivers', primaryColor),
-              _buildStatColumn('234', 'Customers', primaryColor),
+              Obx(() => _buildStatColumn(controller.businessStores.value, 'Stores', primaryColor)),
+              Obx(() => _buildStatColumn(controller.businessDrivers.value, 'Drivers', primaryColor)),
+              Obx(() => _buildStatColumn(controller.businessCustomers.value, 'Customers', primaryColor)),
             ],
           ),
         ],
@@ -902,7 +901,7 @@ class ProfileView extends GetView<ProfileController> {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
-                  color: primaryColor.withOpacity(0.7),
+                  color: primaryColor.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -935,7 +934,8 @@ class ProfileView extends GetView<ProfileController> {
           itemCount: services.length,
           itemBuilder: (context, index) {
             final service = services[index];
-            final badge = index == 0 ? 2 : (index == 3 ? 1 : 0);
+            final badge = index == 0 ? controller.activeOrdersCount
+                : (index == 3 ? controller.unreadNotificationsCount.value : 0);
 
             return Padding(
               padding: EdgeInsets.only(right: 16.w),
@@ -1031,7 +1031,7 @@ class ProfileView extends GetView<ProfileController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -1060,7 +1060,7 @@ class ProfileView extends GetView<ProfileController> {
                       width: 50.w,
                       height: 50.h,
                       child: CircularProgressIndicator(
-                        value: 0.25,
+                        value: controller.vipProgress.value,
                         strokeWidth: 4,
                         backgroundColor: Colors.grey.shade200,
                         valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
@@ -1069,7 +1069,7 @@ class ProfileView extends GetView<ProfileController> {
                     Column(
                       children: [
                         Text(
-                          '250',
+                          controller.vipPoints.value.toString(),
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
@@ -1168,7 +1168,7 @@ class ProfileView extends GetView<ProfileController> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1275,7 +1275,7 @@ class ProfileView extends GetView<ProfileController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: Offset(0, 4),
             ),
@@ -1287,7 +1287,7 @@ class ProfileView extends GetView<ProfileController> {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1342,475 +1342,33 @@ class ProfileView extends GetView<ProfileController> {
       );
     });
   }
-
-  // VARIANTE 1 : Layout Vertical avec date en haut
-  Widget _buildOrderItemVariant1(Map<String, dynamic> order) {
-    Color getStatusColor(String colorName) {
-      switch (colorName) {
-        case 'blue':
-          return Colors.blue;
-        case 'purple':
-          return Colors.purple;
-        case 'green':
-          return Colors.green;
-        case 'orange':
-          return Colors.orange;
-        default:
-          return Colors.grey;
-      }
+  // Safe date-part helpers — handle both "2024-01-15" and "10 Mar" formats
+  String _dateDay(String date) {
+    if (date.isEmpty) return '--';
+    // ISO date like "2024-01-15"
+    if (date.contains('-')) {
+      final parts = date.split('-');
+      return parts.length >= 3 ? parts[2].substring(0, 2) : parts.first;
     }
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // En-tête : Date et Montant
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16.sp,
-                    color: Colors.grey.shade600,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    '${order['date']}  ${order['time']}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'D ${order['amount']}',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.orange,
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          // Nom du magasin
-          Text(
-            order['store'],
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
-
-          SizedBox(height: 6.h),
-
-          // Order ID et Items
-          Text(
-            'Order ID : ${order['id']}  |  ${order['items']} Items',
-            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
-          ),
-
-          SizedBox(height: 10.h),
-
-          // Bas : Type, Status et Flèche
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 3.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                    child: Text(
-                      order['type'],
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.green,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: getStatusColor(
-                        order['statusColor'],
-                      ).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Text(
-                      order['status'],
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: getStatusColor(order['statusColor']),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.sp,
-                color: Colors.grey.shade400,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    // Space-separated like "10 Mar"
+    final parts = date.split(' ');
+    return parts.isNotEmpty ? parts[0] : date;
   }
 
-  // VARIANTE 2 : Layout avec badge date à droite
-  Widget _buildOrderItemVariant2(Map<String, dynamic> order) {
-    Color getStatusColor(String colorName) {
-      switch (colorName) {
-        case 'blue':
-          return Colors.blue;
-        case 'purple':
-          return Colors.purple;
-        case 'green':
-          return Colors.green;
-        case 'orange':
-          return Colors.orange;
-        default:
-          return Colors.grey;
+  String _dateMonth(String date) {
+    if (date.isEmpty) return '';
+    if (date.contains('-')) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final parts = date.split('-');
+      if (parts.length >= 2) {
+        final idx = (int.tryParse(parts[1]) ?? 1) - 1;
+        return months.elementAtOrNull(idx) ?? parts[1];
       }
+      return '';
     }
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Nom magasin et montant
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        order['store'],
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'D ${order['amount']}',
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 6.h),
-
-                // Order ID
-                Text(
-                  'Order ID : ${order['id']}  |  ${order['items']} Items',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-
-                SizedBox(height: 8.h),
-
-                // Type et statut
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 3.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(4.r),
-                      ),
-                      child: Text(
-                        order['type'],
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: getStatusColor(
-                          order['statusColor'],
-                        ).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        order['status'],
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: getStatusColor(order['statusColor']),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 6.h),
-
-                // Heure
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time,
-                      size: 12.sp,
-                      color: Colors.grey.shade600,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '${order['date']}  ${order['time']}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(width: 12.w),
-
-          // Badge date à droite
-          Column(
-            children: [
-              Container(
-                width: 52.w,
-                height: 52.h,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: Colors.orange.shade200, width: 1.5),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      order['date'].split(' ')[0],
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    Text(
-                      order['date'].split(' ')[1],
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.orange.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.sp,
-                color: Colors.grey.shade400,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // VARIANTE 3 : Layout compact en 2 lignes
-  Widget _buildOrderItemVariant3(Map<String, dynamic> order) {
-    Color getStatusColor(String colorName) {
-      switch (colorName) {
-        case 'blue':
-          return Colors.blue;
-        case 'purple':
-          return Colors.purple;
-        case 'green':
-          return Colors.green;
-        case 'orange':
-          return Colors.orange;
-        default:
-          return Colors.grey;
-      }
-    }
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          // Ligne 1 : Infos principales
-          Row(
-            children: [
-              // Badge date compact
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  order['date'].split(' ')[0] +
-                      ' ' +
-                      order['date'].split(' ')[1],
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-
-              SizedBox(width: 10.w),
-
-              Expanded(
-                child: Text(
-                  order['store'],
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-
-              Text(
-                'D ${order['amount']}',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.orange,
-                ),
-              ),
-
-              SizedBox(width: 8.w),
-
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16.sp,
-                color: Colors.grey.shade400,
-              ),
-            ],
-          ),
-
-          SizedBox(height: 10.h),
-
-          // Ligne 2 : Détails
-          Row(
-            children: [
-              Text(
-                'ID: ${order['id']}',
-                style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade600),
-              ),
-
-              SizedBox(width: 12.w),
-
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: Text(
-                  order['type'],
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: Colors.green,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              SizedBox(width: 12.w),
-
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: getStatusColor(order['statusColor']).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Text(
-                  order['status'],
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: getStatusColor(order['statusColor']),
-                  ),
-                ),
-              ),
-
-              Spacer(),
-
-              Icon(Icons.access_time, size: 11.sp, color: Colors.grey.shade500),
-              SizedBox(width: 3.w),
-              Text(
-                order['time'],
-                style: TextStyle(fontSize: 11.sp, color: Colors.grey.shade600),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    final parts = date.split(' ');
+    return parts.length >= 2 ? parts[1] : '';
   }
 
   Widget _buildOrderItem(Map<String, dynamic> order) {
@@ -1856,7 +1414,7 @@ class ProfileView extends GetView<ProfileController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1924,7 +1482,7 @@ class ProfileView extends GetView<ProfileController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      order['date'].split(' ')[0], // "10"
+                      _dateDay(order['date']?.toString() ?? ''),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
@@ -1933,7 +1491,7 @@ class ProfileView extends GetView<ProfileController> {
                       ),
                     ),
                     Text(
-                      order['date'].split(' ')[1], // "Mar"
+                      _dateMonth(order['date']?.toString() ?? ''),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w500,

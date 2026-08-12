@@ -5,7 +5,7 @@ import '../../controllers/merchant_order_controller.dart';
 import 'order_card.dart';
 
 class OrderListWidget extends GetView<MerchantOrderController> {
-  const OrderListWidget({Key? key}) : super(key: key);
+  const OrderListWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

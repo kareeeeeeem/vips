@@ -5,11 +5,10 @@ class CategoryFilterBar extends StatefulWidget {
   final Function(int)? onCategoryChanged;
   final Function(String)? onFilterChanged;
 
-  const CategoryFilterBar({
-    Key? key,
+  const CategoryFilterBar({super.key,
     this.onCategoryChanged,
     this.onFilterChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryFilterBar> createState() => _CategoryFilterBarState();

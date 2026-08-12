@@ -2,9 +2,10 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 
 class BuildPromotionalCarousel extends StatefulWidget {
-  const BuildPromotionalCarousel({Key? key}) : super(key: key);
+  const BuildPromotionalCarousel({super.key});
 
   @override
   State<BuildPromotionalCarousel> createState() =>
@@ -23,7 +24,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
       badge: 'BUY NOW',
       image:
           'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80',
-      overlayColor: Color(0xFFFF6B9D).withOpacity(0.65),
+      overlayColor: Color(0xFFFF6B9D).withValues(alpha: 0.65),
     ),
     PromoCard(
       title: 'MAKE UP',
@@ -31,7 +32,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
       badge: 'by Active eCommerce',
       image:
           'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80',
-      overlayColor: Colors.white.withOpacity(0.75),
+      overlayColor: Colors.white.withValues(alpha: 0.75),
       titleColor: Color(0xFF87CEEB),
       subtitleColor: Color(0xFFFF6B9D),
       badgeColor: Color(0xFF666666),
@@ -42,7 +43,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
       badge: 'Active eCommerce',
       image:
           'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80',
-      overlayColor: Color(0xFF87CEEB).withOpacity(0.65),
+      overlayColor: Color(0xFF87CEEB).withValues(alpha: 0.65),
       titleColor: Color(0xFFFF6B9D),
     ),
     PromoCard(
@@ -51,7 +52,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
       badge: 'SHOP NOW',
       image:
           'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',
-      overlayColor: Color(0xFFFFB6C1).withOpacity(0.65),
+      overlayColor: Color(0xFFFFB6C1).withValues(alpha: 0.65),
     ),
   ];
 
@@ -82,7 +83,10 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
               },
             ),
             itemBuilder: (context, index, realIndex) {
-              return _buildPromoCard(promos[index]);
+              return GestureDetector(
+                onTap: () => Get.toNamed(Routes.HOT_DEALS),
+                child: _buildPromoCard(promos[index]),
+              );
             },
           ),
 
@@ -126,7 +130,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: Offset(0, 5),
           ),
@@ -152,7 +156,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
                 height: 200.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
             ),
@@ -182,7 +186,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       color:
-                          promo.subtitleColor ?? Colors.white.withOpacity(0.95),
+                          promo.subtitleColor ?? Colors.white.withValues(alpha: 0.95),
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -194,10 +198,10 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
                         vertical: 7.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(6.r),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                       ),

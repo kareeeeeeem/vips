@@ -8,12 +8,12 @@ class ExpandableSection extends StatefulWidget {
   final ValueChanged<bool>? onExpansionChanged;
 
   const ExpandableSection({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     this.initialExpanded = false,
     this.onExpansionChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<ExpandableSection> createState() => _ExpandableSectionState();

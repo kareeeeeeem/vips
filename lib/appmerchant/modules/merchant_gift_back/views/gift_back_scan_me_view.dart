@@ -6,7 +6,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class GiftBackScanMeView extends StatefulWidget {
-  const GiftBackScanMeView({Key? key}) : super(key: key);
+  const GiftBackScanMeView({super.key});
 
   @override
   State<GiftBackScanMeView> createState() => _GiftBackScanMeViewState();
@@ -70,7 +70,7 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
               ),
             ),
           ),
-        Container(color: Colors.black.withOpacity(0.30)),
+        Container(color: Colors.black.withValues(alpha: 0.30)),
         _buildTopBar(),
         Center(
           child: _screenState == _ScanScreenState.invalid ? _buildInvalidState() : _buildScanState(),
@@ -124,7 +124,7 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
         width: 34.w,
         height: 34.w,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.35),
+          color: Colors.black.withValues(alpha: 0.35),
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white24),
         ),
@@ -147,7 +147,7 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
           height: 220.w,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: Colors.white.withOpacity(0.8), width: 2),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2),
           ),
           child: Stack(
             children: [
@@ -257,7 +257,7 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10)],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10)],
           ),
           child: Column(
             children: [
@@ -281,7 +281,7 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
           padding: EdgeInsets.only(bottom: 24.h),
           child: Text(
             'VIPsApp.com',
-            style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.sp, fontWeight: FontWeight.w600),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.sp, fontWeight: FontWeight.w600),
           ),
         ),
       ],

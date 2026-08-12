@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_gift_back_controller.dart';
 
 class GiftBackPinView extends GetView<MerchantGiftBackController> {
-  const GiftBackPinView({Key? key}) : super(key: key);
+  const GiftBackPinView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,7 @@ class GiftBackPinView extends GetView<MerchantGiftBackController> {
           decoration: BoxDecoration(
             color: isActive ? const Color(0xFF10B981) : Colors.transparent,
             borderRadius: BorderRadius.circular(8.r),
-            boxShadow: isActive ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : null,
+            boxShadow: isActive ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))] : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +180,7 @@ class GiftBackPinView extends GetView<MerchantGiftBackController> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
         ),
         child: Center(
           child: isDelete

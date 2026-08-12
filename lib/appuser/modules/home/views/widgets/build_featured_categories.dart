@@ -6,8 +6,7 @@ import 'food_delivery_page.dart';
 import 'location_permission_bottom_sheet.dart';
 
 class BuildFeaturedCategories extends StatelessWidget {
-  const BuildFeaturedCategories({Key? key, required this.fromHome})
-    : super(key: key);
+  const BuildFeaturedCategories({super.key, required this.fromHome});
   final bool fromHome;
 
   @override
@@ -125,12 +124,15 @@ class BuildFeaturedCategories extends StatelessWidget {
                           color: Color(0xFF2D3436),
                         ),
                       ),
-                      Text(
-                        'See All',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF667eea),
+                      GestureDetector(
+                        onTap: () => Get.toNamed('/all-merchants'),
+                        child: Text(
+                          'See All',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF667eea),
+                          ),
                         ),
                       ),
                     ],
@@ -187,12 +189,12 @@ class BuildFeaturedCategories extends StatelessWidget {
       LocationPermissionBottomSheet.show(
         context,
         onAllowActivation: () {
-          print('Location permission granted');
+          debugPrint('Location permission granted');
           // Demander la permission de localisation
           _requestLocationPermission(context);
         },
         onNoThanks: () {
-          print('Location permission denied');
+          debugPrint('Location permission denied');
           // Optionnel : afficher un message ou continuer sans localisation
         },
       );
@@ -215,7 +217,7 @@ class BuildFeaturedCategories extends StatelessWidget {
       Get.to(() => FoodDeliveryPage());
     } else if (status.isDenied) {
       // Permission refusée
-      Get.snackbar(
+      safeSnackbar(
         'Permission refusée',
         'La localisation est nécessaire pour voir les lieux à proximité',
         snackPosition: SnackPosition.BOTTOM,
@@ -240,7 +242,7 @@ class BuildFeaturedCategories extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class PaymentMethodBottomSheet extends StatelessWidget {
   final double totalBill;
@@ -8,13 +9,12 @@ class PaymentMethodBottomSheet extends StatelessWidget {
   final String? selectedMethod;
   final Function(String) onMethodSelected;
 
-  const PaymentMethodBottomSheet({
-    Key? key,
+  const PaymentMethodBottomSheet({super.key,
     required this.totalBill,
     this.walletPoints = 28560,
     this.selectedMethod,
     required this.onMethodSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -399,7 +399,7 @@ class PaymentMethodController extends GetxController {
                 width: 60.w,
                 height: 60.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withOpacity(0.1),
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -434,11 +434,11 @@ class PaymentMethodController extends GetxController {
                 child: ElevatedButton(
                   onPressed: () {
                     Get.back();
-                    Get.snackbar(
+                    safeSnackbar(
                       'Wallet Points Applied',
                       'Your wallet points have been applied',
                       snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
+                      backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
                       colorText: Colors.white,
                       duration: const Duration(seconds: 2),
                       margin: EdgeInsets.all(16.w),
@@ -472,11 +472,11 @@ class PaymentMethodController extends GetxController {
 
   void confirmSelection(Function(String) onMethodSelected) {
     if (selectedPaymentMethod.value.isEmpty) {
-      Get.snackbar(
+      safeSnackbar(
         'Select Payment Method',
         'Please select a payment method',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withOpacity(0.9),
+        backgroundColor: Colors.orange.withValues(alpha: 0.9),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
         margin: EdgeInsets.all(16.w),
@@ -502,7 +502,7 @@ Widget buildSelectButton(
       color: Colors.white,
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha: 0.05),
           blurRadius: 10,
           offset: const Offset(0, -2),
         ),
@@ -518,7 +518,7 @@ Widget buildSelectButton(
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF6B35).withOpacity(0.3),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 /// Central API service to communicate with the Node.js backend.
 ///
@@ -15,7 +18,14 @@ class ApiService {
   // iOS Simulator:    http://localhost:3000/api
   // Android Emulator: http://10.0.2.2:3000/api
   // Real Device:      http://YOUR_COMPUTER_IP:3000/api
-  static const String baseUrl = 'http://localhost:3000/api';
+  // Mutable (not const) so tests can repoint it at a local server before
+  // the singleton is first constructed.
+  static String baseUrl = 'https://vips-backend.onrender.com/api';
+
+  /// Set this to the app-specific login route before calling [init].
+  /// Merchant app sets it to MerchantRoutes.LOGIN ('/merchant-login').
+  /// User app defaults to '/login'.
+  static String unauthorizedRoute = '/login';
 
   late Dio _dio;
   String? _token;
@@ -27,8 +37,8 @@ class ApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 60), // Render free: 50s+ cold start
+        receiveTimeout: const Duration(seconds: 60),
         headers: {'Content-Type': 'application/json'},
       ),
     );
@@ -40,15 +50,27 @@ class ApiService {
           if (_token != null) {
             options.headers['Authorization'] = 'Bearer $_token';
           }
-          print('➡️ ${options.method} ${options.path}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('✅ ${response.statusCode} ${response.requestOptions.path}');
           return handler.next(response);
         },
         onError: (error, handler) {
-          print('❌ ${error.response?.statusCode} ${error.requestOptions.path}');
+          if (error.response?.statusCode == 401) {
+            clearToken();
+            Get.offAllNamed(unauthorizedRoute);
+          } else if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.connectionError) {
+            safeSnackbar(
+              'Network Error',
+              'Cannot connect to server. Please check your connection.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.redAccent,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 4),
+            );
+          }
           return handler.next(error);
         },
       ),
@@ -79,7 +101,10 @@ class ApiService {
   bool get isLoggedIn => _token != null;
 
   // ── GET Request ──
-  Future<ApiResponse> get(String path, {Map<String, dynamic>? queryParams}) async {
+  Future<ApiResponse> get(
+    String path, {
+    Map<String, dynamic>? queryParams,
+  }) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParams);
       return ApiResponse.fromDioResponse(response);
@@ -133,7 +158,7 @@ class ApiResponse {
     this.data,
   });
 
-  factory ApiResponse.fromDioResponse(Response response) {
+  factory ApiResponse.fromDioResponse(Response<dynamic> response) {
     final body = response.data;
     return ApiResponse(
       success: body['success'] ?? true,
@@ -154,7 +179,8 @@ class ApiResponse {
       message = 'Cannot connect to server. Is the backend running?';
     } else if (error.response != null) {
       final body = error.response?.data;
-      message = body is Map ? (body['message'] ?? 'Server error') : 'Server error';
+      message =
+          body is Map ? (body['message'] ?? 'Server error') : 'Server error';
     } else {
       message = 'Something went wrong: ${error.message}';
     }

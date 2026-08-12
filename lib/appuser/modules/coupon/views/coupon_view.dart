@@ -6,7 +6,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/coupon_controller.dart';
 
 class CouponView extends GetView<CouponController> {
-  const CouponView({Key? key}) : super(key: key);
+  const CouponView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +53,7 @@ class CouponView extends GetView<CouponController> {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -84,7 +84,7 @@ class CouponView extends GetView<CouponController> {
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -115,7 +115,7 @@ class CouponView extends GetView<CouponController> {
                 borderRadius: BorderRadius.circular(25.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -129,7 +129,7 @@ class CouponView extends GetView<CouponController> {
                   gradient: LinearGradient(
                     colors: [
                       AppColors.AppPrimaryColor,
-                      AppColors.AppPrimaryColor.withOpacity(0.8),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(25.r),
@@ -165,13 +165,13 @@ class CouponView extends GetView<CouponController> {
                   gradient: LinearGradient(
                     colors: [
                       AppColors.AppPrimaryColor,
-                      AppColors.AppPrimaryColor.withOpacity(0.8),
+                      AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                      color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: Offset(0, 4),
                     ),
@@ -226,7 +226,7 @@ class CouponView extends GetView<CouponController> {
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: Offset(0, 4),
             ),
@@ -455,13 +455,13 @@ class CouponView extends GetView<CouponController> {
         border: Border.all(
           color:
               package.isPopular
-                  ? AppColors.AppPrimaryColor.withOpacity(0.3)
+                  ? AppColors.AppPrimaryColor.withValues(alpha: 0.3)
                   : Colors.grey.shade200,
           width: package.isPopular ? 2 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -508,7 +508,7 @@ class CouponView extends GetView<CouponController> {
                     gradient: LinearGradient(
                       colors: [
                         AppColors.AppPrimaryColor,
-                        AppColors.AppPrimaryColor.withOpacity(0.8),
+                        AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20.r),

@@ -1,9 +1,39 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MerchantBillingController extends GetxController {
+  final _api = ApiService();
+
+  // PIN state
   final pinLength = 4.obs;
   final currentPin = ''.obs;
   final hasError = false.obs;
+  final merchantPin = '0000'.obs;
+
+  // Bills list state
+  final isLoading = false.obs;
+  final bills = <Map<String, dynamic>>[].obs;
+  final todayRevenue = 0.0.obs;
+  final monthRevenue = 0.0.obs;
+  final totalRevenue = 0.0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadBills();
+    loadStats();
+    _loadMerchantPin();
+  }
+
+  Future<void> _loadMerchantPin() async {
+    final prefs = await SharedPreferences.getInstance();
+    merchantPin.value = prefs.getString('merchant_pin') ?? '0000';
+  }
+
+  // ─── PIN helpers ────────────────────────────────────────
 
   void addPinDigit(String digit) {
     if (currentPin.value.length < pinLength.value) {
@@ -15,6 +45,114 @@ class MerchantBillingController extends GetxController {
   void removePinDigit() {
     if (currentPin.value.isNotEmpty) {
       currentPin.value = currentPin.value.substring(0, currentPin.value.length - 1);
+    }
+  }
+
+  // ─── API calls ──────────────────────────────────────────
+
+  Future<void> loadBills({String? status}) async {
+    isLoading.value = true;
+    try {
+      final params = <String, String>{};
+      if (status != null) params['status'] = status;
+      final response = await _api.get('/merchant/billing', queryParams: params);
+      if (response.success && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        bills.value = List<Map<String, dynamic>>.from(data['bills'] ?? []);
+        totalRevenue.value = (data['totalRevenue'] ?? 0).toDouble();
+      }
+    } catch (e) {
+      debugPrint('loadBills error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadStats() async {
+    try {
+      final response = await _api.get('/merchant/billing/stats');
+      if (response.success && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        todayRevenue.value = (data['today']?['revenue'] ?? 0).toDouble();
+        monthRevenue.value = (data['month']?['revenue'] ?? 0).toDouble();
+        totalRevenue.value = (data['total']?['revenue'] ?? 0).toDouble();
+      }
+    } catch (e) {
+      debugPrint('loadStats error: $e');
+    }
+  }
+
+  Future<bool> createBill({
+    required List<Map<String, dynamic>> items,
+    required double subtotal,
+    required double grandTotal,
+    double taxAmount = 0,
+    double taxRate = 0,
+    double discountAmount = 0,
+    double serviceCharge = 0,
+    String paymentMethod = 'cash',
+    double? paidAmount,
+    String? customerName,
+    String? customerPhone,
+    String? customerId,
+    String? notes,
+    String? cashierId,
+  }) async {
+    try {
+      final response = await _api.post('/merchant/billing', {
+        'items': items,
+        'subtotal': subtotal,
+        'grandTotal': grandTotal,
+        'taxAmount': taxAmount,
+        'taxRate': taxRate,
+        'discountAmount': discountAmount,
+        'serviceCharge': serviceCharge,
+        'paymentMethod': paymentMethod,
+        'paidAmount': paidAmount ?? grandTotal,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        'customerId': customerId,
+        'notes': notes,
+        'cashierId': cashierId,
+      });
+      if (response.success) {
+        await loadBills();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('createBill error: $e');
+      return false;
+    }
+  }
+
+  Future<void> voidBill(String id, {String? reason}) async {
+    try {
+      final response = await _api.put('/merchant/billing/$id/void', {'reason': reason ?? ''});
+      if (response.success) {
+        await loadBills();
+        safeSnackbar('Done', 'Bill voided', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to void bill',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Network error — could not void bill', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  Future<void> refundBill(String id) async {
+    try {
+      final response = await _api.put('/merchant/billing/$id/refund', {});
+      if (response.success) {
+        await loadBills();
+        safeSnackbar('Done', 'Bill refunded', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to refund bill',
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Network error — could not refund bill', snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

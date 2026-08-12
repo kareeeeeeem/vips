@@ -2,36 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class OrderDetailsController extends GetxController {
-  // Order data
-  final String orderNumber = '100113';
-  final String orderDate = '25 Oct 2025 04:13 PM';
-  final String status = 'PAID';
-  final String paymentMethod = 'Cash On Delivery';
+  late final String orderNumber;
+  late final String orderDate;
+  late final String status;
+  late final String paymentMethod;
+  late final String orderType;
+  late final String customerName;
+  late final String customerId;
+  late final String phone;
+  late final String deliveryAddress;
+  late final List<OrderItem> items;
+  late final double itemPrice;
+  late final double addonCost;
+  late final double discount;
+  late final double couponDiscount;
+  late final double serviceCharge;
+  late final double deliveryCharge;
+  late final double vatTax;
 
-  // Order Type
-  final String orderType = 'Home Delivery';
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
 
-  // Customer details
-  final String customerName = 'Jamil Test';
-  final String customerId = 'ID:888888';
-  final String phone = '95910000';
-  final String deliveryAddress = 'Rue Hédi Nouira, 1002\nTunis';
+    final amount = (args['amount'] as num?)?.toDouble() ?? 0.0;
+    final fee = (args['serviceFee'] as num?)?.toDouble() ?? 0.0;
+    final billNumber = args['billNumber']?.toString() ?? args['referenceNumber']?.toString() ?? '—';
+    final operatorName = args['operator']?.toString() ?? 'Bill Service';
 
-  // Items
-  final List<OrderItem> items = [
-    OrderItem(quantity: 2, name: 'ooredoo 5D', price: 800.00),
-  ];
+    orderNumber = args['orderNumber']?.toString() ??
+        'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    orderDate = args['orderDate']?.toString() ??
+        DateTime.now().toString().substring(0, 16).replaceFirst('T', ' ');
+    status = args['status']?.toString() ?? 'PAID';
+    paymentMethod = args['paymentMethod']?.toString() ?? 'Wallet';
+    orderType = args['orderType']?.toString() ?? 'Bill Payment';
+    customerName = args['customerName']?.toString() ?? '';
+    customerId = args['customerId']?.toString() ?? '';
+    phone = args['phone']?.toString() ?? billNumber;
+    deliveryAddress = args['deliveryAddress']?.toString() ?? '—';
 
-  // Pricing
-  final double itemPrice = 800.0;
-  final double addonCost = 0.0;
-  final double discount = 1.0;
-  final double couponDiscount = 30.0;
-  final double serviceCharge = 0.0;
-  final double deliveryCharge = 0.0;
-  final double vatTax = 38.0;
+    if (args['items'] != null) {
+      items = (args['items'] as List)
+          .map((i) => OrderItem(
+                quantity: (i['quantity'] as num?)?.toInt() ?? 1,
+                name: i['name']?.toString() ?? '',
+                price: (i['price'] as num?)?.toDouble() ?? 0.0,
+              ))
+          .toList();
+    } else {
+      items = [OrderItem(quantity: 1, name: operatorName, price: amount)];
+    }
+
+    itemPrice = amount > 0
+        ? amount
+        : items.fold(0.0, (s, i) => s + i.price * i.quantity);
+    addonCost = 0.0;
+    discount = 0.0;
+    couponDiscount = 0.0;
+    serviceCharge = fee;
+    deliveryCharge = 0.0;
+    vatTax = 0.0;
+  }
 
   double get subtotal => itemPrice + addonCost;
   double get grandTotal =>
@@ -42,24 +77,32 @@ class OrderDetailsController extends GetxController {
       deliveryCharge +
       vatTax;
 
-  void downloadReceipt() {
-    // Implement download functionality
-    print('Downloading receipt...');
-  }
+  void downloadReceipt() => shareReceipt();
 
-  void printReceipt() {
-    // Implement print functionality
-    print('Printing receipt...');
-  }
+  void printReceipt() => shareReceipt();
 
   void shareReceipt() {
-    // Implement share functionality
-    print('Sharing receipt...');
+    final receiptText = 'VIPs Receipt\n'
+        'Order: $orderNumber\n'
+        'Date: $orderDate\n'
+        'Status: $status\n'
+        'Payment: $paymentMethod\n'
+        'Total: D ${grandTotal.toStringAsFixed(2)}';
+    SharePlus.instance.share(ShareParams(text: receiptText, subject: 'VIPs Receipt #$orderNumber'));
   }
 
   void displayQr() {
-    // Implement QR display
-    print('Displaying QR code...');
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Order QR Code'),
+        content: SizedBox(
+          width: 200,
+          height: 200,
+          child: QrImageView(data: orderNumber, version: QrVersions.auto, size: 200),
+        ),
+        actions: [TextButton(onPressed: () => Get.back(), child: const Text('Close'))],
+      ),
+    );
   }
 }
 
@@ -72,7 +115,7 @@ class OrderItem {
 }
 
 class OrderDetailsView extends GetView<OrderDetailsController> {
-  const OrderDetailsView({Key? key}) : super(key: key);
+  const OrderDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +153,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: Offset(0, 4),
           ),
@@ -180,7 +223,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                       vertical: 6.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(

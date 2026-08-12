@@ -57,7 +57,7 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                 ),
               ),
               SizedBox(height: 8.h),
-              RichText(
+              Obx(() => RichText(
                 text: TextSpan(
                   style: TextStyle(
                     fontSize: 14.sp,
@@ -75,12 +75,13 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                     ),
                   ],
                 ),
-              ),
+              )),
               SizedBox(height: 48.h),
               
               Center(
                 child: Pinput(
                   length: 4,
+                  controller: controller.pinController,
                   defaultPinTheme: defaultPinTheme,
                   focusedPinTheme: focusedPinTheme,
                   onCompleted: (pin) => controller.verifyOtp(pin),
@@ -93,7 +94,8 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value ? null : () {
-                    // Logic to trigger manual verification if needed
+                    final pin = controller.pinController.text;
+                    if (pin.length == 4) controller.verifyOtp(pin);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
@@ -124,10 +126,10 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
               const Spacer(),
               
               Center(
-                child: TextButton(
-                  onPressed: () {
-                    // Resend logic
-                  },
+                child: Obx(() => TextButton(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () => controller.login(),
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
@@ -143,7 +145,7 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                       ],
                     ),
                   ),
-                ),
+                )),
               ),
               SizedBox(height: 24.h),
             ],

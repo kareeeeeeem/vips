@@ -6,7 +6,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/success_account_controller.dart';
 
 class SuccessAccountView extends GetView<SuccessAccountController> {
-  const SuccessAccountView({Key? key}) : super(key: key);
+  const SuccessAccountView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +58,7 @@ class SuccessAccountView extends GetView<SuccessAccountController> {
             width: 120.w,
             height: 120.h,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.check_circle, size: 80.sp, color: Colors.green),

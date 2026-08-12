@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
-import 'package:vip/appuser/modules/main_app/views/widgets/gift_back_page.dart';
-import 'package:vip/appuser/modules/main_app/views/widgets/reward_page.dart';
 import 'package:vip/appuser/modules/QR_scanner/views/q_r_scanner_view.dart';
-import '../../controllers/merchant_gift_back_controller.dart';
 
 /// Displays the Gift Back Quick Actions overlay as a bottom sheet.
 /// Usage: showGiftBackQuickActions(context);
@@ -18,8 +16,8 @@ void showGiftBackQuickActions(BuildContext context) {
   );
 }
 
-class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
-  const GiftBackQuickActionsSheet({Key? key}) : super(key: key);
+class GiftBackQuickActionsSheet extends StatelessWidget {
+  const GiftBackQuickActionsSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -80,30 +78,37 @@ class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
           SizedBox(height: 8.h),
 
           // Points display
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '285',
-                style: TextStyle(
-                  fontSize: 40.sp,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF1F2937),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(bottom: 6.h),
-                child: Text(
-                  '60',
+          Obx(() {
+            final homeCtrl = Get.find<MerchantHomeController>();
+            final pts = homeCtrl.vipsIn.value.toInt();
+            final ptsStr = pts.toString();
+            final whole = ptsStr.length > 2 ? ptsStr.substring(0, ptsStr.length - 2) : ptsStr;
+            final frac = ptsStr.length > 2 ? ptsStr.substring(ptsStr.length - 2) : '00';
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  whole,
                   style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF6B7280),
+                    fontSize: 40.sp,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
-              ),
-            ],
-          ),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 6.h),
+                  child: Text(
+                    frac,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
           SizedBox(height: 24.h),
 
           // Grid of Quick Actions
@@ -133,7 +138,7 @@ class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
                 isPrimary: true,
                 onTap: () {
                   Get.back();
-                  Get.to(() => const GiftBackPage());
+                  Get.toNamed(MerchantRoutes.GIFT_BACK_FORM);
                 },
               ),
               _buildActionItem(
@@ -143,7 +148,7 @@ class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
                 iconColor: const Color(0xFFE91E63),
                 onTap: () {
                   Get.back();
-                  Get.to(() => const RewardPage());
+                  Get.toNamed(MerchantRoutes.BUSINESS_PLAN);
                 },
               ),
               _buildActionItem(
@@ -203,7 +208,7 @@ class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
                   : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -216,7 +221,7 @@ class GiftBackQuickActionsSheet extends GetWidget<MerchantGiftBackController> {
               width: 44.w,
               height: 44.w,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.15),
+                color: iconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Center(child: Icon(icon, size: 24.sp, color: iconColor)),

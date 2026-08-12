@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MerchantCreateBillController extends GetxController {
   final TextEditingController amountController = TextEditingController();
@@ -43,10 +45,13 @@ class MerchantCreateBillController extends GetxController {
     amountController.text = amount.value;
   }
 
-  void generateOrderQr() {
+  final _isCreating = false.obs;
+  bool get isCreating => _isCreating.value;
+
+  Future<void> generateOrderQr() async {
     double? parsedAmount = double.tryParse(amount.value);
     if (parsedAmount == null || parsedAmount <= 0) {
-      Get.snackbar(
+      safeSnackbar(
         'Invalid Amount',
         'Please enter a valid bill amount',
         snackPosition: SnackPosition.BOTTOM,
@@ -56,13 +61,38 @@ class MerchantCreateBillController extends GetxController {
       return;
     }
 
-    // Navigate to the QR Display Screen, passing the amount and a mock order ID
-    Get.toNamed(
-      MerchantRoutes.BILL_SCAN_ME, 
-      arguments: {
-        'amount': parsedAmount,
-        'orderId': 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-      }
-    );
+    _isCreating.value = true;
+    try {
+      final response = await ApiService().post('/merchant/billing', {
+        'items': [{'name': 'Quick Charge', 'price': parsedAmount, 'quantity': 1, 'total': parsedAmount}],
+        'subtotal': parsedAmount,
+        'grandTotal': parsedAmount,
+        'paymentMethod': 'cash',
+        'paymentStatus': 'pending',
+        'paidAmount': 0,
+      });
+
+      final billNumber = response.success && response.data != null
+          ? (response.data as Map<String, dynamic>)['billNumber'] ?? 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}'
+          : 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+      Get.toNamed(
+        MerchantRoutes.BILL_SCAN_ME,
+        arguments: {
+          'amount': parsedAmount,
+          'orderId': billNumber,
+        },
+      );
+    } catch (_) {
+      Get.toNamed(
+        MerchantRoutes.BILL_SCAN_ME,
+        arguments: {
+          'amount': parsedAmount,
+          'orderId': 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+        },
+      );
+    } finally {
+      _isCreating.value = false;
+    }
   }
 }

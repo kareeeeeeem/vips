@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/modules/merchant_home/bindings/merchant_home_binding.dart';
 import '../modules/merchant_auth/views/merchant_login_view.dart';
@@ -45,15 +46,16 @@ import '../modules/merchant_orders/bindings/merchant_order_binding.dart';
 import '../modules/merchant_orders/views/merchant_orders_view.dart';
 import '../modules/merchant_orders/views/merchant_order_detail_view.dart';
 import '../modules/merchant_splash/views/merchant_splash_view.dart';
+import '../modules/merchant_notifications/bindings/merchant_notifications_binding.dart';
 import '../modules/merchant_notifications/views/merchant_notifications_view.dart';
 import '../modules/merchant_wallet/bindings/merchant_wallet_binding.dart';
 import '../modules/merchant_wallet/views/merchant_wallet_view.dart';
 import '../modules/merchant_billing/views/merchant_create_bill_view.dart';
 import '../modules/merchant_customers/views/merchant_customers_view.dart';
-import '../modules/merchant_settings/views/merchant_settings_view.dart';
 import '../modules/merchant_cashiers/views/merchant_cashiers_view.dart';
 import '../modules/merchant_reviews/views/merchant_reviews_view.dart';
 import '../modules/merchant_credit/bindings/merchant_credit_binding.dart';
+
 import '../modules/merchant_credit/views/merchant_credit_form_view.dart';
 import '../modules/merchant_credit/views/merchant_credit_inquiry_view.dart';
 import '../modules/merchant_finance/bindings/merchant_finance_binding.dart';
@@ -90,6 +92,7 @@ class MerchantAppPages {
     GetPage(
       name: MerchantRoutes.NOTIFICATIONS,
       page: () => const MerchantNotificationsView(),
+      binding: MerchantNotificationsBinding(),
     ),
     GetPage(
       name: MerchantRoutes.WALLET,
@@ -99,6 +102,7 @@ class MerchantAppPages {
     GetPage(
       name: MerchantRoutes.CREATE_BILL,
       page: () => const MerchantCreateBillView(),
+      binding: MerchantBillingBinding(),
       transition: Transition.downToUp,
     ),
     GetPage(
@@ -126,10 +130,6 @@ class MerchantAppPages {
       name: MerchantRoutes.HOME,
       page: () => const MerchantHomeView(),
       binding: MerchantHomeBinding(),
-    ),
-    GetPage(
-      name: MerchantRoutes.SETTINGS,
-      page: () => const MerchantSettingsView(),
     ),
     GetPage(name: MerchantRoutes.TERMS, page: () => const MerchantTermsView()),
     GetPage(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ResetPasswordController extends GetxController {
   final TextEditingController otpController = TextEditingController();
@@ -60,7 +61,7 @@ class ResetPasswordController extends GetxController {
 
   Future<void> resetPassword() async {
     if (!isPasswordValid.value || !isPasswordConfirmed.value) {
-      Get.snackbar(
+      safeSnackbar(
         'Validation Error',
         'Please ensure your password meets the requirements and matches.',
         snackPosition: SnackPosition.BOTTOM,
@@ -72,7 +73,7 @@ class ResetPasswordController extends GetxController {
 
     final otp = otpController.text.trim();
     if (otp.isEmpty || otp.length != 6) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Please enter the 6-digit code sent to your email.',
         snackPosition: SnackPosition.BOTTOM,
@@ -101,7 +102,7 @@ class ResetPasswordController extends GetxController {
           Get.offAllNamed('/login');
         }
 
-        Get.snackbar(
+        safeSnackbar(
           'Success',
           'Password reset successfully!',
           snackPosition: SnackPosition.BOTTOM,
@@ -109,7 +110,7 @@ class ResetPasswordController extends GetxController {
           colorText: Colors.white,
         );
       } else {
-        Get.snackbar(
+        safeSnackbar(
           'Error',
           response.message,
           snackPosition: SnackPosition.BOTTOM,
@@ -118,7 +119,7 @@ class ResetPasswordController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,

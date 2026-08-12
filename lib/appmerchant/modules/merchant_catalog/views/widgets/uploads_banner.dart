@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class UploadsBanner extends StatelessWidget {
   final int remaining;
@@ -7,11 +8,11 @@ class UploadsBanner extends StatelessWidget {
   final VoidCallback? onUpgrade;
 
   const UploadsBanner({
-    Key? key,
+    super.key,
     this.remaining = 8,
     this.total = 2, // design says 8/2
     this.onUpgrade,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +40,7 @@ class UploadsBanner extends StatelessWidget {
             ],
           ),
           GestureDetector(
-            onTap: onUpgrade ?? () {}, // Trigger onUpgrade
+            onTap: onUpgrade ?? () => Get.toNamed('/merchant/subscription'),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(

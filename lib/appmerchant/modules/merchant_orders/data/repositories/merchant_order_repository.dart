@@ -123,9 +123,11 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
   ) async {
     try {
       ResponseModel responseModel;
-      Response response = await apiClient.postData(
-        AppConstants.updatedOrderStatusUri,
-        updateStatusBody.toJson(),
+      // Backend: PUT /api/merchant/orders/:id/status
+      final orderId = updateStatusBody.orderId;
+      Response response = await apiClient.putData(
+        '${AppConstants.updatedOrderStatusUri}/$orderId/status',
+        {'status': updateStatusBody.status ?? '', if (updateStatusBody.reason != null) 'reason': updateStatusBody.reason!},
         handleError: false,
       );
 
@@ -206,7 +208,4 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
     }
   }
 
-  String _getMerchantToken() {
-    return sharedPreferences.getString(AppConstants.token) ?? "";
-  }
 }

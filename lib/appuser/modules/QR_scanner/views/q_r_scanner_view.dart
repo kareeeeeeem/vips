@@ -9,8 +9,7 @@ class QRScannerView extends StatelessWidget {
   final Color primaryColor;
   final controller = Get.put(QRScannerController());
 
-  QRScannerView({Key? key, this.primaryColor = const Color(0xFFFF6B35)})
-    : super(key: key);
+  QRScannerView({super.key, this.primaryColor = const Color(0xFFFF6B35)});
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +38,8 @@ class QRScannerView extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.8),
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withValues(alpha: 0.4),
                     Colors.transparent,
                   ],
                 ),
@@ -60,8 +59,8 @@ class QRScannerView extends StatelessWidget {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withOpacity(0.95),
-                    Colors.black.withOpacity(0.6),
+                    Colors.black.withValues(alpha: 0.95),
+                    Colors.black.withValues(alpha: 0.6),
                     Colors.transparent,
                   ],
                 ),
@@ -87,6 +86,33 @@ class QRScannerView extends StatelessWidget {
                 _buildBottomButton(),
               ],
             ),
+          ),
+
+          // Validating overlay — visible feedback while the scanned code is
+          // checked against the backend, so the screen never looks frozen.
+          Obx(
+            () => controller.isValidating.value
+                ? Container(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: primaryColor),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Validating QR code…',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -120,7 +146,7 @@ class QRScannerView extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.6),
+                          color: primaryColor.withValues(alpha: 0.6),
                           blurRadius: 10,
                           spreadRadius: 2,
                         ),
@@ -187,12 +213,12 @@ class QRScannerView extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24.r),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.2),
+                    color: primaryColor.withValues(alpha: 0.2),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -218,7 +244,7 @@ class QRScannerView extends StatelessWidget {
       height: 50.w,
       child: CustomPaint(
         painter: CornerPainter(
-          color: color.withOpacity(opacity),
+          color: color.withValues(alpha: opacity),
           isTopLeft: isTopLeft,
           isTopRight: isTopRight,
           isBottomLeft: isBottomLeft,
@@ -281,20 +307,20 @@ class QRScannerView extends StatelessWidget {
           gradient:
               isActive
                   ? LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                    colors: [primaryColor, primaryColor.withValues(alpha: 0.8)],
                   )
                   : null,
-          color: isActive ? null : Colors.white.withOpacity(0.15),
+          color: isActive ? null : Colors.white.withValues(alpha: 0.15),
           shape: BoxShape.circle,
           border: Border.all(
-            color: isActive ? primaryColor : Colors.white.withOpacity(0.3),
+            color: isActive ? primaryColor : Colors.white.withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow:
               isActive
                   ? [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.4),
+                      color: primaryColor.withValues(alpha: 0.4),
                       blurRadius: 15,
                       spreadRadius: 2,
                     ),
@@ -336,7 +362,7 @@ class QRScannerView extends StatelessWidget {
             letterSpacing: -1,
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
@@ -355,7 +381,7 @@ class QRScannerView extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               height: 1.4,
             ),
           ),
@@ -373,10 +399,10 @@ class QRScannerView extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -385,7 +411,7 @@ class QRScannerView extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.2),
+                    color: primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
@@ -400,7 +426,7 @@ class QRScannerView extends StatelessWidget {
                     'Make sure the QR code is clearly visible',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -419,14 +445,14 @@ class QRScannerView extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 18.h),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                  colors: [primaryColor, primaryColor.withValues(alpha: 0.8)],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.4),
+                    color: primaryColor.withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -438,7 +464,7 @@ class QRScannerView extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Icon(

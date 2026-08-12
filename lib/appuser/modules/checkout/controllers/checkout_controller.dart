@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../Cart/controllers/cart_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum OrderType { delivery, takeaway, inStore }
 
@@ -13,7 +14,7 @@ class CheckoutController extends GetxController {
 
   // Delivery Address
   var deliveryType = 'Deliver to -> Home'.obs;
-  var deliveryAddress = '221B Baker Street, London, United K...'.obs;
+  var deliveryAddress = ''.obs;
 
   // Payment Method
   var paymentMethod = 'Cash'.obs;
@@ -29,7 +30,7 @@ class CheckoutController extends GetxController {
   // Order Summary
   var subtotal = 31.5.obs;
   var deliveryFee = 6.0.obs;
-  var discount = 6.3.obs;
+  var discount = 0.0.obs;
 
   // VIP Points
   var vipPoints = 250.obs;
@@ -49,8 +50,25 @@ class CheckoutController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Load data from previous page (cart)
     _loadCheckoutData();
+    _loadUserPoints();
+  }
+
+  Future<void> _loadUserPoints() async {
+    try {
+      final response = await ApiService().get('/user/wallet');
+      if (response.success && response.data != null) {
+        vipPoints.value = ((response.data['points'] ?? 250) as num).toInt();
+      }
+    } catch (_) {}
+  }
+
+  double _parseDouble(dynamic value, [double fallback = 0.0]) {
+    if (value == null) return fallback;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? fallback;
+    return fallback;
   }
 
   @override
@@ -65,15 +83,15 @@ class CheckoutController extends GetxController {
       final args = Get.arguments as Map<String, dynamic>;
 
       if (args.containsKey('subtotal')) {
-        subtotal.value = args['subtotal'];
+        subtotal.value = _parseDouble(args['subtotal']);
       }
 
       if (args.containsKey('deliveryFee')) {
-        deliveryFee.value = args['deliveryFee'];
+        deliveryFee.value = _parseDouble(args['deliveryFee']);
       }
 
       if (args.containsKey('discount')) {
-        discount.value = args['discount'];
+        discount.value = _parseDouble(args['discount']);
       }
 
       if (args.containsKey('deliveryOption')) {
@@ -88,8 +106,8 @@ class CheckoutController extends GetxController {
       }
 
       if (args.containsKey('paymentMethod')) {
-        final method = args['paymentMethod'] as String;
-        switch (method) {
+        final method = args['paymentMethod']?.toString() ?? '';
+        switch (method.toLowerCase()) {
           case 'cash':
             paymentMethod.value = 'Cash';
             break;
@@ -103,7 +121,7 @@ class CheckoutController extends GetxController {
             paymentMethod.value = 'Apple Pay';
             break;
           default:
-            paymentMethod.value = method.capitalizeFirst ?? method;
+            paymentMethod.value = method.isNotEmpty ? method.capitalizeFirst ?? method : paymentMethod.value;
             break;
         }
       }
@@ -119,11 +137,11 @@ class CheckoutController extends GetxController {
     selectedOrderType.value = type;
     _updateDeliveryFee();
 
-    Get.snackbar(
+    safeSnackbar(
       'Order Type Updated',
       'Selected: ${_getOrderTypeName(type)}',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
+      backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
       margin: EdgeInsets.all(16.w),
@@ -226,11 +244,11 @@ class CheckoutController extends GetxController {
           deliveryAddress.value = address;
           Get.back();
 
-          Get.snackbar(
+          safeSnackbar(
             'Address Updated',
             'Delivering to $label',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
+            backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
             colorText: Colors.white,
             duration: const Duration(seconds: 2),
             margin: EdgeInsets.all(16.w),
@@ -338,9 +356,9 @@ class CheckoutController extends GetxController {
   }
 
   Widget _buildPaymentOption(String method, IconData icon) {
-    final isSelected = paymentMethod.value == method;
-
-    return Material(
+    return Obx(() {
+      final isSelected = paymentMethod.value == method;
+      return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12.r),
@@ -348,11 +366,11 @@ class CheckoutController extends GetxController {
           paymentMethod.value = method;
           Get.back();
 
-          Get.snackbar(
+          safeSnackbar(
             'Payment Method Updated',
             'Selected: $method',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
+            backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
             colorText: Colors.white,
             duration: const Duration(seconds: 2),
             margin: EdgeInsets.all(16.w),
@@ -372,7 +390,7 @@ class CheckoutController extends GetxController {
             borderRadius: BorderRadius.circular(12.r),
             color:
                 isSelected
-                    ? const Color(0xFFFF6B35).withOpacity(0.05)
+                    ? const Color(0xFFFF6B35).withValues(alpha: 0.05)
                     : Colors.transparent,
           ),
           child: Row(
@@ -408,6 +426,7 @@ class CheckoutController extends GetxController {
         ),
       ),
     );
+    }); // end Obx
   }
 
   // ==================== PROMOTIONS ====================
@@ -501,7 +520,7 @@ class CheckoutController extends GetxController {
         ),
         borderRadius: BorderRadius.circular(12.r),
         color:
-            isActive ? const Color(0xFFFF6B35).withOpacity(0.05) : Colors.white,
+            isActive ? const Color(0xFFFF6B35).withValues(alpha: 0.05) : Colors.white,
       ),
       child: Row(
         children: [
@@ -612,7 +631,27 @@ class CheckoutController extends GetxController {
       final cartController = Get.isRegistered<CartController>()
           ? Get.find<CartController>()
           : null;
-      final merchantId = cartController?.cartItems.first.merchantId ?? '64abcd1234567890abcdef12';
+
+      if (cartController == null || cartController.cartItems.isEmpty) {
+        Get.back();
+        safeSnackbar(
+          'Error',
+          'Cart is empty or unavailable.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final merchantId = cartController.cartItems.first.merchantId ?? '';
+      if (merchantId.isEmpty) {
+        Get.back();
+        safeSnackbar(
+          'Error',
+          'Merchant information is missing.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
       final response = await ApiService().post('/order/create', {
         'merchantId': merchantId,
@@ -634,7 +673,7 @@ class CheckoutController extends GetxController {
           Get.find<CartController>().clearCartLocally();
         } catch (_) {}
       } else {
-        Get.snackbar(
+        safeSnackbar(
           'Error',
           response.message,
           snackPosition: SnackPosition.BOTTOM,
@@ -642,7 +681,7 @@ class CheckoutController extends GetxController {
       }
     } catch (e) {
       Get.back(); // Close loading dialog
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         'Failed to place order: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -662,7 +701,7 @@ class CheckoutController extends GetxController {
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -676,7 +715,7 @@ class CheckoutController extends GetxController {
                 width: 80.w,
                 height: 80.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withOpacity(0.1),
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -776,8 +815,8 @@ class CheckoutController extends GetxController {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        Get.back(); // Close dialog
-                        Get.toNamed('/order-tracking'); // Go to order tracking
+                        Get.back();
+                        Get.offAllNamed('/profile');
                       },
                       child: Container(
                         height: 48.h,
@@ -786,7 +825,7 @@ class CheckoutController extends GetxController {
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6B35).withOpacity(0.3),
+                              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),

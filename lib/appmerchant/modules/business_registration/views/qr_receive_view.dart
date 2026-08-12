@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class QrReceiveView extends StatelessWidget {
-  const QrReceiveView({Key? key}) : super(key: key);
+  const QrReceiveView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +22,7 @@ class QrReceiveView extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -55,7 +57,7 @@ class QrReceiveView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -89,7 +91,7 @@ class QrReceiveView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(32.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -180,21 +182,45 @@ class QrReceiveView extends StatelessWidget {
                   end: Alignment.topCenter,
                   colors: [
                     const Color(0xFFF3F4F6),
-                    const Color(0xFFF3F4F6).withOpacity(0.0),
+                    const Color(0xFFF3F4F6).withValues(alpha: 0.0),
                   ],
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildActionButton(Icons.download_rounded, const Color(0xFFFFB800)),
+                  _buildActionButton(
+                    Icons.download_rounded,
+                    const Color(0xFFFFB800),
+                    onTap: () {
+                      // QR download: copy the ID to clipboard as a placeholder
+                      Clipboard.setData(const ClipboardData(text: '12345678'));
+                      Get.snackbar('Download', 'QR data copied to clipboard',
+                          snackPosition: SnackPosition.BOTTOM);
+                    },
+                  ),
                   _buildActionButton(
                     Icons.grid_view_rounded,
                     const Color(0xFFFFB800),
                     onTap: () => Get.offAllNamed(MerchantRoutes.HOME),
                   ),
-                  _buildActionButton(Icons.print_rounded, const Color(0xFFEF4444)),
-                  _buildActionButton(Icons.share_rounded, const Color(0xFF1F2937)),
+                  _buildActionButton(
+                    Icons.print_rounded,
+                    const Color(0xFFEF4444),
+                    onTap: () {
+                      Get.snackbar('Print', 'Connect a printer to print this QR code',
+                          snackPosition: SnackPosition.BOTTOM);
+                    },
+                  ),
+                  _buildActionButton(
+                    Icons.share_rounded,
+                    const Color(0xFF1F2937),
+                    onTap: () {
+                      SharePlus.instance.share(
+                        ShareParams(text: 'My VIPs merchant QR ID: 12345678'),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

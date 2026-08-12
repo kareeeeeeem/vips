@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:pinput/pinput.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appuser/modules/mobile/views/widgets/transfer_details.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
@@ -12,11 +12,21 @@ class BillInquiryController extends GetxController {
   final RxString pin = ''.obs;
   final RxBool isProcessing = false.obs;
 
+  String _userPin = '0000';
+
   // Bill data
   final String transferTo = '#12355866';
   final double billAmount = 2000.0;
   final double fees = 200.0;
   final double vpToAwards = 1000.0;
+
+  @override
+  void onInit() {
+    super.onInit();
+    SharedPreferences.getInstance().then((prefs) {
+      _userPin = prefs.getString('user_pin') ?? '0000';
+    });
+  }
 
   double get totalVP => vpToAwards + fees;
 
@@ -33,20 +43,23 @@ class BillInquiryController extends GetxController {
         primaryColor:
             Colors.orange, // Utilisez la couleur primaire de votre app
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
-          return await localAuth.authenticate(
-            localizedReason: 'Authentifiez-vous',
-            options: const AuthenticationOptions(
-              stickyAuth: true,
-              biometricOnly: true,
-            ),
-          );
+          try {
+            return await localAuth.authenticate(
+              localizedReason: 'Authentifiez-vous',
+              options: const AuthenticationOptions(
+                stickyAuth: true,
+                biometricOnly: true,
+              ),
+            );
+          } catch (_) {
+            return false;
+          }
         },
         onValidPin: () {
-          Get.put(CardDetailsView());
           Get.to(() => CardDetailsView());
         },
         supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
@@ -60,7 +73,7 @@ class BillInquiryController extends GetxController {
 }
 
 class BillInquiryView extends GetView<BillInquiryController> {
-  const BillInquiryView({Key? key}) : super(key: key);
+  const BillInquiryView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +132,7 @@ class BillInquiryView extends GetView<BillInquiryController> {
         borderRadius: BorderRadius.circular(22.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 28,
             offset: Offset(0, 8),
           ),
@@ -150,7 +163,7 @@ class BillInquiryView extends GetView<BillInquiryController> {
           width: 61.w,
           height: 58.h,
           decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withOpacity(0.1),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Icon(
@@ -191,7 +204,7 @@ class BillInquiryView extends GetView<BillInquiryController> {
   Widget _buildDivider() {
     return Container(
       height: 1,
-      decoration: BoxDecoration(color: Colors.grey.withOpacity(0.2)),
+      decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.2)),
     );
   }
 
@@ -206,7 +219,7 @@ class BillInquiryView extends GetView<BillInquiryController> {
         ),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
-          color: AppColors.AppPrimaryColor.withOpacity(0.3),
+          color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -297,76 +310,6 @@ class BillInquiryView extends GetView<BillInquiryController> {
     );
   }
 
-  Widget _buildPinSection() {
-    return Column(
-      children: [
-        Text(
-          'Enter PIN Code',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: 32.h),
-        _buildPinInput(),
-      ],
-    );
-  }
-
-  Widget _buildPinInput() {
-    final defaultPinTheme = PinTheme(
-      width: 50.w,
-      height: 50.h,
-      textStyle: TextStyle(
-        fontSize: 20.sp,
-        fontWeight: FontWeight.w600,
-        color: AppColors.AppPrimaryColor,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade300, width: 2),
-      ),
-    );
-
-    final focusedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration!.copyWith(
-        color: AppColors.AppPrimaryColor.withOpacity(0.05),
-        border: Border.all(color: AppColors.AppPrimaryColor, width: 2),
-      ),
-    );
-
-    final submittedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration!.copyWith(
-        color: AppColors.AppPrimaryColor.withOpacity(0.1),
-        border: Border.all(color: AppColors.AppPrimaryColor, width: 2),
-      ),
-    );
-
-    return Pinput(
-      length: 4,
-      defaultPinTheme: defaultPinTheme,
-      focusedPinTheme: focusedPinTheme,
-      submittedPinTheme: submittedPinTheme,
-      showCursor: true,
-      obscureText: true,
-      obscuringCharacter: '●',
-      onChanged: (value) => controller.updatePin(value),
-      onCompleted: (value) => controller.proceed(),
-      errorPinTheme: defaultPinTheme.copyWith(
-        decoration: defaultPinTheme.decoration!.copyWith(
-          border: Border.all(color: Colors.red, width: 2),
-        ),
-      ),
-      hapticFeedbackType: HapticFeedbackType.lightImpact,
-      cursor: Container(
-        width: 2,
-        height: 24.h,
-        color: AppColors.AppPrimaryColor,
-      ),
-    );
-  }
 
   Widget _buildActionButtons() {
     return Row(
@@ -430,11 +373,10 @@ class NumericKeyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final VoidCallback onDelete;
 
-  const NumericKeyboard({
-    Key? key,
+  const NumericKeyboard({super.key,
     required this.onKeyPressed,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

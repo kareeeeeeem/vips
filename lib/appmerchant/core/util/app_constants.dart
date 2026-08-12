@@ -14,39 +14,36 @@ class AppConstants {
   static const Color merchantBorder = Color(0xFFE5E7EB);
 
   /// API Endpoints
-  static const String baseUrl = 'https://api.vipsapp.com';
+  static const String baseUrl = 'https://vips-backend.onrender.com';
 
   // Auth
-  static const String loginUri = '/api/v1/auth/vendor/login';
-  static const String forgetPasswordUri = '/api/v1/auth/vendor/forgot-password';
-  static const String verifyTokenUri = '/api/v1/auth/vendor/verify-token';
-  static const String resetPasswordUri = '/api/v1/auth/vendor/reset-password';
+  static const String loginUri = '/api/auth/merchant-login';
+  static const String forgetPasswordUri = '/api/auth/forgot-password';
+  static const String verifyTokenUri = '/api/auth/verify-token';
+  static const String resetPasswordUri = '/api/auth/reset-password';
 
   // Orders
-  static const String allOrdersUri = '/api/v1/vendor/all-orders';
-  static const String currentOrdersUri = '/api/v1/vendor/current-orders';
-  static const String completedOrdersUri = '/api/v1/vendor/completed-orders';
-  static const String orderDetailsUri =
-      '/api/v1/vendor/order-details?order_id=';
-  static const String updatedOrderStatusUri =
-      '/api/v1/vendor/update-order-status';
-  static const String orderCancellationUri =
-      '/api/v1/vendor/order/cancel-reasons';
+  static const String allOrdersUri = '/api/merchant/orders';
+  static const String currentOrdersUri = '/api/merchant/orders?status=pending';
+  static const String completedOrdersUri = '/api/merchant/orders?status=delivered';
+  static const String orderDetailsUri = '/api/merchant/orders/';
+  static const String updatedOrderStatusUri = '/api/merchant/orders';
+  static const String orderCancellationUri = '/api/merchant/orders';
 
   // Items/Catalog
-  static const String itemListUri = '/api/v1/vendor/get-items-list';
-  static const String addItemUri = '/api/v1/vendor/item/store';
-  static const String updateItemUri = '/api/v1/vendor/item/update';
-  static const String deleteItemUri = '/api/v1/vendor/item/delete';
-  static const String updateItemStatusUri = '/api/v1/vendor/item/status';
-  static const String itemStockUpdateUri = '/api/v1/vendor/item/stock-update';
+  static const String itemListUri = '/api/merchant/products';
+  static const String addItemUri = '/api/merchant/products';
+  static const String updateItemUri = '/api/merchant/products';
+  static const String deleteItemUri = '/api/merchant/products';
+  static const String updateItemStatusUri = '/api/merchant/products';
+  static const String itemStockUpdateUri = '/api/merchant/products';
 
   // Profile
-  static const String profileUri = '/api/v1/vendor/profile';
-  static const String updateProfileUri = '/api/v1/vendor/update-profile';
+  static const String profileUri = '/api/merchant/profile';
+  static const String updateProfileUri = '/api/merchant/profile';
 
   // Notifications
-  static const String notificationUri = '/api/v1/vendor/notifications';
+  static const String notificationUri = '/api/merchant/notifications';
 
   // Storage keys
   static const String token = 'token';

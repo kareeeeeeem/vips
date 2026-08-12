@@ -4,7 +4,6 @@ import 'package:vip/appuser/modules/bills/views/bills_view.dart';
 import 'package:vip/appuser/modules/home/views/home_view.dart';
 import 'package:vip/appuser/modules/vendor_home/views/vendor_home_view.dart';
 
-import '../../home/controllers/home_controller.dart';
 import '../../home/views/widgets/navbar.dart';
 import '../../profile/controllers/profile_controller.dart';
 import '../../profile/views/profile_view.dart';
@@ -16,9 +15,7 @@ class MainAppView extends GetView<MainAppController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(MainAppController());
-    Get.put(HomeController());
-    final profileController = Get.put(ProfileController());
+    final profileController = Get.find<ProfileController>();
 
     return Scaffold(
       bottomNavigationBar: Obx(

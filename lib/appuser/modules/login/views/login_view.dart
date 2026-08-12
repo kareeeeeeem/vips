@@ -11,7 +11,6 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(LoginController());
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -188,24 +187,37 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildLoginButton() {
-    return ElevatedButton(
-      onPressed: controller.emailLogin,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.AppPrimaryColor,
-        minimumSize: Size(double.infinity, 56.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.r),
+    return Obx(() {
+      final isLoading = controller.isLoading.value;
+      return ElevatedButton(
+        onPressed: isLoading ? null : controller.emailLogin,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.AppPrimaryColor,
+          disabledBackgroundColor: Colors.grey.shade300,
+          minimumSize: Size(double.infinity, 56.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.r),
+          ),
         ),
-      ),
-      child: Text(
-        'Sign In',
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
+        child: isLoading
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                'Sign In',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+      );
+    });
   }
 
   Widget _buildSocialLogins() {

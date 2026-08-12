@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/merchant_finance_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class AddTransactionView extends StatefulWidget {
-  const AddTransactionView({Key? key}) : super(key: key);
+  const AddTransactionView({super.key});
 
   @override
   State<AddTransactionView> createState() => _AddTransactionViewState();
@@ -141,7 +142,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(10.r),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)] : [],
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : [],
           ),
           alignment: Alignment.center,
           child: Text(
@@ -197,13 +198,13 @@ class _AddTransactionViewState extends State<AddTransactionView> {
 
   void _submit() {
     if (titleController.text.isEmpty || amountController.text.isEmpty) {
-      Get.snackbar('Error', 'Please fill all fields', snackPosition: SnackPosition.BOTTOM);
+      safeSnackbar('Error', 'Please fill all fields', snackPosition: SnackPosition.BOTTOM);
       return;
     }
     
     double? amt = double.tryParse(amountController.text);
     if (amt == null) {
-      Get.snackbar('Error', 'Invalid amount', snackPosition: SnackPosition.BOTTOM);
+      safeSnackbar('Error', 'Invalid amount', snackPosition: SnackPosition.BOTTOM);
       return;
     }
 

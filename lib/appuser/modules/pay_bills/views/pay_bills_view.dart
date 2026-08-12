@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/pay_bills_controller.dart';
 
 class PayBillsView extends GetView<PayBillsController> {
-  const PayBillsView({Key? key}) : super(key: key);
+  const PayBillsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(PayBillsController);
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
@@ -76,7 +75,7 @@ class PayBillsView extends GetView<PayBillsController> {
     return Padding(
       padding: EdgeInsets.only(right: 12.w),
       child: GestureDetector(
-        onTap: () => controller.navigateToCategory(category['route']),
+        onTap: () => controller.navigateToCategory(category),
         child: Container(
           width: 110.w,
           decoration: BoxDecoration(
@@ -84,7 +83,7 @@ class PayBillsView extends GetView<PayBillsController> {
             borderRadius: BorderRadius.circular(16.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -100,7 +99,23 @@ class PayBillsView extends GetView<PayBillsController> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                child: Center(child: Image.network(category['image'])),
+                child: Center(
+                  child: (category['image'] as String? ?? '').isNotEmpty
+                      ? Image.network(
+                          category['image'],
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.receipt_long,
+                            color: AppColors.AppPrimaryColor,
+                            size: 28.sp,
+                          ),
+                        )
+                      : Icon(
+                          Icons.receipt_long,
+                          color: AppColors.AppPrimaryColor,
+                          size: 28.sp,
+                        ),
+                ),
               ),
               SizedBox(height: 12.h),
               // Operator name
@@ -119,7 +134,7 @@ class PayBillsView extends GetView<PayBillsController> {
 
 // Version alternative avec design plus moderne
 class PayBillsViewModern extends GetView<PayBillsController> {
-  const PayBillsViewModern({Key? key}) : super(key: key);
+  const PayBillsViewModern({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +159,7 @@ class PayBillsViewModern extends GetView<PayBillsController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -205,7 +220,7 @@ class PayBillsViewModern extends GetView<PayBillsController> {
 
   Widget _buildModernCategoryCard(Map<String, dynamic> category) {
     return GestureDetector(
-      onTap: () => controller.navigateToCategory(category['route'] ?? ''),
+      onTap: () => controller.navigateToCategory(category),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -217,7 +232,7 @@ class PayBillsViewModern extends GetView<PayBillsController> {
           border: Border.all(color: Colors.grey.shade200, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: Offset(0, 2),
             ),
@@ -233,8 +248,8 @@ class PayBillsViewModern extends GetView<PayBillsController> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.AppPrimaryColor.withOpacity(0.15),
-                    AppColors.AppPrimaryColor.withOpacity(0.05),
+                    AppColors.AppPrimaryColor.withValues(alpha: 0.15),
+                    AppColors.AppPrimaryColor.withValues(alpha: 0.05),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16.r),

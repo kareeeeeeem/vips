@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Tooling / analysis artifacts
+/coverage/
+/release/
+/.claude/
+repomix-output.xml
+
+# Contains live production secrets (DB credentials, JWT secret) — never commit
+/infor
+
+# Backend has its own separate repo (kareeeeeeem/vips-backend) — don't duplicate here
+/lib/vips-backend/
+/vips-backend/
+node_modules/
+.env

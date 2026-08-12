@@ -2,25 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import '../../../../design_system/organisms/pin/pin.dart';
 import '../../../mobile/views/widgets/order_details.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ElectricBillAmountController extends GetxController {
   final TextEditingController amountController = TextEditingController();
   final RxBool isLoading = false.obs;
 
-  final String operatorName = 'Tunisia Electric Company';
-  final String operatorIcon =
-      'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
+  late final String billServiceId;
+  late final String operatorName;
+  late final String operatorIcon;
+  late final String billingNumber;
+  late final String billStatus;
+  late final String dueDate;
+  late final String amountDue;
 
-  // Bill details
-  final String billStatus = 'Unpaid';
-  final String billingNumber = '80152473300816';
-  final String dueDate = '10-08-2024';
   final double serviceFee = 0.500;
+
+  String _userPin = '0000';
+
+  @override
+  void onInit() {
+    super.onInit();
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    billServiceId = args['billServiceId']?.toString() ?? '';
+    operatorName = args['operator']?.toString() ?? 'Bill Payment';
+    operatorIcon = 'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
+    billingNumber = args['subscriberNumber']?.toString() ?? args['accountNumber']?.toString() ?? '';
+    billStatus = args['billStatus']?.toString() ?? 'Unpaid';
+    dueDate = args['dueDate']?.toString() ?? '';
+    amountDue = args['amountDue']?.toString() ?? '';
+    if (amountDue.isNotEmpty) {
+      amountController.text = amountDue;
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      _userPin = prefs.getString('user_pin') ?? '0000';
+    });
+  }
 
   void proceed() {
     if (amountController.text.isEmpty) {
@@ -37,7 +60,7 @@ class ElectricBillAmountController extends GetxController {
         pinLength: 4,
         primaryColor: Colors.orange,
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -60,8 +83,7 @@ class ElectricBillAmountController extends GetxController {
 
           try {
             final response = await ApiService().post('/services/pay-bill', {
-              'billServiceId':
-                  'electric_company_id_123', // should be dynamic, placeholder for now
+              'billServiceId': billServiceId,
               'amount': amount + serviceFee,
               'referenceNumber': billingNumber,
             });
@@ -69,7 +91,7 @@ class ElectricBillAmountController extends GetxController {
             Get.back(); // close loading dialog
 
             if (response.success) {
-              Get.snackbar(
+              safeSnackbar(
                 'Success',
                 'Bill paid successfully!',
                 snackPosition: SnackPosition.BOTTOM,
@@ -84,7 +106,7 @@ class ElectricBillAmountController extends GetxController {
                 },
               );
             } else {
-              Get.snackbar(
+              safeSnackbar(
                 'Error',
                 response.message,
                 snackPosition: SnackPosition.BOTTOM,
@@ -92,7 +114,7 @@ class ElectricBillAmountController extends GetxController {
             }
           } catch (e) {
             Get.back(); // close loading dialog
-            Get.snackbar(
+            safeSnackbar(
               'Error',
               'Failed to pay bill: $e',
               snackPosition: SnackPosition.BOTTOM,
@@ -115,7 +137,7 @@ class ElectricBillAmountController extends GetxController {
 }
 
 class ElectricBillAmountView extends GetView<ElectricBillAmountController> {
-  const ElectricBillAmountView({Key? key}) : super(key: key);
+  const ElectricBillAmountView({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 // ==================== MODEL ====================
 
@@ -100,48 +103,68 @@ class MyLocationsController extends GetxController {
   var locations = <SavedLocation>[].obs;
   var selectedLocationIndex = 0.obs;
 
+  static const _kPrefsKey = 'saved_locations';
+
   @override
   void onInit() {
     super.onInit();
     _loadLocations();
   }
 
-  void _loadLocations() {
-    // Sample data - remplacer avec des données depuis API/Storage
-    locations.value = [
-      SavedLocation(
-        id: '1',
-        name: "MAM'S HOUSE",
-        address: '110 Baker Street, London, United Kingdom',
-        city: 'London',
-        country: 'United Kingdom',
-        isDefault: false,
-      ),
-      SavedLocation(
-        id: '2',
-        name: 'HOME',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        city: 'Mesa',
-        state: 'New Jersey',
-        zipCode: '45463',
-        country: 'USA',
-        isDefault: true,
-      ),
-      SavedLocation(
-        id: '3',
-        name: 'WORK',
-        address: '3891 Ranchview Dr. Richardson, California 62639',
-        city: 'Richardson',
-        state: 'California',
-        zipCode: '62639',
-        country: 'USA',
-        isDefault: false,
-      ),
-    ];
-
-    // Sélectionner l'adresse par défaut ou la première
+  Future<void> _loadLocations() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_kPrefsKey);
+    if (raw != null) {
+      try {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => SavedLocation.fromJson(e as Map<String, dynamic>))
+            .toList();
+        locations.value = list;
+      } catch (_) {
+        locations.value = _defaultLocations();
+      }
+    } else {
+      locations.value = _defaultLocations();
+      _persistLocations();
+    }
     final defaultIndex = locations.indexWhere((loc) => loc.isDefault);
     selectedLocationIndex.value = defaultIndex != -1 ? defaultIndex : 0;
+  }
+
+  List<SavedLocation> _defaultLocations() => [
+        SavedLocation(
+          id: '1',
+          name: "MAM'S HOUSE",
+          address: '110 Baker Street, London, United Kingdom',
+          city: 'London',
+          country: 'United Kingdom',
+          isDefault: false,
+        ),
+        SavedLocation(
+          id: '2',
+          name: 'HOME',
+          address: '2464 Royal Ln. Mesa, New Jersey 45463',
+          city: 'Mesa',
+          state: 'New Jersey',
+          zipCode: '45463',
+          country: 'USA',
+          isDefault: true,
+        ),
+        SavedLocation(
+          id: '3',
+          name: 'WORK',
+          address: '3891 Ranchview Dr. Richardson, California 62639',
+          city: 'Richardson',
+          state: 'California',
+          zipCode: '62639',
+          country: 'USA',
+          isDefault: false,
+        ),
+      ];
+
+  Future<void> _persistLocations() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPrefsKey, jsonEncode(locations.map((l) => l.toJson()).toList()));
   }
 
   void selectLocation(int index) {
@@ -149,6 +172,8 @@ class MyLocationsController extends GetxController {
   }
 
   void addNewLocation() {
+    final nameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -170,6 +195,7 @@ class MyLocationsController extends GetxController {
               ),
               SizedBox(height: 20.h),
               TextField(
+                controller: nameCtrl,
                 decoration: InputDecoration(
                   labelText: 'Location Name (e.g., Home, Work)',
                   border: OutlineInputBorder(
@@ -181,6 +207,7 @@ class MyLocationsController extends GetxController {
               ),
               SizedBox(height: 16.h),
               TextField(
+                controller: addressCtrl,
                 decoration: InputDecoration(
                   labelText: 'Full Address',
                   border: OutlineInputBorder(
@@ -222,15 +249,29 @@ class MyLocationsController extends GetxController {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Implémenter l'ajout
+                        final name = nameCtrl.text.trim();
+                        final address = addressCtrl.text.trim();
+                        if (name.isEmpty || address.isEmpty) {
+                          safeSnackbar('Required', 'Please fill in all fields',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        final newLoc = SavedLocation(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          name: name.toUpperCase(),
+                          address: address,
+                          isDefault: locations.isEmpty,
+                        );
+                        locations.add(newLoc);
+                        _persistLocations();
                         Get.back();
-                        Get.snackbar(
+                        safeSnackbar(
                           'Success',
                           'New location added successfully',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: const Color(
                             0xFF22C55E,
-                          ).withOpacity(0.9),
+                          ).withValues(alpha: 0.9),
                           colorText: Colors.white,
                           duration: const Duration(seconds: 2),
                           margin: EdgeInsets.all(16.w),
@@ -265,6 +306,8 @@ class MyLocationsController extends GetxController {
   }
 
   void editLocation(SavedLocation location) {
+    final nameCtrl = TextEditingController(text: location.name);
+    final addressCtrl = TextEditingController(text: location.address);
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -286,6 +329,7 @@ class MyLocationsController extends GetxController {
               ),
               SizedBox(height: 20.h),
               TextField(
+                controller: nameCtrl,
                 decoration: InputDecoration(
                   labelText: 'Location Name',
                   border: OutlineInputBorder(
@@ -294,10 +338,10 @@ class MyLocationsController extends GetxController {
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),
                 ),
-                controller: TextEditingController(text: location.name),
               ),
               SizedBox(height: 16.h),
               TextField(
+                controller: addressCtrl,
                 decoration: InputDecoration(
                   labelText: 'Full Address',
                   border: OutlineInputBorder(
@@ -306,7 +350,6 @@ class MyLocationsController extends GetxController {
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),
                 ),
-                controller: TextEditingController(text: location.address),
                 maxLines: 2,
               ),
               SizedBox(height: 24.h),
@@ -340,15 +383,29 @@ class MyLocationsController extends GetxController {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Implémenter la mise à jour
+                        final name = nameCtrl.text.trim();
+                        final address = addressCtrl.text.trim();
+                        if (name.isEmpty || address.isEmpty) {
+                          safeSnackbar('Required', 'Please fill in all fields',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        final idx = locations.indexWhere((l) => l.id == location.id);
+                        if (idx != -1) {
+                          locations[idx] = location.copyWith(
+                            name: name.toUpperCase(),
+                            address: address,
+                          );
+                          _persistLocations();
+                        }
                         Get.back();
-                        Get.snackbar(
+                        safeSnackbar(
                           'Success',
                           'Location updated successfully',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: const Color(
                             0xFF22C55E,
-                          ).withOpacity(0.9),
+                          ).withValues(alpha: 0.9),
                           colorText: Colors.white,
                           duration: const Duration(seconds: 2),
                           margin: EdgeInsets.all(16.w),
@@ -399,7 +456,7 @@ class MyLocationsController extends GetxController {
                 width: 60.w,
                 height: 60.h,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -460,20 +517,20 @@ class MyLocationsController extends GetxController {
                     child: ElevatedButton(
                       onPressed: () {
                         locations.removeAt(index);
+                        _persistLocations();
 
-                        // Ajuster l'index sélectionné si nécessaire
                         if (selectedLocationIndex.value >= locations.length) {
                           selectedLocationIndex.value =
-                              locations.length > 0 ? locations.length - 1 : 0;
+                              locations.isNotEmpty ? locations.length - 1 : 0;
                         }
 
                         Get.back();
 
-                        Get.snackbar(
+                        safeSnackbar(
                           'Deleted',
                           'Location deleted successfully',
                           snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red.withOpacity(0.9),
+                          backgroundColor: Colors.red.withValues(alpha: 0.9),
                           colorText: Colors.white,
                           duration: const Duration(seconds: 2),
                           margin: EdgeInsets.all(16.w),
@@ -509,11 +566,11 @@ class MyLocationsController extends GetxController {
 
   void applySelectedLocation() {
     if (locations.isEmpty) {
-      Get.snackbar(
+      safeSnackbar(
         'No Location',
         'Please add a location first',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withOpacity(0.9),
+        backgroundColor: Colors.orange.withValues(alpha: 0.9),
         colorText: Colors.white,
         duration: const Duration(seconds: 2),
         margin: EdgeInsets.all(16.w),
@@ -527,11 +584,11 @@ class MyLocationsController extends GetxController {
     // Retourner la location sélectionnée
     Get.back(result: selectedLocation);
 
-    Get.snackbar(
+    safeSnackbar(
       'Location Selected',
       '${selectedLocation.name} has been set as delivery address',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: const Color(0xFF22C55E).withOpacity(0.9),
+      backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
       colorText: Colors.white,
       duration: const Duration(seconds: 2),
       margin: EdgeInsets.all(16.w),
@@ -562,21 +619,23 @@ class MyLocationsController extends GetxController {
   }
 
   Future<void> saveLocations() async {
-    // TODO: Sauvegarder dans le storage ou API
-    // GetStorage().write('saved_locations', locations.map((l) => l.toJson()).toList());
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(locations.map((l) => l.toJson()).toList());
+    await prefs.setString('saved_locations', encoded);
   }
 
   Future<void> loadSavedLocations() async {
-    // TODO: Charger depuis le storage ou API
-    // final saved = GetStorage().read('saved_locations');
-    // if (saved != null) {
-    //   locations.value = (saved as List).map((json) => SavedLocation.fromJson(json)).toList();
-    // }
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('saved_locations');
+    if (saved != null) {
+      final List<dynamic> list = jsonDecode(saved);
+      locations.value = list.map((json) => SavedLocation.fromJson(json as Map<String, dynamic>)).toList();
+    }
   }
 }
 
 class MyLocationsView extends GetView<MyLocationsController> {
-  const MyLocationsView({Key? key}) : super(key: key);
+  const MyLocationsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -629,7 +688,7 @@ class MyLocationsView extends GetView<MyLocationsController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -825,7 +884,7 @@ class MyLocationsView extends GetView<MyLocationsController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -841,7 +900,7 @@ class MyLocationsView extends GetView<MyLocationsController> {
             borderRadius: BorderRadius.circular(30.r),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF6B35).withOpacity(0.3),
+                color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

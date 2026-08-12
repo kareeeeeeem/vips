@@ -5,12 +5,10 @@ import 'package:get/get.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
-  const SettingsView({Key? key}) : super(key: key);
+  const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(SettingsController());
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -151,7 +149,7 @@ class SettingsView extends GetView<SettingsController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -179,7 +177,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.language, color: Colors.blue, size: 24.sp),
@@ -214,7 +212,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.purple.withOpacity(0.1),
+            color: Colors.purple.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
@@ -234,7 +232,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isDarkMode.value,
           onChanged: controller.toggleTheme,
-          activeColor: Colors.purple,
+          activeThumbColor: Colors.purple,
         ),
       ),
     );
@@ -248,7 +246,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.fingerprint, color: Colors.green, size: 24.sp),
@@ -268,7 +266,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isBiometricEnabled.value,
           onChanged: controller.toggleBiometric,
-          activeColor: Colors.green,
+          activeThumbColor: Colors.green,
         ),
       ),
     );
@@ -282,7 +280,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.security, color: Colors.orange, size: 24.sp),
@@ -302,7 +300,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isTwoFactorEnabled.value,
           onChanged: controller.toggleTwoFactor,
-          activeColor: Colors.orange,
+          activeThumbColor: Colors.orange,
         ),
       ),
     );
@@ -315,7 +313,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
+          color: Colors.red.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(Icons.lock_outline, color: Colors.red, size: 24.sp),
@@ -341,7 +339,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
@@ -361,7 +359,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isPushNotificationsEnabled.value,
           onChanged: controller.togglePushNotifications,
-          activeColor: Colors.blue,
+          activeThumbColor: Colors.blue,
         ),
       ),
     );
@@ -375,7 +373,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.teal.withOpacity(0.1),
+            color: Colors.teal.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.email_outlined, color: Colors.teal, size: 24.sp),
@@ -391,7 +389,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isEmailNotificationsEnabled.value,
           onChanged: controller.toggleEmailNotifications,
-          activeColor: Colors.teal,
+          activeThumbColor: Colors.teal,
         ),
       ),
     );
@@ -405,7 +403,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.purple.withOpacity(0.1),
+            color: Colors.purple.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.sms_outlined, color: Colors.purple, size: 24.sp),
@@ -421,7 +419,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isSmsNotificationsEnabled.value,
           onChanged: controller.toggleSmsNotifications,
-          activeColor: Colors.purple,
+          activeThumbColor: Colors.purple,
         ),
       ),
     );
@@ -435,7 +433,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
@@ -455,7 +453,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isOrderUpdatesEnabled.value,
           onChanged: controller.toggleOrderUpdates,
-          activeColor: Colors.green,
+          activeThumbColor: Colors.green,
         ),
       ),
     );
@@ -469,7 +467,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
@@ -489,7 +487,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isPromotionsEnabled.value,
           onChanged: controller.togglePromotions,
-          activeColor: Colors.orange,
+          activeThumbColor: Colors.orange,
         ),
       ),
     );
@@ -503,7 +501,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(
@@ -527,7 +525,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isLocationEnabled.value,
           onChanged: controller.toggleLocation,
-          activeColor: Colors.red,
+          activeThumbColor: Colors.red,
         ),
       ),
     );
@@ -541,7 +539,7 @@ class SettingsView extends GetView<SettingsController> {
         leading: Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: Colors.indigo.withOpacity(0.1),
+            color: Colors.indigo.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Icon(Icons.share_outlined, color: Colors.indigo, size: 24.sp),
@@ -561,7 +559,7 @@ class SettingsView extends GetView<SettingsController> {
         trailing: Switch(
           value: controller.isDataSharingEnabled.value,
           onChanged: controller.toggleDataSharing,
-          activeColor: Colors.indigo,
+          activeThumbColor: Colors.indigo,
         ),
       ),
     );
@@ -574,7 +572,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
+          color: Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(Icons.help_outline, color: Colors.blue, size: 24.sp),
@@ -599,7 +597,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          color: Colors.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(
@@ -628,7 +626,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(
@@ -657,7 +655,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.purple.withOpacity(0.1),
+          color: Colors.purple.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(Icons.info_outline, color: Colors.purple, size: 24.sp),
@@ -682,7 +680,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(
@@ -715,7 +713,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(Icons.logout, color: Colors.orange, size: 24.sp),
@@ -740,7 +738,7 @@ class SettingsView extends GetView<SettingsController> {
       leading: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
+          color: Colors.red.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(Icons.delete_forever, color: Colors.red, size: 24.sp),

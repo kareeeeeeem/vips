@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class RewardPage extends StatefulWidget {
-  const RewardPage({Key? key}) : super(key: key);
+  const RewardPage({super.key});
 
   @override
   State<RewardPage> createState() => _RewardPageState();
@@ -42,7 +42,7 @@ class _RewardPageState extends State<RewardPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         leading: GestureDetector(
           onTap: () => Get.back(),
           child: Container(
@@ -52,7 +52,7 @@ class _RewardPageState extends State<RewardPage> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -244,7 +244,7 @@ class _RewardPageState extends State<RewardPage> {
                                 borderRadius: BorderRadius.circular(10.r),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Color(0xFF2E7D5F).withOpacity(0.3),
+                                    color: Color(0xFF2E7D5F).withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: Offset(0, 3),
                                   ),
@@ -354,12 +354,12 @@ class _RewardPageState extends State<RewardPage> {
                         ),
                         borderRadius: BorderRadius.circular(16.r),
                         border: Border.all(
-                          color: Color(0xFF5ED5A8).withOpacity(0.1),
+                          color: Color(0xFF5ED5A8).withValues(alpha: 0.1),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF5ED5A8).withOpacity(0.08),
+                            color: Color(0xFF5ED5A8).withValues(alpha: 0.08),
                             blurRadius: 20,
                             offset: Offset(0, 4),
                           ),
@@ -373,7 +373,7 @@ class _RewardPageState extends State<RewardPage> {
                               Container(
                                 padding: EdgeInsets.all(8.w),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF2E7D5F).withOpacity(0.1),
+                                  color: Color(0xFF2E7D5F).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 child: Icon(
@@ -413,7 +413,7 @@ class _RewardPageState extends State<RewardPage> {
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.transparent,
-                                  Color(0xFF5ED5A8).withOpacity(0.2),
+                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
                                   Colors.transparent,
                                 ],
                               ),
@@ -439,7 +439,7 @@ class _RewardPageState extends State<RewardPage> {
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.transparent,
-                                  Color(0xFF5ED5A8).withOpacity(0.2),
+                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
                                   Colors.transparent,
                                 ],
                               ),
@@ -452,7 +452,7 @@ class _RewardPageState extends State<RewardPage> {
                           Container(
                             padding: EdgeInsets.all(14.w),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Row(
@@ -506,7 +506,7 @@ class _RewardPageState extends State<RewardPage> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 20,
                   offset: Offset(0, -4),
                 ),
@@ -530,7 +530,7 @@ class _RewardPageState extends State<RewardPage> {
                           borderRadius: BorderRadius.circular(14.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0xFFFF6B35).withOpacity(0.1),
+                              color: Color(0xFFFF6B35).withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: Offset(0, 4),
                             ),
@@ -566,7 +566,7 @@ class _RewardPageState extends State<RewardPage> {
                           borderRadius: BorderRadius.circular(14.r),
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0xFFFF6B35).withOpacity(0.4),
+                              color: Color(0xFFFF6B35).withValues(alpha: 0.4),
                               blurRadius: 15,
                               offset: Offset(0, 6),
                             ),
@@ -617,7 +617,7 @@ class _RewardPageState extends State<RewardPage> {
         border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),

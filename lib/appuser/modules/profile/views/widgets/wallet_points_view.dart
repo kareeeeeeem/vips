@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:vip/appuser/core/util/images.dart';
 import 'package:vip/appuser/modules/packages/views/packages_view.dart';
 import 'package:vip/appuser/modules/profile/views/widgets/redeem_page.dart';
+import 'package:vip/core/services/api_service.dart';
 
 class WalletPointsController extends GetxController {
   final selectedTab = 'Redeem History'.obs;
@@ -17,206 +18,11 @@ class WalletPointsController extends GetxController {
 
   // Track which transactions are expanded
   final RxList<bool> expandedTransactions = <bool>[].obs;
+  final isLoading = false.obs;
+  final _api = ApiService();
 
-  // Sample data with new transaction types
-  final allTransactions =
-      <Map<String, dynamic>>[
-        {
-          'type': 'redeem',
-          'category': 'redeem',
-          'status': 'pending',
-          'title': 'Redeemed for Gift Card',
-          'points': '-500',
-          'date': '25 Oct 2025',
-          'time': '14:30',
-          'orderId': '0023900',
-          'expenseType': 'Discount on product',
-          'location': 'Pizza Hub',
-          'dateTime': DateTime(2025, 10, 25, 14, 30),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Purchase Reward',
-          'points': '+250',
-          'date': '24 Oct 2025',
-          'time': '10:15',
-          'orderId': '0023901',
-          'expenseType': 'Purchase bonus',
-          'location': 'Store',
-          'dateTime': DateTime(2025, 10, 24, 10, 15),
-        },
-        {
-          'type': 'credit',
-          'category': 'on_upgrade',
-          'status': 'done',
-          'title': 'Welcome Bonus',
-          'points': '+100',
-          'date': '23 Oct 2025',
-          'time': '09:00',
-          'orderId': '0023902',
-          'expenseType': 'Welcome reward',
-          'location': 'Online',
-          'dateTime': DateTime(2025, 10, 23, 9, 0),
-        },
-        {
-          'type': 'redeem',
-          'category': 'on_redeem',
-          'status': 'pending',
-          'title': 'Redeemed for Discount',
-          'points': '-300',
-          'date': '22 Oct 2025',
-          'time': '16:45',
-          'orderId': '0023903',
-          'expenseType': 'Discount on product',
-          'location': 'Pizza Hub',
-          'dateTime': DateTime(2025, 10, 22, 16, 45),
-        },
-        {
-          'type': 'credit',
-          'category': 'upgrade',
-          'status': 'done',
-          'title': 'Referral Bonus',
-          'points': '+500',
-          'date': '21 Oct 2025',
-          'time': '11:20',
-          'orderId': '0023904',
-          'expenseType': 'Referral reward',
-          'location': 'In Store',
-          'dateTime': DateTime(2025, 10, 21, 11, 20),
-        },
-        {
-          'type': 'redeem',
-          'category': 'redeem',
-          'status': 'pending',
-          'title': 'Redeemed for Product',
-          'points': '-750',
-          'date': '20 Oct 2025',
-          'time': '13:50',
-          'orderId': '0023905',
-          'expenseType': 'Discount on product',
-          'location': 'Pizza Hub',
-          'dateTime': DateTime(2025, 10, 20, 13, 50),
-        },
-      ].obs;
+  // Live transaction data — populated from /user/transactions API
+  final allTransactions = <Map<String, dynamic>>[].obs;
 
   List<Map<String, dynamic>> get filteredTransactions {
     var filtered =
@@ -261,11 +67,80 @@ class WalletPointsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize expanded list with false for all transactions
-    expandedTransactions.value = List.generate(
-      allTransactions.length,
-      (index) => false,
-    );
+    expandedTransactions.value = List.generate(allTransactions.length, (_) => false);
+    fetchTransactions();
+  }
+
+  Future<void> fetchTransactions() async {
+    isLoading.value = true;
+    try {
+      final response = await _api.get('/user/transactions', queryParams: {'limit': '50'});
+      if (response.success && response.data != null) {
+        final raw = response.data as Map<String, dynamic>;
+        final list = (raw['transactions'] as List?) ?? [];
+        final mapped = list.map<Map<String, dynamic>>((tx) {
+          final createdAt = DateTime.tryParse(tx['createdAt']?.toString() ?? '') ?? DateTime.now();
+          final type = (tx['type'] as String?) ?? 'credit';
+          final amount = (tx['amount'] as num?)?.toDouble() ?? 0;
+          final isDebit = type == 'expense' || type == 'redeem' || type == 'transfer';
+          final merchant = (tx['merchantId'] as Map<String, dynamic>?);
+          final location = merchant?['storeName'] ?? merchant?['fullName'] ?? 'VIPs';
+          return {
+            'type': type,
+            'category': _categoryForType(type),
+            'status': (tx['status'] as String?) == 'completed' ? 'done' : (tx['status'] ?? 'pending'),
+            'title': (tx['description'] as String?) ?? _titleForType(type),
+            'points': isDebit ? '-${amount.toStringAsFixed(0)}' : '+${amount.toStringAsFixed(0)}',
+            'date': DateFormat('dd MMM yyyy').format(createdAt),
+            'time': DateFormat('HH:mm').format(createdAt),
+            'orderId': (tx['reference'] as String?) ?? tx['_id']?.toString() ?? '',
+            'expenseType': _titleForType(type),
+            'location': location,
+            'dateTime': createdAt,
+          };
+        }).toList();
+
+        if (mapped.isNotEmpty) {
+          allTransactions.assignAll(mapped);
+          expandedTransactions.value = List.generate(mapped.length, (_) => false);
+        }
+      }
+    } catch (e) {
+      debugPrint('fetchTransactions error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  String _categoryForType(String type) {
+    switch (type) {
+      case 'credit':
+      case 'reward':
+      case 'income':
+        return 'upgrade';
+      case 'expense':
+      case 'redeem':
+        return 'redeem';
+      case 'transfer':
+        return 'on_upgrade';
+      case 'gift_back':
+        return 'on_redeem';
+      default:
+        return 'upgrade';
+    }
+  }
+
+  String _titleForType(String type) {
+    switch (type) {
+      case 'credit':    return 'Credit';
+      case 'reward':    return 'Reward earned';
+      case 'income':    return 'Income';
+      case 'expense':   return 'Expense';
+      case 'redeem':    return 'Redeemed';
+      case 'transfer':  return 'Transfer';
+      case 'gift_back': return 'Gift Back';
+      default:          return 'Transaction';
+    }
   }
 
   void changeFilter(String filter) {
@@ -344,8 +219,7 @@ class WalletPointsView extends StatelessWidget {
   final Color primaryColor;
   final controller = Get.put(WalletPointsController());
 
-  WalletPointsView({Key? key, this.primaryColor = const Color(0xFFFF9B7A)})
-    : super(key: key);
+  WalletPointsView({super.key, this.primaryColor = const Color(0xFFFF9B7A)});
 
   @override
   Widget build(BuildContext context) {
@@ -517,12 +391,12 @@ class WalletPointsView extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [primaryColor, primaryColor.withOpacity(0.85)],
+                    colors: [primaryColor, primaryColor.withValues(alpha: 0.85)],
                   ),
                   borderRadius: BorderRadius.circular(6.r),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.4),
+                      color: primaryColor.withValues(alpha: 0.4),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                       spreadRadius: -2,
@@ -530,7 +404,12 @@ class WalletPointsView extends StatelessWidget {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final filters = ['Activity', 'On Upgrade', 'Upgrade', 'On Redeem', 'Redeem'];
+                    final current = controller.selectedFilter.value;
+                    final next = filters[(filters.indexOf(current) + 1) % filters.length];
+                    controller.selectedFilter.value = next;
+                  },
                   icon: Icon(
                     Icons.sort_rounded,
                     color: Colors.white,
@@ -574,7 +453,7 @@ class WalletPointsView extends StatelessWidget {
               isSelected
                   ? [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
+                      color: primaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -614,7 +493,7 @@ class WalletPointsView extends StatelessWidget {
               borderRadius: BorderRadius.circular(24.r),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withOpacity(0.3),
+                  color: primaryColor.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -669,7 +548,7 @@ class WalletPointsView extends StatelessWidget {
                   '200 points expiring on 31/12/2025',
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -726,7 +605,7 @@ class WalletPointsView extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -780,7 +659,7 @@ class WalletPointsView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
@@ -797,7 +676,7 @@ class WalletPointsView extends StatelessWidget {
                         height: 120.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
@@ -811,7 +690,7 @@ class WalletPointsView extends StatelessWidget {
                           Container(
                             padding: EdgeInsets.all(10.w),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Icon(
@@ -827,7 +706,7 @@ class WalletPointsView extends StatelessWidget {
                                 'Platinum',
                                 style: TextStyle(
                                   fontSize: 13.sp,
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -864,14 +743,14 @@ class WalletPointsView extends StatelessWidget {
                 height: 160.h,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [primaryColor.withOpacity(0.9), primaryColor],
+                    colors: [primaryColor.withValues(alpha: 0.9), primaryColor],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20.r),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
+                      color: primaryColor.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
@@ -888,7 +767,7 @@ class WalletPointsView extends StatelessWidget {
                         height: 120.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
                     ),
@@ -902,7 +781,7 @@ class WalletPointsView extends StatelessWidget {
                           Container(
                             padding: EdgeInsets.all(10.w),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Icon(
@@ -918,7 +797,7 @@ class WalletPointsView extends StatelessWidget {
                                 'VIPs Club',
                                 style: TextStyle(
                                   fontSize: 13.sp,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -991,7 +870,7 @@ class WalletPointsView extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1118,7 +997,7 @@ class WalletPointsView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1130,7 +1009,7 @@ class WalletPointsView extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

@@ -7,7 +7,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/createpin_controller.dart';
 
 class CreatepinView extends GetView<CreatepinController> {
-  const CreatepinView({Key? key}) : super(key: key);
+  const CreatepinView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,8 +69,8 @@ class CreatepinView extends GetView<CreatepinController> {
         decoration: BoxDecoration(
           color:
               controller.isConfirmStep.value
-                  ? Colors.green.withOpacity(0.1)
-                  : AppColors.AppPrimaryColor.withOpacity(0.1),
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : AppColors.AppPrimaryColor.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -144,7 +144,7 @@ class CreatepinView extends GetView<CreatepinController> {
 
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: BoxDecoration(
-        color: AppColors.AppPrimaryColor.withOpacity(0.1),
+        color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.AppPrimaryColor, width: 1.5),
       ),

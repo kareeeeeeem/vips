@@ -9,11 +9,10 @@ class ProductListPage extends StatelessWidget {
   final String? category;
   final String title;
 
-  const ProductListPage({
-    Key? key,
+  const ProductListPage({super.key,
     this.category,
     this.title = 'Best Selling Theme',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -67,19 +66,28 @@ class ProductListPage extends StatelessWidget {
 
           // Products Grid
           Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.all(12.w),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: controller.allProducts.length,
-              itemBuilder: (context, index) {
-                return _buildProductGridItem(controller.allProducts[index]);
-              },
-            ),
+            child: Obx(() {
+              if (controller.isLoading.value && controller.allProducts.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFFF6B35),
+                  ),
+                );
+              }
+              return GridView.builder(
+                padding: EdgeInsets.all(12.w),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.65,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: controller.allProducts.length,
+                itemBuilder: (context, index) {
+                  return _buildProductGridItem(controller.allProducts[index]);
+                },
+              );
+            }),
           ),
         ],
       ),
@@ -161,7 +169,7 @@ class ProductListPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

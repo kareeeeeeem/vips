@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum PackageTier { basic, silver, gold, platinum }
 
@@ -254,84 +256,76 @@ class PackagesController extends GetxController {
     return (selectedPackage.value?.price ?? 0) * quantity.value;
   }
 
-  void buyPackage() {
-    if (selectedPackage.value == null) return;
+  final isBuying = false.obs;
 
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF22C55E), const Color(0xFF16A34A)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Successfully Upgraded!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'SF Pro Display',
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Welcome to ${selectedPackage.value!.name}! Enjoy all the premium benefits.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: const Color(0xFF6B7280),
-                  fontFamily: 'SF Pro Text',
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    Get.back();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F2937),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+  Future<void> buyPackage() async {
+    if (selectedPackage.value == null) return;
+    final pkg = selectedPackage.value!;
+    if (pkg.tier == PackageTier.basic) return;
+
+    isBuying.value = true;
+    try {
+      final response = await ApiService().post('/services/packages/subscribe', {
+        'tier': pkg.name.toLowerCase(),
+      });
+
+      if (response.success) {
+        Get.dialog(
+          Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                      ),
+                      shape: BoxShape.circle,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
+                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 48),
                   ),
-                  child: const Text(
-                    'Start Enjoying',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontFamily: 'SF Pro Display',
+                  const SizedBox(height: 24),
+                  Text(
+                    'Successfully Upgraded!',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, fontFamily: 'SF Pro Display'),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Welcome to ${pkg.name}! Enjoy all the premium benefits.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280), fontFamily: 'SF Pro Text', height: 1.5),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () { Get.back(); Get.back(); },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F2937),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                      ),
+                      child: const Text('Start Enjoying', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, fontFamily: 'SF Pro Display')),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
+      } else {
+        safeSnackbar('Error', response.message, backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Could not process subscription', backgroundColor: Colors.red, colorText: Colors.white);
+    }
+    isBuying.value = false;
   }
 
   void goBack() {

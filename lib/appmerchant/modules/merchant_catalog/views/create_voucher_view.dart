@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_catalog_controller.dart';
 import 'widgets/uploads_banner.dart';
 import 'widgets/tags_input.dart';
 import 'widgets/form_widgets.dart';
-import 'widgets/voucher_preview_card.dart';
 
 class CreateVoucherView extends GetView<MerchantCatalogController> {
-  const CreateVoucherView({Key? key}) : super(key: key);
+  const CreateVoucherView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +34,7 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                   children: [
                     const UploadsBanner(),
                     
-                    FormWidgets.buildTextField('Voucher Code', hint: 'Voucher Code'),
+                    FormWidgets.buildTextField('Voucher Code', hint: 'Voucher Code', controller: controller.voucherCodeCtrl),
                     SizedBox(height: 16.h),
                     
                     Text('Availability', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151))),
@@ -100,11 +98,11 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Publish', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                        Switch(
-                          value: true,
-                          onChanged: (val) {},
-                          activeColor: const Color(0xFF10B981),
-                        ),
+                        Obx(() => Switch(
+                          value: controller.isPublishedVoucher.value,
+                          onChanged: (val) => controller.isPublishedVoucher.value = val,
+                          activeThumbColor: const Color(0xFF10B981),
+                        )),
                       ],
                     ),
                     SizedBox(height: 32.h),
@@ -118,7 +116,7 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Get.offNamed(MerchantRoutes.CATALOG),
+                  onPressed: controller.createVoucherFromForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),

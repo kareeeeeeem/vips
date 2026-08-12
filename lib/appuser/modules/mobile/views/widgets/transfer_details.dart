@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import 'order_details.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CardDetailsController extends GetxController {
   // Liste des cartes
@@ -56,13 +57,13 @@ class CardDetailsController extends GetxController {
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: [
               BoxShadow(
-                color: AppColors.AppPrimaryColor.withOpacity(0.15),
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.15),
                 blurRadius: 30,
                 offset: Offset(0, 15),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: Offset(0, 10),
               ),
@@ -79,7 +80,7 @@ class CardDetailsController extends GetxController {
                   height: 150.h,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.AppPrimaryColor.withOpacity(0.05),
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.05),
                   ),
                 ),
               ),
@@ -91,7 +92,7 @@ class CardDetailsController extends GetxController {
                   height: 100.h,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.AppPrimaryColor.withOpacity(0.03),
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.03),
                   ),
                 ),
               ),
@@ -106,7 +107,7 @@ class CardDetailsController extends GetxController {
                     Container(
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
-                        color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                        color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -149,12 +150,12 @@ class CardDetailsController extends GetxController {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
-                          color: AppColors.AppPrimaryColor.withOpacity(0.15),
+                          color: AppColors.AppPrimaryColor.withValues(alpha: 0.15),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.AppPrimaryColor.withOpacity(0.08),
+                            color: AppColors.AppPrimaryColor.withValues(alpha: 0.08),
                             blurRadius: 15,
                             offset: Offset(0, 5),
                           ),
@@ -272,7 +273,7 @@ class CardDetailsController extends GetxController {
                           child: OutlinedButton.icon(
                             onPressed: () {
                               // Partager le QR code
-                              Get.snackbar(
+                              safeSnackbar(
                                 'Share',
                                 'QR code sharing feature',
                                 snackPosition: SnackPosition.BOTTOM,
@@ -293,9 +294,7 @@ class CardDetailsController extends GetxController {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.AppPrimaryColor,
                               side: BorderSide(
-                                color: AppColors.AppPrimaryColor.withOpacity(
-                                  0.3,
-                                ),
+                                color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
@@ -322,7 +321,7 @@ class CardDetailsController extends GetxController {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shadowColor: AppColors
-                                  .AppPrimaryColor.withOpacity(0.3),
+                                  .AppPrimaryColor.withValues(alpha: 0.3),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14.r),
                               ),
@@ -362,7 +361,7 @@ class CardDetailsController extends GetxController {
         ),
       ),
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withValues(alpha: 0.6),
     );
   }
 
@@ -385,7 +384,7 @@ class CardDetails {
 }
 
 class CardDetailsView extends GetView<CardDetailsController> {
-  const CardDetailsView({Key? key}) : super(key: key);
+  const CardDetailsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +414,15 @@ class CardDetailsView extends GetView<CardDetailsController> {
               color: AppColors.AppPrimaryColor,
               size: 24.sp,
             ),
-            onPressed: () {},
+            onPressed: () {
+                final controller = Get.find<CardDetailsController>();
+                final card = controller.cards.isNotEmpty ? controller.cards[0] : null;
+                final info = card != null
+                    ? 'Card: ${card.cardNumber}\nPoints: ${card.vipPoints}\nStatus: ${card.status}'
+                    : 'VIPs Transfer Details';
+                Clipboard.setData(ClipboardData(text: info));
+                safeSnackbar('Copied', 'Transfer details copied to clipboard', snackPosition: SnackPosition.BOTTOM);
+              },
           ),
         ],
       ),
@@ -487,13 +494,13 @@ class CardDetailsView extends GetView<CardDetailsController> {
           end: Alignment.bottomRight,
           colors: [
             AppColors.AppPrimaryColor,
-            AppColors.AppPrimaryColor.withOpacity(0.85),
+            AppColors.AppPrimaryColor.withValues(alpha: 0.85),
           ],
         ),
         borderRadius: BorderRadius.circular(28.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.AppPrimaryColor.withOpacity(0.25),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.25),
             blurRadius: 25,
             offset: Offset(0, 12),
             spreadRadius: -3,
@@ -511,7 +518,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               height: 250.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -523,7 +530,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               height: 180.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -559,7 +566,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 letterSpacing: 2,
               ),
             ),
@@ -567,7 +574,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
@@ -586,7 +593,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
           child: Container(
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16.r),
             ),
             child: Image.network(
@@ -611,7 +618,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 letterSpacing: 0.5,
               ),
             ),
@@ -621,7 +628,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               child: Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Obx(
@@ -643,7 +650,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
               child: Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
@@ -688,7 +695,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
         Container(
           width: 1.5,
           height: 45.h,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
         ),
         SizedBox(width: 20.w),
         Expanded(child: _buildDetailColumn('Date', '25 Oct 2025')),
@@ -705,7 +712,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
         SizedBox(height: 6.h),
@@ -731,7 +738,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
             icon: Icons.file_download_outlined,
             label: '',
             onTap: () {
-              Get.snackbar(
+              safeSnackbar(
                 'Download',
                 'Download card feature',
                 snackPosition: SnackPosition.BOTTOM,
@@ -754,7 +761,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
             icon: Icons.print_outlined,
             label: '',
             onTap: () {
-              Get.snackbar(
+              safeSnackbar(
                 'Print',
                 'Print card feature',
                 snackPosition: SnackPosition.BOTTOM,
@@ -769,7 +776,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
             icon: Icons.share_outlined,
             label: '',
             onTap: () {
-              Get.snackbar(
+              safeSnackbar(
                 'Share',
                 'Share card feature',
                 snackPosition: SnackPosition.BOTTOM,
@@ -800,7 +807,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
           border: Border.all(color: Colors.grey.shade200, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: Offset(0, 2),
             ),
@@ -821,7 +828,7 @@ class CardDetailsView extends GetView<CardDetailsController> {
           backgroundColor: AppColors.AppPrimaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: AppColors.AppPrimaryColor.withOpacity(0.3),
+          shadowColor: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18.r),
           ),

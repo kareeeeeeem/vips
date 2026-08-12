@@ -29,8 +29,6 @@ class ApiClient extends GetxService {
   ApiClient({required this.appBaseUrl, required this.sharedPreferences}) {
     token = sharedPreferences.getString(AppConstants.token);
     type = sharedPreferences.getString(AppConstants.type);
-    debugPrint('Token: $token');
-    debugPrint('Type: $type');
     updateHeader(
       token,
       sharedPreferences.getString(AppConstants.languageCode),
@@ -47,12 +45,18 @@ class ApiClient extends GetxService {
   ) {
     _mainHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
-      AppConstants.localizationKey: languageCode!,
+      AppConstants.localizationKey: languageCode ?? 'en',
       AppConstants.moduleId: moduleID != null ? moduleID.toString() : '',
       'Authorization': 'Bearer $token',
       'vendorType': type ?? '',
     };
   }
+
+  /// Headers with the bearer token masked, safe to print to the console.
+  Map<String, String> get _redactedHeaders => {
+    ..._mainHeaders,
+    if (_mainHeaders.containsKey('Authorization')) 'Authorization': 'Bearer ***',
+  };
 
   Future<Response> getData(
     String uri, {
@@ -61,7 +65,7 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       http.Response response = await http
           .get(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
           .timeout(Duration(seconds: timeoutInSeconds));
@@ -78,7 +82,7 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       debugPrint('====> API Body: $body');
       http.Response response = await http
           .post(
@@ -102,7 +106,7 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       debugPrint(
         '====> API Body: $body with ${multipartBody.length} and multipart ${multipartDocument?.length}',
       );
@@ -168,7 +172,7 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       debugPrint('====> API Body: $body');
       http.Response response = await http
           .put(
@@ -189,7 +193,7 @@ class ApiClient extends GetxService {
     bool handleError = true,
   }) async {
     try {
-      debugPrint('====> API Call: $uri\nHeader: $_mainHeaders');
+      debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       http.Response response = await http
           .delete(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
           .timeout(Duration(seconds: timeoutInSeconds));

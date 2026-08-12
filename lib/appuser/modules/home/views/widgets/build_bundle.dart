@@ -12,7 +12,7 @@ class BuildBundle extends GetView<HomeController> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFB8804A).withOpacity(0.2),
+        color: const Color(0xFFB8804A).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(0),
       ),
       child: Column(
@@ -28,7 +28,7 @@ class BuildBundle extends GetView<HomeController> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFB8804A).withOpacity(0.1),
+                        color: const Color(0xFFB8804A).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -107,15 +107,24 @@ class BuildBundle extends GetView<HomeController> {
               itemCount: controller.hotDeals.length,
               itemBuilder: (context, index) {
                 final deal = controller.hotDeals[index];
+                final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
+                final isFav = controller.favorites.any((f) => (f['itemId']?.toString() ?? '') == id);
                 return Container(
                   width: 180.w,
                   margin: EdgeInsets.only(right: 12.w),
                   child: BuildOfferCard(
                     deal: deal,
                     onTap: () => controller.navigateToHotDeal(deal),
-                    onAddToBasket: () {},
-                    isFavorite: true,
-                    onToggleFavorite: () {},
+                    onAddToBasket: () => controller.addToCartServer(
+                      itemId: id,
+                      itemType: 'Deal',
+                      name: deal['title']?.toString(),
+                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
+                      quantity: 1,
+                      merchantId: deal['merchantId']?.toString(),
+                    ),
+                    isFavorite: isFav,
+                    onToggleFavorite: () => controller.toggleFavoriteServer(id, itemType: 'Deal'),
                   ),
                 );
               },

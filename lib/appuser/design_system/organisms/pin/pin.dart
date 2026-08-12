@@ -18,8 +18,7 @@ class PinValidator extends StatefulWidget {
   final int maxAttempts;
   final int lockoutDurationMinutes;
 
-  const PinValidator({
-    Key? key,
+  const PinValidator({super.key,
     this.pinLength = 4,
     required this.validatePin,
     this.validateBiometrics,
@@ -31,7 +30,7 @@ class PinValidator extends StatefulWidget {
     ],
     this.maxAttempts = 5,
     this.lockoutDurationMinutes = 5,
-  }) : super(key: key);
+  });
 
   @override
   _PinValidatorState createState() => _PinValidatorState();
@@ -353,9 +352,7 @@ class _PinValidatorState extends State<PinValidator>
                                         isSelected
                                             ? [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.06,
-                                                ),
+                                                color: Colors.black.withValues(alpha: 0.06),
                                                 blurRadius: 12,
                                                 offset: Offset(0, 2),
                                               ),
@@ -581,7 +578,7 @@ class _PinValidatorState extends State<PinValidator>
                             width: 100.w,
                             height: 100.w,
                             decoration: BoxDecoration(
-                              color: widget.primaryColor.withOpacity(0.08),
+                              color: widget.primaryColor.withValues(alpha: 0.08),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -613,7 +610,7 @@ class _PinValidatorState extends State<PinValidator>
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.r),
                                 side: BorderSide(
-                                  color: widget.primaryColor.withOpacity(0.3),
+                                  color: widget.primaryColor.withValues(alpha: 0.3),
                                   width: 1,
                                 ),
                               ),
@@ -741,7 +738,7 @@ class _PinValidatorState extends State<PinValidator>
     return InkWell(
       onTap: _isLocked ? null : () => _addDigit(digit),
       borderRadius: BorderRadius.circular(50),
-      splashColor: widget.primaryColor.withOpacity(0.1),
+      splashColor: widget.primaryColor.withValues(alpha: 0.1),
       child: Container(
         width: 56.w,
         height: 56.w,
@@ -751,7 +748,7 @@ class _PinValidatorState extends State<PinValidator>
             color:
                 _isLocked
                     ? Colors.grey.shade200
-                    : widget.primaryColor.withOpacity(0.15),
+                    : widget.primaryColor.withValues(alpha: 0.15),
             width: 1,
           ),
         ),

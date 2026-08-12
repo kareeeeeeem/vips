@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
-import '../../../design_system/atoms/app_colors.dart';
 import '../../../design_system/organisms/pin/pin.dart';
 import '../../edit_profile/views/edit_profile_view.dart';
 import '../views/widgets/vips_id_view.dart';
 import '../views/widgets/wallet_points_view.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ProfileController extends GetxController {
   final RxString selectedRole = 'Customer'.obs;
   final RxBool isUserSelected = true.obs;
   final RxBool isAdminSelected = false.obs;
   var temporaryRole = 'Customer'.obs;
-  // Simuler des données utilisateur
   final RxString userName = 'Full Name'.obs;
   final RxString userEmail = 'user@email.com'.obs;
   final RxDouble profileCompletion = 0.31.obs;
@@ -25,12 +25,40 @@ class ProfileController extends GetxController {
   final RxBool isStoresExpanded = false.obs;
   final RxBool isLoading = true.obs;
 
-  final RxString selectedStore = 'Store 1'.obs; // Store sélectionné par défaut
+  // Dynamic profile fields
+  final RxString packageName = '--'.obs;
+  final RxString lastLogin = '--'.obs;
+  // Vendor stats
+  final RxString vendorProducts = '0'.obs;
+  final RxString vendorSales = '0'.obs;
+  final RxString vendorRevenue = '0'.obs;
+  // Agent stats
+  final RxString agentTotal = '0'.obs;
+  final RxString agentCompleted = '0'.obs;
+  final RxString agentPending = '0'.obs;
+  // Business stats
+  final RxString businessStores = '0'.obs;
+  final RxString businessDrivers = '0'.obs;
+  final RxString businessCustomers = '0'.obs;
+
+  final RxString selectedStore = 'Store 1'.obs;
+  final RxString userId = ''.obs;
+  final RxDouble vipProgress = 0.0.obs;
+  final RxInt vipPoints = 0.obs;
+  final RxInt unreadNotificationsCount = 0.obs;
+
+  String _userPin = '0000';
 
   @override
   void onInit() {
     super.onInit();
+    _loadPin();
     fetchUserProfile();
+  }
+
+  Future<void> _loadPin() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userPin = prefs.getString('user_pin') ?? '0000';
   }
 
   Future<void> fetchUserProfile() async {
@@ -38,9 +66,42 @@ class ProfileController extends GetxController {
     try {
       final userResponse = await ApiService().get('/auth/me');
       if (userResponse.success && userResponse.data != null) {
-        final user = userResponse.data['user'];
-        userName.value = user['fullName'] ?? 'User';
+        final user = userResponse.data['user'] ?? userResponse.data;
+        userId.value = (user['_id'] ?? user['id'] ?? '').toString();
+        userName.value = user['fullName'] ?? user['name'] ?? 'User';
         userEmail.value = user['email'] ?? '';
+        packageName.value =
+            user['package'] ?? user['packageName'] ?? user['plan'] ?? '--';
+        if (user['lastLogin'] != null || user['lastConnection'] != null) {
+          final raw = user['lastLogin'] ?? user['lastConnection'];
+          try {
+            final dt = DateTime.parse(raw.toString());
+            lastLogin.value =
+                '${dt.day}/${dt.month} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+          } catch (_) {
+            lastLogin.value = raw.toString();
+          }
+        }
+
+        final stats = user['stats'] ?? {};
+        vendorProducts.value =
+            (stats['products'] ?? stats['productCount'] ?? 0).toString();
+        vendorSales.value =
+            (stats['sales'] ?? stats['salesCount'] ?? 0).toString();
+        vendorRevenue.value = (stats['revenue'] ?? 0).toString();
+        agentTotal.value =
+            (stats['totalDeliveries'] ?? stats['total'] ?? 0).toString();
+        agentCompleted.value =
+            (stats['completedDeliveries'] ?? stats['completed'] ?? 0)
+                .toString();
+        agentPending.value =
+            (stats['pendingDeliveries'] ?? stats['pending'] ?? 0).toString();
+        businessStores.value =
+            (stats['stores'] ?? stats['storeCount'] ?? 0).toString();
+        businessDrivers.value =
+            (stats['drivers'] ?? stats['driverCount'] ?? 0).toString();
+        businessCustomers.value =
+            (stats['customers'] ?? stats['customerCount'] ?? 0).toString();
       }
 
       final walletResponse = await ApiService().get('/user/wallet');
@@ -49,12 +110,86 @@ class ProfileController extends GetxController {
             (walletResponse.data['balance'] as num?)?.toInt() ?? 0;
         totalExpenses.value =
             (walletResponse.data['points'] as num?)?.toInt() ?? 0;
-        // Also could parse transactions
       }
+
+      final clubResponse = await ApiService().get('/user/vips-club');
+      if (clubResponse.success && clubResponse.data != null) {
+        final pts =
+            (clubResponse.data['points'] ??
+                    clubResponse.data['convertibleDiamonds'] ??
+                    0)
+                as num;
+        vipPoints.value = pts.toInt();
+        const vipThreshold = 1000;
+        vipProgress.value = (pts / vipThreshold).clamp(0.0, 1.0).toDouble();
+      }
+
+      final notifResponse = await ApiService().get(
+        '/user/notifications',
+        queryParams: {'unread': 'true', 'limit': '1'},
+      );
+      if (notifResponse.success && notifResponse.data != null) {
+        unreadNotificationsCount.value =
+            (notifResponse.data['unreadCount'] ??
+                    notifResponse.data['count'] ??
+                    0)
+                as int;
+      }
+
+      await _loadOrdersFromApi();
     } catch (e) {
-      print('Error fetching profile: $e');
+      debugPrint('Error fetching profile: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadOrdersFromApi() async {
+    try {
+      final response = await ApiService().get('/order/my-orders');
+      if (response.success && response.data != null) {
+        final List<dynamic> raw = response.data;
+        ordersList.value =
+            raw
+                .map(
+                  (o) => {
+                    'id':
+                        o['_id']?.toString().substring(
+                          o['_id'].toString().length - 7,
+                        ) ??
+                        '',
+                    'store': o['merchantId']?['storeName'] ?? 'VIPs Store',
+                    'amount': (o['totalAmount'] ?? 0).toString(),
+                    'items': (o['items'] as List?)?.length ?? 1,
+                    'date':
+                        o['createdAt'] != null
+                            ? DateTime.parse(
+                              o['createdAt'],
+                            ).toString().substring(0, 10)
+                            : '',
+                    'time': '',
+                    'status': _capitalize(o['status'] ?? 'pending'),
+                    'type': o['deliveryType'] ?? 'Delivery',
+                    'statusColor': _statusColor(o['status']),
+                  },
+                )
+                .toList();
+      }
+    } catch (_) {}
+  }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  String _statusColor(String? s) {
+    switch (s) {
+      case 'delivered':
+        return 'green';
+      case 'cancelled':
+        return 'red';
+      case 'pending':
+        return 'blue';
+      default:
+        return 'purple';
     }
   }
 
@@ -66,346 +201,9 @@ class ProfileController extends GetxController {
   final Rx<DateTime> fromDate = DateTime.now().subtract(Duration(days: 30)).obs;
   final Rx<DateTime> toDate = DateTime.now().obs;
 
-  // Liste simulée de commandes
-  final RxList<Map<String, dynamic>> ordersList =
-      <Map<String, dynamic>>[
-        {
-          'id': '0023900',
-          'store': 'McDonald\'s',
-          'amount': '25.20',
-          'items': 2,
-          'date': '10 Mar',
-          'time': '04:13 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023901',
-          'store': 'KFC',
-          'amount': '32.50',
-          'items': 3,
-          'date': '10 Mar',
-          'time': '02:30 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023902',
-          'store': 'Pizza Hut',
-          'amount': '18.90',
-          'items': 1,
-          'date': '10 Mar',
-          'time': '06:45 PM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023903',
-          'store': 'Burger King',
-          'amount': '45.20',
-          'items': 4,
-          'date': '11 Mar',
-          'time': '12:15 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023904',
-          'store': 'Subway',
-          'amount': '28.75',
-          'items': 2,
-          'date': '11 Mar',
-          'time': '07:20 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023905',
-          'store': 'Domino\'s Pizza',
-          'amount': '56.80',
-          'items': 5,
-          'date': '11 Mar',
-          'time': '08:30 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023906',
-          'store': 'Starbucks',
-          'amount': '15.50',
-          'items': 2,
-          'date': '12 Mar',
-          'time': '09:00 AM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023907',
-          'store': 'McDonald\'s',
-          'amount': '22.40',
-          'items': 3,
-          'date': '12 Mar',
-          'time': '01:45 PM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023908',
-          'store': 'KFC',
-          'amount': '38.90',
-          'items': 4,
-          'date': '12 Mar',
-          'time': '05:20 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023909',
-          'store': 'Taco Bell',
-          'amount': '19.75',
-          'items': 2,
-          'date': '13 Mar',
-          'time': '11:30 AM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023910',
-          'store': 'Pizza Hut',
-          'amount': '67.50',
-          'items': 6,
-          'date': '13 Mar',
-          'time': '07:15 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023911',
-          'store': 'Burger King',
-          'amount': '29.30',
-          'items': 3,
-          'date': '13 Mar',
-          'time': '02:40 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023912',
-          'store': 'Subway',
-          'amount': '16.80',
-          'items': 1,
-          'date': '14 Mar',
-          'time': '12:00 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023913',
-          'store': 'McDonald\'s',
-          'amount': '41.20',
-          'items': 5,
-          'date': '14 Mar',
-          'time': '06:30 PM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023914',
-          'store': 'Starbucks',
-          'amount': '23.50',
-          'items': 3,
-          'date': '14 Mar',
-          'time': '08:45 AM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023915',
-          'store': 'Domino\'s Pizza',
-          'amount': '52.90',
-          'items': 4,
-          'date': '15 Mar',
-          'time': '08:00 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023916',
-          'store': 'KFC',
-          'amount': '34.60',
-          'items': 3,
-          'date': '15 Mar',
-          'time': '01:20 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023917',
-          'store': 'Taco Bell',
-          'amount': '27.40',
-          'items': 4,
-          'date': '15 Mar',
-          'time': '05:50 PM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023918',
-          'store': 'Pizza Hut',
-          'amount': '44.80',
-          'items': 3,
-          'date': '16 Mar',
-          'time': '07:30 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023919',
-          'store': 'Burger King',
-          'amount': '31.50',
-          'items': 2,
-          'date': '16 Mar',
-          'time': '12:45 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023920',
-          'store': 'McDonald\'s',
-          'amount': '26.90',
-          'items': 3,
-          'date': '16 Mar',
-          'time': '03:15 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023921',
-          'store': 'Subway',
-          'amount': '19.20',
-          'items': 2,
-          'date': '17 Mar',
-          'time': '11:00 AM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023922',
-          'store': 'Starbucks',
-          'amount': '17.80',
-          'items': 2,
-          'date': '17 Mar',
-          'time': '09:30 AM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023923',
-          'store': 'Domino\'s Pizza',
-          'amount': '59.70',
-          'items': 5,
-          'date': '17 Mar',
-          'time': '08:45 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023924',
-          'store': 'KFC',
-          'amount': '36.40',
-          'items': 4,
-          'date': '18 Mar',
-          'time': '02:00 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023925',
-          'store': 'Taco Bell',
-          'amount': '24.60',
-          'items': 3,
-          'date': '18 Mar',
-          'time': '06:15 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-        {
-          'id': '0023926',
-          'store': 'Pizza Hut',
-          'amount': '48.90',
-          'items': 4,
-          'date': '18 Mar',
-          'time': '07:50 PM',
-          'status': 'Ready For Pickup',
-          'type': 'In Store',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023927',
-          'store': 'Burger King',
-          'amount': '33.20',
-          'items': 3,
-          'date': '19 Mar',
-          'time': '01:30 PM',
-          'status': 'Pending',
-          'type': 'Delivery',
-          'statusColor': 'blue',
-        },
-        {
-          'id': '0023928',
-          'store': 'McDonald\'s',
-          'amount': '28.50',
-          'items': 2,
-          'date': '19 Mar',
-          'time': '04:45 PM',
-          'status': 'Reserved',
-          'type': 'In Store',
-          'statusColor': 'purple',
-        },
-        {
-          'id': '0023929',
-          'store': 'Subway',
-          'amount': '21.30',
-          'items': 2,
-          'date': '19 Mar',
-          'time': '12:30 PM',
-          'status': 'Delivered',
-          'type': 'Delivery',
-          'statusColor': 'green',
-        },
-      ].obs;
+  final RxList<Map<String, dynamic>> ordersList = <Map<String, dynamic>>[].obs;
 
-  final RxList<Map<String, dynamic>> storesList =
-      <Map<String, dynamic>>[
-        {'name': 'Store 1', 'products': '25 Products'},
-        {'name': 'Store 2', 'products': '18 Products'},
-      ].obs;
+  final RxList<Map<String, dynamic>> storesList = <Map<String, dynamic>>[].obs;
 
   // Filtrer les commandes selon les critères sélectionnés
   List<Map<String, dynamic>> get filteredOrders {
@@ -456,6 +254,75 @@ class ProfileController extends GetxController {
     selectedTypeFilter.value = filter;
   }
 
+  final RxString orderSortMode = 'newest'.obs;
+
+  void showSortDialog() {
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Sort Orders',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            for (final option in [
+              ('newest', 'Newest First'),
+              ('oldest', 'Oldest First'),
+              ('highest', 'Highest Amount'),
+              ('lowest', 'Lowest Amount'),
+            ])
+              ListTile(
+                title: Text(option.$2),
+                trailing: Obx(
+                  () =>
+                      orderSortMode.value == option.$1
+                          ? const Icon(Icons.check, color: Colors.blue)
+                          : const SizedBox.shrink(),
+                ),
+                onTap: () {
+                  orderSortMode.value = option.$1;
+                  _applySortToOrders(option.$1);
+                  Get.back();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applySortToOrders(String mode) {
+    final list = ordersList.toList();
+    switch (mode) {
+      case 'oldest':
+        list.sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
+        break;
+      case 'highest':
+        list.sort(
+          (a, b) => (double.tryParse(b['amount']?.toString() ?? '0') ?? 0)
+              .compareTo(double.tryParse(a['amount']?.toString() ?? '0') ?? 0),
+        );
+        break;
+      case 'lowest':
+        list.sort(
+          (a, b) => (double.tryParse(a['amount']?.toString() ?? '0') ?? 0)
+              .compareTo(double.tryParse(b['amount']?.toString() ?? '0') ?? 0),
+        );
+        break;
+      default: // newest
+        list.sort((a, b) => (b['date'] ?? '').compareTo(a['date'] ?? ''));
+    }
+    ordersList.assignAll(list);
+  }
+
   // Méthode pour sélectionner la plage de dates
   Future<void> selectDateRange() async {
     final picked = await showDateRangePicker(
@@ -473,7 +340,7 @@ class ProfileController extends GetxController {
               surface: Colors.white,
               onSurface: Colors.black87,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(foregroundColor: primaryColor),
             ),
@@ -598,7 +465,7 @@ class ProfileController extends GetxController {
         pinLength: 4,
         primaryColor: primaryColor,
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -786,88 +653,6 @@ class ProfileController extends GetxController {
     );
   }
 
-  // Nouvelle méthode pour les sous-options
-  Widget _buildSubRoleOption({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Icon
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? Colors.blue.withOpacity(0.15)
-                        : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.blue : Colors.grey.shade600,
-                size: 24.sp,
-              ),
-            ),
-
-            SizedBox(width: 12.w),
-
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.blue : Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Checkmark
-            if (isSelected)
-              Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.check, color: Colors.white, size: 16.sp),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEnhancedRoleOption({
     required String title,
     required String subtitle,
@@ -882,7 +667,9 @@ class ProfileController extends GetxController {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color:
-              isSelected ? primaryColor.withOpacity(0.08) : Colors.grey.shade50,
+              isSelected
+                  ? primaryColor.withValues(alpha: 0.08)
+                  : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: isSelected ? primaryColor : Colors.grey.shade200,
@@ -896,7 +683,9 @@ class ProfileController extends GetxController {
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
                 color:
-                    isSelected ? primaryColor.withOpacity(0.15) : Colors.white,
+                    isSelected
+                        ? primaryColor.withValues(alpha: 0.15)
+                        : Colors.white,
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
@@ -957,64 +746,6 @@ class ProfileController extends GetxController {
     );
   }
 
-  Widget _buildRoleOption(String role, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.AppPrimaryColor.withOpacity(0.1)
-                  : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color:
-                isSelected ? AppColors.AppPrimaryColor : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 20.w,
-              height: 20.h,
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? AppColors.AppPrimaryColor : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color:
-                      isSelected
-                          ? AppColors.AppPrimaryColor
-                          : Colors.grey.shade400,
-                  width: 2,
-                ),
-              ),
-              child:
-                  isSelected
-                      ? Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 12.sp,
-                      )
-                      : null,
-            ),
-            SizedBox(width: 12.w),
-            Text(
-              role,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? AppColors.AppPrimaryColor : Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void navigateToEditProfile() {
     Get.to(() => EditProfileView());
   }
@@ -1029,7 +760,7 @@ class ProfileController extends GetxController {
         pinLength: 4,
         primaryColor: primaryColor,
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -1054,10 +785,10 @@ class ProfileController extends GetxController {
           isStoresExpanded.value = false;
 
           // Afficher un message de confirmation
-          Get.snackbar(
+          safeSnackbar(
             'Store Changed',
             'You are now managing $tempStore',
-            backgroundColor: primaryColor.withOpacity(0.1),
+            backgroundColor: primaryColor.withValues(alpha: 0.1),
             colorText: primaryColor,
             snackPosition: SnackPosition.BOTTOM,
             margin: EdgeInsets.all(16.w),
@@ -1074,8 +805,8 @@ class ProfileController extends GetxController {
   void navigateToVipsId() {
     VipsIdDialog.show(
       primaryColor: primaryColor,
-      userId: '12345678',
-      userName: 'John Doe',
+      userId: userId.value.isNotEmpty ? userId.value : '—',
+      userName: userName.value,
     );
   }
 
@@ -1085,7 +816,7 @@ class ProfileController extends GetxController {
         pinLength: 4,
         primaryColor: primaryColor,
         validatePin: (pin) {
-          return pin == '1234';
+          return pin == _userPin;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();

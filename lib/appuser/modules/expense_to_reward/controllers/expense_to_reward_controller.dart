@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ExpenseToRewardController extends GetxController {
   // Controllers
@@ -85,9 +86,8 @@ class ExpenseToRewardController extends GetxController {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  // Scanner QR Code
   void scanQRCode() {
-    // TODO: Implémenter le scan QR
+    Get.toNamed('/q-r-scanner');
   }
 
   // Afficher dialogue timeout
@@ -191,13 +191,13 @@ class ExpenseToRewardController extends GetxController {
                           gradient: LinearGradient(
                             colors: [
                               AppColors.AppPrimaryColor,
-                              AppColors.AppPrimaryColor.withOpacity(0.8),
+                              AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                              color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: Offset(0, 4),
                             ),
@@ -240,15 +240,16 @@ class ExpenseToRewardController extends GetxController {
     );
 
     try {
+      final parsedAmount = double.tryParse(billAmount.value) ?? 0.0;
       final response = await ApiService().post('/rewards/expense-to-reward', {
-        'amount': double.tryParse(billAmount.value),
+        'amount': parsedAmount,
         'merchantId': userId.value,
       });
 
       Get.back(); // close loading
 
       if (response.success) {
-        final earned = response.data['pointsEarned'];
+        final earned = response.data?['pointsEarned'] ?? 0;
         Get.dialog(
           Dialog(
             shape: RoundedRectangleBorder(
@@ -312,12 +313,12 @@ class ExpenseToRewardController extends GetxController {
           ),
         );
       } else {
-        Get.snackbar('Error', response.message);
+        safeSnackbar('Error', response.message);
         startTimer();
       }
     } catch (e) {
       Get.back(); // close loading
-      Get.snackbar('Error', 'Failed to process expense');
+      safeSnackbar('Error', 'Failed to process expense');
       startTimer();
     }
   }

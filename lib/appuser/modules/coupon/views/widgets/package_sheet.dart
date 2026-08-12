@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CreatePackageSheet extends StatefulWidget {
   @override
@@ -75,7 +76,7 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                          color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(
@@ -208,7 +209,7 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                                 isPopular = value;
                               });
                             },
-                            activeColor: AppColors.AppPrimaryColor,
+                            activeThumbColor: AppColors.AppPrimaryColor,
                           ),
                         ],
                       ),
@@ -375,7 +376,7 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: Offset(0, -5),
                   ),
@@ -411,7 +412,7 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                     child: GestureDetector(
                       onTap: () {
                         Get.back();
-                        Get.snackbar(
+                        safeSnackbar(
                           'Success',
                           'Package created successfully',
                           snackPosition: SnackPosition.BOTTOM,
@@ -432,13 +433,13 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                           gradient: LinearGradient(
                             colors: [
                               AppColors.AppPrimaryColor,
-                              AppColors.AppPrimaryColor.withOpacity(0.8),
+                              AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(14.r),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                              color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: Offset(0, 4),
                             ),

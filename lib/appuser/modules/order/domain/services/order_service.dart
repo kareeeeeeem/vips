@@ -43,7 +43,9 @@ class OrderService implements OrderServiceInterface {
   }
 
   @override
-  Future<OrderModel?> getOrderWithId(int orderId) async {}
+  Future<OrderModel?> getOrderWithId(int orderId) async {
+    return null;
+  }
 
   @override
   Future<ResponseModel> updateOrderAmount(Map<String, String> body) async {

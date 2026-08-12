@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 
 class BuildQuickNavigation extends StatefulWidget {
-  const BuildQuickNavigation({Key? key}) : super(key: key);
+  const BuildQuickNavigation({super.key});
 
   @override
   State<BuildQuickNavigation> createState() => _BuildQuickNavigationState();
@@ -12,10 +14,10 @@ class _BuildQuickNavigationState extends State<BuildQuickNavigation> {
   int selectedIndex = 1;
 
   final List<NavItem> items = [
-    NavItem('Todays Deal', Icons.calendar_today_outlined),
-    NavItem('Flash Deal', Icons.flash_on),
-    NavItem('Brands', Icons.lightbulb_outline),
-    NavItem('Top', Icons.military_tech_outlined),
+    NavItem('Todays Deal', Icons.calendar_today_outlined, Routes.HOT_DEALS),
+    NavItem('Flash Deal', Icons.flash_on, Routes.HOT_DEALS),
+    NavItem('Brands', Icons.lightbulb_outline, Routes.ALL_MERCHANTS),
+    NavItem('Top', Icons.military_tech_outlined, Routes.HOT_DEALS),
   ];
 
   @override
@@ -32,7 +34,10 @@ class _BuildQuickNavigationState extends State<BuildQuickNavigation> {
 
           return SizedBox(
             child: GestureDetector(
-              onTap: () => setState(() => selectedIndex = index),
+              onTap: () {
+                setState(() => selectedIndex = index);
+                Get.toNamed(items[index].route);
+              },
               child: Container(
                 margin: EdgeInsets.only(right: 10.w),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 0.h),
@@ -51,7 +56,7 @@ class _BuildQuickNavigationState extends State<BuildQuickNavigation> {
                               color: (isToday
                                       ? Colors.black
                                       : Color(0xFFFF6B35))
-                                  .withOpacity(0.25),
+                                  .withValues(alpha: 0.25),
                               blurRadius: 10,
                               offset: Offset(0, 3),
                             ),
@@ -96,5 +101,6 @@ class _BuildQuickNavigationState extends State<BuildQuickNavigation> {
 class NavItem {
   final String label;
   final IconData icon;
-  NavItem(this.label, this.icon);
+  final String route;
+  NavItem(this.label, this.icon, this.route);
 }

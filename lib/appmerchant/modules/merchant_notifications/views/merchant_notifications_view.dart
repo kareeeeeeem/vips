@@ -10,8 +10,6 @@ class MerchantNotificationsView extends GetView<MerchantNotificationsController>
 
   @override
   Widget build(BuildContext context) {
-    Get.put(MerchantNotificationsController());
-
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(

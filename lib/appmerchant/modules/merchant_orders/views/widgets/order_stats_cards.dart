@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/merchant_order_controller.dart';
 
 class OrderStatsCards extends GetView<MerchantOrderController> {
-  const OrderStatsCards({Key? key}) : super(key: key);
+  const OrderStatsCards({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class OrderStatsCards extends GetView<MerchantOrderController> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

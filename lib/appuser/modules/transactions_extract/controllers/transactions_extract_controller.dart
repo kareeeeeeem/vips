@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
 import 'package:vip/core/services/api_service.dart';
 import '../views/transactions_extract_view.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class TransactionsExtractController extends GetxController {
   // Observables
@@ -14,9 +16,9 @@ class TransactionsExtractController extends GetxController {
   final RxBool isLoading = false.obs;
 
   // Stats observables
-  final RxDouble totalRewards = 1200.0.obs;
-  final RxDouble totalExtract = 600.0.obs;
-  final RxDouble netBalance = 600.0.obs;
+  final RxDouble totalRewards = 0.0.obs;
+  final RxDouble totalExtract = 0.0.obs;
+  final RxDouble netBalance = 0.0.obs;
 
   // Date range
   final Rx<DateTime> selectedDate = DateTime.now().obs;
@@ -33,9 +35,12 @@ class TransactionsExtractController extends GetxController {
   Future<void> loadTransactions() async {
     isLoading.value = true;
     try {
-      final response = await ApiService().get('/user/transactions?limit=50');
+      final response = await ApiService().get(
+        '/user/transactions',
+        queryParams: {'limit': '50'},
+      );
       if (response.success && response.data != null) {
-        final List<dynamic> data = response.data['transactions'];
+        final List<dynamic> data = response.data['transactions'] ?? [];
         transactions.value =
             data.map((t) {
               return Transaction(
@@ -44,7 +49,7 @@ class TransactionsExtractController extends GetxController {
                     t['type'] == 'expense'
                         ? TransactionType.extract
                         : TransactionType.reward,
-                amount: (t['amount'] as num).toDouble(),
+                amount: ((t['amount'] ?? 0) as num).toDouble(),
                 title: t['description'] ?? 'Transaction',
                 time:
                     t['createdAt'] != null
@@ -62,8 +67,7 @@ class TransactionsExtractController extends GetxController {
             }).toList();
         calculateStats();
       }
-    } catch (e) {
-      print('Error loading transactions: $e');
+    } catch (_) {
     } finally {
       isLoading.value = false;
     }
@@ -128,7 +132,7 @@ class TransactionsExtractController extends GetxController {
               surface: Colors.white,
               onSurface: Colors.black87,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.AppPrimaryColor,
@@ -178,11 +182,11 @@ class TransactionsExtractController extends GetxController {
       loadTransactions();
 
       // Feedback visuel
-      Get.snackbar(
+      safeSnackbar(
         'Date Updated',
         'Showing transactions for ${_formatDate(picked)}',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.AppPrimaryColor.withOpacity(0.9),
+        backgroundColor: AppColors.AppPrimaryColor.withValues(alpha: 0.9),
         colorText: Colors.white,
         duration: Duration(seconds: 2),
         margin: EdgeInsets.all(16.w),
@@ -228,34 +232,110 @@ class TransactionsExtractController extends GetxController {
     );
   }
 
-  // Télécharger l'extrait
+  // Télécharger l'extrait — shares a plain-text summary via the OS share sheet
   void downloadExtract() {
-    Get.snackbar(
-      'Download',
-      'Transaction extract is being prepared...',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.black87,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-      icon: Icon(Icons.download, color: Colors.white),
-    );
+    if (transactions.isEmpty) {
+      safeSnackbar('No Data', 'No transactions to export',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final buffer = StringBuffer();
+    buffer.writeln('VIPs Transaction Extract — $selectedMonth');
+    buffer.writeln('Total Rewards: ${totalRewards.value.toStringAsFixed(3)} TND');
+    buffer.writeln('Net Balance:   ${netBalance.value.toStringAsFixed(3)} TND');
+    buffer.writeln('─' * 40);
+    for (final tx in transactions) {
+      final sign = tx.type == TransactionType.reward ? '+' : '-';
+      final dateStr = '${tx.date.day}/${tx.date.month}/${tx.date.year}';
+      buffer.writeln('$sign${tx.amount.toStringAsFixed(3)} TND  ${tx.title}  $dateStr  ${tx.time}');
+    }
+    SharePlus.instance.share(ShareParams(
+      text: buffer.toString(),
+      subject: 'VIPs Transactions — $selectedMonth',
+    ));
   }
 
-  // Partager la transaction
+  // Partager une transaction individuelle
   void shareTransaction(Transaction transaction) {
-    Get.snackbar(
-      'Share',
-      'Sharing transaction #${transaction.id}',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.black87,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-    );
+    final sign = transaction.type == TransactionType.reward ? '+' : '-';
+    final dateStr = '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}';
+    SharePlus.instance.share(ShareParams(
+      text: 'VIPs Transaction\n'
+          '$sign${transaction.amount.toStringAsFixed(3)} TND\n'
+          '${transaction.title}\n'
+          'Date: $dateStr  ${transaction.time}\n'
+          'Status: ${transaction.status.name}\n'
+          'Ref: #${transaction.id}',
+      subject: 'VIPs Transaction #${transaction.id}',
+    ));
   }
 
   // Voir les détails
   void viewDetails(Transaction transaction) {
-    Get.toNamed('/transaction-details', arguments: transaction);
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              'Transaction Details',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 16.h),
+            _detailRow('ID', '#${transaction.id}'),
+            _detailRow('Title', transaction.title),
+            _detailRow(
+              'Amount',
+              '${transaction.type == TransactionType.extract ? '-' : '+'}${transaction.amount.toStringAsFixed(2)} TND',
+            ),
+            _detailRow(
+              'Date',
+              '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
+            ),
+            _detailRow('Time', transaction.time),
+            _detailRow('Status', transaction.status.name.toUpperCase()),
+            SizedBox(height: 24.h),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
   }
 }
 

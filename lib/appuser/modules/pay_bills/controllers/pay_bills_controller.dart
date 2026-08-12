@@ -70,7 +70,7 @@ class PayBillsController extends GetxController {
                     (b) => {
                       'id': b['_id'],
                       'title': b['name'],
-                      'image': b['logo'] ?? 'https://via.placeholder.com/150',
+                      'image': b['logo'] ?? '',
                       'route': 'dynamic-bill', // generic route
                     },
                   )
@@ -81,17 +81,26 @@ class PayBillsController extends GetxController {
       } else {
         billCategories.value = _fallbackCategories;
       }
-    } catch (e) {
-      print('Error fetching bills: $e');
+    } catch (_) {
       billCategories.value = _fallbackCategories;
     } finally {
       isLoading.value = false;
     }
   }
 
-  void navigateToCategory(String route) {
-    if (route == 'electric-bill') {
-      Get.to(() => ElectricBillView());
-    } else {}
+  void navigateToCategory(Map<String, dynamic> category) {
+    final id = (category['id'] ?? '').toString().toLowerCase();
+    if (id == 'donation') {
+      Get.toNamed('/donation');
+      return;
+    }
+    Get.to(
+      () => ElectricBillView(),
+      arguments: {
+        'billServiceId': category['id'],
+        'title': category['title'],
+        'logo': category['image'],
+      },
+    );
   }
 }

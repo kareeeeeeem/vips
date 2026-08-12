@@ -8,7 +8,7 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/credit_controller.dart';
 
 class CreditView extends GetView<CreditController> {
-  const CreditView({Key? key}) : super(key: key);
+  const CreditView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,7 @@ class CreditView extends GetView<CreditController> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -99,7 +99,7 @@ class CreditView extends GetView<CreditController> {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: Offset(0, 4),
           ),
@@ -113,7 +113,7 @@ class CreditView extends GetView<CreditController> {
               Container(
                 padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.1),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
@@ -275,7 +275,7 @@ class CreditView extends GetView<CreditController> {
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: Offset(0, 4),
               ),
@@ -365,7 +365,7 @@ class CreditView extends GetView<CreditController> {
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? AppColors.AppPrimaryColor.withOpacity(0.05)
+                    ? AppColors.AppPrimaryColor.withValues(alpha: 0.05)
                     : Colors.transparent,
             border: Border(
               bottom: BorderSide(color: Colors.grey.shade200, width: 1),
@@ -499,7 +499,7 @@ class CreditView extends GetView<CreditController> {
                     ? LinearGradient(
                       colors: [
                         AppColors.AppPrimaryColor,
-                        AppColors.AppPrimaryColor.withOpacity(0.8),
+                        AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                       ],
                     )
                     : LinearGradient(
@@ -510,7 +510,7 @@ class CreditView extends GetView<CreditController> {
                 isValid
                     ? [
                       BoxShadow(
-                        color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                        color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                         blurRadius: 16,
                         offset: Offset(0, 6),
                       ),

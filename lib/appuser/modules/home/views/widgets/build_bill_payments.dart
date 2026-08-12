@@ -11,7 +11,7 @@ class BuildBillPayments extends GetView<HomeController> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
-        color: const Color(0xFF06B6D4).withOpacity(0.2),
+        color: const Color(0xFF06B6D4).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(0),
       ),
       child: Column(
@@ -27,7 +27,7 @@ class BuildBillPayments extends GetView<HomeController> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withOpacity(0.1),
+                        color: const Color(0xFF06B6D4).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Icon(
@@ -154,7 +154,7 @@ class BuildBillPayments extends GetView<HomeController> {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -186,7 +186,7 @@ class BuildBillPayments extends GetView<HomeController> {
                           return Container(
                             color: Color(
                               billType['color'] ?? 0xFF06B6D4,
-                            ).withOpacity(0.1),
+                            ).withValues(alpha: 0.1),
                             child: Center(
                               child: Icon(
                                 billType['icon'] ?? Icons.receipt,
@@ -200,7 +200,7 @@ class BuildBillPayments extends GetView<HomeController> {
                       : Container(
                         color: Color(
                           billType['color'] ?? 0xFF06B6D4,
-                        ).withOpacity(0.1),
+                        ).withValues(alpha: 0.1),
                         child: Center(
                           child: Icon(
                             billType['icon'] ?? Icons.receipt,

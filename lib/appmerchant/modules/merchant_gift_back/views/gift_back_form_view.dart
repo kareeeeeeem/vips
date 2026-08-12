@@ -3,10 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_gift_back_controller.dart';
-import '../../merchant_catalog/views/widgets/form_widgets.dart';
 
 class GiftBackFormView extends GetView<MerchantGiftBackController> {
-  const GiftBackFormView({Key? key}) : super(key: key);
+  const GiftBackFormView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -131,40 +130,51 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                     SizedBox(height: 32.h),
 
                     // Limit Information Grid
-                    Container(
-                      padding: EdgeInsets.all(20.w),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Limit Information',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF10B981),
+                    Obx(() {
+                      final c = controller.currency.value;
+                      return Container(
+                        padding: EdgeInsets.all(20.w),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Limit Information',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF10B981),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 16.h),
-                          _buildLimitRow('Daily Limit', 'Remaining Daily Limit', '1000.0000 USD', '60.3954 USD'),
-                          SizedBox(height: 12.h),
-                          _buildLimitRow('Monthly Limit', 'Remaining Monthly Limit', '10000.0000 USD', '10000.0000 USD'),
-                          SizedBox(height: 12.h),
-                          Text(
-                            'Transaction Limit',
-                            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            '1.0000 - 1000.0000 USD',
-                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
-                          ),
-                        ],
-                      ),
-                    ),
+                            SizedBox(height: 16.h),
+                            _buildLimitRow(
+                              'Daily Limit', 'Remaining Daily Limit',
+                              '${controller.dailyLimit.value.toStringAsFixed(4)} $c',
+                              '${controller.remainingDailyLimit.value.toStringAsFixed(4)} $c',
+                            ),
+                            SizedBox(height: 12.h),
+                            _buildLimitRow(
+                              'Monthly Limit', 'Remaining Monthly Limit',
+                              '${controller.monthlyLimit.value.toStringAsFixed(4)} $c',
+                              '${controller.remainingMonthlyLimit.value.toStringAsFixed(4)} $c',
+                            ),
+                            SizedBox(height: 12.h),
+                            Text(
+                              'Transaction Limit',
+                              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              '${controller.txMin.value.toStringAsFixed(4)} - ${controller.txMax.value.toStringAsFixed(4)} $c',
+                              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ),

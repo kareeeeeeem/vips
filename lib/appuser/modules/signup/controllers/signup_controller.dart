@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class SignupController extends GetxController
     with GetSingleTickerProviderStateMixin {
@@ -172,11 +173,19 @@ class SignupController extends GetxController
   }
 
   void signUpWithGoogle() {
-    // TODO: Implement Google sign up
+    safeSnackbar(
+      'Coming Soon',
+      'Google sign-up will be available in the next update.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void signUpWithFacebook() {
-    // TODO: Implement Facebook sign up
+    safeSnackbar(
+      'Coming Soon',
+      'Facebook sign-up will be available in the next update.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void navigateToSignIn() {

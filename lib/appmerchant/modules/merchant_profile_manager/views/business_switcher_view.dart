@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
+import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_profile_controller.dart';
 import '../models/business_profile_model.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class BusinessSwitcherView extends GetView<MerchantProfileController> {
-  const BusinessSwitcherView({Key? key}) : super(key: key);
+  const BusinessSwitcherView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,7 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
         borderRadius: BorderRadius.circular(16.r),
         border: profile.isActive ? Border.all(color: const Color(0xFF10B981), width: 2) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: ListTile(
@@ -122,7 +124,7 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
               onCompleted: (pin) async {
                 final success = await controller.verifyPin(profile, pin);
                 if (!success) {
-                  Get.snackbar('Error', 'Incorrect PIN', backgroundColor: Colors.red.withOpacity(0.1));
+                  safeSnackbar('Error', 'Incorrect PIN', backgroundColor: Colors.red.withValues(alpha: 0.1));
                   pinController.clear();
                 }
               },
@@ -139,7 +141,7 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
       width: double.infinity,
       margin: EdgeInsets.only(bottom: 20.h),
       child: OutlinedButton.icon(
-        onPressed: () {},
+        onPressed: () => Get.toNamed(MerchantRoutes.BUSINESS_REGISTRATION),
         icon: const Icon(Icons.add),
         label: const Text('Add New Business'),
         style: OutlinedButton.styleFrom(

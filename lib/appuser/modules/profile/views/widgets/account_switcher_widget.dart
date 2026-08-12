@@ -3,8 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/modules/merchant_home/views/merchant_home_view.dart';
 import 'package:vip/appmerchant/modules/merchant_home/bindings/merchant_home_binding.dart';
-import 'package:vip/appmerchant/routes/merchant_pages.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 /// Displays a premium account switcher bottom sheet.
 /// Call: showAccountSwitcher(context);
@@ -18,7 +16,7 @@ void showAccountSwitcher(BuildContext context) {
 }
 
 class AccountSwitcherSheet extends StatelessWidget {
-  const AccountSwitcherSheet({Key? key}) : super(key: key);
+  const AccountSwitcherSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +34,7 @@ class AccountSwitcherSheet extends StatelessWidget {
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2.r),
             ),
           ),
@@ -79,7 +77,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                           'Choose your workspace',
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -127,7 +125,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                     Expanded(
                       child: Container(
                         height: 1,
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                       ),
                     ),
                     Padding(
@@ -136,14 +134,14 @@ class AccountSwitcherSheet extends StatelessWidget {
                         'or',
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ),
                     ),
                     Expanded(
                       child: Container(
                         height: 1,
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                       ),
                     ),
                   ],
@@ -163,10 +161,10 @@ class AccountSwitcherSheet extends StatelessWidget {
                       vertical: 14.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Row(
@@ -174,12 +172,12 @@ class AccountSwitcherSheet extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.all(8.w),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: Colors.white.withValues(alpha: 0.08),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.add_rounded,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             size: 20.sp,
                           ),
                         ),
@@ -189,14 +187,14 @@ class AccountSwitcherSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                         const Spacer(),
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14.sp,
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ],
                     ),
@@ -231,20 +229,20 @@ class AccountSwitcherSheet extends StatelessWidget {
             colors:
                 isActive
                     ? [
-                      gradientColors[0].withOpacity(0.2),
-                      gradientColors[1].withOpacity(0.1),
+                      gradientColors[0].withValues(alpha: 0.2),
+                      gradientColors[1].withValues(alpha: 0.1),
                     ]
                     : [
-                      Colors.white.withOpacity(0.06),
-                      Colors.white.withOpacity(0.03),
+                      Colors.white.withValues(alpha: 0.06),
+                      Colors.white.withValues(alpha: 0.03),
                     ],
           ),
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color:
                 isActive
-                    ? gradientColors[0].withOpacity(0.5)
-                    : Colors.white.withOpacity(0.08),
+                    ? gradientColors[0].withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.08),
             width: isActive ? 1.5 : 1,
           ),
         ),
@@ -263,7 +261,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: gradientColors[0].withOpacity(0.4),
+                    color: gradientColors[0].withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -292,7 +290,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -308,7 +306,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                         ? LinearGradient(colors: gradientColors)
                         : null,
                 color:
-                    isActive ? null : Colors.white.withOpacity(0.08),
+                    isActive ? null : Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
@@ -316,7 +314,7 @@ class AccountSwitcherSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
-                  color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+                  color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -331,7 +329,7 @@ class AccountSwitcherSheet extends StatelessWidget {
               color:
                   isActive
                       ? gradientColors[0]
-                      : Colors.white.withOpacity(0.3),
+                      : Colors.white.withValues(alpha: 0.3),
               size: isActive ? 20.sp : 14.sp,
             ),
           ],

@@ -1,21 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class AuthBottomSheet extends StatelessWidget {
-  bool isLogin = true; // true = Login, false = Sign Up
+class AuthBottomSheet extends StatefulWidget {
+  static Future<bool?> show(BuildContext context) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => const AuthBottomSheet(),
+    );
+  }
+
+  const AuthBottomSheet({super.key});
+
+  @override
+  State<AuthBottomSheet> createState() => _AuthBottomSheetState();
+}
+
+class _AuthBottomSheetState extends State<AuthBottomSheet> {
+  bool isLogin = true;
   bool rememberMe = false;
   bool obscurePassword = true;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  static Future<bool?> show(BuildContext context) {
-    return showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => AuthBottomSheet(),
-    );
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -52,6 +66,7 @@ class AuthBottomSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: GestureDetector(
+                      onTap: () => setState(() => isLogin = true),
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         decoration: BoxDecoration(
@@ -74,6 +89,7 @@ class AuthBottomSheet extends StatelessWidget {
                   SizedBox(width: 12.w),
                   Expanded(
                     child: GestureDetector(
+                      onTap: () => setState(() => isLogin = false),
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         decoration: BoxDecoration(
@@ -120,15 +136,15 @@ class AuthBottomSheet extends StatelessWidget {
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16.w,
@@ -170,7 +186,7 @@ class AuthBottomSheet extends StatelessWidget {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
                   ),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16.w,
@@ -183,7 +199,8 @@ class AuthBottomSheet extends StatelessWidget {
                           : Icons.visibility_off_outlined,
                       color: Colors.grey[600],
                     ),
-                    onPressed: () {},
+                    onPressed: () =>
+                        setState(() => obscurePassword = !obscurePassword),
                   ),
                 ),
               ),
@@ -201,7 +218,8 @@ class AuthBottomSheet extends StatelessWidget {
                         height: 24,
                         child: Checkbox(
                           value: rememberMe,
-                          onChanged: (value) {},
+                          onChanged: (value) =>
+                              setState(() => rememberMe = value ?? false),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4.r),
                           ),
@@ -220,8 +238,8 @@ class AuthBottomSheet extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Action Forgot Password
-                      print('Forgot Password');
+                      Navigator.pop(context);
+                      // Navigate to Forgot Password
                     },
                     child: Text(
                       'Forgot Password',
@@ -242,11 +260,7 @@ class AuthBottomSheet extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Action Login
-                    Navigator.pop(
-                      context,
-                      true,
-                    ); // Retourner true si login réussi
+                    Navigator.pop(context, true);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2196F3),

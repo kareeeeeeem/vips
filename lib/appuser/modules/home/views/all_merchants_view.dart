@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 
 class AllMerchantsView extends StatelessWidget {
-  const AllMerchantsView({Key? key}) : super(key: key);
+  const AllMerchantsView({super.key});
 
   @override
   Widget build(BuildContext context) {

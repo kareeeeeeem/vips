@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/search_controller.dart' as search;
 
 class SearchView extends GetView<search.SearchController> {
-  const SearchView({Key? key}) : super(key: key);
+  const SearchView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(search.SearchController());
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -54,7 +53,7 @@ class SearchView extends GetView<search.SearchController> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),
@@ -75,7 +74,7 @@ class SearchView extends GetView<search.SearchController> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: Offset(0, 2),
                 ),
@@ -84,7 +83,6 @@ class SearchView extends GetView<search.SearchController> {
             child: TextField(
               controller: controller.searchTextController,
               focusNode: controller.searchFocusNode,
-              readOnly: true,
               decoration: InputDecoration(
                 hintText: 'Search restaurants, food...',
                 hintStyle: TextStyle(
@@ -134,7 +132,7 @@ class SearchView extends GetView<search.SearchController> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: Offset(0, 4),
                 ),
@@ -232,7 +230,7 @@ class SearchView extends GetView<search.SearchController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -271,10 +269,10 @@ class SearchView extends GetView<search.SearchController> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: AppColors.AppPrimaryColor.withOpacity(0.1),
+          color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: AppColors.AppPrimaryColor.withOpacity(0.3),
+            color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -360,7 +358,7 @@ class SearchView extends GetView<search.SearchController> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),

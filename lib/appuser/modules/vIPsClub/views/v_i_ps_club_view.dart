@@ -4,12 +4,13 @@ import 'package:get/get.dart';
 import 'package:vip/appuser/modules/vIPsClub/views/widgets/invite_friends.dart';
 import 'package:vip/appuser/modules/vIPsClub/views/widgets/vips_rank.dart';
 
+import '../../../routes/app_pages.dart';
 import '../../spin_wheel/views/spin_wheel_view.dart';
 import '../../vips_club_history/views/vips_club_history_view.dart';
 import '../controllers/v_i_ps_club_controller.dart';
 
 class VIPsClubView extends GetView<VIPsClubController> {
-  const VIPsClubView({Key? key}) : super(key: key);
+  const VIPsClubView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +91,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
               width: 50.w,
               height: 50.w,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
@@ -127,7 +128,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => Get.toNamed(Routes.VIPS_CLUB_HISTORY),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               ),
@@ -244,7 +245,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
           ),
           SizedBox(height: 20.h),
           // Check-in days with rewards
-          Row(
+          Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
               var day = controller.checkInDays[index];
@@ -255,7 +256,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
                 day['reward'],
               );
             }),
-          ),
+          )),
           SizedBox(height: 20.h),
           // Check In Button
           Obx(
@@ -383,7 +384,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
       ),
-      child: Column(
+      child: Obx(() => Column(
         children: [
           _buildStatRow(
             'Approved Diamants',
@@ -405,7 +406,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
           SizedBox(height: 16.h),
           _buildStatRow('Super Bonus', controller.superBonus.value.toString()),
         ],
-      ),
+      )),
     );
   }
 
@@ -501,7 +502,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
 
           child: _buildMissionItem('Spin the wheel', '+500 diamants', false),
         ),
-        _buildMissionItem('Daily Check-in', '+500 diamants', true),
+        Obx(() => _buildMissionItem('Daily Check-in', '+500 diamants', controller.hasCheckedInToday.value)),
         InkWell(
           onTap: () => Get.to(() => InviteFriendsView()),
           child: _buildMissionItem('Invite Friends', '+25000 diamants', false),

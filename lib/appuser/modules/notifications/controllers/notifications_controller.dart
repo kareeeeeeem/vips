@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
-import '../../../core/constants/app_assets.dart';
 import '../../../design_system/atoms/app_colors.dart';
 
 enum NotificationType { promotion, account, payment, partnership }
@@ -103,15 +102,16 @@ class NotificationsController extends GetxController
     try {
       final response = await ApiService().get('/user/notifications');
       if (response.success && response.data != null) {
-        final data = response.data as List<dynamic>;
+        final raw = response.data;
+        final data = raw is List ? raw : (raw is Map ? (raw['notifications'] as List? ?? []) : <dynamic>[]);
         notifications.value = data
-            .map((item) => NotificationItem.fromJson(item))
+            .map((item) => NotificationItem.fromJson(item as Map<String, dynamic>))
             .toList();
       } else {
         _loadLocalNotifications();
       }
     } catch (e) {
-      print('Error loading notifications: $e');
+      debugPrint('Error loading notifications: $e');
       _loadLocalNotifications();
     } finally {
       isLoading.value = false;
@@ -119,54 +119,7 @@ class NotificationsController extends GetxController
   }
 
   void _loadLocalNotifications() {
-    notifications.value = [
-      NotificationItem(
-        id: '1',
-        title: 'LC WAIKIKI',
-        message:
-            'Welcome to resort paradise we ensure the best service in bali with an emphasis on customer satisfaction and comfort.',
-        time: '1 day ago',
-        image: AppImages.LC,
-        isRead: false,
-        type: NotificationType.promotion,
-      ),
-      NotificationItem(
-        id: '2',
-        title: 'VIP Account Update',
-        message:
-            'Your profile has been successfully updated. All changes are now active.',
-        time: '2 hours ago',
-        isRead: true,
-        type: NotificationType.account,
-      ),
-      NotificationItem(
-        id: '3',
-        title: 'Payment Successful',
-        message:
-            'Your payment of \$89.99 has been processed successfully for your VIP membership.',
-        time: '3 hours ago',
-        isRead: false,
-        type: NotificationType.payment,
-      ),
-      NotificationItem(
-        id: '4',
-        title: 'New Partner Added',
-        message:
-            'Great news! A new exclusive partner has joined our VIP network.',
-        time: '1 day ago',
-        isRead: true,
-        type: NotificationType.partnership,
-      ),
-      NotificationItem(
-        id: '5',
-        title: 'Special Offer',
-        message:
-            'Limited time offer: Get 20% off on all premium services this week!',
-        time: '2 days ago',
-        isRead: false,
-        type: NotificationType.promotion,
-      ),
-    ];
+    notifications.value = [];
   }
 
   // Getters
@@ -193,11 +146,14 @@ class NotificationsController extends GetxController
     }
   }
 
-  void markAllAsRead() {
+  Future<void> markAllAsRead() async {
     for (var notification in notifications) {
       notification.isRead = true;
     }
     notifications.refresh();
+    try {
+      await ApiService().post('/user/notifications/read-all', {});
+    } catch (_) {}
   }
 
   void setFilter(String filter) {
@@ -311,7 +267,7 @@ class NotificationsController extends GetxController
                       gradient: LinearGradient(
                         colors: [
                           AppColors.AppPrimaryColor,
-                          AppColors.AppPrimaryColor.withOpacity(0.8),
+                          AppColors.AppPrimaryColor.withValues(alpha: 0.8),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -420,7 +376,7 @@ class NotificationsController extends GetxController
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: getTypeColor(notification.type).withOpacity(0.1),
+        color: getTypeColor(notification.type).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
@@ -509,23 +465,18 @@ class NotificationsController extends GetxController
   }
 
   void handleNotificationAction(NotificationItem notification) {
-    // Handle specific actions based on notification type
     switch (notification.type) {
       case NotificationType.promotion:
-        // Navigate to offers page
-        Get.toNamed('/offers');
+        Get.toNamed('/hot-deals');
         break;
       case NotificationType.account:
-        // Navigate to profile
         Get.toNamed('/profile');
         break;
       case NotificationType.payment:
-        // Navigate to payment history
-        Get.toNamed('/payment-history');
+        Get.toNamed('/profile');
         break;
       case NotificationType.partnership:
-        // Navigate to partnerships
-        Get.toNamed('/partnerships');
+        Get.toNamed('/all-merchants');
         break;
     }
   }

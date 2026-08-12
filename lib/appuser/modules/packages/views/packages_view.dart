@@ -5,12 +5,10 @@ import 'package:get/get.dart';
 import '../controllers/packages_controller.dart';
 
 class PackagesView extends GetView<PackagesController> {
-  const PackagesView({Key? key}) : super(key: key);
+  const PackagesView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(PackagesController());
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
@@ -53,7 +51,7 @@ class PackagesView extends GetView<PackagesController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -110,11 +108,26 @@ class PackagesView extends GetView<PackagesController> {
 
   Widget _buildPackagesList() {
     return Obx(() {
+      if (controller.packages.isEmpty) {
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 40.h),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.card_membership_outlined, size: 56.sp, color: Colors.grey.shade300),
+                SizedBox(height: 16.h),
+                Text('No packages available',
+                    style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        );
+      }
       return Column(
-        children:
-            controller.packages.map((package) {
-              return _buildSimplePackageCard(package);
-            }).toList(),
+        children: controller.packages.map((package) {
+          return _buildSimplePackageCard(package);
+        }).toList(),
       );
     });
   }
@@ -134,13 +147,13 @@ class PackagesView extends GetView<PackagesController> {
           border: Border.all(
             color:
                 isPopular
-                    ? const Color(0xFFFFD700).withOpacity(0.3)
+                    ? const Color(0xFFFFD700).withValues(alpha: 0.3)
                     : const Color(0xFFE5E7EB),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -155,7 +168,7 @@ class PackagesView extends GetView<PackagesController> {
                   width: 56.w,
                   height: 56.h,
                   decoration: BoxDecoration(
-                    color: package.primaryColor.withOpacity(0.15),
+                    color: package.primaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   child: Icon(
@@ -397,7 +410,7 @@ class PackagesView extends GetView<PackagesController> {
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFE5E7EB).withOpacity(0.5),
+            color: const Color(0xFFE5E7EB).withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -453,7 +466,7 @@ class PackagesView extends GetView<PackagesController> {
           borderRadius: BorderRadius.circular(28.r),
           boxShadow: [
             BoxShadow(
-              color: package.primaryColor.withOpacity(0.15),
+              color: package.primaryColor.withValues(alpha: 0.15),
               blurRadius: 30,
               offset: const Offset(0, 15),
               spreadRadius: -5,
@@ -469,7 +482,7 @@ class PackagesView extends GetView<PackagesController> {
                 end: Alignment.bottomRight,
                 colors: [
                   package.primaryColor,
-                  package.primaryColor.withOpacity(0.85),
+                  package.primaryColor.withValues(alpha: 0.85),
                   package.accentColor,
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -486,7 +499,7 @@ class PackagesView extends GetView<PackagesController> {
                     height: 150.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
@@ -498,7 +511,7 @@ class PackagesView extends GetView<PackagesController> {
                     height: 100.w,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
@@ -517,10 +530,10 @@ class PackagesView extends GetView<PackagesController> {
                             width: 72.w,
                             height: 72.h,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20.r),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 width: 2,
                               ),
                             ),
@@ -545,7 +558,7 @@ class PackagesView extends GetView<PackagesController> {
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     fontFamily: 'SF Pro Display',
                                     letterSpacing: 2,
                                   ),
@@ -577,9 +590,7 @@ class PackagesView extends GetView<PackagesController> {
                                           style: TextStyle(
                                             fontSize: 14.sp,
                                             fontWeight: FontWeight.w500,
-                                            color: Colors.white.withOpacity(
-                                              0.8,
-                                            ),
+                                            color: Colors.white.withValues(alpha: 0.8),
                                             fontFamily: 'SF Pro Text',
                                           ),
                                         ),
@@ -645,14 +656,14 @@ class PackagesView extends GetView<PackagesController> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.9), size: 20.sp),
+          Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 20.sp),
           SizedBox(height: 8.h),
           Text(
             value,
@@ -669,7 +680,7 @@ class PackagesView extends GetView<PackagesController> {
             label,
             style: TextStyle(
               fontSize: 12.sp,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               fontFamily: 'SF Pro Text',
             ),
           ),
@@ -682,9 +693,9 @@ class PackagesView extends GetView<PackagesController> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,7 +705,7 @@ class PackagesView extends GetView<PackagesController> {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontFamily: 'SF Pro Text',
               letterSpacing: 0.5,
             ),
@@ -707,7 +718,7 @@ class PackagesView extends GetView<PackagesController> {
                 'Years of subscription',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontFamily: 'SF Pro Text',
                 ),
               ),
@@ -719,10 +730,10 @@ class PackagesView extends GetView<PackagesController> {
                       width: 32.w,
                       height: 32.h,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10.r),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -760,7 +771,7 @@ class PackagesView extends GetView<PackagesController> {
                         borderRadius: BorderRadius.circular(10.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -826,7 +837,7 @@ class PackagesView extends GetView<PackagesController> {
                   isSelected
                       ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -917,7 +928,7 @@ class PackagesView extends GetView<PackagesController> {
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -933,8 +944,8 @@ class PackagesView extends GetView<PackagesController> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  benefit.iconColor.withOpacity(0.1),
-                  benefit.iconColor.withOpacity(0.05),
+                  benefit.iconColor.withValues(alpha: 0.1),
+                  benefit.iconColor.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(16.r),
@@ -987,7 +998,7 @@ class PackagesView extends GetView<PackagesController> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
             spreadRadius: -5,
@@ -1048,7 +1059,7 @@ class PackagesView extends GetView<PackagesController> {
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1F2937).withOpacity(0.3),
+                      color: const Color(0xFF1F2937).withValues(alpha: 0.3),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),

@@ -4,12 +4,12 @@ import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class BillErrorView extends StatelessWidget {
-  const BillErrorView({Key? key}) : super(key: key);
+  const BillErrorView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.5), // Dimmed background
+      backgroundColor: Colors.black.withValues(alpha: 0.5), // Dimmed background
       body: Stack(
         children: [
           // Background layout from Bill Inquiry showing through (mocked)
@@ -43,7 +43,7 @@ class BillErrorView extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, -5)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, -5)),
                 ],
               ),
               child: Column(

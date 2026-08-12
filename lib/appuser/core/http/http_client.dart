@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
+import '../constants/constants.dart';
 import '../utils/helpers.dart';
 
 class ApiResponse<T> {
@@ -69,7 +70,7 @@ class ApiRequest {
     final storage = const FlutterSecureStorage();
     final dio = Dio(
       BaseOptions(
-        baseUrl: 'AppConstants.API_BASE_URL',
+        baseUrl: AppConstants.API_BASE_URL,
         connectTimeout: const Duration(seconds: 10),
       ),
     );

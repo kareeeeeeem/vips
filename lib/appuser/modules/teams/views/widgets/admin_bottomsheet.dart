@@ -371,11 +371,7 @@ class SettingsAdminBottomSheet extends StatelessWidget {
             title: 'Notifications',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Notifications',
-                'Coming soon!',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              Get.toNamed('/notifications');
             },
           ),
           Divider(height: 1.h, color: Colors.grey.shade200),
@@ -385,11 +381,7 @@ class SettingsAdminBottomSheet extends StatelessWidget {
             title: 'Permissions',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Permissions',
-                'Coming soon!',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              Get.toNamed('/settings');
             },
           ),
           Divider(height: 1.h, color: Colors.grey.shade200),
@@ -399,11 +391,8 @@ class SettingsAdminBottomSheet extends StatelessWidget {
             title: 'Filter Options',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Filters',
-                'Coming soon!',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              final ctrl = Get.find<TeamsController>();
+              ctrl.showFilterSheet();
             },
           ),
           Divider(height: 1.h, color: Colors.grey.shade200),
@@ -413,11 +402,7 @@ class SettingsAdminBottomSheet extends StatelessWidget {
             title: 'Export Data',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Export',
-                'Preparing export...',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              Get.find<TeamsController>().exportEmployees();
             },
           ),
           Divider(height: 1.h, color: Colors.grey.shade200),
@@ -427,11 +412,7 @@ class SettingsAdminBottomSheet extends StatelessWidget {
             title: 'Help & Support',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Help',
-                'Opening support...',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              Get.toNamed('/settings');
             },
           ),
         ],
@@ -610,10 +591,22 @@ class OperationAdminBottomSheet extends StatelessWidget {
             title: 'View Details',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'View Details',
-                'Opening ${employee.name}\'s profile...',
-                snackPosition: SnackPosition.BOTTOM,
+              Get.dialog(
+                AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                  title: Text(employee.name, style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 16.sp)),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _infoRow('Role', employee.role),
+                      _infoRow('Email', employee.email),
+                      _infoRow('Status', employee.status.displayName),
+                      _infoRow('Joined', '${employee.joinDate.day}/${employee.joinDate.month}/${employee.joinDate.year}'),
+                    ],
+                  ),
+                  actions: [TextButton(onPressed: () => Get.back(), child: const Text('Close'))],
+                ),
               );
             },
           ),
@@ -624,11 +617,7 @@ class OperationAdminBottomSheet extends StatelessWidget {
             title: 'Edit Information',
             onTap: () {
               Get.back();
-              Get.snackbar(
-                'Edit',
-                'Opening edit form...',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              controller.showEditEmployeeSheet(employee);
             },
           ),
           Divider(height: 1.h, color: Colors.grey.shade200),
@@ -715,6 +704,19 @@ class OperationAdminBottomSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontFamily: 'Poppins', fontSize: 13.sp, color: Colors.grey.shade600)),
+          Text(value, style: TextStyle(fontFamily: 'Poppins', fontSize: 13.sp, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }

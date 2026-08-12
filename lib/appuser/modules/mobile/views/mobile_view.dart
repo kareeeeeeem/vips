@@ -6,11 +6,10 @@ import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/mobile_controller.dart';
 
 class MobilesView extends GetView<MobilesController> {
-  const MobilesView({Key? key}) : super(key: key);
+  const MobilesView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Get.put(MobilesController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
@@ -137,7 +136,7 @@ class MobilesView extends GetView<MobilesController> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: Offset(0, 2),
                           ),
@@ -153,9 +152,7 @@ class MobilesView extends GetView<MobilesController> {
                             decoration: BoxDecoration(
                               color:
                                   isSelected
-                                      ? AppColors.AppPrimaryColor.withOpacity(
-                                        0.1,
-                                      )
+                                      ? AppColors.AppPrimaryColor.withValues(alpha: 0.1)
                                       : Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(12.r),
                             ),
@@ -235,7 +232,7 @@ class MobilesView extends GetView<MobilesController> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: Offset(0, 2),
                           ),
@@ -301,7 +298,7 @@ class MobilesView extends GetView<MobilesController> {
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 20,
                   offset: Offset(0, 4),
                 ),
@@ -333,7 +330,7 @@ class MobilesView extends GetView<MobilesController> {
                       colors: [
                         operator['color'] ?? AppColors.AppPrimaryColor,
                         (operator['color'] ?? AppColors.AppPrimaryColor)
-                            .withOpacity(0.7),
+                            .withValues(alpha: 0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20.r),
@@ -396,7 +393,7 @@ class MobilesView extends GetView<MobilesController> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 15,
                       offset: Offset(0, 5),
                     ),
@@ -409,26 +406,6 @@ class MobilesView extends GetView<MobilesController> {
         ],
       );
     });
-  }
-
-  Widget _buildDetailRow(String label, String value, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildQuantitySelector(int optionIndex) {
@@ -455,7 +432,7 @@ class MobilesView extends GetView<MobilesController> {
                   border: Border.all(color: Colors.grey.shade300),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: Offset(0, 2),
                     ),
@@ -517,7 +494,7 @@ class MobilesView extends GetView<MobilesController> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.AppPrimaryColor.withOpacity(0.3),
+                      color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: Offset(0, 4),
                     ),
@@ -579,7 +556,7 @@ class MobilesView extends GetView<MobilesController> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, -4),
           ),

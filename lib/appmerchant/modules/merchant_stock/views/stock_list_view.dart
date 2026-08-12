@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_stock_controller.dart';
 
 class StockListView extends GetView<MerchantStockController> {
-  const StockListView({Key? key}) : super(key: key);
+  const StockListView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +64,33 @@ class StockListView extends GetView<MerchantStockController> {
                   ),
                   SizedBox(height: 16.h),
                   Expanded(
-                    child: Obx(() => ListView.builder(
-                      itemCount: controller.stockItems.length,
-                      itemBuilder: (context, index) {
-                        final item = controller.stockItems[index];
-                        return _buildStockItem(item);
-                      },
-                    )),
+                    child: Obx(() {
+                      if (controller.stockItems.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inventory_2_outlined, size: 56.sp, color: Colors.grey.shade300),
+                              SizedBox(height: 16.h),
+                              Text('No stock items',
+                                  style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w600)),
+                              SizedBox(height: 8.h),
+                              Text('Add items from your catalog to track inventory',
+                                  style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade400),
+                                  textAlign: TextAlign.center),
+                            ],
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: controller.stockItems.length,
+                        itemBuilder: (context, index) {
+                          final item = controller.stockItems[index];
+                          return _buildStockItem(item);
+                        },
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -109,7 +129,9 @@ class StockListView extends GetView<MerchantStockController> {
             SizedBox(height: 12.h),
             Text(title, style: TextStyle(fontSize: 11.sp, color: text, fontWeight: FontWeight.w600)),
             Obx(() => Text(
-              value is RxDouble ? 'D ${value.value.toStringAsFixed(2)}' : '${value}',
+              value is RxDouble
+                  ? 'D ${value.value.toStringAsFixed(2)}'
+                  : '${(value as RxInt).value}',
               style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: text),
             )),
           ],
@@ -125,7 +147,7 @@ class StockListView extends GetView<MerchantStockController> {
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(16.r),
-        border: item.isLowStock ? Border.all(color: const Color(0xFFDC2626).withOpacity(0.3)) : null,
+        border: item.isLowStock ? Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.3)) : null,
       ),
       child: Row(
         children: [

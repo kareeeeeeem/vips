@@ -9,8 +9,6 @@ class MerchantCreateBillView extends GetView<MerchantCreateBillController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(MerchantCreateBillController());
-
     return Scaffold(
       backgroundColor: const Color(0xFF111827), // Dark theme for POS feel
       appBar: AppBar(

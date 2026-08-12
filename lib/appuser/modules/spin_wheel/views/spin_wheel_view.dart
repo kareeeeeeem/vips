@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../controllers/spin_wheel_controller.dart';
 
 class SpinWheelView extends GetView<SpinWheelController> {
-  const SpinWheelView({Key? key}) : super(key: key);
+  const SpinWheelView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class SpinWheelView extends GetView<SpinWheelController> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withOpacity(0.4),
+                color: Colors.red.withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: Offset(0, 4),
               ),
@@ -119,7 +119,7 @@ class SpinWheelView extends GetView<SpinWheelController> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.withOpacity(0.5),
+                  color: Colors.red.withValues(alpha: 0.5),
                   blurRadius: 8,
                   offset: Offset(0, 2),
                 ),
@@ -152,7 +152,7 @@ class SpinWheelView extends GetView<SpinWheelController> {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
-              BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 4),
+              BoxShadow(color: Colors.green.withValues(alpha: 0.4), blurRadius: 4),
             ],
           ),
         ),
@@ -190,7 +190,7 @@ class SpinWheelView extends GetView<SpinWheelController> {
                   canPlay
                       ? [
                         BoxShadow(
-                          color: Color(0xFFFF6B35).withOpacity(0.4),
+                          color: Color(0xFFFF6B35).withValues(alpha: 0.4),
                           blurRadius: 16,
                           offset: Offset(0, 8),
                         ),

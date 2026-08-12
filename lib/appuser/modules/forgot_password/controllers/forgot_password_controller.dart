@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class ForgotPasswordController extends GetxController {
   final TextEditingController emailController = TextEditingController();
@@ -26,7 +27,7 @@ class ForgotPasswordController extends GetxController {
 
   Future<void> sendResetCode() async {
     if (!isEmailValid.value) {
-      Get.snackbar(
+      safeSnackbar(
         'Validation Error',
         'Please enter a valid email address.',
         snackPosition: SnackPosition.BOTTOM,
@@ -44,13 +45,14 @@ class ForgotPasswordController extends GetxController {
       });
 
       if (response.success) {
-        // Navigate to reset password screen, passing the email
+        // Navigate to OTP verification screen first, passing the email
+        // fromReset = true tells VerificationView to go to reset-password after OTP
         Get.toNamed(
-          '/reset-password',
-          arguments: {'email': emailController.text.trim()},
+          '/verification',
+          arguments: {'email': emailController.text.trim(), 'fromReset': true},
         );
 
-        Get.snackbar(
+        safeSnackbar(
           'Code Sent',
           response.message,
           snackPosition: SnackPosition.BOTTOM,
@@ -59,7 +61,7 @@ class ForgotPasswordController extends GetxController {
           duration: const Duration(seconds: 4),
         );
       } else {
-        Get.snackbar(
+        safeSnackbar(
           'Error',
           response.message,
           snackPosition: SnackPosition.BOTTOM,
@@ -68,7 +70,7 @@ class ForgotPasswordController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
+      safeSnackbar(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,

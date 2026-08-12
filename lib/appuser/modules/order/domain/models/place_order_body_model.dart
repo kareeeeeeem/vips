@@ -28,10 +28,10 @@ class PlaceOrderBodyModel {
     }
     orderNote = json['order_note'];
     storeId = json['store_id'];
-    discount = json['discount'].toDouble();
+    discount = (json['discount'] ?? 0).toDouble();
     discountType = json['discount_type'];
-    tax = json['tax'].toDouble();
-    paidAmount = json['paid_amount'].toDouble();
+    tax = (json['tax'] ?? 0).toDouble();
+    paidAmount = (json['paid_amount'] ?? 0).toDouble();
     paymentMethod = json['payment_method'];
   }
 
@@ -80,7 +80,7 @@ class Cart {
     itemId = json['item_id'];
     itemCampaignId = json['item_campaign_id'];
     price = json['price']?.toDouble();
-    variant = json['variant'].cast<String>();
+    variant = (json['variant'] as List?)?.cast<String>() ?? [];
     if (json['variation'] != null) {
       variation = [];
       json['variation'].forEach((v) {
@@ -90,8 +90,8 @@ class Cart {
     discountAmount = json['discount_amount']?.toDouble();
     quantity = json['quantity'];
     taxAmount = json['tax_amount']?.toDouble();
-    addOnIds = json['add_on_ids'].cast<int>();
-    addOnQtys = json['add_on_qtys'].cast<int>();
+    addOnIds = (json['add_on_ids'] as List?)?.cast<int>() ?? [];
+    addOnQtys = (json['add_on_qtys'] as List?)?.cast<int>() ?? [];
   }
 
   Map<String, dynamic> toJson() {

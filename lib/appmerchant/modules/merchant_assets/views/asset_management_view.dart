@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/merchant_asset_controller.dart';
 
 class AssetManagementView extends GetView<MerchantAssetController> {
-  const AssetManagementView({Key? key}) : super(key: key);
+  const AssetManagementView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class AssetManagementView extends GetView<MerchantAssetController> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: Row(
@@ -47,7 +47,7 @@ class AssetManagementView extends GetView<MerchantAssetController> {
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF97316).withOpacity(0.1),
+                          color: const Color(0xFFF97316).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(Icons.inventory, color: const Color(0xFFF97316), size: 24.sp),
@@ -63,7 +63,7 @@ class AssetManagementView extends GetView<MerchantAssetController> {
                         ),
                       ),
                       Text(
-                        'D ${asset.value}',
+                        'D ${asset.value.toStringAsFixed(2)}',
                         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
                       ),
                     ],
@@ -96,7 +96,7 @@ class AssetManagementView extends GetView<MerchantAssetController> {
                 SizedBox(height: 4.h),
                 Obx(() {
                   double total = controller.assets.fold(0, (sum, item) => sum + item.value);
-                  return Text('D $total', style: TextStyle(color: Colors.white, fontSize: 24.sp, fontWeight: FontWeight.w900));
+                  return Text('D ${total.toStringAsFixed(2)}', style: TextStyle(color: Colors.white, fontSize: 24.sp, fontWeight: FontWeight.w900));
                 }),
               ],
             ),

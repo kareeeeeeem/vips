@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/business_registration_controller.dart';
 
 class CategorySheet extends GetView<BusinessRegistrationController> {
-  const CategorySheet({Key? key}) : super(key: key);
+  const CategorySheet({super.key});
 
   @override
   Widget build(BuildContext context) {

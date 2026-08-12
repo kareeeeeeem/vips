@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../controllers/merchant_order_controller.dart';
 
 class SearchBarWidget extends GetView<MerchantOrderController> {
-  const SearchBarWidget({Key? key}) : super(key: key);
+  const SearchBarWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

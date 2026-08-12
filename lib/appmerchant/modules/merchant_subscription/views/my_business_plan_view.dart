@@ -5,7 +5,7 @@ import '../controllers/merchant_subscription_controller.dart';
 import '../../../routes/merchant_routes.dart';
 
 class MyBusinessPlanView extends GetView<MerchantSubscriptionController> {
-  const MyBusinessPlanView({Key? key}) : super(key: key);
+  const MyBusinessPlanView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class MyBusinessPlanView extends GetView<MerchantSubscriptionController> {
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
             ],
           ),
           child: IconButton(
@@ -162,7 +162,7 @@ class MyBusinessPlanView extends GetView<MerchantSubscriptionController> {
               text,
               style: TextStyle(
                 fontSize: 13.sp,
-                color: isActive ? Colors.white : Colors.white.withOpacity(0.7),
+                color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.7),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                 decoration: isActive ? null : TextDecoration.lineThrough,
               ),
