@@ -313,7 +313,7 @@ class CreditView extends GetView<CreditController> {
                       ),
                       SizedBox(width: 12.w),
                       Text(
-                        'Bank Card',
+                        'Payment Method',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 16.sp,
@@ -340,13 +340,31 @@ class CreditView extends GetView<CreditController> {
               Obx(() {
                 if (!controller.isExpanded.value) return SizedBox.shrink();
 
+                if (controller.availableGateways.isEmpty) {
+                  return Column(
+                    children: [
+                      Divider(height: 1, color: Colors.grey.shade200),
+                      Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Text(
+                          'No payment gateway is active on this account yet.',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13.sp,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
                 return Column(
                   children: [
                     Divider(height: 1, color: Colors.grey.shade200),
-                    ...controller.bankCards.map(
-                      (card) => _buildCardOption(card),
+                    ...controller.availableGateways.map(
+                      (gateway) => _buildGatewayOption(gateway),
                     ),
-                    _buildAddCardOption(),
                   ],
                 );
               }),
@@ -357,12 +375,12 @@ class CreditView extends GetView<CreditController> {
     );
   }
 
-  Widget _buildCardOption(BankCard card) {
+  Widget _buildGatewayOption(Map<String, String> gateway) {
     return Obx(() {
-      final isSelected = controller.selectedPaymentMethod.value == card.id;
+      final isSelected = controller.selectedGateway.value == gateway['id'];
 
       return GestureDetector(
-        onTap: () => controller.selectCard(card.id),
+        onTap: () => controller.selectGateway(gateway['id']!),
         child: Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
@@ -402,88 +420,20 @@ class CreditView extends GetView<CreditController> {
 
               SizedBox(width: 16.w),
 
-              // Card info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      card.bankName,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      card.maskedNumber,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11.sp,
-                        color: Colors.grey.shade600,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
+              Text(
+                gateway['name']!,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
               ),
-
-              // Default badge
-              if (card.isDefault)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text(
-                    'Default',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green.shade700,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
       );
     });
-  }
-
-  Widget _buildAddCardOption() {
-    return GestureDetector(
-      onTap: controller.showAddCardSheet,
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(6.w),
-              decoration: BoxDecoration(
-                color: AppColors.AppPrimaryColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.add, color: Colors.white, size: 16.sp),
-            ),
-            SizedBox(width: 16.w),
-            Text(
-              'Add New Card',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColors.AppPrimaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildProceedButton() {

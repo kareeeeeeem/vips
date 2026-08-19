@@ -247,18 +247,8 @@ void main() {
       credit = CreditController();
     });
 
-    test('BankCard.maskedNumber formats the masked card number', () {
-      final card = BankCard(
-        id: '9',
-        bankName: 'Test Bank',
-        lastFourDigits: '4242',
-      );
-      expect(card.maskedNumber, equals('**** **** **** 4242'));
-      expect(card.isDefault, isFalse);
-    });
-
-    test('starts with no bank cards loaded (loadBankCards is async/network)', () {
-      expect(credit.bankCards, isEmpty);
+    test('starts with no gateways loaded (loadWalletAndGateways is async/network)', () {
+      expect(credit.availableGateways, isEmpty);
     });
 
     test('validateVipsNumber requires an integer >= minVipsPurchase (100)', () {
@@ -283,18 +273,18 @@ void main() {
       expect(credit.amountInTnd, equals(0.0));
     });
 
-    test('isFormValid requires both a valid VIPS number and a payment method', () {
+    test('isFormValid requires both a valid VIPS number and a selected gateway', () {
       credit.vipsNumberController.text = '200';
       credit.validateVipsNumber();
-      expect(credit.isFormValid, isFalse); // no payment method yet
+      expect(credit.isFormValid, isFalse); // no gateway selected yet
 
-      credit.selectCard('card-1');
+      credit.selectGateway('paymee');
       expect(credit.isFormValid, isTrue);
     });
 
-    test('selectCard sets the selected payment method', () {
-      credit.selectCard('card-42');
-      expect(credit.selectedPaymentMethod.value, equals('card-42'));
+    test('selectGateway sets the selected gateway', () {
+      credit.selectGateway('paypal');
+      expect(credit.selectedGateway.value, equals('paypal'));
     });
 
     test('proceedToPayment with an invalid form is a no-op', () {
