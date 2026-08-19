@@ -31,18 +31,8 @@ class VIPsClubController extends GetxController {
   var hasCheckedInToday = false.obs;
   var canClaimReward = true.obs;
 
-  // Missions
-  var weeklyStreak = 3.obs;
-  var weeklyStreakTotal = 7.obs;
-  var dailyCheckIn = 4.obs;
-  var dailyCheckInTotal = 7.obs;
-
   // History
   var transactionHistory = <Map<String, dynamic>>[].obs;
-
-  // Spin wheel remaining spins
-  var remainingSpins = 3.obs;
-  var isSpinning = false.obs;
 
   @override
   void onInit() {
@@ -209,41 +199,6 @@ class VIPsClubController extends GetxController {
     Get.toNamed('/spin-wheel');
   }
 
-  void spinWheel() async {
-    if (remainingSpins.value <= 0 || isSpinning.value) return;
-
-    isSpinning.value = true;
-
-    try {
-      final response = await ApiService().post('/rewards/spin-wheel', {});
-      
-      if (response.success && response.data != null) {
-        remainingSpins.value--;
-        final wonPrize = response.data['amount'] ?? 0;
-        
-        // Wait for UI animation (assuming 3 seconds spinner)
-        await Future.delayed(Duration(seconds: 3));
-
-        todayCoins.value += (wonPrize as num).toInt();
-        
-        // Show prize dialog
-        safeSnackbar(
-          'Congratulations!',
-          'You won $wonPrize coins!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-      } else {
-        safeSnackbar('Oops', response.message, backgroundColor: Colors.red, colorText: Colors.white);
-      }
-    } catch (e) {
-      safeSnackbar('Error', 'Failed to spin the wheel: $e');
-    } finally {
-      isSpinning.value = false;
-    }
-  }
-
   final RxString referralCode = ''.obs;
 
   Future<void> loadReferralCode() async {
@@ -336,12 +291,4 @@ class VIPsClubController extends GetxController {
     );
   }
 
-  void joinMission(String missionType) {
-    safeSnackbar(
-      'Mission',
-      'Joining $missionType mission...',
-      backgroundColor: Colors.purple,
-      colorText: Colors.white,
-    );
-  }
 }

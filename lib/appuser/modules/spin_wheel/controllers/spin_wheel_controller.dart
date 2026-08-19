@@ -103,9 +103,14 @@ class SpinWheelController extends GetxController
 
   Future<void> _loadRemainingSpins() async {
     try {
-      final res = await ApiService().get('/user/vips-club');
+      // GET /user/vips-club never had spin fields — this always silently
+      // no-op'd, leaving remainingSpins stuck at the hardcoded default of
+      // 3 (and POST /rewards/spin-wheel had no server-side cap at all, so
+      // navigating away and back reset it indefinitely). Real daily count
+      // now lives in /rewards/limits alongside the other reward limits.
+      final res = await ApiService().get('/rewards/limits');
       if (res.success && res.data != null) {
-        final spins = res.data['remainingSpins'] ?? res.data['spinsLeft'] ?? res.data['spins'];
+        final spins = res.data['spinWheel']?['remainingSpins'];
         if (spins != null) remainingSpins.value = (spins as num).toInt();
       }
     } catch (_) {}
@@ -122,7 +127,8 @@ class SpinWheelController extends GetxController
     try {
       final response = await ApiService().post('/rewards/spin-wheel', {});
       if (response.success && response.data != null) {
-        remainingSpins.value--;
+        final serverRemaining = response.data['remainingSpins'];
+        remainingSpins.value = serverRemaining != null ? (serverRemaining as num).toInt() : remainingSpins.value - 1;
         final amountWon = response.data['amount'];
 
         // Find the index of the prize we won
@@ -161,7 +167,8 @@ class SpinWheelController extends GetxController
 
         animationController.forward(from: 0);
       } else {
-        safeSnackbar('Error', 'Failed to spin. Try again.');
+        if (response.statusCode == 429) remainingSpins.value = 0;
+        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to spin. Try again.');
         isSpinning.value = false;
         canSpin.value = true;
       }
@@ -188,11 +195,6 @@ class SpinWheelController extends GetxController
       transition: Transition.fadeIn,
       duration: Duration(milliseconds: 300),
     );
-  }
-
-  void resetSpins() {
-    remainingSpins.value = 3;
-    canSpin.value = true;
   }
 
   @override

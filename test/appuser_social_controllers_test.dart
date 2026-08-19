@@ -132,14 +132,6 @@ void main() {
       expect(c.wonPrize.value, isNull);
     });
 
-    test('resetSpins restores remainingSpins to 3 and canSpin to true', () {
-      c.remainingSpins.value = 0;
-      c.canSpin.value = false;
-      c.resetSpins();
-      expect(c.remainingSpins.value, equals(3));
-      expect(c.canSpin.value, isTrue);
-    });
-
     test('spinWheel is a no-op when remainingSpins is 0', () {
       c.remainingSpins.value = 0;
       c.spinWheel();
@@ -395,13 +387,9 @@ void main() {
       expect(c.superBonus.value, equals(0));
       expect(c.referrals.value, equals(0));
       expect(c.currentRank.value, equals(0));
-      expect(c.weeklyStreak.value, equals(3));
-      expect(c.dailyCheckIn.value, equals(4));
       expect(c.checkInStreak.value, equals(0));
       expect(c.referralCode.value, isEmpty);
       expect(c.transactionHistory, isEmpty);
-      expect(c.remainingSpins.value, equals(3));
-      expect(c.isSpinning.value, isFalse);
       expect(c.hasCheckedInToday.value, isFalse);
       expect(c.canClaimReward.value, isTrue);
     });
@@ -432,27 +420,11 @@ void main() {
       expect(c.convertibleDiamonds.value, equals(0));
     });
 
-    test('spinWheel is a no-op when out of spins', () {
-      c.remainingSpins.value = 0;
-      c.spinWheel();
-      expect(c.isSpinning.value, isFalse);
-    });
-
-    test('spinWheel is a no-op when already spinning', () {
-      c.isSpinning.value = true;
-      c.spinWheel();
-      expect(c.remainingSpins.value, equals(3));
-    });
-
     test('convertDiamonds is a no-op below the 100-diamond minimum', () {
       c.convertibleDiamonds.value = 50;
       c.convertDiamonds();
       expect(c.convertibleDiamonds.value, equals(50));
       expect(c.transactionHistory, isEmpty);
-    });
-
-    test('joinMission runs without throwing', () {
-      expect(() => c.joinMission('Referral'), returnsNormally);
     });
   });
 
