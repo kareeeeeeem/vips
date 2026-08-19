@@ -694,59 +694,6 @@ class CheckoutView extends GetView<CheckoutController> {
       ),
       child: Column(
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'VIPs Club! Place Order and Get',
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF92400E),
-                    fontFamily: 'SF Pro Display',
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '+',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF92400E),
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.circle,
-                      color: const Color(0xFFFBBF24),
-                      size: 16.sp,
-                    ),
-                    SizedBox(width: 4.w),
-                    Obx(
-                      () => Text(
-                        '${controller.vipPoints.value}',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF92400E),
-                          fontFamily: 'SF Pro Display',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 16.h),
           GestureDetector(
             onTap: controller.placeOrder,
             child: Container(

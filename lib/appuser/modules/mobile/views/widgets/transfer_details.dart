@@ -10,30 +10,9 @@ import 'order_details.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CardDetailsController extends GetxController {
-  // Liste des cartes
-  final RxList<CardDetails> cards =
-      <CardDetails>[
-        CardDetails(
-          cardNumber: '1234 5678 9012 3456',
-          vipPoints: '1500 Points',
-          status: 'D1',
-        ),
-        CardDetails(
-          cardNumber: '9876 5432 1098 7654',
-          vipPoints: '2300 Points',
-          status: 'D5',
-        ),
-        CardDetails(
-          cardNumber: '5432 1098 7654 3210',
-          vipPoints: '750 Points',
-          status: 'D1',
-        ),
-        CardDetails(
-          cardNumber: '6789 0123 4567 8901',
-          vipPoints: '3100 Points',
-          status: 'D10',
-        ),
-      ].obs;
+  // No payment methods backend/tokenization exists yet — keep this honestly
+  // empty instead of showing fake card data.
+  final RxList<CardDetails> cards = <CardDetails>[].obs;
 
   final RxInt currentCardIndex = 0.obs;
   final RxBool isCardNumberVisible = false.obs;
@@ -427,13 +406,16 @@ class CardDetailsView extends GetView<CardDetailsController> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: 20.h),
+        child: Obx(() {
+          if (controller.cards.isEmpty) {
+            return _buildEmptyState();
+          }
+          return Column(
+            children: [
+              SizedBox(height: 20.h),
 
-            // Card indicator (moved to top)
-            Obx(
-              () => Text(
+              // Card indicator (moved to top)
+              Text(
                 '${controller.currentCardIndex.value + 1}/${controller.cards.length}',
                 style: TextStyle(
                   fontSize: 18.sp,
@@ -442,14 +424,12 @@ class CardDetailsView extends GetView<CardDetailsController> {
                   letterSpacing: 1,
                 ),
               ),
-            ),
 
-            SizedBox(height: 15.h),
+              SizedBox(height: 15.h),
 
-            // Carousel
-            Expanded(
-              child: Obx(
-                () => CarouselSlider.builder(
+              // Carousel
+              Expanded(
+                child: CarouselSlider.builder(
                   itemCount: controller.cards.length,
                   itemBuilder: (context, index, realIndex) {
                     return _buildCardItem(controller.cards[index]);
@@ -466,19 +446,62 @@ class CardDetailsView extends GetView<CardDetailsController> {
                   ),
                 ),
               ),
+
+              SizedBox(height: 20.h),
+
+              // Action buttons row
+              _buildActionButtonsRow(),
+
+              SizedBox(height: 20.h),
+
+              // Transfer button
+              _buildTransferButton(),
+
+              SizedBox(height: 25.h),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(24.w),
+              decoration: BoxDecoration(
+                color: AppColors.AppPrimaryColor.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.credit_card_off_outlined,
+                size: 48.sp,
+                color: AppColors.AppPrimaryColor,
+              ),
             ),
-
             SizedBox(height: 20.h),
-
-            // Action buttons row
-            _buildActionButtonsRow(),
-
-            SizedBox(height: 20.h),
-
-            // Transfer button
-            _buildTransferButton(),
-
-            SizedBox(height: 25.h),
+            Text(
+              'No payment methods yet',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Adding and managing cards is coming soon.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.grey.shade600,
+              ),
+            ),
           ],
         ),
       ),

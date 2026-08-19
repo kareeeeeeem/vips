@@ -26,8 +26,10 @@ class CustomerModel {
     return CustomerModel(
       id: json['_id'] ?? json['id'] ?? '',
       name: name,
-      totalVisits: (json['totalVisits'] ?? 0) as int,
-      pointsEarned: (json['walletPoints'] ?? 0) as int,
+      // Backend aggregation can return these as either int or double —
+      // a bare `as int` crashes on a double count.
+      totalVisits: ((json['totalVisits'] ?? 0) as num).toInt(),
+      pointsEarned: ((json['walletPoints'] ?? 0) as num).toInt(),
       pointsSpent: 0,
       lastVisit: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal().toString().split('.')[0]

@@ -22,9 +22,14 @@ class ResetPasswordController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // Get email from navigation arguments
+    // Get email (and OTP, already verified on the previous screen) from
+    // navigation arguments so the user isn't forced to retype the code.
     final args = Get.arguments as Map<String, dynamic>?;
     email = args?['email'] ?? '';
+    final otp = args?['otp'];
+    if (otp != null) {
+      otpController.text = otp.toString();
+    }
 
     passwordController.addListener(_validatePassword);
     confirmPasswordController.addListener(_validateConfirmPassword);

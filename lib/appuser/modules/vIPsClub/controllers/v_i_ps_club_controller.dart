@@ -56,16 +56,20 @@ class VIPsClubController extends GetxController {
       final response = await ApiService().get('/user/vips-club');
       if (response.success && response.data != null) {
         final data = response.data;
-        convertibleDiamonds.value = data['points'] ?? data['convertibleDiamonds'] ?? 0;
-        pendingDiamonds.value = data['pendingDiamonds'] ?? data['pending'] ?? 0;
-        suspendedDiamonds.value = data['suspendedDiamonds'] ?? data['suspended'] ?? 0;
-        superBonus.value = data['superBonus'] ?? data['bonus'] ?? 0;
-        referrals.value = data['referrals'] ?? data['referralCount'] ?? 0;
-        currentRank.value = data['rank'] ?? data['currentRank'] ?? 0;
-        todayCoins.value = data['todayCoins'] ?? data['dailyCoins'] ?? 0;
+        convertibleDiamonds.value =
+            ((data['points'] ?? data['convertibleDiamonds'] ?? 0) as num).toInt();
+        pendingDiamonds.value =
+            ((data['pendingDiamonds'] ?? data['pending'] ?? 0) as num).toInt();
+        suspendedDiamonds.value =
+            ((data['suspendedDiamonds'] ?? data['suspended'] ?? 0) as num).toInt();
+        superBonus.value = ((data['superBonus'] ?? data['bonus'] ?? 0) as num).toInt();
+        referrals.value =
+            ((data['referrals'] ?? data['referralCount'] ?? 0) as num).toInt();
+        currentRank.value = ((data['rank'] ?? data['currentRank'] ?? 0) as num).toInt();
+        todayCoins.value = ((data['todayCoins'] ?? data['dailyCoins'] ?? 0) as num).toInt();
         hasCheckedInToday.value = data['checkedInToday'] ?? false;
         canClaimReward.value = !hasCheckedInToday.value;
-        checkInStreak.value = data['checkInStreak'] ?? 0;
+        checkInStreak.value = ((data['checkInStreak'] ?? 0) as num).toInt();
 
         final List<dynamic> days = data['checkInDays'] ?? [];
         if (days.isNotEmpty) {
@@ -247,6 +251,10 @@ class VIPsClubController extends GetxController {
       final res = await ApiService().get('/user/referral');
       if (res.success && res.data != null) {
         referralCode.value = (res.data['referralCode'] ?? res.data['code'] ?? '').toString();
+        // /user/vips-club never returns a referral count, so the "Referrals"
+        // stat would otherwise always show 0 — pull it from here instead.
+        final joined = res.data['totalJoined'] ?? res.data['totalInvited'];
+        if (joined != null) referrals.value = (joined as num).toInt();
       }
     } catch (_) {}
   }

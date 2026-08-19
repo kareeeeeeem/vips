@@ -221,28 +221,31 @@ class CreditView extends GetView<CreditController> {
                 ),
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Minimum: ',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue.shade900,
+                  child: Obx(
+                    () => RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Minimum: ',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue.shade900,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: '100 VPS = 10 TND',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.blue.shade700,
+                          TextSpan(
+                            text:
+                                '${controller.minVipsPurchase} VPS = ${(controller.minVipsPurchase * controller.vipsToTndRate).toStringAsFixed(2)} TND',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.blue.shade700,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -77,6 +77,20 @@ class MerchantStockController extends GetxController {
     lowStockCount.value = low;
   }
 
+  Future<void> addStockItem(StockItem item) async {
+    try {
+      final res = await ApiService().post('/merchant/stock', item.toJson());
+      if (res.success && res.data != null) {
+        stockItems.insert(0, StockItem.fromJson(res.data));
+        _calculateStats();
+      } else {
+        safeSnackbar('Error', 'Failed to add stock item', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Failed to add stock item', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
   Future<void> adjustStock(String id, int adjustment) async {
     final index = stockItems.indexWhere((e) => e.id == id);
     if (index == -1) return;

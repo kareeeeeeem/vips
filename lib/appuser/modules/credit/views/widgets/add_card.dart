@@ -106,16 +106,18 @@ class AddCardBottomSheet extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   Get.back();
+                  // Card payments aren't wired to a real payment processor yet —
+                  // don't claim success for something that isn't actually saved.
                   safeSnackbar(
-                    'Success',
-                    'Card added successfully',
+                    'Coming Soon',
+                    'Adding payment cards will be available in a future update',
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.grey.shade800,
                     colorText: Colors.white,
                     duration: Duration(seconds: 2),
                     margin: EdgeInsets.all(16.w),
                     borderRadius: 12.r,
-                    icon: Icon(Icons.check_circle_rounded, color: Colors.white),
+                    icon: Icon(Icons.info_outline_rounded, color: Colors.white),
                   );
                 },
                 child: Container(

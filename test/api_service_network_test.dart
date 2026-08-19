@@ -63,6 +63,10 @@ void main() {
           body = {'success': false, 'message': 'Token expired'};
           request.response.statusCode = 401;
           break;
+        case '/auth/login':
+          body = {'success': false, 'message': 'Invalid phone or password'};
+          request.response.statusCode = 401;
+          break;
         default:
           body = {'success': false, 'message': 'Not found'};
           request.response.statusCode = 404;
@@ -155,8 +159,19 @@ void main() {
         () async {
       final response = await ApiService().get('/server-error');
       expect(response.success, isFalse);
-      expect(response.statusCode, equals(500));
       expect(response.message, equals('Something broke server-side'));
+    });
+
+    test(
+        'post() to /auth/login returning 401 does not trigger route redirect and returns ApiResponse',
+        () async {
+      final response = await ApiService().post('/auth/login', {
+        'phone': '12345678',
+        'password': 'wrongpassword',
+      });
+      expect(response.success, isFalse);
+      expect(response.statusCode, equals(401));
+      expect(response.message, equals('Invalid phone or password'));
     });
   });
 

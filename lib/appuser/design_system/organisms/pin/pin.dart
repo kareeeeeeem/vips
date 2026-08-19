@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -10,7 +12,9 @@ enum ValidationMethod { pin, biometrics }
 /// Generic PIN validation class with biometric support - Fine UI Version
 class PinValidator extends StatefulWidget {
   final int pinLength;
-  final bool Function(String pin) validatePin;
+  // FutureOr so callers can validate against a real backend call
+  // (POST /auth/pin/verify) as well as a plain local check.
+  final FutureOr<bool> Function(String pin) validatePin;
   final Future<bool> Function()? validateBiometrics;
   final void Function() onValidPin;
   final Color primaryColor;
@@ -214,7 +218,7 @@ class _PinValidatorState extends State<PinValidator>
       return;
     }
 
-    if (widget.validatePin(_pin)) {
+    if (await widget.validatePin(_pin)) {
       await _resetAttempts();
       setState(() {
         _errorMessage = null;

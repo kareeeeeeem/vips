@@ -280,14 +280,17 @@ class VipsIdContent extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                // Labels now match what actually happens — this used to
+                // say "Download" over a clipboard copy and "Print" over a
+                // text share (no real file save or print dialog exists).
                 _buildActionButton(
-                  icon: Icons.download_rounded,
-                  label: 'Download',
+                  icon: Icons.copy_rounded,
+                  label: 'Copy',
                   color: Colors.grey.shade700,
                   primaryColor: primaryColor,
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: 'VIPs ID: $userId\nName: $userName'));
-                    safeSnackbar('Saved', 'VIPs ID details copied to clipboard', snackPosition: SnackPosition.BOTTOM);
+                    safeSnackbar('Copied', 'VIPs ID details copied to clipboard', snackPosition: SnackPosition.BOTTOM);
                   },
                 ),
                 _buildActionButton(
@@ -296,16 +299,6 @@ class VipsIdContent extends StatelessWidget {
                   color: Colors.grey.shade700,
                   primaryColor: primaryColor,
                   onTap: () => Get.toNamed(Routes.Q_R_SCANNER),
-                ),
-                _buildActionButton(
-                  icon: Icons.print_rounded,
-                  label: 'Print',
-                  color: Colors.grey.shade700,
-                  primaryColor: primaryColor,
-                  onTap: () => SharePlus.instance.share(ShareParams(
-                    text: 'VIPs Membership ID\nID: $userId\nName: $userName',
-                    subject: 'VIPs ID Card — $userName',
-                  )),
                 ),
                 _buildActionButton(
                   icon: Icons.share_rounded,

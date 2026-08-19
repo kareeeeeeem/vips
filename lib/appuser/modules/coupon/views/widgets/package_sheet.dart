@@ -412,19 +412,15 @@ class _CreatePackageSheetState extends State<CreatePackageSheet> {
                     child: GestureDetector(
                       onTap: () {
                         Get.back();
+                        // No backend endpoint exists yet for creating a
+                        // subscription package (see CouponController.loadPackages)
+                        // — don't claim success for something never saved.
                         safeSnackbar(
-                          'Success',
-                          'Package created successfully',
+                          'Coming Soon',
+                          'Creating packages will be available in a future update',
                           snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          duration: Duration(seconds: 2),
                           margin: EdgeInsets.all(16.w),
                           borderRadius: 12.r,
-                          icon: Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                          ),
                         );
                       },
                       child: Container(

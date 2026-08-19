@@ -85,7 +85,7 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
                       itemCount: controller.availablePlans.length,
                       itemBuilder: (_, i) {
                         final plan = controller.availablePlans[i];
-                        final planCode = (plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
+                        final planCode = (plan['code'] ?? plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
                         final isCurrent = planCode == currentPlanCode;
                         return _buildPlanCard(plan: plan, isCurrent: isCurrent);
                       },
@@ -119,11 +119,11 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
   }
 
   Widget _buildPlanCard({required Map<dynamic, dynamic> plan, required bool isCurrent, bool isFallback = false}) {
-    final planName = (plan['name'] ?? plan['planName'] ?? plan['id'] ?? 'Plan').toString();
+    final planName = (plan['name'] ?? plan['planName'] ?? plan['code'] ?? plan['id'] ?? 'Plan').toString();
     final price = ((plan['price'] ?? plan['monthlyPrice'] ?? 0) as num?) ?? 0;
     final currency = (plan['currency'] ?? 'D').toString();
     final features = plan['features'] as List? ?? _extractFeatures(plan);
-    final planCode = (plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
+    final planCode = (plan['code'] ?? plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
 
     final Color planColor = _planColor(planCode);
 

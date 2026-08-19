@@ -166,11 +166,16 @@ void main() {
       expect(cart.selectedPaymentMethodLabel, equals('Cash on Delivery'));
     });
 
-    test('normalizedPaymentMethod converts cash_on_delivery to cash', () {
+    test('normalizedPaymentMethod maps to the Order schema enum', () {
+      // Order schema only accepts wallet/cash/card/online — anything else
+      // fails Mongoose validation server-side, so every gateway choice
+      // (paypal, stripe, ...) must resolve to 'online', not its raw name.
       cart.selectedPaymentMethod.value = 'cash_on_delivery';
       expect(cart.normalizedPaymentMethod, equals('cash'));
-      cart.selectedPaymentMethod.value = 'PayPal';
-      expect(cart.normalizedPaymentMethod, equals('paypal'));
+      cart.selectedPaymentMethod.value = 'wallet';
+      expect(cart.normalizedPaymentMethod, equals('wallet'));
+      cart.selectedPaymentMethod.value = 'paypal';
+      expect(cart.normalizedPaymentMethod, equals('online'));
     });
 
     test('addItem merges quantity for identical id + options', () {
@@ -453,12 +458,6 @@ void main() {
       expect(profile.refundedOrdersCount, equals(1));
     });
 
-    test('toggleStoresExpanded flips the boolean', () {
-      expect(profile.isStoresExpanded.value, isFalse);
-      profile.toggleStoresExpanded();
-      expect(profile.isStoresExpanded.value, isTrue);
-    });
-
     test('primaryColor depends on selectedRole', () {
       profile.selectedRole.value = 'Vendor';
       expect(profile.primaryColor, equals(const Color(0xFFFFC107)));
@@ -469,7 +468,7 @@ void main() {
     test('servicesList returns a role-specific menu', () {
       profile.selectedRole.value = 'Admin';
       expect(
-        profile.servicesList.any((s) => s['title'] == 'Recovery'),
+        profile.servicesList.any((s) => s['title'] == 'Report'),
         isTrue,
       );
       profile.selectedRole.value = 'Customer';

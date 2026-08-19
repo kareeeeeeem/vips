@@ -115,4 +115,10 @@ const Map<String, String> arSA = {
   'was': 'كان',
   'you_save': 'توفر',
   'instant_confirmation': 'تأكيد فوري بعد الشراء',
+  'no_hot_deals_found': 'لا توجد عروض ساخنة',
+  'no_merchants_found': 'لا يوجد تجار',
+  'no_merchant_data': 'لا توجد بيانات عن التاجر',
+  'merchant_details': 'تفاصيل التاجر',
+  'merchant_details_description': 'تصفح معلومات وعروض هذا التاجر.',
+  'no_deal_data': 'لا توجد بيانات عن العرض',
 };

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class RewardPage extends StatefulWidget {
   const RewardPage({super.key});
@@ -11,9 +13,7 @@ class RewardPage extends StatefulWidget {
 
 class _RewardPageState extends State<RewardPage> {
   final TextEditingController promoCodeController = TextEditingController();
-  final TextEditingController phoneIdController = TextEditingController(
-    text: '#12345678',
-  );
+  final TextEditingController phoneIdController = TextEditingController();
   final TextEditingController amountController = TextEditingController(
     text: '0.000',
   );
@@ -23,6 +23,67 @@ class _RewardPageState extends State<RewardPage> {
   final FocusNode amountFocus = FocusNode();
 
   String selectedCurrency = 'D';
+  bool isSubmitting = false;
+
+  bool isLoadingLimits = true;
+  double maxExpensePerTransaction = 0;
+  int dailyLimitPoints = 0;
+  int remainingTodayPoints = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLimits();
+  }
+
+  Future<void> _loadLimits() async {
+    try {
+      final res = await ApiService().get('/rewards/limits');
+      if (res.success && res.data != null) {
+        final reward = res.data['reward'] as Map;
+        setState(() {
+          maxExpensePerTransaction = (reward['maxExpensePerTransaction'] as num).toDouble();
+          dailyLimitPoints = (reward['dailyLimitPoints'] as num).toInt();
+          remainingTodayPoints = (reward['remainingTodayPoints'] as num).toInt();
+        });
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => isLoadingLimits = false);
+    }
+  }
+
+  Future<void> _proceed() async {
+    final amount = double.tryParse(amountController.text.trim());
+    if (amount == null || amount <= 0) {
+      safeSnackbar('Invalid amount', 'Enter a bill amount greater than 0.', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    setState(() => isSubmitting = true);
+    try {
+      final response = await ApiService().post('/rewards/expense-to-reward', {
+        'amount': amount,
+      });
+      if (response.success) {
+        final pointsEarned = response.data is Map ? response.data['pointsEarned'] : null;
+        Get.back();
+        safeSnackbar(
+          'Success',
+          pointsEarned != null
+              ? 'You earned $pointsEarned VIPS points!'
+              : 'Expense converted to rewards!',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not process reward. Please try again.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      if (mounted) setState(() => isSubmitting = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -163,6 +224,8 @@ class _RewardPageState extends State<RewardPage> {
                               controller: phoneIdController,
                               focusNode: phoneIdFocus,
                               decoration: InputDecoration(
+                                hintText: 'Merchant phone / ID (optional)',
+                                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15.sp),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -396,98 +459,78 @@ class _RewardPageState extends State<RewardPage> {
                           ),
                           SizedBox(height: 20.h),
 
-                          // Daily Limit Row
-                          _buildLimitRow(
-                            leftLabel: 'Daily Limit',
-                            leftValue: '1000.0000 USD',
-                            rightLabel: 'Remaining Daily Limit',
-                            rightValue: '60.3954 USD',
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Divider
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
+                          if (isLoadingLimits)
+                            const Center(child: CircularProgressIndicator())
+                          else ...[
+                            // Daily Limit Row — real numbers from
+                            // GET /rewards/limits, backed by this user's
+                            // actual Transaction history for today.
+                            _buildLimitRow(
+                              leftLabel: 'Daily Limit',
+                              leftValue: '$dailyLimitPoints pts',
+                              rightLabel: 'Remaining Today',
+                              rightValue: '$remainingTodayPoints pts',
                             ),
-                          ),
 
-                          SizedBox(height: 18.h),
+                            SizedBox(height: 18.h),
 
-                          // Monthly Limit Row
-                          _buildLimitRow(
-                            leftLabel: 'Monthly Limit',
-                            leftValue: '10000.0000 USD',
-                            rightLabel: 'Remaining Monthly Limit',
-                            rightValue: '10000.0000 USD',
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Divider
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Transaction Limit
-                          Container(
-                            padding: EdgeInsets.all(14.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 18.sp,
-                                  color: Color(0xFF2E7D5F),
-                                ),
-                                SizedBox(width: 10.w),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Transaction Limit',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Color(0xFF5ED5A8),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      '1.0000 - 1000.0000 USD',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Color(0xFF2E7D5F),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
+                            // Divider
+                            Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Color(0xFF5ED5A8).withValues(alpha: 0.2),
+                                    Colors.transparent,
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+
+                            SizedBox(height: 18.h),
+
+                            // Max per Expense
+                            Container(
+                              padding: EdgeInsets.all(14.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.swap_horiz_rounded,
+                                    size: 18.sp,
+                                    color: Color(0xFF2E7D5F),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Max per Expense',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Color(0xFF5ED5A8),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        '${maxExpensePerTransaction.toStringAsFixed(0)} D',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: Color(0xFF2E7D5F),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -554,9 +597,7 @@ class _RewardPageState extends State<RewardPage> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: () {
-                        // Handle proceed action
-                      },
+                      onTap: isSubmitting ? null : _proceed,
                       child: Container(
                         height: 54.h,
                         decoration: BoxDecoration(
@@ -573,26 +614,32 @@ class _RewardPageState extends State<RewardPage> {
                           ],
                         ),
                         child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Proceed',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
+                          child: isSubmitting
+                              ? SizedBox(
+                                  width: 20.sp,
+                                  height: 20.sp,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Proceed',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 18.sp,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 18.sp,
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appmerchant/routes/merchant_routes.dart';
 
 class UploadsBanner extends StatelessWidget {
   final int remaining;
@@ -40,7 +41,7 @@ class UploadsBanner extends StatelessWidget {
             ],
           ),
           GestureDetector(
-            onTap: onUpgrade ?? () => Get.toNamed('/merchant/subscription'),
+            onTap: onUpgrade ?? () => Get.toNamed(MerchantRoutes.SUBSCRIPTION_PACKAGES),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(

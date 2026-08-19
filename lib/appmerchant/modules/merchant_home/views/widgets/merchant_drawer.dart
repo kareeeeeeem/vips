@@ -216,7 +216,8 @@ class MerchantDrawer extends StatelessWidget {
                 child: const Icon(Icons.phone_outlined, color: Color(0xFF10B981)),
               ),
               title: const Text('Phone Support', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('+216 71 000 000'),
+              // TODO: placeholder pending the real support contact number before launch
+              subtitle: const Text('+216 XX XXX XXX'),
             ),
             const SizedBox(height: 16),
           ],

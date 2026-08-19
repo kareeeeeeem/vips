@@ -15,6 +15,7 @@ import '../modules/contact/bindings/contact_binding.dart';
 import '../modules/contact/views/contact_view.dart';
 import '../modules/home/views/all_merchants_view.dart';
 import '../modules/home/views/deal_details_view.dart';
+import '../modules/home/views/favorites_view.dart';
 import '../modules/home/views/hot_deals_view.dart';
 import '../modules/home/views/merchant_details_view.dart';
 import '../modules/coupon/bindings/coupon_binding.dart';
@@ -39,6 +40,8 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/login/views/phone_login_view.dart';
+import '../modules/login/views/otp_verification_view.dart';
 import '../modules/main_app/bindings/main_app_binding.dart';
 import '../modules/main_app/views/main_app_view.dart';
 import '../modules/mobile/bindings/mobile_binding.dart';
@@ -59,6 +62,8 @@ import '../modules/report/bindings/report_binding.dart';
 import '../modules/report/views/report_view.dart';
 import '../modules/reset_password/bindings/reset_password_binding.dart';
 import '../modules/reset_password/views/reset_password_view.dart';
+import '../modules/change_password/bindings/change_password_binding.dart';
+import '../modules/change_password/views/change_password_view.dart';
 import '../modules/search/bindings/search_binding.dart';
 import '../modules/search/views/search_view.dart';
 import '../modules/settings/bindings/settings_binding.dart';
@@ -104,6 +109,16 @@ class AppPages {
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginView(),
+      binding: LoginBinding(),
+    ),
+    GetPage(
+      name: _Paths.PHONE_LOGIN,
+      page: () => const PhoneLoginView(),
+      binding: LoginBinding(),
+    ),
+    GetPage(
+      name: _Paths.OTP_VERIFY,
+      page: () => const OtpVerificationView(),
       binding: LoginBinding(),
     ),
     GetPage(
@@ -177,6 +192,11 @@ class AppPages {
       binding: ResetPasswordBinding(),
     ),
     GetPage(
+      name: _Paths.CHANGE_PASSWORD,
+      page: () => const ChangePasswordView(),
+      binding: ChangePasswordBinding(),
+    ),
+    GetPage(
       name: _Paths.EDIT_PROFILE,
       page: () => const EditProfileView(),
       binding: EditProfileBinding(),
@@ -214,6 +234,11 @@ class AppPages {
     GetPage(
       name: _Paths.DEAL_DETAILS,
       page: () => const DealDetailsView(),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: _Paths.FAVORITES,
+      page: () => const FavoritesView(),
       binding: HomeBinding(),
     ),
     GetPage(

@@ -57,8 +57,21 @@ class ApiService {
         },
         onError: (error, handler) {
           if (error.response?.statusCode == 401) {
-            clearToken();
-            Get.offAllNamed(unauthorizedRoute);
+            final path = error.requestOptions.path;
+            final isAuthPath = path.contains('/auth/login') ||
+                path.contains('/auth/merchant-login') ||
+                path.contains('/auth/register') ||
+                path.contains('/auth/social');
+            // Only treat this as "your session expired" when we actually
+            // had a token that got rejected. A guest browsing with no
+            // token hitting an auth-required endpoint is expected to 401 -
+            // that must not force-navigate them away from wherever they
+            // are (e.g. straight back to Login right after tapping
+            // "Continue as Guest").
+            if (!isAuthPath && _token != null) {
+              clearToken();
+              Get.offAllNamed(unauthorizedRoute);
+            }
           } else if (error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
               error.type == DioExceptionType.connectionError) {
@@ -142,6 +155,16 @@ class ApiService {
       return ApiResponse.fromDioError(e);
     }
   }
+
+  // ── PATCH Request ──
+  Future<ApiResponse> patch(String path, [Map<String, dynamic>? body]) async {
+    try {
+      final response = await _dio.patch(path, data: body);
+      return ApiResponse.fromDioResponse(response);
+    } on DioException catch (e) {
+      return ApiResponse.fromDioError(e);
+    }
+  }
 }
 
 /// Standardized API response wrapper.
@@ -160,11 +183,28 @@ class ApiResponse {
 
   factory ApiResponse.fromDioResponse(Response<dynamic> response) {
     final body = response.data;
+    final statusCode = response.statusCode ?? 200;
+
+    if (body is Map) {
+      return ApiResponse(
+        success: body['success'] ?? true,
+        statusCode: statusCode,
+        message: (body['message'] ?? 'Success').toString(),
+        data: body['data'],
+      );
+    }
+
+    // Some backend routes return a bare array, plain string, or an empty
+    // body (e.g. 204 No Content) instead of the standard
+    // {success, message, data} envelope. Treat any 2xx as success and pass
+    // the raw body through as `data` instead of throwing a TypeError on
+    // `body['success']`, which would otherwise crash whatever screen
+    // triggered the call.
     return ApiResponse(
-      success: body['success'] ?? true,
-      statusCode: response.statusCode ?? 200,
-      message: body['message'] ?? 'Success',
-      data: body['data'],
+      success: statusCode >= 200 && statusCode < 300,
+      statusCode: statusCode,
+      message: 'Success',
+      data: body,
     );
   }
 

@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appuser/modules/packages/views/packages_view.dart';
-import 'package:vip/appuser/modules/settings/views/settings_view.dart';
 
-import '../../gift/views/gift_view.dart';
-import '../../vips_club_history/views/vips_club_history_view.dart';
 import '../controllers/profile_controller.dart';
-import 'widgets/account_switcher_widget.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -208,7 +203,7 @@ class ProfileView extends GetView<ProfileController> {
               children: [
                 // Avatar on the left
                 InkWell(
-                  onTap: () => Get.to(() => const VipsClubHistoryView()),
+                  onTap: () => Get.toNamed('/vips-club-history'),
                   child: CircleAvatar(
                     radius: 40.r,
                     backgroundColor: primaryColor.withValues(alpha: 0.1),
@@ -262,7 +257,7 @@ class ProfileView extends GetView<ProfileController> {
                       // Settings Icon
                       InkWell(
                         onTap: () {
-                          Get.to(() => SettingsView());
+                          Get.toNamed('/settings');
                         },
                         child: Container(
                           child: Icon(
@@ -328,7 +323,7 @@ class ProfileView extends GetView<ProfileController> {
                         SizedBox(width: 8.w),
                         Expanded(
                           child: InkWell(
-                            onTap: () => Get.to(() => PackagesView()),
+                            onTap: () => Get.toNamed('/packages'),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
@@ -362,54 +357,58 @@ class ProfileView extends GetView<ProfileController> {
 
                 // Alerts card (carré)
                 Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(
-                              Icons.notifications_outlined,
-                              color: primaryColor,
-                              size: 26.sp,
-                            ),
-                            Positioned(
-                              right: -4,
-                              top: -4,
-                              child: Container(
-                                padding: EdgeInsets.all(4.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '1',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 8.sp,
-                                    fontWeight: FontWeight.bold,
+                  child: GestureDetector(
+                    onTap: () => Get.toNamed('/notifications'),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                Icons.notifications_outlined,
+                                color: primaryColor,
+                                size: 26.sp,
+                              ),
+                              if (controller.unreadNotificationsCount.value > 0)
+                                Positioned(
+                                  right: -4,
+                                  top: -4,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '${controller.unreadNotificationsCount.value}',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Alerts',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
+                            ],
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Alerts',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -455,12 +454,11 @@ class ProfileView extends GetView<ProfileController> {
 
             SizedBox(height: 12.h),
 
-            // Row: Wallet Points + Switch to
+            // Row: Wallet Points
             Row(
               children: [
                 // Wallet Points (plus large avec flèche)
                 Expanded(
-                  flex: 2,
                   child: InkWell(
                     onTap: () => controller.navigateToWallet(),
                     child: Container(
@@ -489,22 +487,18 @@ class ProfileView extends GetView<ProfileController> {
                                   ),
                                 ),
                                 SizedBox(height: 3.h),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'expiring on 31/12/${DateTime.now().year}',
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                // Real balance — this used to claim a fixed
+                                // "expiring on 31/12/<year>" date with no
+                                // backend field backing it (the account has
+                                // no points-expiry concept at all).
+                                Obx(
+                                  () => Text(
+                                    '${controller.totalExpenses.value} points available',
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      color: Colors.grey.shade600,
                                     ),
-                                    SizedBox(width: 4.w),
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 12.sp,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -519,405 +513,13 @@ class ProfileView extends GetView<ProfileController> {
                     ),
                   ),
                 ),
-
-                SizedBox(width: 10.w),
-
-                // Switch to button
-                GestureDetector(
-                  onTap: controller.showRoleSwitcher,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 21.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Switch',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            height: 1.6,
-                            fontSize: 11.sp,
-                            color: primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          'to',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            height: 1.6,
-                            fontSize: 11.sp,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
 
-            // Section spécifique selon le rôle
-            if (currentRole == 'Vendor') ...[
-              SizedBox(height: 12.h),
-              _buildVendorStatsSection(primaryColor),
-            ] else if (currentRole == 'Agent') ...[
-              SizedBox(height: 16.h),
-              _buildAgentSection(primaryColor),
-            ] else if (isBusiness) ...[
-              SizedBox(height: 16.h),
-              _buildBusinessSection(primaryColor),
-            ],
-
-            // ─── Account Switcher ─────────────────────────────────────
-            SizedBox(height: 16.h),
-            GestureDetector(
-              onTap: () => showAccountSwitcher(Get.context!),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Icons stack (like Meta)
-                    SizedBox(
-                      width: 56.w,
-                      height: 36.h,
-                      child: Stack(
-                        children: [
-                          // Merchant icon
-                          Positioned(
-                            right: 0,
-                            child: Container(
-                              width: 32.w,
-                              height: 32.w,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF0F172A),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.storefront_rounded,
-                                color: Colors.white,
-                                size: 16.sp,
-                              ),
-                            ),
-                          ),
-                          // Customer icon (on top)
-                          Positioned(
-                            left: 0,
-                            child: Container(
-                              width: 32.w,
-                              height: 32.w,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFF97316), Color(0xFFEAB308)],
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF0F172A),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.person_rounded,
-                                color: Colors.white,
-                                size: 16.sp,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: 14.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Switch Account',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Customer  •  Merchant',
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: Colors.white.withValues(alpha: 0.45),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                        ),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        'Switch',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       );
     });
-  }
-
-  Widget _buildVendorStatsSection(Color primaryColor) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Store Analytics',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: primaryColor,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'This month',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              Icon(Icons.trending_up_rounded, color: primaryColor, size: 22.sp),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Obx(() => _buildStatColumn(controller.vendorProducts.value, 'Products', primaryColor)),
-              Obx(() => _buildStatColumn(controller.vendorSales.value, 'Sales', primaryColor)),
-              Obx(() => _buildStatColumnWithSuffix(
-                controller.vendorRevenue.value,
-                'Revenue',
-                'TND',
-                primaryColor,
-              )),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAgentSection(Color primaryColor) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'My Deliveries',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: primaryColor,
-                ),
-              ),
-              Icon(
-                Icons.delivery_dining_rounded,
-                color: primaryColor,
-                size: 22.sp,
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Obx(() => _buildStatColumn(controller.agentTotal.value, 'Total', primaryColor)),
-              Obx(() => _buildStatColumn(controller.agentCompleted.value, 'Completed', primaryColor)),
-              Obx(() => _buildStatColumn(controller.agentPending.value, 'Pending', primaryColor)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBusinessSection(Color primaryColor) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Your Network',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: primaryColor,
-                ),
-              ),
-              Icon(Icons.business_rounded, color: primaryColor, size: 20.sp),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Obx(() => _buildStatColumn(controller.businessStores.value, 'Stores', primaryColor)),
-              Obx(() => _buildStatColumn(controller.businessDrivers.value, 'Drivers', primaryColor)),
-              Obx(() => _buildStatColumn(controller.businessCustomers.value, 'Customers', primaryColor)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatColumn(String value, String label, Color primaryColor) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24.sp,
-            fontWeight: FontWeight.w700,
-            color: primaryColor,
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatColumnWithSuffix(
-    String value,
-    String label,
-    String suffix,
-    Color primaryColor,
-  ) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.w700,
-                color: primaryColor,
-              ),
-            ),
-            SizedBox(width: 4.w),
-            Padding(
-              padding: EdgeInsets.only(top: 4.h),
-              child: Text(
-                suffix,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: primaryColor.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.sp,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildServicesRow() {
@@ -944,14 +546,7 @@ class ProfileView extends GetView<ProfileController> {
                 service['title'],
                 badge,
                 primaryColor,
-                () {
-                  final route = service['route'];
-                  if (route == '/gift') {
-                    Get.to(() => GiftView());
-                  } else {
-                    Get.toNamed(route);
-                  }
-                },
+                () => Get.toNamed(service['route']),
               ),
             );
           },
@@ -1160,55 +755,89 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildPremiumCard() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'In order to be premium you must:',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 12.h),
+    return Obx(() {
+      // Both requirements used to show a permanent red X with no way to
+      // act on either, regardless of the account's real state — now
+      // reflects /auth/me's real isVerified flag and whether a real
+      // payment method is on file, and each unmet one is tappable.
+      final verified = controller.isVerified.value;
+      final hasPayment = controller.hasPaymentMethod.value;
 
-          _buildRequirement('Choose Payment Method', false),
-          SizedBox(height: 8.h),
-          _buildRequirement('Verify Your Account now', false),
-        ],
-      ),
-    );
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'In order to be premium you must:',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 12.h),
+
+            _buildRequirement(
+              'Choose Payment Method',
+              hasPayment,
+              onTap: hasPayment ? null : controller.navigateToPaymentMethods,
+            ),
+            SizedBox(height: 8.h),
+            _buildRequirement(
+              'Verify Your Account now',
+              verified,
+              onTap: verified || controller.isSendingVerification.value ? null : controller.verifyAccountNow,
+              isLoading: controller.isSendingVerification.value,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildRequirement(String text, bool isCompleted) {
-    return Row(
-      children: [
-        Icon(Icons.close_rounded, color: Colors.red, size: 20.sp),
-        SizedBox(width: 8.w),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: Colors.red,
-            fontWeight: FontWeight.w500,
+  Widget _buildRequirement(String text, bool isCompleted, {VoidCallback? onTap, bool isLoading = false}) {
+    final color = isCompleted ? const Color(0xFF22C55E) : Colors.red;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8.r),
+      child: Row(
+        children: [
+          if (isLoading)
+            SizedBox(
+              width: 20.sp,
+              height: 20.sp,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          else
+            Icon(isCompleted ? Icons.check_circle_rounded : Icons.close_rounded, color: color, size: 20.sp),
+          SizedBox(width: 8.w),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+          if (onTap != null) ...[
+            const Spacer(),
+            Icon(Icons.chevron_right, color: color, size: 18.sp),
+          ],
+        ],
+      ),
     );
   }
 
@@ -1406,7 +1035,9 @@ class ProfileView extends GetView<ProfileController> {
       }
     }
 
-    return Container(
+    return GestureDetector(
+      onTap: () => _showOrderDetailsSheet(order, getStatusColor, getStatusBgColor),
+      child: Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -1607,6 +1238,121 @@ class ProfileView extends GetView<ProfileController> {
           ),
         ],
       ),
+      ),
+    );
+  }
+
+  void _showOrderDetailsSheet(
+    Map<String, dynamic> order,
+    Color Function(String) getStatusColor,
+    Color Function(String) getStatusBgColor,
+  ) {
+    final items = (order['rawItems'] as List? ?? []).whereType<Map>().toList();
+    final canCancel = controller.orderIsCancelable(order);
+
+    Get.bottomSheet(
+      Container(
+        constraints: BoxConstraints(maxHeight: Get.height * 0.75),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Order #${order['id']}',
+                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700)),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: getStatusBgColor(order['status']),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(order['status'],
+                      style: TextStyle(
+                          color: getStatusColor(order['status']),
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            SizedBox(height: 4.h),
+            Text(order['store'], style: TextStyle(color: Colors.grey.shade600, fontSize: 13.sp)),
+            SizedBox(height: 16.h),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: items.length,
+                separatorBuilder: (_, __) => Divider(height: 16.h),
+                itemBuilder: (_, i) {
+                  final it = items[i];
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${it['item_name'] ?? 'Item'}  x${it['quantity'] ?? 1}',
+                          style: TextStyle(fontSize: 14.sp),
+                        ),
+                      ),
+                      Text('${it['price'] ?? 0}', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  );
+                },
+              ),
+            ),
+            Divider(height: 24.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15.sp)),
+                Text('${order['amount']}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15.sp)),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            Row(
+              children: [
+                if (canCancel)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.cancelOrder(order);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                        side: const BorderSide(color: Colors.redAccent),
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                      ),
+                      child: const Text('Cancel Order'),
+                    ),
+                  ),
+                if (canCancel) SizedBox(width: 12.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      controller.reorder(order);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6C63FF),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child: const Text('Reorder', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
     );
   }
 }

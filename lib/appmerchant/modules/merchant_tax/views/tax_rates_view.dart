@@ -146,6 +146,9 @@ class TaxRatesView extends GetView<MerchantTaxController> {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      nameController.dispose();
+      rateController.dispose();
+    });
   }
 }

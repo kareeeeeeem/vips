@@ -21,7 +21,15 @@ class MerchantGiftBackController extends GetxController {
 
   // --- Step 3: Status ---
   final statusLabel = 'Pending'.obs;
-  final resolvedUserId = ''.obs;
+
+  // Set only by a successful QR scan (see GiftBackScanMeView) — takes
+  // priority over phoneController for the send, since it's an exact
+  // customer match rather than a typed-in phone number. Cleared whenever
+  // phoneController's text changes to anything other than what the scan
+  // itself just populated, so an edited phone number can't be sent under a
+  // stale scanned identity.
+  final scannedUserId = ''.obs;
+  String _lastScannedPhone = '';
 
   // --- Limits (from API) ---
   final currency = 'D'.obs;
@@ -57,12 +65,23 @@ class MerchantGiftBackController extends GetxController {
   }
 
   void _validateForm() {
+    if (phoneController.text != _lastScannedPhone) {
+      scannedUserId.value = '';
+    }
     isFormValid.value =
         phoneController.text.isNotEmpty && amountController.text.isNotEmpty;
   }
 
   void onScanQR() {
     Get.toNamed(MerchantRoutes.GIFT_BACK_SCAN_ME);
+  }
+
+  // Called by GiftBackScanMeView after it resolves a scanned QR to a real
+  // customer via GET /merchant/gift-back/lookup.
+  void applyScannedCustomer({required String userId, required String phone}) {
+    _lastScannedPhone = phone;
+    scannedUserId.value = userId;
+    phoneController.text = phone;
   }
 
   void onProceedToInquiry() {
@@ -78,7 +97,10 @@ class MerchantGiftBackController extends GetxController {
     try {
       final amount = double.tryParse(amountController.text) ?? 0;
       final response = await ApiService().post('/merchant/gift-back', {
-        'userId': resolvedUserId.value,
+        if (scannedUserId.value.isNotEmpty)
+          'userId': scannedUserId.value
+        else
+          'phone': phoneController.text.trim(),
         'amount': amount,
         'message': messageController.text.isNotEmpty
             ? messageController.text

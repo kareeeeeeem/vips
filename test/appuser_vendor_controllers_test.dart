@@ -530,6 +530,7 @@ void main() {
     }) {
       return Promotion(
         id: id,
+        code: 'CODE$id',
         title: 'Title $id',
         brandName: 'Brand',
         validUntil: '2025',

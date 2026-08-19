@@ -261,7 +261,12 @@ class PackagesController extends GetxController {
   Future<void> buyPackage() async {
     if (selectedPackage.value == null) return;
     final pkg = selectedPackage.value!;
-    if (pkg.tier == PackageTier.basic) return;
+    if (pkg.tier == PackageTier.basic) {
+      // Basic is the free/current tier — tapping "Subscribe Now" on it
+      // previously did nothing with no feedback, looking like a dead button.
+      safeSnackbar('Already Active', 'You\'re already on the Basic plan.');
+      return;
+    }
 
     isBuying.value = true;
     try {

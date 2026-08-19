@@ -8,6 +8,8 @@ class DueListView extends GetView<MerchantDuesController> {
 
   @override
   Widget build(BuildContext context) {
+    final filter = 'All'.obs; // All | Customer | Supplier
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -22,6 +24,12 @@ class DueListView extends GetView<MerchantDuesController> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF1F2937)),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Color(0xFF10B981)),
+            onPressed: () => _showAddDueDialog(context),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -45,22 +53,61 @@ class DueListView extends GetView<MerchantDuesController> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'All Dues',
+                      Obx(() => Text(
+                        filter.value == 'All' ? 'All Dues' : '${filter.value}s',
                         style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
+                      )),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.filter_list, color: Color(0xFF6B7280)),
+                        onSelected: (v) => filter.value = v,
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'All', child: Text('All')),
+                          PopupMenuItem(value: 'Customer', child: Text('Customers (receivable)')),
+                          PopupMenuItem(value: 'Supplier', child: Text('Suppliers (payable)')),
+                        ],
                       ),
-                      const Icon(Icons.filter_list, color: Color(0xFF6B7280)),
                     ],
                   ),
                   SizedBox(height: 16.h),
                   Expanded(
-                    child: Obx(() => ListView.builder(
-                      itemCount: controller.dues.length,
-                      itemBuilder: (context, index) {
-                        final due = controller.dues[index];
-                        return _buildDueItem(due);
-                      },
-                    )),
+                    child: Obx(() {
+                      final dues = filter.value == 'All'
+                          ? controller.dues
+                          : controller.dues
+                              .where((d) => d.isCustomer == (filter.value == 'Customer'))
+                              .toList();
+
+                      if (controller.dues.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined, size: 56.sp, color: Colors.grey.shade300),
+                              SizedBox(height: 16.h),
+                              Text('No dues recorded',
+                                  style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w600)),
+                              SizedBox(height: 8.h),
+                              Text('Tap the + button to record a due',
+                                  style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade400)),
+                            ],
+                          ),
+                        );
+                      }
+                      if (dues.isEmpty) {
+                        return Center(
+                          child: Text('No ${filter.value.toLowerCase()} dues',
+                              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500)),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: dues.length,
+                        itemBuilder: (context, index) {
+                          final due = dues[index];
+                          return _buildDueItem(due);
+                        },
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -106,6 +153,78 @@ class DueListView extends GetView<MerchantDuesController> {
         ),
       ),
     );
+  }
+
+  void _showAddDueDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final amountController = TextEditingController();
+    final isCustomer = true.obs;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Record a Due'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Party Name')),
+              TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone'), keyboardType: TextInputType.phone),
+              TextField(controller: amountController, decoration: const InputDecoration(labelText: 'Total Amount'), keyboardType: TextInputType.number),
+              SizedBox(height: 8.h),
+              Obx(() => Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: const Text('Customer owes me'),
+                      value: true,
+                      groupValue: isCustomer.value,
+                      onChanged: (v) => isCustomer.value = v!,
+                    ),
+                  ),
+                ],
+              )),
+              Obx(() => Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: const Text('I owe a supplier'),
+                      value: false,
+                      groupValue: isCustomer.value,
+                      onChanged: (v) => isCustomer.value = v!,
+                    ),
+                  ),
+                ],
+              )),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text);
+              if (nameController.text.isNotEmpty && amount != null && amount > 0) {
+                controller.addDue({
+                  'partyName': nameController.text,
+                  'phone': phoneController.text,
+                  'totalAmount': amount,
+                  'paidAmount': 0,
+                  'isCustomer': isCustomer.value,
+                });
+                Get.back();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      nameController.dispose();
+      phoneController.dispose();
+      amountController.dispose();
+    });
   }
 
   Widget _buildDueItem(DueItem due) {

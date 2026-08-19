@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/services/api_service.dart';
+import '../views/widgets/product_detail_page.dart';
+import '../views/widgets/product_list_page.dart';
 
 class BillsController extends GetxController {
   final PageController pageController = PageController();
@@ -20,7 +22,9 @@ class BillsController extends GetxController {
     'https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=400&h=200&fit=crop',
   ];
 
-  // Catégories pour Products
+  // Matches the real categories present in GET /content/products —
+  // verified live rather than assumed, so a chip is only shown for a
+  // category that actually has products behind it.
   final List<CategoryItem> categories = [
     CategoryItem(
       icon: Icons.photo_library,
@@ -39,6 +43,7 @@ class BillsController extends GetxController {
       color: Color(0xFFFF6B35),
     ),
     CategoryItem(icon: Icons.book, title: 'Guide', color: Color(0xFFFF6B35)),
+    CategoryItem(icon: Icons.fastfood, title: 'Food', color: Color(0xFFFF6B35)),
   ];
 
   // Dynamic Product Lists
@@ -146,26 +151,45 @@ class BillsController extends GetxController {
     fetchOrderHistory();
   }
 
+  // This used to read /user/transactions — real wallet credit/debit
+  // records (top-ups, rewards, gifts) — and mislabel every one of them as
+  // a product order with a hardcoded "Mobil Card Type" tag regardless of
+  // what actually happened. Real product purchase history lives on
+  // Order documents, so this now matches what Profile's own order
+  // history already correctly uses (/order/my-orders).
   Future<void> fetchOrderHistory() async {
     try {
-      final response = await ApiService().get('/user/transactions', queryParams: {'limit': '20'});
-      if (response.success && response.data != null) {
-        final List<dynamic> txList = response.data['transactions'] ?? [];
-        if (txList.isNotEmpty) {
-          orders.value = txList.map((tx) => OrderItem(
-            orderId: tx['reference'] ?? tx['_id'].toString().substring(0, 7),
-            type: tx['type'] == 'credit' ? 'Credit' : 'Debit',
-            day: tx['createdAt'] != null ? DateTime.parse(tx['createdAt']).day.toString() : '--',
-            month: tx['createdAt'] != null ? _monthName(DateTime.parse(tx['createdAt']).month) : '--',
-            cardType: tx['type'] ?? 'transaction',
-            price: 'D ${((tx['amount'] ?? 0) as num).toDouble().toStringAsFixed(2)}',
-            transId: tx['reference'] ?? tx['_id'].toString(),
-            points: 'Vpt ${((tx['amount'] ?? 0) as num).toDouble().toStringAsFixed(2)}',
-            serviceCharge: 'Vpt 0',
-            fullDate: tx['createdAt'] != null ? DateTime.parse(tx['createdAt']).toString().substring(0, 16) : '',
-          )).toList();
-          expandedOrders.value = List.generate(orders.length, (_) => false);
-        }
+      final response = await ApiService().get('/order/my-orders');
+      if (response.success && response.data is List) {
+        final List<dynamic> orderList = response.data;
+        orders.value = orderList.map((o) {
+          final items = (o['items'] as List?) ?? [];
+          final itemNames = items
+              .map((i) => (i['item_name'] ?? '').toString())
+              .where((n) => n.isNotEmpty)
+              .join(', ');
+          final createdAt = o['createdAt'] != null ? DateTime.parse(o['createdAt']) : null;
+          final merchant = o['merchantId'];
+          final storeName = merchant is Map
+              ? (merchant['storeName'] ?? merchant['fullName'] ?? 'VIPs Store').toString()
+              : 'VIPs Store';
+          final status = (o['status'] ?? 'pending').toString();
+          return OrderItem(
+            id: (o['_id'] ?? '').toString(),
+            orderId: (o['orderNumber']?.toString() ?? (o['_id'] ?? '').toString()),
+            type: status.isNotEmpty ? status[0].toUpperCase() + status.substring(1) : 'Pending',
+            day: createdAt != null ? createdAt.day.toString() : '--',
+            month: createdAt != null ? _monthName(createdAt.month) : '--',
+            cardType: itemNames.isNotEmpty ? itemNames : 'Order',
+            price: '${((o['totalAmount'] ?? 0) as num).toDouble().toStringAsFixed(2)} TND',
+            transId: (o['orderNumber']?.toString() ?? (o['_id'] ?? '').toString()),
+            store: storeName,
+            itemCount: items.length,
+            rating: ((o['rating'] ?? 0) as num).toInt(),
+            fullDate: createdAt != null ? createdAt.toString().substring(0, 16) : '',
+          );
+        }).toList();
+        expandedOrders.value = List.generate(orders.length, (_) => false);
       }
     } catch (_) {}
   }
@@ -175,295 +199,58 @@ class BillsController extends GetxController {
     return month >= 1 && month <= 12 ? months[month - 1] : '--';
   }
 
+  final RxBool hasLoadError = false.obs;
+
   Future<void> fetchProducts() async {
     try {
       isLoading.value = true;
+      hasLoadError.value = false;
       final response = await ApiService().get('/content/products');
       if (response.success && response.data != null) {
         final List<dynamic> productsJson = response.data;
         final products = productsJson.map((json) {
+          final merchant = json['merchantId'];
           return ProductItem(
             id: json['_id'] ?? '',
             title: json['name'] ?? '',
             category: json['category'] ?? '',
             price: (json['price'] as num?)?.toDouble() ?? 0.0,
             imageUrl: json['image'] ?? 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-            rating: 5.0,
-            sellCount: 0,
+            description: (json['description'] ?? '').toString(),
+            avgRating: (json['avgRating'] as num?)?.toDouble() ?? 0.0,
+            reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+            sellCount: (json['salesCount'] as num?)?.toInt() ?? 0,
+            merchantName: merchant is Map ? (merchant['storeName'] ?? merchant['fullName'])?.toString() : null,
           );
         }).toList();
 
         allProducts.assignAll(products);
 
-        // Populate categorized lists
+        // "Best Selling" / "Trending" reflect real category splits, not a
+        // real sales ranking — GET /content/products doesn't support
+        // sorting by salesCount server-side. Category grouping is the
+        // real, verified-live signal available; sorting by the now-real
+        // salesCount would need a backend change to add that as a sort
+        // option, which is a reasonable follow-up but out of this pass.
         bestSellingProducts.assignAll(products.where((p) => p.category == 'Photo' || p.category == 'Course').take(6).toList());
         trendingProducts.assignAll(products.where((p) => p.category == 'E-book' || p.category == 'Ticket' || p.category == 'Course').take(9).toList());
         featureProducts.assignAll(products.take(6).toList());
       } else {
-        _loadMockProducts();
+        allProducts.clear();
+        bestSellingProducts.clear();
+        trendingProducts.clear();
+        featureProducts.clear();
+        hasLoadError.value = true;
       }
     } catch (_) {
-      _loadMockProducts();
+      allProducts.clear();
+      bestSellingProducts.clear();
+      trendingProducts.clear();
+      featureProducts.clear();
+      hasLoadError.value = true;
     } finally {
       isLoading.value = false;
     }
-  }
-
-  void _loadMockProducts() {
-    allProducts.assignAll([
-      ProductItem(
-        id: '1',
-        title: 'Saas Landing Software Theme',
-        category: 'E-book',
-        price: 50.0,
-        imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '2',
-        title: 'Oifolio-Digital Marketing Theme',
-        category: 'Photo',
-        price: 60.0,
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '3',
-        title: 'Minimoll - Fashion eCommerce Flutte...',
-        category: 'Ticket',
-        price: 27.0,
-        imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '4',
-        title: 'FoodBari - Flutter Food Restaurant B...',
-        category: 'Photo',
-        price: 15.0,
-        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '5',
-        title: 'Single-Branch Restaurant Manag...',
-        category: 'Course',
-        price: 15.0,
-        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '6',
-        title: 'Apps Premium Landing Theme',
-        category: 'E-book',
-        price: 33.0,
-        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-    ]);
-
-    bestSellingProducts.assignAll([
-      ProductItem(
-        id: '1',
-        title: 'Saas Landing Software Theme',
-        category: 'Photo',
-        price: 50.0,
-        imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '2',
-        title: 'Oifolio-Digital Marketing Them',
-        category: 'Course',
-        price: 60.0,
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '3',
-        title: 'Minimoll - Fashion eCommerce',
-        category: 'E-book',
-        price: 27.0,
-        imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '4',
-        title: 'FoodBari - Flutter Food Restaurant',
-        category: 'Photo',
-        price: 15.0,
-        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '5',
-        title: 'Apps Premium Landing Theme',
-        category: 'Course',
-        price: 33.0,
-        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '6',
-        title: 'Business Corporate Theme',
-        category: 'Guide',
-        price: 45.0,
-        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-    ]);
-
-    trendingProducts.assignAll([
-      ProductItem(
-        id: '7',
-        title: 'Saas Landing Software Theme',
-        category: 'E-book',
-        price: 50.0,
-        imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '8',
-        title: 'Oifolio-Digital Marketing Theme',
-        category: 'Ticket',
-        price: 60.0,
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '9',
-        title: 'Apps Premium Landing Theme',
-        category: 'Course',
-        price: 33.0,
-        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '10',
-        title: 'Minimoll - Fashion eCommerce',
-        category: 'Photo',
-        price: 27.0,
-        imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '11',
-        title: 'FoodBari - Flutter Food',
-        category: 'E-book',
-        price: 15.0,
-        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '12',
-        title: 'Real Estate Property Theme',
-        category: 'Guide',
-        price: 55.0,
-        imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '13',
-        title: 'Travel Booking Platform',
-        category: 'Ticket',
-        price: 42.0,
-        imageUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '14',
-        title: 'Fitness App UI Kit',
-        category: 'Course',
-        price: 38.0,
-        imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '15',
-        title: 'Music Streaming App',
-        category: 'Photo',
-        price: 48.0,
-        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-    ]);
-
-    featureProducts.assignAll([
-      ProductItem(
-        id: '16',
-        title: 'Saas Landing Software Theme',
-        category: 'E-book',
-        price: 50.0,
-        imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '17',
-        title: 'Oifolio-Digital Marketing Them',
-        category: 'Photo',
-        price: 60.0,
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '18',
-        title: 'Portfolio Creative Theme',
-        category: 'Course',
-        price: 35.0,
-        imageUrl: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '19',
-        title: 'Blog Magazine Theme',
-        category: 'Guide',
-        price: 29.0,
-        imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '20',
-        title: 'E-Learning Platform',
-        category: 'Ticket',
-        price: 52.0,
-        imageUrl: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-      ProductItem(
-        id: '21',
-        title: 'Restaurant Management',
-        category: 'E-book',
-        price: 41.0,
-        imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&h=200&fit=crop',
-        rating: 5.0,
-        sellCount: 0,
-      ),
-    ]);
   }
 
   void _startAutoSlide() {
@@ -566,18 +353,16 @@ class BillsController extends GetxController {
   }
 
   void onCategoryTap(String categoryName) {
-    final name = categoryName.toLowerCase();
-    if (name.contains('photo') || name.contains('ticket') ||
-        name.contains('e-book') || name.contains('guide') ||
-        name.contains('course')) {
-      Get.toNamed('/hot-deals');
-    } else {
-      Get.toNamed('/pay-bills');
-    }
+    Get.to(() => ProductListPage(title: categoryName, category: categoryName));
   }
 
   void onProductTap(ProductItem product) {
-    Get.toNamed('/deal-details', arguments: {'product': product});
+    // /deal-details expects a Map shaped like a Deal/Outing, not a raw
+    // ProductItem — every other tap in this module (bills_view.dart,
+    // product_list_page.dart) already opens the real ProductDetailPage
+    // directly; this now matches them instead of routing somewhere that
+    // can't render a ProductItem at all.
+    Get.to(() => ProductDetailPage(product: product));
   }
 
   void onFilterChanged(String filter) {
@@ -611,8 +396,13 @@ class ProductItem {
   final String category;
   final double price;
   final String imageUrl;
-  final double rating;
+  final String description;
+  // Real values from GET /content/products — aggregated server-side from
+  // actual Orders, not decorative placeholders.
+  final double avgRating;
+  final int reviewCount;
   final int sellCount;
+  final String? merchantName;
 
   ProductItem({
     required this.id,
@@ -620,8 +410,11 @@ class ProductItem {
     required this.category,
     required this.price,
     required this.imageUrl,
-    required this.rating,
+    this.description = '',
+    this.avgRating = 0,
+    this.reviewCount = 0,
     required this.sellCount,
+    this.merchantName,
   });
 }
 
@@ -640,6 +433,7 @@ class ServiceItem {
 }
 
 class OrderItem {
+  final String id;
   final String orderId;
   final String type;
   final String day;
@@ -647,11 +441,13 @@ class OrderItem {
   final String cardType;
   final String price;
   final String transId;
-  final String points;
-  final String serviceCharge;
+  final String store;
+  final int itemCount;
+  final int rating;
   final String fullDate;
 
   OrderItem({
+    required this.id,
     required this.orderId,
     required this.type,
     required this.day,
@@ -659,8 +455,9 @@ class OrderItem {
     required this.cardType,
     required this.price,
     required this.transId,
-    required this.points,
-    required this.serviceCharge,
+    required this.store,
+    required this.itemCount,
+    required this.rating,
     required this.fullDate,
   });
 }

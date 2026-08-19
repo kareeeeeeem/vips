@@ -112,154 +112,156 @@ class OnboardingView extends GetView<OnboardingController> {
   }
 
   Widget _buildConditionsPage(OnboardingPageData page) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 1.w),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Icône de document / conditions
-          Container(
-            width: 120.w,
-            height: 120.h,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.AppPrimaryColor.withValues(alpha: 0.7),
-                  AppColors.AppPrimaryColor,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 1.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Icône de document / conditions
+            Container(
+              width: 120.w,
+              height: 120.h,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.AppPrimaryColor.withValues(alpha: 0.7),
+                    AppColors.AppPrimaryColor,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                Icons.policy_rounded,
-                color: Colors.white,
-                size: 60.sp,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.policy_rounded,
+                  color: Colors.white,
+                  size: 60.sp,
+                ),
               ),
             ),
-          ),
 
-          SizedBox(height: 32.h),
+            SizedBox(height: 32.h),
 
-          // Title
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'SF Pro Display',
-              color: const Color(0xFF1E293B),
-              height: 1.5,
-              letterSpacing: -0.5,
+            // Title
+            Text(
+              page.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'SF Pro Display',
+                color: const Color(0xFF1E293B),
+                height: 1.5,
+                letterSpacing: -0.5,
+              ),
             ),
-          ),
 
-          SizedBox(height: 16.h),
+            SizedBox(height: 16.h),
 
-          // Description
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'SF Pro Text',
-              color: const Color(0xFF64748B),
-              height: 1.5,
-              letterSpacing: -0.1,
+            // Description
+            Text(
+              page.description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'SF Pro Text',
+                color: const Color(0xFF64748B),
+                height: 1.5,
+                letterSpacing: -0.1,
+              ),
             ),
-          ),
 
-          SizedBox(height: 32.h),
+            SizedBox(height: 32.h),
 
-          // Checkbox pour accepter les CGU
-          GetBuilder(
-            init: controller,
-            builder: (context) {
-              return GestureDetector(
-                onTap: () {
-                  final isChecked = page.isConditionsChecked ?? false;
-                  controller.toggleConditionsAcceptance(!isChecked);
-                  controller.update();
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color:
-                          (page.isConditionsChecked ?? false)
-                              ? AppColors.AppPrimaryColor
-                              : Colors.grey.shade300,
-                      width: 1.5,
+            // Checkbox pour accepter les CGU
+            GetBuilder(
+              init: controller,
+              builder: (context) {
+                return GestureDetector(
+                  onTap: () {
+                    final isChecked = page.isConditionsChecked ?? false;
+                    controller.toggleConditionsAcceptance(!isChecked);
+                    controller.update();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Checkbox
-                      Container(
-                        width: 24.w,
-                        height: 24.h,
-                        decoration: BoxDecoration(
-                          color:
-                              (page.isConditionsChecked ?? false)
-                                  ? AppColors.AppPrimaryColor
-                                  : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6.r),
-                          border: Border.all(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color:
+                            (page.isConditionsChecked ?? false)
+                                ? AppColors.AppPrimaryColor
+                                : Colors.grey.shade300,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Checkbox
+                        Container(
+                          width: 24.w,
+                          height: 24.h,
+                          decoration: BoxDecoration(
                             color:
                                 (page.isConditionsChecked ?? false)
                                     ? AppColors.AppPrimaryColor
-                                    : Colors.grey.shade400,
-                            width: 2,
+                                    : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6.r),
+                            border: Border.all(
+                              color:
+                                  (page.isConditionsChecked ?? false)
+                                      ? AppColors.AppPrimaryColor
+                                      : Colors.grey.shade400,
+                              width: 2,
+                            ),
+                          ),
+                          child:
+                              (page.isConditionsChecked ?? false)
+                                  ? Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16.sp,
+                                  )
+                                  : null,
+                        ),
+
+                        SizedBox(width: 12.w),
+
+                        // Text
+                        Expanded(
+                          child: Text(
+                            'I accept the Terms and Conditions',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'SF Pro Text',
+                              color: const Color(0xFF1E293B),
+                            ),
                           ),
                         ),
-                        child:
-                            (page.isConditionsChecked ?? false)
-                                ? Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 16.sp,
-                                )
-                                : null,
-                      ),
-
-                      SizedBox(width: 12.w),
-
-                      // Text
-                      Expanded(
-                        child: Text(
-                          'I accept the Terms and Conditions',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'SF Pro Text',
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -284,77 +286,80 @@ class OnboardingView extends GetView<OnboardingController> {
   }
 
   Widget _buildWelcomePage(OnboardingPageData page) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Logo Container
-        Image.asset(
-          'assets/icons/onbordingfirst.png',
-          //color: Colors.white,
-        ),
-
-        SizedBox(height: 32.h),
-
-        // Title
-        Text(
-          page.title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 28.sp,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'SF Pro Display',
-            color: const Color(0xFF1E293B),
-            height: 1.5,
-            letterSpacing: -0.5,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Logo Container
+          Image.asset(
+            'assets/icons/onbordingfirst.png',
+            height: 144.h,
+            fit: BoxFit.contain,
+            //color: Colors.white,
           ),
-        ),
 
-        SizedBox(height: 24.h),
+          SizedBox(height: 32.h),
 
-        // Subtitle
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Text(
-            page.subtitle,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.AppPrimaryColor,
-              fontFamily: 'SF Pro Display',
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-
-        SizedBox(height: 24.h),
-
-        // Description
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32.w),
-          child: Text(
-            page.description,
+          // Title
+          Text(
+            page.title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'SF Pro Text',
-              color: const Color(0xFF64748B),
-              height: 1.6,
-              letterSpacing: -0.1,
+              fontSize: 28.sp,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'SF Pro Display',
+              color: const Color(0xFF1E293B),
+              height: 1.5,
+              letterSpacing: -0.5,
             ),
           ),
-        ),
 
-        SizedBox(height: 32.h),
-      ],
+          SizedBox(height: 24.h),
+
+          // Subtitle
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: AppColors.AppPrimaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              page.subtitle,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.AppPrimaryColor,
+                fontFamily: 'SF Pro Display',
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 24.h),
+
+          // Description
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32.w),
+            child: Text(
+              page.description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'SF Pro Text',
+                color: const Color(0xFF64748B),
+                height: 1.6,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 32.h),
+        ],
+      ),
     );
   }
-
 
   Widget _buildStandardPage(OnboardingPageData page) {
     return Column(
@@ -387,7 +392,8 @@ class OnboardingView extends GetView<OnboardingController> {
         // Content Section
         Expanded(
           flex: 2,
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             children: [
               // Subtitle
               Container(
@@ -443,6 +449,7 @@ class OnboardingView extends GetView<OnboardingController> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ],

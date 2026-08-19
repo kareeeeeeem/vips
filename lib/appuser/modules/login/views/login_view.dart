@@ -247,6 +247,23 @@ class LoginView extends GetView<LoginController> {
             ),
           ],
         ),
+        SizedBox(height: 16.h),
+        TextButton.icon(
+          onPressed: controller.navigateToPhoneLogin,
+          icon: Icon(
+            Icons.phone_iphone_rounded,
+            size: 18.sp,
+            color: AppColors.AppPrimaryColor,
+          ),
+          label: Text(
+            'Sign in with Phone',
+            style: TextStyle(
+              color: AppColors.AppPrimaryColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ],
     );
   }

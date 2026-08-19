@@ -32,7 +32,8 @@ class MerchantSubscriptionController extends GetxController {
       if (response.success && response.data != null) {
         final data = Map<String, dynamic>.from(response.data as Map);
         currentPlan.value = data;
-        selectedPackageName.value = data['plan'] ?? 'Basic';
+        // Backend field is `planCode` (e.g. "free"/"basic"), not `plan`.
+        selectedPackageName.value = data['planCode'] ?? 'free';
       }
     } catch (e) {
       debugPrint('loadCurrentPlan error: $e');
@@ -63,9 +64,9 @@ class MerchantSubscriptionController extends GetxController {
     try {
       final response = await _api.get('/merchant/subscription/history');
       if (response.success && response.data != null) {
-        final data = response.data as Map<String, dynamic>;
+        // Backend returns the history array directly, not wrapped in a map.
         paymentHistory.value = List<Map<String, dynamic>>.from(
-          data['history'] ?? [],
+          response.data as List,
         );
       }
     } catch (e) {
@@ -76,7 +77,9 @@ class MerchantSubscriptionController extends GetxController {
   Future<void> subscribe(String planId) async {
     try {
       final response = await _api.post('/merchant/subscription/subscribe', {
-        'plan': planId,
+        // Backend expects `planCode`, not `plan` (confirmed live — sending
+        // `plan` always fails with "Invalid plan code" regardless of value).
+        'planCode': planId,
         'paymentMethod': paymentMethod.value.toLowerCase(),
       });
       if (response.success) {

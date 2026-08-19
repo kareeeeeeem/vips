@@ -28,7 +28,7 @@ class VipsClubHistoryController extends GetxController {
         final List<dynamic> txList = txRes.data['transactions'] ?? [];
         transactions.value = txList.map((tx) {
           return DiamantTransaction(
-            amount: (tx['amount'] as num).toInt(),
+            amount: (tx['amount'] as num?)?.toInt() ?? 0,
             type: tx['type'] ?? 'credit',
             description: tx['description'],
             date: tx['createdAt'] != null

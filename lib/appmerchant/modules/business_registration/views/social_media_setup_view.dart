@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/core/utils/safe_snackbar.dart';
+import '../controllers/business_registration_controller.dart';
 
-class SocialMediaSetupView extends StatelessWidget {
+class SocialMediaSetupView extends GetView<BusinessRegistrationController> {
   const SocialMediaSetupView({super.key});
 
   @override
@@ -55,34 +55,11 @@ class SocialMediaSetupView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSocialMediaField('FACEBOOK', Icons.facebook, Colors.blue),
+                  _buildSocialMediaField('FACEBOOK', Icons.facebook, Colors.blue, controller.facebookCtrl),
                   SizedBox(height: 24.h),
-                  _buildSocialMediaField('INSTAGRAM', Icons.camera_alt_outlined, Colors.pink),
+                  _buildSocialMediaField('INSTAGRAM', Icons.camera_alt_outlined, Colors.pink, controller.instagramCtrl),
                   SizedBox(height: 24.h),
-                  _buildSocialMediaField('WEBSITE', Icons.language, Colors.grey),
-                  SizedBox(height: 32.h),
-
-                  // Add New Address Button (Placeholder per design)
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        safeSnackbar(
-                          'Added',
-                          'New social media row can be configured next',
-                          snackPosition: SnackPosition.BOTTOM,
-                        );
-                      },
-                      icon: const Icon(Icons.add, color: Color(0xFFEF4444)),
-                      label: const Text('Add New Address', style: TextStyle(color: Color(0xFFEF4444))),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        backgroundColor: const Color(0xFFFEF2F2),
-                        side: BorderSide.none,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                      ),
-                    ),
-                  ),
+                  _buildSocialMediaField('WEBSITE', Icons.language, Colors.grey, controller.websiteCtrl),
                 ],
               ),
             ),
@@ -118,7 +95,7 @@ class SocialMediaSetupView extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialMediaField(String label, IconData icon, Color iconColor) {
+  Widget _buildSocialMediaField(String label, IconData icon, Color iconColor, TextEditingController ctrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -144,6 +121,7 @@ class SocialMediaSetupView extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         TextFormField(
+          controller: ctrl,
           decoration: InputDecoration(
             hintText: 'URL',
             hintStyle: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp),

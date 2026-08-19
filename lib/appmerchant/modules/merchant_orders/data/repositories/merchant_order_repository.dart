@@ -171,39 +171,27 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
   @override
   Future<Map<String, dynamic>?> getOrderStats() async {
     try {
-      // Create a summary from available orders
-      List<MerchantOrder>? allOrders = await getCurrentOrders();
-      List<MerchantOrder>? completedOrders = await getCompletedOrders(
-        0,
-      ).then((paginated) => paginated?.orders ?? []);
-
-      if (allOrders == null) {
+      // Real lifetime aggregates from GET /merchant/orders/stats — this
+      // used to be derived purely from the ?status=pending order list
+      // (getCurrentOrders), so "Total Orders"/"Total Revenue" only ever
+      // counted pending orders instead of the merchant's real totals.
+      final response = await apiClient.getData('/api/merchant/orders/stats');
+      if (response.statusCode != 200 || response.body['success'] != true) {
         return null;
       }
-
-      double totalRevenue = 0;
-      int todayOrders = 0;
-      String today = DateTime.now().toString().split(' ')[0];
-
-      for (var order in allOrders) {
-        totalRevenue += order.orderAmount ?? 0;
-        if (order.createdAt?.contains(today) ?? false) {
-          todayOrders++;
-        }
-      }
-
+      final data = response.body['data'] as Map<String, dynamic>;
+      final totalOrders = data['totalOrders'] ?? 0;
+      final totalRevenue = (data['totalRevenue'] ?? 0).toDouble();
       return {
-        'totalOrders': allOrders.length,
-        'completedOrders': completedOrders?.length ?? 0,
-        'pendingOrders':
-            allOrders.where((o) => o.orderStatus == 'pending').length,
+        'totalOrders': totalOrders,
+        'completedOrders': data['completedOrders'] ?? 0,
+        'pendingOrders': data['pendingOrders'] ?? 0,
         'totalRevenue': totalRevenue,
-        'todayOrders': todayOrders,
-        'averageOrderValue':
-            allOrders.isNotEmpty ? totalRevenue / allOrders.length : 0,
+        'todayOrders': data['todayOrders'] ?? 0,
+        'averageOrderValue': totalOrders > 0 ? totalRevenue / totalOrders : 0,
       };
     } catch (e) {
-      debugPrint('Error calculating order stats: $e');
+      debugPrint('Error fetching order stats: $e');
       return null;
     }
   }

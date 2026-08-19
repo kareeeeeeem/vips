@@ -192,6 +192,8 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                 // Titre
                 Text(
                   banner.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 28.sp,
                     fontWeight: FontWeight.w300,
@@ -204,6 +206,8 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                 // Sous-titre
                 Text(
                   banner.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w400,

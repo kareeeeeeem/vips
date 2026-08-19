@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:vip/appuser/modules/Cart/views/widgets/order_request.dart' hide OrderItem;
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../controllers/bills_controller.dart';
 
@@ -59,16 +63,34 @@ class HistoryListWidget extends GetView<BillsController> {
 
         // Orders List
         Expanded(
-          child: Obx(
-            () => ListView.builder(
+          child: Obx(() {
+            if (controller.orders.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade400),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'No orders yet.',
+                        style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12),
               itemCount: controller.orders.length,
               itemBuilder: (context, index) {
                 final order = controller.orders[index];
                 return _buildOrderCard(order, index);
               },
-            ),
-          ),
+            );
+          }),
         ),
       ],
     );
@@ -105,12 +127,12 @@ class HistoryListWidget extends GetView<BillsController> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Row 1: Order ID + Badge + Price
+                  // Row 1: Order ID + Status Badge + Price
                   Row(
                     children: [
                       // Order ID
                       Text(
-                        'Order ID : ',
+                        'Order #',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
@@ -133,14 +155,14 @@ class HistoryListWidget extends GetView<BillsController> {
                         color: Colors.grey.shade400,
                       ),
                       SizedBox(width: 8.w),
-                      // Badge Type
+                      // Real order status (Pending/Confirmed/Delivered/Cancelled/...)
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 10.w,
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A4A4A),
+                          color: _statusColor(order.type),
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
@@ -207,22 +229,16 @@ class HistoryListWidget extends GetView<BillsController> {
                       ),
                       SizedBox(width: 12.w),
 
-                      // Info Column
+                      // Info Column — real item names + real store, not a
+                      // fixed "Mobil Card Type" / "VIPs App" label shown
+                      // for every single order regardless of what it was.
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Mobil Card Type
                             Row(
                               children: [
-                                Text(
-                                  'Mobil Card Type ',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
                                 Flexible(
                                   child: Text(
                                     order.cardType,
@@ -231,31 +247,33 @@ class HistoryListWidget extends GetView<BillsController> {
                                       fontWeight: FontWeight.w500,
                                       color: const Color(0xFF4CAF50),
                                     ),
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                if (order.itemCount > 1)
+                                  Text(
+                                    ' (${order.itemCount} items)',
+                                    style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                                  ),
                               ],
                             ),
                             SizedBox(height: 6.h),
-                            // VIPs App
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'V',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFFFF6B35),
-                                  ),
-                                ),
+                                Icon(Icons.storefront, size: 14.sp, color: const Color(0xFFFF6B35)),
                                 SizedBox(width: 4.w),
-                                Text(
-                                  'VIPs App',
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFFFF6B35),
+                                Flexible(
+                                  child: Text(
+                                    order.store,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFFFF6B35),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -266,12 +284,7 @@ class HistoryListWidget extends GetView<BillsController> {
 
                       // Menu Icon
                       GestureDetector(
-                        onTap: () {
-                          // TODO: implement options menu (share/download receipt)
-                          Get.snackbar('Options', 'Order #${order.orderId}',
-                              snackPosition: SnackPosition.BOTTOM,
-                              duration: const Duration(seconds: 2));
-                        },
+                        onTap: () => _showOptionsMenu(order),
                         child: Container(
                           padding: EdgeInsets.all(8.w),
                           child: Icon(
@@ -299,26 +312,27 @@ class HistoryListWidget extends GetView<BillsController> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildDetailRow('Trans ID:', order.transId),
+                      _buildDetailRow('Order Number:', order.transId),
                       SizedBox(height: 12.h),
-                      _buildDetailRow(
-                        'My Points',
-                        order.points,
-                        valueColor: const Color(0xFF4CAF50),
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildDetailRow('Service Charge', order.serviceCharge),
+                      _buildDetailRow('Items', '${order.itemCount}'),
                       SizedBox(height: 12.h),
                       _buildDetailRow('Date', order.fullDate),
+                      if (order.rating > 0) ...[
+                        SizedBox(height: 12.h),
+                        _buildDetailRow('Your Rating', '${'★' * order.rating}${'☆' * (5 - order.rating)}',
+                            valueColor: Colors.amber.shade700),
+                      ],
                       SizedBox(height: 20.h),
 
-                      // View Product Button
+                      // View Order Button — opens the real order (fetched
+                      // live via GET /order/:id), not '/deal-details' with
+                      // just an order id, which that screen can't render.
                       SizedBox(
                         width: double.infinity,
                         height: 50.h,
                         child: ElevatedButton(
                           onPressed: () {
-                            Get.toNamed('/deal-details', arguments: {'orderId': order.orderId});
+                            Get.to(() => OrderRequestView(), arguments: {'orderId': order.id});
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6B35),
@@ -328,7 +342,7 @@ class HistoryListWidget extends GetView<BillsController> {
                             elevation: 0,
                           ),
                           child: Text(
-                            'View Product',
+                            'View Order',
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
@@ -350,6 +364,217 @@ class HistoryListWidget extends GetView<BillsController> {
           ],
         ),
       ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return const Color(0xFF22C55E);
+      case 'cancelled':
+      case 'canceled':
+      case 'refunded':
+        return const Color(0xFFEF4444);
+      case 'pending':
+        return const Color(0xFF3B82F6);
+      default:
+        return const Color(0xFF4A4A4A);
+    }
+  }
+
+  /// Menu d'options — share/download receipt, plus a real "Rate this
+  /// order" action (POST /order/:id/review) when it hasn't been rated yet.
+  void _showOptionsMenu(OrderItem order) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              margin: EdgeInsets.only(bottom: 12.h),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            if (order.rating == 0 && order.type.toLowerCase() == 'delivered')
+              ListTile(
+                leading: Icon(Icons.star_outline, color: Colors.amber.shade700),
+                title: const Text('Rate this Order'),
+                onTap: () {
+                  Get.back();
+                  _showRateDialog(order);
+                },
+              ),
+            if (order.type.toLowerCase() == 'delivered')
+              ListTile(
+                leading: const Icon(Icons.assignment_return_outlined, color: Color(0xFFEF4444)),
+                title: const Text('Request Refund'),
+                onTap: () {
+                  Get.back();
+                  _showRequestRefundDialog(order);
+                },
+              ),
+            ListTile(
+              leading: Icon(Icons.share_outlined, color: Colors.grey.shade700),
+              title: const Text('Share Receipt'),
+              onTap: () {
+                Get.back();
+                _shareReceipt(order);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.download_outlined, color: Colors.grey.shade700),
+              title: const Text('Download Receipt'),
+              onTap: () {
+                Get.back();
+                _shareReceipt(order);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRateDialog(OrderItem order) {
+    final ratingRx = 5.obs;
+    final reviewController = TextEditingController();
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Rate Order #${order.orderId}', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              SizedBox(height: 16.h),
+              Obx(() => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) => IconButton(
+                  onPressed: () => ratingRx.value = i + 1,
+                  icon: Icon(
+                    i < ratingRx.value ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                    size: 28,
+                  ),
+                )),
+              )),
+              TextField(
+                controller: reviewController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Leave a review (optional)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final res = await ApiService().post('/order/${order.id}/review', {
+                      'rating': ratingRx.value,
+                      'review': reviewController.text.trim(),
+                    });
+                    Get.back();
+                    if (res.success) {
+                      safeSnackbar('Thank you!', 'Your rating was submitted.', snackPosition: SnackPosition.BOTTOM);
+                      Get.find<BillsController>().fetchOrderHistory();
+                    } else {
+                      safeSnackbar('Error', res.message, snackPosition: SnackPosition.BOTTOM);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B35)),
+                  child: const Text('Submit Rating', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRequestRefundDialog(OrderItem order) {
+    final reasonController = TextEditingController();
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Request Refund — Order #${order.orderId}', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              SizedBox(height: 8.h),
+              Text('The merchant will review your request and approve or deny it.',
+                  style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600)),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Reason for refund',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final res = await ApiService().put('/order/${order.id}/request-refund', {
+                          'reason': reasonController.text.trim(),
+                        });
+                        Get.back();
+                        if (res.success) {
+                          safeSnackbar('Refund Requested', 'The merchant will review your request.', snackPosition: SnackPosition.BOTTOM);
+                          Get.find<BillsController>().fetchOrderHistory();
+                        } else {
+                          safeSnackbar('Error', res.message, snackPosition: SnackPosition.BOTTOM);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      child: const Text('Submit', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _shareReceipt(OrderItem order) {
+    final receiptText = 'VIPs Receipt\n'
+        'Order: #${order.orderId}\n'
+        'Status: ${order.type}\n'
+        'Store: ${order.store}\n'
+        'Date: ${order.fullDate}\n'
+        'Items: ${order.itemCount}\n'
+        'Total: ${order.price}';
+    SharePlus.instance.share(
+      ShareParams(text: receiptText, subject: 'VIPs Receipt #${order.orderId}'),
     );
   }
 

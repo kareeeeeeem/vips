@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -82,7 +83,7 @@ class DeliveryDriverController extends GetxController {
         final d = ordersRes.data as Map<String, dynamic>;
         final orders = (d['orders'] as List?) ?? [];
         _allOrders.assignAll(
-          orders.map((o) => Map<String, dynamic>.from(o as Map)).toList(),
+          orders.map((o) => _mapOrder(o as Map)).toList(),
         );
         final active = _allOrders.firstWhereOrNull(
           (o) =>
@@ -97,6 +98,33 @@ class DeliveryDriverController extends GetxController {
       }
     } catch (_) {}
     isLoading.value = false;
+  }
+
+  // Raw '/merchant/orders' documents use keys like `_id`, `userId`,
+  // `totalAmount`, `deliveryAddress` (see vendor_order_controller._mapOrder)
+  // — not `orderId`/`storeName`/`customerName`/`deliveryFee` that the cards
+  // below read. Without this mapping those Text widgets receive null and
+  // crash (Text requires non-null data), and `.toStringAsFixed()` on a
+  // missing `deliveryFee` throws. storeName/storeAddress fall back to this
+  // merchant's own profile since '/merchant/orders' is scoped to them;
+  // distance/deliveryFee have no backing field yet and default safely.
+  Map<String, dynamic> _mapOrder(Map o) {
+    final user = o['userId'];
+    final items = (o['items'] as List?) ?? [];
+    return {
+      'orderId': o['_id']?.toString() ?? '',
+      'status': o['status']?.toString() ?? 'pending',
+      'storeName': driverName.value,
+      'storeAddress': '',
+      'customerName': user is Map ? (user['fullName']?.toString() ?? 'Unknown') : 'Unknown',
+      'customerPhone': user is Map ? (user['phone']?.toString() ?? '') : '',
+      'customerAddress': o['deliveryAddress']?.toString() ?? '',
+      'deliveryAddress': o['deliveryAddress']?.toString() ?? '',
+      'itemsCount': items.length,
+      'distance': '',
+      'deliveryFee': 0.0,
+      'totalAmount': (o['totalAmount'] as num?)?.toDouble() ?? 0.0,
+    };
   }
 
   void setOrderTab(int index) {
@@ -297,14 +325,29 @@ class DeliveryDriverController extends GetxController {
     );
   }
 
-  void requestNotificationPermission() async {
-    // Implement notification permission request
-    safeSnackbar('Permission', 'Requesting notification permission...');
+  // Mirrors VendorHomeController's requestNotificationPermission/
+  // requestBatteryOptimization — permission_handler is already a dependency
+  // and already used this way elsewhere in the app.
+  Future<void> requestNotificationPermission() async {
+    if (await Permission.notification.request().isGranted) {
+      isNotificationPermissionGranted.value = true;
+    } else {
+      await openAppSettings();
+    }
   }
 
-  void requestBatteryOptimization() async {
-    // Implement battery optimization request
-    safeSnackbar('Permission', 'Requesting battery optimization...');
+  Future<void> requestBatteryOptimization() async {
+    final status = await Permission.ignoreBatteryOptimizations.status;
+
+    if (status.isGranted) {
+      isBatteryOptimizationGranted.value = true;
+      return;
+    } else if (status.isDenied) {
+      final result = await Permission.ignoreBatteryOptimizations.request();
+      isBatteryOptimizationGranted.value = result.isGranted;
+    } else {
+      await openAppSettings();
+    }
   }
 
   void closeNotificationPermissionWarning() {

@@ -131,36 +131,9 @@ class MyLocationsController extends GetxController {
     selectedLocationIndex.value = defaultIndex != -1 ? defaultIndex : 0;
   }
 
-  List<SavedLocation> _defaultLocations() => [
-        SavedLocation(
-          id: '1',
-          name: "MAM'S HOUSE",
-          address: '110 Baker Street, London, United Kingdom',
-          city: 'London',
-          country: 'United Kingdom',
-          isDefault: false,
-        ),
-        SavedLocation(
-          id: '2',
-          name: 'HOME',
-          address: '2464 Royal Ln. Mesa, New Jersey 45463',
-          city: 'Mesa',
-          state: 'New Jersey',
-          zipCode: '45463',
-          country: 'USA',
-          isDefault: true,
-        ),
-        SavedLocation(
-          id: '3',
-          name: 'WORK',
-          address: '3891 Ranchview Dr. Richardson, California 62639',
-          city: 'Richardson',
-          state: 'California',
-          zipCode: '62639',
-          country: 'USA',
-          isDefault: false,
-        ),
-      ];
+  // No fabricated placeholder addresses — a new user has no saved
+  // locations until they add one themselves via addNewLocation().
+  List<SavedLocation> _defaultLocations() => [];
 
   Future<void> _persistLocations() async {
     final prefs = await SharedPreferences.getInstance();

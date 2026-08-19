@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
@@ -23,6 +26,34 @@ class MerchantAdsController extends GetxController {
   final endDate = Rxn<DateTime>();
   final isCreating = false.obs;
   final uploadedImageUrl = ''.obs;
+  final isUploadingImage = false.obs;
+
+  Future<void> pickAndUploadAdImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+    isUploadingImage.value = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final dioClient = dio.Dio(dio.BaseOptions(
+        baseUrl: ApiService.baseUrl,
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      ));
+      final formData = dio.FormData.fromMap({
+        'image': await dio.MultipartFile.fromFile(picked.path, filename: picked.name),
+      });
+      final res = await dioClient.post('/upload', data: formData);
+      if (res.data['success'] == true) {
+        uploadedImageUrl.value = res.data['data']['url'] as String;
+      } else {
+        safeSnackbar('Error', 'Image upload failed', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Could not upload image', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isUploadingImage.value = false;
+    }
+  }
 
   @override
   void onClose() {

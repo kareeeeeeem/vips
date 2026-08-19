@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../controllers/merchant_auth_controller.dart';
 
@@ -103,7 +104,7 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
               ),
               
               SizedBox(height: 40.h),
-              
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -124,9 +125,14 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
                   ),
                 ),
               ),
-              
+
+              SizedBox(height: 28.h),
+              _buildSocialDivider(),
+              SizedBox(height: 20.h),
+              _buildSocialButtons(),
+
               SizedBox(height: 24.h),
-              
+
               Center(
                 child: Text(
                   'By signing in, you agree to our Terms & Conditions',
@@ -140,6 +146,61 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSocialDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: const Color(0xFFE5E7EB))),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          child: Text(
+            'Or continue with',
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF)),
+          ),
+        ),
+        Expanded(child: Divider(color: const Color(0xFFE5E7EB))),
+      ],
+    );
+  }
+
+  Widget _buildSocialButtons() {
+    return Obx(() {
+      final isLoading = controller.isLoading.value;
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildSocialButton(
+            icon: 'assets/icons/Google.svg',
+            onTap: isLoading ? null : controller.googleLogin,
+          ),
+          SizedBox(width: 16.w),
+          _buildSocialButton(
+            icon: 'assets/icons/Facebook.svg',
+            onTap: isLoading ? null : controller.facebookLogin,
+          ),
+          SizedBox(width: 16.w),
+          _buildSocialButton(
+            icon: 'assets/icons/apple.svg',
+            onTap: isLoading ? null : controller.appleLogin,
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildSocialButton({required String icon, required VoidCallback? onTap}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: IconButton(
+        icon: SvgPicture.asset(icon, width: 24.w, height: 24.h),
+        onPressed: onTap,
       ),
     );
   }

@@ -10,6 +10,7 @@ class MerchantPartnershipController extends GetxController {
   final pageController = PageController();
   final currentPage = 0.obs;
   final isLoading = false.obs;
+  final storeAddressController = TextEditingController();
 
   // Partnership / registration status
   final partnershipStatus = ''.obs; // 'pending', 'approved', 'rejected', etc.
@@ -53,6 +54,7 @@ class MerchantPartnershipController extends GetxController {
   @override
   void onClose() {
     pageController.dispose();
+    storeAddressController.dispose();
     super.onClose();
   }
 
@@ -102,6 +104,15 @@ class MerchantPartnershipController extends GetxController {
       return;
     }
 
+    if (storeAddressController.text.trim().isEmpty) {
+      safeSnackbar(
+        "Address Required",
+        "Please enter your business address",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     isLoading.value = true;
     try {
       // Fetch merchant profile to get required fields
@@ -115,6 +126,7 @@ class MerchantPartnershipController extends GetxController {
         'ownerName': profile['fullName'] ?? 'Owner',
         'phone': profile['phone'] ?? '',
         'email': profile['email'] ?? '',
+        'address': storeAddressController.text.trim(),
         'businessType': 'retail',
         'minRewardPercent': minRewardPercent.value,
         'minPurchaseAmount': minPurchaseAmount.value,

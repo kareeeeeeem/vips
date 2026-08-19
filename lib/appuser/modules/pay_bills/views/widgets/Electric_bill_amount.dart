@@ -33,7 +33,10 @@ class ElectricBillAmountController extends GetxController {
     billServiceId = args['billServiceId']?.toString() ?? '';
     operatorName = args['operator']?.toString() ?? 'Bill Payment';
     operatorIcon = 'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
-    billingNumber = args['subscriberNumber']?.toString() ?? args['accountNumber']?.toString() ?? '';
+    billingNumber =
+        args['subscriberNumber']?.toString() ??
+        args['accountNumber']?.toString() ??
+        '';
     billStatus = args['billStatus']?.toString() ?? 'Unpaid';
     dueDate = args['dueDate']?.toString() ?? '';
     amountDue = args['amountDue']?.toString() ?? '';
@@ -74,6 +77,8 @@ class ElectricBillAmountController extends GetxController {
         },
         onValidPin: () async {
           Get.back(); // close pin validator
+
+          isLoading.value = true;
 
           // Show loading dialog
           Get.dialog(
@@ -119,6 +124,8 @@ class ElectricBillAmountController extends GetxController {
               'Failed to pay bill: $e',
               snackPosition: SnackPosition.BOTTOM,
             );
+          } finally {
+            isLoading.value = false;
           }
         },
         supportedMethods: const [
@@ -184,7 +191,7 @@ class ElectricBillAmountView extends GetView<ElectricBillAmountController> {
           ),
           SizedBox(width: 12.w),
           Text(
-            'Electric Bill',
+            controller.operatorName,
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.w700,

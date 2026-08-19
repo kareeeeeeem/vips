@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
+import '../../../design_system/atoms/app_colors.dart';
 import '../controllers/settings_controller.dart';
 
 class SettingsView extends GetView<SettingsController> {
@@ -52,6 +55,8 @@ class SettingsView extends GetView<SettingsController> {
               _buildTwoFactorTile(),
               _buildDivider(),
               _buildChangePasswordTile(),
+              _buildDivider(),
+              _buildResetPinTile(),
             ]),
 
             SizedBox(height: 24.h),
@@ -155,7 +160,15 @@ class SettingsView extends GetView<SettingsController> {
           ),
         ],
       ),
-      child: Column(children: children),
+      // Each ListTile paints its background/ink splashes on the nearest
+      // Material ancestor - without this, the outer Container's own
+      // background color hides them entirely.
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12.r),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: children),
+      ),
     );
   }
 
@@ -328,6 +341,119 @@ class SettingsView extends GetView<SettingsController> {
       ),
       trailing: Icon(Icons.arrow_forward_ios, size: 16.sp, color: Colors.grey),
       onTap: controller.navigateToChangePassword,
+    );
+  }
+
+  Widget _buildResetPinTile() {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      leading: Container(
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Icon(Icons.pin_outlined, color: Colors.orange, size: 24.sp),
+      ),
+      title: Text(
+        'Reset PIN',
+        style: TextStyle(
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
+      trailing: Icon(Icons.arrow_forward_ios, size: 16.sp, color: Colors.grey),
+      onTap: _showResetPinSheet,
+    );
+  }
+
+  void _showResetPinSheet() {
+    final passwordController = TextEditingController();
+    final pinController = TextEditingController();
+    final isSubmitting = false.obs;
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, MediaQuery.of(Get.context!).viewInsets.bottom + 24.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Reset PIN',
+              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Enter your account password to set a new PIN.',
+              style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
+            ),
+            SizedBox(height: 20.h),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Current Password',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: pinController,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: InputDecoration(
+                labelText: 'New PIN (4-6 digits)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+            ),
+            SizedBox(height: 8.h),
+            SizedBox(
+              width: double.infinity,
+              height: 52.h,
+              child: Obx(
+                () => ElevatedButton(
+                  onPressed: isSubmitting.value
+                      ? null
+                      : () async {
+                          isSubmitting.value = true;
+                          final response = await ApiService().put('/auth/pin/reset', {
+                            'currentPassword': passwordController.text,
+                            'newPin': pinController.text.trim(),
+                          });
+                          isSubmitting.value = false;
+                          if (response.success) {
+                            Get.back();
+                            safeSnackbar('Success', 'PIN reset successfully!', snackPosition: SnackPosition.BOTTOM);
+                          } else {
+                            safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.AppPrimaryColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  ),
+                  child: isSubmitting.value
+                      ? SizedBox(
+                          width: 22.w,
+                          height: 22.w,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text('Reset PIN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 

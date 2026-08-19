@@ -114,4 +114,10 @@ const Map<String, String> frFR = {
   'was': 'Était',
   'you_save': 'Vous économisez',
   'instant_confirmation': 'Confirmation instantanée après achat',
+  'no_hot_deals_found': 'Aucune offre trouvée',
+  'no_merchants_found': 'Aucun marchand trouvé',
+  'no_merchant_data': 'Aucune donnée sur le marchand',
+  'merchant_details': 'Détails du marchand',
+  'merchant_details_description': 'Consultez les informations et les offres de ce marchand.',
+  'no_deal_data': 'Aucune donnée sur l\'offre',
 };

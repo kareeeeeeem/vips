@@ -10,6 +10,11 @@ class VerificationController extends GetxController {
   final RxString email = ''.obs;
   final RxBool isVerifying = false.obs;
   final RxInt resendTimer = 60.obs;
+  // Login's second factor — the OTP was already sent by POST /auth/login
+  // itself (it doubles as the 2FA challenge trigger), so this screen
+  // just needs to know to call /auth/2fa/verify instead of /auth/verify-otp
+  // and finish like a normal login on success.
+  bool isLogin2FA = false;
 
   @override
   void onInit() {
@@ -17,6 +22,9 @@ class VerificationController extends GetxController {
     final args = Get.arguments;
     if (args is Map && args['email'] != null) {
       email.value = args['email'].toString();
+    }
+    if (args is Map && args['isLogin2FA'] == true) {
+      isLogin2FA = true;
     }
     startResendTimer();
   }
@@ -36,13 +44,26 @@ class VerificationController extends GetxController {
   Future<void> verifyCode(String code, bool fromReset) async {
     isVerifying.value = true;
     try {
-      final response = await ApiService().post('/auth/verify-otp', {
-        'email': email.value,
-        'otp': code,
-      });
+      final response = await ApiService().post(
+        isLogin2FA ? '/auth/2fa/verify' : '/auth/verify-otp',
+        {'email': email.value, 'otp': code},
+      );
       isVerifying.value = false;
       if (response.success) {
-        if (fromReset) {
+        if (isLogin2FA) {
+          final data = response.data;
+          final token = data is Map ? data['token'] as String? : null;
+          final userData = data is Map ? data['user'] : null;
+          if (token != null && token.isNotEmpty) {
+            await ApiService().setToken(token);
+            final hasPin = userData is Map && userData['hasPin'] == true;
+            Get.offAllNamed(hasPin ? '/main-app' : '/createpin');
+          } else {
+            safeSnackbar('Error', 'Could not complete sign-in. Please try again.',
+                backgroundColor: Colors.red.withValues(alpha: 0.1), colorText: Colors.red,
+                snackPosition: SnackPosition.BOTTOM);
+          }
+        } else if (fromReset) {
           Get.offAllNamed('/reset-password', arguments: {'email': email.value, 'otp': code});
         } else {
           Get.offAllNamed('/createpin');
@@ -108,6 +129,14 @@ class VerificationController extends GetxController {
 
   void goBack() {
     Get.back();
+  }
+
+  // Only reachable from the post-signup path (fromReset: false) — email
+  // delivery isn't guaranteed to be configured yet (needs SENDGRID_API_KEY),
+  // so verification can't be a hard gate on using the app. The account can
+  // still be verified later from Settings.
+  void skipVerification() {
+    Get.offAllNamed('/createpin');
   }
 
   @override

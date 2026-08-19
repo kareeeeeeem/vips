@@ -21,6 +21,13 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   String selectedAccount = 'Cash';
 
   @override
+  void dispose() {
+    titleController.dispose();
+    amountController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,

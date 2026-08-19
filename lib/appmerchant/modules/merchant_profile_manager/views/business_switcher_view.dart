@@ -133,7 +133,9 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
           ],
         ),
       ),
-    );
+    ).then((_) {
+      pinController.dispose();
+    });
   }
 
   Widget _buildAddNewButton() {

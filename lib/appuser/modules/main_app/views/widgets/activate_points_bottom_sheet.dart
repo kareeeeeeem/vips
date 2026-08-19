@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/modules/main_app/views/widgets/reward_page.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../../QR_scanner/views/q_r_scanner_view.dart';
 import 'gift_back_page.dart';
 
 class WalletPointsBottomSheet {
+  static final RxBool _amountVisible = true.obs;
+
   static void show({
     required Color primaryColor,
     required double points,
@@ -78,20 +81,22 @@ class WalletPointsBottomSheet {
                           Row(
                             children: [
                               // Eye icon
-                              GestureDetector(
-                                onTap: () {
-                                  // Toggle visibility
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.all(8.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.visibility_outlined,
-                                    size: 20.sp,
-                                    color: Colors.grey.shade700,
+                              Obx(
+                                () => GestureDetector(
+                                  onTap: () => _amountVisible.value = !_amountVisible.value,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _amountVisible.value
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      size: 20.sp,
+                                      color: Colors.grey.shade700,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -118,20 +123,22 @@ class WalletPointsBottomSheet {
                       ),
                       SizedBox(height: 16.h),
                       // Points display
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            points.toInt().toString(),
-                            style: TextStyle(
-                              fontSize: 56.sp,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              height: 1,
+                      Obx(
+                        () => Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _amountVisible.value ? points.toInt().toString() : '••••',
+                              style: TextStyle(
+                                fontSize: 56.sp,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
+                                height: 1,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -190,8 +197,16 @@ class WalletPointsBottomSheet {
                               subtitle: 'Expense',
                               icon: Icons.arrow_upward_rounded,
                               color: actionColors['switch']!,
+                              // No screen or backend endpoint exists for
+                              // converting/spending points yet — needs a
+                              // product decision on what "Switch" should do
+                              // before it can link anywhere real.
                               onTap: () {
-                                // Navigate to switch
+                                safeSnackbar(
+                                  'Coming Soon',
+                                  'This feature will be available in a future update',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
                               },
                             ),
                           ),

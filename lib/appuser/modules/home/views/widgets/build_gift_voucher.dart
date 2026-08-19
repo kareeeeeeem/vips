@@ -233,30 +233,36 @@ class GiftVoucherView extends GetView<HomeController> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 15),
-                    Text(
-                      'From',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${voucher.minAmount} ${voucher.currency}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 15),
+                      Text(
+                        'From',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Up to ${voucher.maxAmount} ${voucher.currency}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        '${voucher.minAmount} ${voucher.currency}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Up to ${voucher.maxAmount} ${voucher.currency}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -325,7 +331,7 @@ class GiftVoucherView extends GetView<HomeController> {
                                 ],
                               ),
                               child: ClipOval(
-                                child: Image.asset(
+                                child: Image.network(
                                   voucher.logoUrl,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {

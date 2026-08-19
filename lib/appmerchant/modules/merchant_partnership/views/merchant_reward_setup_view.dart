@@ -104,8 +104,35 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
                 ),
               ),
 
+              SizedBox(height: 40.h),
+              Text(
+                'Business Address',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              TextField(
+                controller: controller.storeAddressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Enter your store address',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                ),
+              ),
+
               SizedBox(height: 48.h),
-              
+
               // Terms checkbox
               Obx(() => Row(
                 children: [

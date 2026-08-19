@@ -360,6 +360,48 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
 
   Widget _buildActionButtons(MerchantOrder order) {
     final status = order.orderStatus?.toLowerCase();
+
+    if (status == 'refund_requested') {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final success = await controller.updateOrderStatus(order.id!, 'delivered');
+                if (success) Get.back();
+              },
+              icon: Icon(Icons.close, size: 18.sp),
+              label: Text('Deny', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final success = await controller.updateOrderStatus(order.id!, 'refunded');
+                if (success) Get.back();
+              },
+              icon: Icon(Icons.check, size: 18.sp),
+              label: Text('Approve Refund', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     final nextStatus = _getNextStatus(status);
     if (nextStatus == null) return const SizedBox.shrink();
 

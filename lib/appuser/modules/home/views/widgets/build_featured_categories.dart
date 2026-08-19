@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import 'food_delivery_page.dart';
 import 'location_permission_bottom_sheet.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 
 class BuildFeaturedCategories extends StatelessWidget {
   const BuildFeaturedCategories({super.key, required this.fromHome});
@@ -141,7 +141,7 @@ class BuildFeaturedCategories extends StatelessWidget {
               if (fromHome) SizedBox(height: 6.h),
               // Première ligne horizontale
               SizedBox(
-                height: 75.h,
+                height: 90.h,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -158,7 +158,7 @@ class BuildFeaturedCategories extends StatelessWidget {
               SizedBox(height: 12.h),
               // Deuxième ligne horizontale
               SizedBox(
-                height: 75.h,
+                height: 90.h,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -183,6 +183,17 @@ class BuildFeaturedCategories extends StatelessWidget {
     );
   }
 
+  // NOTE: this UI's category taxonomy (Computer & Accessories, Men Clothing
+  // & Fashion, Automobile & Motorcycle, etc.) doesn't match anything the
+  // backend actually has data for (real categories are just food/shopping/
+  // entertainment/services/outings, per SearchController's filter list and
+  // /content/search's real category field values). There's no backend
+  // category to deep-link into for most of these cards, so tapping one opens
+  // real Search (live backend data) rather than a category-specific listing
+  // — that's a product/taxonomy decision to reconcile, not a one-line fix.
+  // Previously this fell through to a fully hardcoded, fake "food delivery"
+  // mock screen with fabricated products regardless of which category was
+  // tapped, which was strictly worse (no live data, wrong category or not).
   void _handleCategoryTap(BuildContext context, CategoryItem item) {
     if (item.isNearestPlaces) {
       // Afficher la bottom sheet de demande de localisation
@@ -190,46 +201,19 @@ class BuildFeaturedCategories extends StatelessWidget {
         context,
         onAllowActivation: () {
           debugPrint('Location permission granted');
-          // Demander la permission de localisation
-          _requestLocationPermission(context);
+          // Real geolocation-based "nearby merchants" isn't built: no
+          // permission_handler/geolocator call here and no distance-based
+          // backend endpoint exists yet. Land on real Search instead of a
+          // fabricated food-delivery mock until that feature is built.
+          Get.toNamed(Routes.SEARCH);
         },
         onNoThanks: () {
           debugPrint('Location permission denied');
-          // Optionnel : afficher un message ou continuer sans localisation
         },
       );
     } else {
-      // Navigation normale pour les autres catégories
-      Get.to(() => FoodDeliveryPage());
+      Get.toNamed(Routes.SEARCH);
     }
-  }
-
-  Future<void> _requestLocationPermission(BuildContext context) async {
-    // Ici, vous pouvez intégrer le package de permissions
-    // Par exemple avec geolocator ou permission_handler
-
-    // Exemple avec permission_handler:
-    // import 'package:permission_handler/permission_handler.dart';
-    /*
-    var status = await Permission.location.request();
-    if (status.isGranted) {
-      // Permission accordée, naviguer vers la page
-      Get.to(() => FoodDeliveryPage());
-    } else if (status.isDenied) {
-      // Permission refusée
-      safeSnackbar(
-        'Permission refusée',
-        'La localisation est nécessaire pour voir les lieux à proximité',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } else if (status.isPermanentlyDenied) {
-      // Ouvrir les paramètres
-      openAppSettings();
-    }
-    */
-
-    // Pour l'instant, on navigue simplement
-    Get.to(() => FoodDeliveryPage());
   }
 
   Widget _buildCategoryCard(CategoryItem item) {

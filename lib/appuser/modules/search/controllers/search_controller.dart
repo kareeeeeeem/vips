@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 import 'package:vip/core/services/api_service.dart';
 
 class SearchController extends GetxController {
@@ -15,8 +16,9 @@ class SearchController extends GetxController {
   var isLoading = false.obs;
   var searchQuery = ''.obs;
 
-  // Keep these for backward compatibility with views
-  var filteredResults = <String>[].obs;
+  // Combined, type-tagged search results (deals/merchants/outings/products)
+  // so tapping a result can navigate to the right details screen.
+  var combinedResults = <Map<String, dynamic>>[].obs;
 
   @override
   void onInit() {
@@ -40,7 +42,7 @@ class SearchController extends GetxController {
 
     if (query.isEmpty) {
       isSearching.value = false;
-      filteredResults.clear();
+      combinedResults.clear();
       _searchData.value = {};
     } else {
       isSearching.value = true;
@@ -63,18 +65,28 @@ class SearchController extends GetxController {
     if (query.isEmpty) return;
     isLoading.value = true;
     try {
-      final response = await ApiService().get('/content/search', queryParams: {'q': query});
+      final params = <String, dynamic>{'q': query};
+      if (selectedCategory.value != 'All') params['category'] = selectedCategory.value;
+      if (selectedSort.value != 'Relevance') params['sort'] = selectedSort.value;
+      final response = await ApiService().get('/content/search', queryParams: params);
       if (response.success && response.data != null) {
         _searchData.value = Map<String, dynamic>.from(response.data);
-        // Flatten results for legacy filteredResults
-        final allTitles = <String>[];
+        // Combine all result types, tagged so the UI can show the right
+        // label/icon and navigate to the right details screen on tap.
+        final combined = <Map<String, dynamic>>[];
         for (var deal in dealResults) {
-          allTitles.add(deal['title']?.toString() ?? '');
+          combined.add({...deal, 'type': 'deal'});
         }
         for (var merchant in merchantResults) {
-          allTitles.add(merchant['storeName']?.toString() ?? '');
+          combined.add({...merchant, 'type': 'merchant'});
         }
-        filteredResults.value = allTitles.where((s) => s.isNotEmpty).toList();
+        for (var outing in outingResults) {
+          combined.add({...outing, 'type': 'outing'});
+        }
+        for (var product in productResults) {
+          combined.add({...product, 'type': 'product'});
+        }
+        combinedResults.value = combined;
       }
     } catch (_) {}
     isLoading.value = false;
@@ -116,8 +128,17 @@ class SearchController extends GetxController {
     if (query.isNotEmpty) addToRecent(query);
   }
 
-  void selectSearchResult(String result) {
-    addToRecent(result);
+  // Opens the right details screen for a tapped search result based on
+  // its type, and records the search term in recents.
+  void openSearchResult(Map<String, dynamic> item) {
+    final title = (item['title'] ?? item['storeName'] ?? '').toString();
+    if (title.isNotEmpty) addToRecent(title);
+
+    if (item['type'] == 'merchant') {
+      Get.toNamed(Routes.MERCHANT_DETAILS, arguments: item);
+    } else {
+      Get.toNamed(Routes.DEAL_DETAILS, arguments: item);
+    }
   }
 
   final selectedCategory = 'All'.obs;

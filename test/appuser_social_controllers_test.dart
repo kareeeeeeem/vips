@@ -259,8 +259,8 @@ void main() {
       expect(c.recentSearches, isEmpty);
     });
 
-    test('selectSearchResult records the selection into recent searches', () {
-      c.selectSearchResult('Museum');
+    test('selectSearch records the selection into recent searches', () {
+      c.selectSearch('Museum');
       expect(c.recentSearches.first, equals('Museum'));
     });
 
@@ -371,10 +371,10 @@ void main() {
       expect(c.isDataSharingEnabled.value, isTrue);
     });
 
-    test('toggleTwoFactor flips the flag', () {
-      c.toggleTwoFactor(true);
-      expect(c.isTwoFactorEnabled.value, isTrue);
-    });
+    // toggleTwoFactor now opens a real password-confirmation dialog and
+    // calls PUT /auth/2fa on confirm — like other dialog-driven actions in
+    // this codebase, that requires a mounted GetMaterialApp/navigator to
+    // test meaningfully, not a bare unit test.
   });
 
   // ═══════════════════════════════════════════════════════════

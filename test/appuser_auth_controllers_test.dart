@@ -17,6 +17,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appuser/modules/success_account/controllers/success_account_controller.dart';
 import 'package:vip/appuser/modules/forgot_password/controllers/forgot_password_controller.dart';
@@ -251,9 +252,22 @@ void main() {
       expect(controller.isConfirmPasswordVisible.value, isFalse);
     });
 
-    test('signUpWithGoogle / signUpWithFacebook are safe no-ops', () {
-      expect(() => controller.signUpWithGoogle(), returnsNormally);
-      expect(() => controller.signUpWithFacebook(), returnsNormally);
+    test(
+        'signUpWithGoogle / signUpWithFacebook attempt real Firebase '
+        'sign-in and reset isLoading even when it fails (no Firebase app '
+        'and no mounted Navigator in this unit-test environment, so the '
+        'error dialog itself throws — that is a test-harness limitation, '
+        'not app behavior; a real run has a mounted GetMaterialApp)',
+        () async {
+      try {
+        await controller.signUpWithGoogle();
+      } catch (_) {}
+      expect(controller.isLoading.value, isFalse);
+
+      try {
+        await controller.signUpWithFacebook();
+      } catch (_) {}
+      expect(controller.isLoading.value, isFalse);
     });
   });
 

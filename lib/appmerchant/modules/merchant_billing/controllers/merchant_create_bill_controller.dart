@@ -95,4 +95,10 @@ class MerchantCreateBillController extends GetxController {
       _isCreating.value = false;
     }
   }
+
+  @override
+  void onClose() {
+    amountController.dispose();
+    super.onClose();
+  }
 }

@@ -658,6 +658,7 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
 
   Widget _buildFriendItem(Map<String, dynamic> friend) {
     bool isJoined = friend['joined'] ?? false;
+    final String friendName = (friend['name'] as String?)?.trim() ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -679,7 +680,7 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
             ),
             child: Center(
               child: Text(
-                friend['name'][0].toUpperCase(),
+                friendName.isNotEmpty ? friendName[0].toUpperCase() : '?',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w700,
@@ -696,7 +697,7 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  friend['name'],
+                  friendName.isNotEmpty ? friendName : 'Friend',
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,

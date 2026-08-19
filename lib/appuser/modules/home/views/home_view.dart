@@ -9,16 +9,17 @@ import 'package:vip/appuser/modules/home/views/widgets/build_discover_places_car
 import 'package:vip/appuser/modules/home/views/widgets/build_drawer_menu.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_explore_section.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_featured_categories.dart';
+import 'package:vip/appuser/modules/home/views/widgets/build_filter_categories.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_gift_voucher.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_hero_banner.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_hot_deals.dart';
-import 'package:vip/appuser/modules/home/views/widgets/build_offre_details.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_promotional_carousel.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_quick_navigation.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_restorant.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_section_header.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_store_alerts_section.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_trending_merchants.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 
 import '../controllers/home_controller.dart';
 
@@ -66,6 +67,7 @@ class HomeView extends StatelessWidget {
                                 if (!fromOffer) BuildHeroBanner(),
                                 SizedBox(height: 5),
                                 BuildQuickNavigation(),
+                                BuildFilterCategories(),
                                 BuildPromotionalCarousel(),
 
                                 SizedBox(height: 5),
@@ -81,7 +83,7 @@ class HomeView extends StatelessWidget {
                                 BuildEndingSoon(
                                   deals: controller.endingSoonDeals,
                                   onDealTap: (deal) {
-                                    Get.to(() => OfferDetailPage(), arguments: deal);
+                                    Get.toNamed(Routes.DEAL_DETAILS, arguments: deal);
                                   },
                                   onViewAll: () => controller.onSeeAllPressed('Best Deals'),
                                   onAddToBasket: (deal) {

@@ -86,7 +86,7 @@ class OrderSuccessController extends GetxController {
   void viewOrderRequest() {
     Get.to(
       () => OrderRequestView(),
-      arguments: {'orderId': orderId.value, 'grandTotal': 87.0},
+      arguments: {'orderId': orderId.value, 'grandTotal': orderAmount.value},
     );
   }
 

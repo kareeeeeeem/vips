@@ -291,7 +291,7 @@ class SearchView extends GetView<search.SearchController> {
 
   Widget _buildSearchResults() {
     return Obx(() {
-      if (controller.filteredResults.isEmpty) {
+      if (controller.combinedResults.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -325,7 +325,7 @@ class SearchView extends GetView<search.SearchController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${controller.filteredResults.length} results found',
+            '${controller.combinedResults.length} results found',
             style: TextStyle(
               color: Colors.black87,
               fontSize: 16.sp,
@@ -336,10 +336,10 @@ class SearchView extends GetView<search.SearchController> {
           SizedBox(height: 16.h),
           Expanded(
             child: ListView.builder(
-              itemCount: controller.filteredResults.length,
+              itemCount: controller.combinedResults.length,
               itemBuilder: (context, index) {
                 return _buildSearchResultItem(
-                  controller.filteredResults[index],
+                  controller.combinedResults[index],
                 );
               },
             ),
@@ -349,7 +349,31 @@ class SearchView extends GetView<search.SearchController> {
     });
   }
 
-  Widget _buildSearchResultItem(String result) {
+  Widget _buildSearchResultItem(Map<String, dynamic> item) {
+    final type = (item['type'] ?? '').toString();
+    final title = (item['title'] ?? item['storeName'] ?? '').toString();
+
+    String subtitle;
+    IconData icon;
+    switch (type) {
+      case 'merchant':
+        subtitle = item['storeCategory']?.toString() ?? 'Merchant';
+        icon = Icons.store;
+        break;
+      case 'outing':
+        subtitle = item['category']?.toString() ?? 'Outing';
+        icon = Icons.explore;
+        break;
+      case 'product':
+        subtitle = item['category']?.toString() ?? 'Product';
+        icon = Icons.shopping_bag;
+        break;
+      case 'deal':
+      default:
+        subtitle = item['description']?.toString() ?? 'Deal';
+        icon = Icons.local_offer;
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),
@@ -365,11 +389,11 @@ class SearchView extends GetView<search.SearchController> {
         ],
       ),
       child: GestureDetector(
-        onTap: () => controller.selectSearchResult(result),
+        onTap: () => controller.openSearchResult(item),
         child: Row(
           children: [
             Icon(
-              Icons.restaurant,
+              icon,
               color: AppColors.AppPrimaryColor,
               size: 24.r,
             ),
@@ -379,7 +403,7 @@ class SearchView extends GetView<search.SearchController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    result,
+                    title,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 16.sp,
@@ -389,12 +413,14 @@ class SearchView extends GetView<search.SearchController> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Restaurant • Fast Food',
+                    subtitle,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12.sp,
                       color: Colors.grey[600],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

@@ -5,6 +5,8 @@ import 'package:vip/appuser/modules/bills/views/widgets/filter.dart';
 import 'package:vip/appuser/modules/bills/views/widgets/history_list_widget.dart';
 import 'package:vip/appuser/modules/bills/views/widgets/product_detail_page.dart';
 import 'package:vip/appuser/modules/bills/views/widgets/product_list_page.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../home/views/widgets/build_appbar.dart';
 import '../../home/views/widgets/build_drawer_menu.dart';
@@ -16,7 +18,17 @@ class BillsView extends GetView<BillsController> {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(BillsController());
+    // main_app_view.dart instantiates BillsView directly (not via
+    // Get.toNamed), so BillsBinding never runs for the real "Digital"
+    // bottom-nav tab — this Get.put is the only thing that ever
+    // registers BillsController there, and removing it outright breaks
+    // that tab. But calling Get.put unconditionally replaced the
+    // controller (discarding loaded products, filter selection,
+    // expanded-order state, then re-fetching from scratch) on every
+    // rebuild of this widget, not just the first. Guard it instead.
+    if (!Get.isRegistered<BillsController>()) {
+      Get.put(BillsController());
+    }
     return Scaffold(
       key: scaffoldKey,
       backgroundColor: Colors.grey[50],
@@ -47,6 +59,33 @@ class BillsView extends GetView<BillsController> {
                   // Show History content
                   return const HistoryListWidget();
                 } else if (controller.selectedFilter.value == 'Products') {
+                  if (controller.isLoading.value && controller.allProducts.isEmpty) {
+                    return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B35)));
+                  }
+                  if (controller.hasLoadError.value) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade400),
+                            SizedBox(height: 12.h),
+                            Text(
+                              'Could not load products. Check your connection and try again.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                            SizedBox(height: 12.h),
+                            TextButton(
+                              onPressed: controller.fetchProducts,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
                   // Show Products content
                   return _buildProductsView();
                 } else {
@@ -148,7 +187,10 @@ class BillsView extends GetView<BillsController> {
                 TextButton(
                   onPressed: () {
                     Get.to(
-                      () => const ProductListPage(title: 'Best Selling Theme'),
+                      () => ProductListPage(
+                        title: 'Best Selling Theme',
+                        products: controller.bestSellingProducts,
+                      ),
                     );
                   },
                   child: const Text(
@@ -194,7 +236,7 @@ class BillsView extends GetView<BillsController> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Text(
-                      'Check our software Megapack worth \$565\nfor Only \$39.',
+                      'Browse our full digital product catalog',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
@@ -204,7 +246,12 @@ class BillsView extends GetView<BillsController> {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () => Get.toNamed('/hot-deals'),
+                      onPressed: () => Get.to(
+                        () => ProductListPage(
+                          title: 'All Products',
+                          products: controller.allProducts,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF0066FF),
@@ -217,7 +264,7 @@ class BillsView extends GetView<BillsController> {
                         ),
                       ),
                       child: const Text(
-                        'Go to Offer Page',
+                        'Browse All Products',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -244,7 +291,12 @@ class BillsView extends GetView<BillsController> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => Get.toNamed('/hot-deals'),
+                  onPressed: () => Get.to(
+                    () => ProductListPage(
+                      title: 'Trending Theme',
+                      products: controller.trendingProducts,
+                    ),
+                  ),
                   child: const Text(
                     'See All',
                     style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -286,7 +338,12 @@ class BillsView extends GetView<BillsController> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => Get.toNamed('/hot-deals'),
+                  onPressed: () => Get.to(
+                    () => ProductListPage(
+                      title: 'Feature Themes',
+                      products: controller.featureProducts,
+                    ),
+                  ),
                   child: const Text(
                     'See All',
                     style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -418,16 +475,29 @@ class BillsView extends GetView<BillsController> {
                 Positioned(
                   top: 8,
                   left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      color: Color(0xFF0066FF),
-                      size: 18,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final res = await ApiService().post('/favorites/toggle', {
+                        'itemId': product.id,
+                        'itemType': 'Product',
+                      });
+                      safeSnackbar(
+                        res.success ? 'Favorites' : 'Error',
+                        res.success ? 'Updated your favorites' : res.message,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.favorite_border,
+                        color: Color(0xFF0066FF),
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -487,7 +557,9 @@ class BillsView extends GetView<BillsController> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Sell count and rating
+                  // Sell count and rating — both real (aggregated
+                  // server-side from actual Orders), not a decoration
+                  // that always showed 5 gold stars for every product.
                   Row(
                     children: [
                       const Icon(Icons.download, size: 14, color: Colors.grey),
@@ -500,14 +572,14 @@ class BillsView extends GetView<BillsController> {
                         ),
                       ),
                       const Spacer(),
-                      ...List.generate(
-                        5,
-                        (index) => const Icon(
-                          Icons.star,
-                          size: 12,
-                          color: Colors.amber,
+                      if (product.reviewCount > 0) ...[
+                        const Icon(Icons.star, size: 12, color: Colors.amber),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${product.avgRating.toStringAsFixed(1)} (${product.reviewCount})',
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

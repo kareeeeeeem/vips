@@ -416,7 +416,9 @@ class GiftView extends GetView<GiftController> {
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
         ),
-        child: ExpansionTile(
+        child: Material(
+          type: MaterialType.transparency,
+          child: ExpansionTile(
           tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
           childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
           collapsedIconColor: Colors.grey.shade400,
@@ -439,6 +441,7 @@ class GiftView extends GetView<GiftController> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

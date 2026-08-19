@@ -198,7 +198,8 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
             ListTile(
               leading: const Icon(Icons.phone, color: Color(0xFFF97316)),
               title: const Text('Call Support'),
-              subtitle: const Text('+220 000 0000'),
+              // TODO: placeholder pending the real support contact number before launch
+              subtitle: const Text('+216 XX XXX XXX'),
               contentPadding: EdgeInsets.zero,
               onTap: () => Get.back(),
             ),

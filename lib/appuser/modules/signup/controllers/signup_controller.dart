@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
-import 'package:vip/core/utils/safe_snackbar.dart';
+import 'package:vip/core/services/auth_service.dart';
 
 class SignupController extends GetxController
     with GetSingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
+
   // Text Controllers
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -135,19 +138,26 @@ class SignupController extends GetxController
     }
 
     isLoading.value = true;
+    debugPrint('[SIGNUP] createAccount() started');
 
     try {
+      debugPrint('[SIGNUP] POST /auth/register...');
       final response = await ApiService().post('/auth/register', {
         'fullName': fullNameController.text.trim(),
         'phone': phoneController.text.trim(),
         'email': emailController.text.trim(),
         'password': passwordController.text,
       });
+      debugPrint('[SIGNUP] createAccount() response received, success=${response.success}');
 
-      if (response.success && response.data != null) {
-        final token = response.data['token'];
+      final token =
+          response.data is Map ? response.data['token'] as String? : null;
+      if (response.success && token != null && token.isNotEmpty) {
         await ApiService().setToken(token);
-        Get.offAllNamed('/main-app');
+        // A fresh email/password account can't have its email verified by
+        // a third party the way social sign-in can — send them through the
+        // real verify → PIN → welcome flow instead of straight into the app.
+        Get.offAllNamed('/verification', arguments: {'email': emailController.text.trim()});
       } else {
         Get.defaultDialog(
           title: 'Error',
@@ -159,6 +169,7 @@ class SignupController extends GetxController
         );
       }
     } catch (e) {
+      debugPrint('[SIGNUP] createAccount() threw: $e');
       Get.defaultDialog(
         title: 'Error',
         middleText: e.toString(),
@@ -172,19 +183,90 @@ class SignupController extends GetxController
     }
   }
 
-  void signUpWithGoogle() {
-    safeSnackbar(
-      'Coming Soon',
-      'Google sign-up will be available in the next update.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  Future<void> signUpWithGoogle() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    debugPrint('[SIGNUP] signUpWithGoogle() started');
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      if (userCredential == null) {
+        debugPrint('[SIGNUP] signUpWithGoogle() canceled by user');
+        return;
+      }
+      debugPrint('[SIGNUP] Google auth done, exchanging with backend...');
+      await _signUpWithBackend(userCredential.user, 'google');
+      debugPrint('[SIGNUP] signUpWithGoogle() finished');
+    } catch (e) {
+      debugPrint('[SIGNUP] signUpWithGoogle() threw: $e');
+      _handleSignUpError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  void signUpWithFacebook() {
-    safeSnackbar(
-      'Coming Soon',
-      'Facebook sign-up will be available in the next update.',
-      snackPosition: SnackPosition.BOTTOM,
+  Future<void> signUpWithFacebook() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    debugPrint('[SIGNUP] signUpWithFacebook() started');
+    try {
+      final userCredential = await _authService.signInWithFacebook();
+      if (userCredential == null) {
+        debugPrint('[SIGNUP] signUpWithFacebook() canceled by user');
+        return;
+      }
+      debugPrint('[SIGNUP] Facebook auth done, exchanging with backend...');
+      await _signUpWithBackend(userCredential.user, 'facebook');
+      debugPrint('[SIGNUP] signUpWithFacebook() finished');
+    } catch (e) {
+      debugPrint('[SIGNUP] signUpWithFacebook() threw: $e');
+      _handleSignUpError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Exchange Firebase social credentials for a VIPs JWT token, mirroring
+  // LoginController._loginWithBackend's pattern.
+  Future<void> _signUpWithBackend(User? firebaseUser, String provider) async {
+    try {
+      debugPrint('[SIGNUP] _signUpWithBackend: getting Firebase ID token...');
+      final idToken = await firebaseUser?.getIdToken();
+      debugPrint('[SIGNUP] _signUpWithBackend: POST /auth/social (provider=$provider)...');
+      final response = await ApiService().post('/auth/social', {
+        'idToken' : idToken,
+        'provider': provider,
+      });
+      debugPrint('[SIGNUP] _signUpWithBackend: response received, success=${response.success}');
+      final token = response.data is Map ? response.data['token'] as String? : null;
+      if (response.success && token != null && token.isNotEmpty) {
+        await ApiService().setToken(token);
+        // Firebase already verified this email to issue the token, so
+        // there's no OTP step needed here — but a brand new social account
+        // still needs a PIN, same as an email/password one.
+        final userData = response.data is Map ? response.data['user'] : null;
+        final hasPin = userData is Map && userData['hasPin'] == true;
+        Get.offAllNamed(hasPin ? '/main-app' : '/createpin');
+      } else {
+        await _authService.signOut();
+        _handleSignUpError(response.message.isNotEmpty
+            ? response.message
+            : 'Could not complete sign-up. Please try again.');
+      }
+    } catch (e) {
+      debugPrint('[SIGNUP] _signUpWithBackend threw: $e');
+      await _authService.signOut();
+      _handleSignUpError('Could not complete sign-up. Please try again.');
+    }
+  }
+
+  void _handleSignUpError(String message) {
+    Get.defaultDialog(
+      title: 'Error',
+      middleText: message,
+      textConfirm: 'OK',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.redAccent,
+      onConfirm: () => Get.back(),
     );
   }
 

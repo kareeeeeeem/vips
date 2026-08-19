@@ -48,10 +48,7 @@ abstract class MerchantRoutes {
   static const ADD_TRANSACTION = _MerchantPaths.ADD_TRANSACTION;
   static const ACCOUNTS = _MerchantPaths.ACCOUNTS;
   static const DUE_LIST = _MerchantPaths.DUE_LIST;
-  static const DUE_DETAIL = _MerchantPaths.DUE_DETAIL;
-  static const COLLECT_DUE = _MerchantPaths.COLLECT_DUE;
   static const STOCK_LIST = _MerchantPaths.STOCK_LIST;
-  static const UPDATE_STOCK = _MerchantPaths.UPDATE_STOCK;
   static const TAX_RATES = _MerchantPaths.TAX_RATES;
   static const STAFF_MANAGEMENT = _MerchantPaths.STAFF_MANAGEMENT;
   static const STAFF_LEDGER = _MerchantPaths.STAFF_LEDGER;
@@ -110,10 +107,7 @@ abstract class _MerchantPaths {
   static const ADD_TRANSACTION = '/add-transaction';
   static const ACCOUNTS = '/accounts';
   static const DUE_LIST = '/due-list';
-  static const DUE_DETAIL = '/due-detail';
-  static const COLLECT_DUE = '/collect-due';
   static const STOCK_LIST = '/stock-list';
-  static const UPDATE_STOCK = '/update-stock';
   static const TAX_RATES = '/tax-rates';
   static const STAFF_MANAGEMENT = '/staff-management';
   static const STAFF_LEDGER = '/staff-ledger';

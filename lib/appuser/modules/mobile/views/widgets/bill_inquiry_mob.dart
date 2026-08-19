@@ -3,38 +3,77 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vip/appuser/modules/mobile/views/widgets/transfer_details.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import '../../../../design_system/organisms/pin/pin.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
+import 'order_details.dart';
 
 class BillInquiryController extends GetxController {
   final RxString pin = ''.obs;
   final RxBool isProcessing = false.obs;
+  final RxBool isLoading = false.obs;
+  final TextEditingController phoneNumberController = TextEditingController();
 
   String _userPin = '0000';
 
-  // Bill data
-  final String transferTo = '#12355866';
-  final double billAmount = 2000.0;
-  final double fees = 200.0;
-  final double vpToAwards = 1000.0;
+  // Real bill data — operator/amount come from the mobile top-up screen,
+  // fees come from the /services/bills catalog (same endpoint pay_bills_controller uses).
+  late final String transferTo;
+  late final double billAmount;
+  final RxDouble fees = 0.0.obs;
+  final RxDouble vpToAwards = 0.0.obs;
 
   @override
   void onInit() {
     super.onInit();
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    transferTo = (args['operator'] as String?) ?? '';
+    billAmount = (args['amount'] as double?) ?? 0.0;
+    phoneNumberController.text = (args['phoneNumber'] as String?) ?? '';
+    // Mirrors the backend's 10% reward rate used in /rewards/expense-to-reward.
+    vpToAwards.value = billAmount * 0.1;
+
     SharedPreferences.getInstance().then((prefs) {
       _userPin = prefs.getString('user_pin') ?? '0000';
     });
+    _loadFees();
   }
 
-  double get totalVP => vpToAwards + fees;
+  Future<void> _loadFees() async {
+    isLoading.value = true;
+    try {
+      final response = await ApiService().get('/services/bills');
+      if (response.success && response.data != null) {
+        final List<dynamic> data = response.data;
+        final match = data.firstWhere(
+          (b) => (b['type'] ?? '').toString().toLowerCase() == 'mobile',
+          orElse: () => null,
+        );
+        if (match != null) {
+          fees.value = ((match['fee'] ?? 0) as num).toDouble();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching bill fee: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  double get totalVP => vpToAwards.value + fees.value;
 
   void updatePin(String newPin) {
     pin.value = newPin;
   }
 
   void proceed() {
+    if (phoneNumberController.text.trim().isEmpty) {
+      safeSnackbar('Required', 'Please enter the phone number to recharge', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     isProcessing.value = true;
 
     Get.to(
@@ -59,8 +98,51 @@ class BillInquiryController extends GetxController {
             return false;
           }
         },
-        onValidPin: () {
-          Get.to(() => CardDetailsView());
+        onValidPin: () async {
+          Get.back(); // close pin validator
+
+          Get.dialog(
+            const Center(child: CircularProgressIndicator()),
+            barrierDismissible: false,
+          );
+
+          try {
+            final response = await ApiService().post('/services/mobile-recharge', {
+              'operator': transferTo,
+              'amount': billAmount,
+              'phoneNumber': phoneNumberController.text.trim(),
+            });
+
+            Get.back(); // close loading dialog
+
+            if (response.success) {
+              safeSnackbar('Success', response.message.isNotEmpty ? response.message : 'Recharge successful!',
+                  snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+              Get.put(OrderDetailsController());
+              Get.to(
+                () => OrderDetailsView(),
+                arguments: {
+                  'orderType': 'Mobile Recharge',
+                  'phone': phoneNumberController.text.trim(),
+                  'paymentMethod': 'Wallet',
+                  'status': 'PAID',
+                  'items': [
+                    {'quantity': 1, 'name': '$transferTo Recharge', 'price': billAmount},
+                  ],
+                  'amount': billAmount,
+                  'serviceFee': fees.value,
+                },
+              );
+            } else {
+              safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to complete recharge',
+                  snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+            }
+          } catch (e) {
+            Get.back(); // close loading dialog
+            safeSnackbar('Error', 'Failed to complete recharge: $e', snackPosition: SnackPosition.BOTTOM);
+          } finally {
+            isProcessing.value = false;
+          }
         },
         supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
       ),
@@ -69,6 +151,12 @@ class BillInquiryController extends GetxController {
 
   void cancel() {
     Get.back();
+  }
+
+  @override
+  void onClose() {
+    phoneNumberController.dispose();
+    super.onClose();
   }
 }
 
@@ -144,6 +232,8 @@ class BillInquiryView extends GetView<BillInquiryController> {
           _buildCardHeader(),
           SizedBox(height: 8.h),
           _buildTransferInfo(),
+          SizedBox(height: 16.h),
+          _buildPhoneNumberField(),
           SizedBox(height: 11.h),
           _buildDivider(),
           SizedBox(height: 18.h),
@@ -152,6 +242,43 @@ class BillInquiryView extends GetView<BillInquiryController> {
           _buildBillDetails(),
         ],
       ),
+    );
+  }
+
+  Widget _buildPhoneNumberField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Phone Number',
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        SizedBox(height: 6.h),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.grey.shade200, width: 1.5),
+          ),
+          child: TextField(
+            controller: controller.phoneNumberController,
+            keyboardType: TextInputType.phone,
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: 'Enter phone number to recharge',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14.sp),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -248,17 +375,19 @@ class BillInquiryView extends GetView<BillInquiryController> {
   }
 
   Widget _buildBillDetails() {
-    return Column(
-      children: [
-        _buildDetailRow('Fees', controller.fees),
-        SizedBox(height: 12.h),
-        _buildDetailRow('VP to Awards', controller.vpToAwards),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: _buildDivider(),
-        ),
-        _buildTotalRow(),
-      ],
+    return Obx(
+      () => Column(
+        children: [
+          _buildDetailRow('Fees', controller.fees.value),
+          SizedBox(height: 12.h),
+          _buildDetailRow('VP to Awards', controller.vpToAwards.value),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            child: _buildDivider(),
+          ),
+          _buildTotalRow(),
+        ],
+      ),
     );
   }
 

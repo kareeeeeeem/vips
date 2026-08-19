@@ -454,7 +454,14 @@ class NotificationsView extends GetView<NotificationsController> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12.r),
-          child: Image.asset(notification.image!, fit: BoxFit.cover),
+          child: Image.network(
+            notification.image!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Icon(
+              controller.getTypeIcon(notification.type),
+              color: controller.getTypeColor(notification.type),
+            ),
+          ),
         ),
       );
     }

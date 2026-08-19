@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -125,6 +126,7 @@ class MerchantBarcodeController extends GetxController {
   // ─── Helper: copy code to clipboard ─────────────────────
 
   void copyCode(String code) {
+    Clipboard.setData(ClipboardData(text: code));
     safeSnackbar('Copied!', 'Code copied to clipboard',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFF10B981),

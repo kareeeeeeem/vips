@@ -31,7 +31,7 @@ class MerchantProfileController extends GetxController {
           id: data['_id'] ?? '',
           name: data['storeName'] ?? data['fullName'] ?? 'My Store',
           type: data['storeCategory'] ?? 'Business',
-          logoUrl: data['profileImageUrl'] ?? '',
+          logoUrl: data['logo'] ?? data['profileImage'] ?? '',
           pin: savedPin,
           isActive: true,
         );

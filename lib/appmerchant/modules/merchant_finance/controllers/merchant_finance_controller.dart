@@ -78,6 +78,7 @@ class MerchantFinanceController extends GetxController {
         totalIncome.value = (data['totalIncome'] ?? 0).toDouble();
         totalExpense.value = (data['totalExpense'] ?? 0).toDouble();
         cashBalance.value = (data['cashBalance'] ?? 0).toDouble();
+        bankBalance.value = (data['bankBalance'] ?? 0).toDouble();
       }
     } catch (e) {
       safeSnackbar('Error', 'Failed to load finance data: $e');

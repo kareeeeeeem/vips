@@ -10,10 +10,11 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
   @override
   Widget build(BuildContext context) {
     final plan = (Get.arguments as Map<dynamic, dynamic>?) ?? {};
-    final planName = (plan['name'] ?? plan['planName'] ?? plan['id'] ?? 'Plan').toString();
+    final planName = (plan['name'] ?? plan['planName'] ?? plan['code'] ?? plan['id'] ?? 'Plan').toString();
     final price = (((plan['price'] ?? plan['monthlyPrice'] ?? 0) as num?) ?? 0).toDouble();
     final currency = (plan['currency'] ?? 'D').toString();
-    final planId = (plan['id'] ?? plan['planCode'] ?? planName).toString();
+    // Backend plan objects key the subscribe code as `code`, not `id`/`planCode`.
+    final planId = (plan['code'] ?? plan['id'] ?? plan['planCode'] ?? planName).toString();
 
     // Sync controller with selected plan from arguments
     WidgetsBinding.instance.addPostFrameCallback((_) {

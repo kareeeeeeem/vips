@@ -51,7 +51,7 @@ class BuildOfferCard extends StatelessWidget {
                     height: 120.h,
                     width: double.infinity,
                     child: Image.network(
-                      deal['image'],
+                      deal['image']?.toString() ?? '',
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
@@ -270,8 +270,11 @@ class BuildOfferCard extends StatelessWidget {
                             ],
                           ),
 
-                          // Space reserved for the add-to-basket button (40.h)
-                          SizedBox(height: 40.h),
+                          // Small clearance before the add-to-basket button,
+                          // which is absolutely positioned over the bottom-right
+                          // corner — this text is left-aligned so it doesn't
+                          // need the button's full 40.h reserved beneath it.
+                          SizedBox(height: 8.h),
                         ],
                       ),
                     ),

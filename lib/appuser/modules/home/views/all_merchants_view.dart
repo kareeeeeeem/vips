@@ -8,17 +8,15 @@ class AllMerchantsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<HomeController>()
-        ? Get.find<HomeController>()
-        : Get.put(HomeController());
+    if (!Get.isRegistered<HomeController>()) Get.put(HomeController());
 
     return Scaffold(
       appBar: AppBar(
         title: Text('trending_merchants'.tr),
         backgroundColor: const Color(0xFF3B82F6),
       ),
-      body: Obx(
-        () {
+      body: GetBuilder<HomeController>(
+        builder: (controller) {
           if (controller.trendingMerchants.isEmpty) {
             return Center(
               child: Text(

@@ -38,33 +38,51 @@ class CouponController extends GetxController
       final response = await ApiService().get('/rewards/coupons');
       if (response.success && response.data != null) {
         final List<dynamic> data = response.data;
-        coupons.value = data.map((c) {
-          final expiryRaw = c['expiryDate'] ?? c['expiresAt'];
-          final expiry = expiryRaw != null
-              ? (DateTime.tryParse(expiryRaw.toString()) ?? DateTime.now().add(const Duration(days: 365)))
-              : DateTime.now().add(const Duration(days: 365));
-          final isExpired = expiry.isBefore(DateTime.now());
-          final discount = ((c['discountPercentage'] ?? c['discount'] ?? 0) as num).toDouble();
-          return Coupon(
-            id: (c['_id'] ?? c['id'] ?? '').toString(),
-            code: (c['code'] ?? '').toString(),
-            discount: discount,
-            type: c['type'] == 'fixed' ? CouponType.fixed : CouponType.percentage,
-            status: isExpired
-                ? CouponStatus.expired
-                : ((c['isActive'] == true) ? CouponStatus.active : CouponStatus.inactive),
-            expiryDate: expiry,
-            usageCount: ((c['usageCount'] ?? c['usageLimit'] ?? 0) as num).toInt(),
-            maxUsage: ((c['maxUsage'] ?? c['limit'] ?? 100) as num).toInt(),
-          );
-        }).toList();
+        coupons.value =
+            data.map((c) {
+              final expiryRaw = c['expiryDate'] ?? c['expiresAt'];
+              final expiry =
+                  expiryRaw != null
+                      ? (DateTime.tryParse(expiryRaw.toString()) ??
+                          DateTime.now().add(const Duration(days: 365)))
+                      : DateTime.now().add(const Duration(days: 365));
+              final isExpired = expiry.isBefore(DateTime.now());
+              final discount =
+                  ((c['discountPercentage'] ?? c['discount'] ?? 0) as num)
+                      .toDouble();
+              return Coupon(
+                id: (c['_id'] ?? c['id'] ?? '').toString(),
+                code: (c['code'] ?? '').toString(),
+                discount: discount,
+                type:
+                    c['type'] == 'fixed'
+                        ? CouponType.fixed
+                        : CouponType.percentage,
+                status:
+                    isExpired
+                        ? CouponStatus.expired
+                        : ((c['isActive'] == true)
+                            ? CouponStatus.active
+                            : CouponStatus.inactive),
+                expiryDate: expiry,
+                usageCount:
+                    ((c['usageCount'] ?? c['usageLimit'] ?? 0) as num).toInt(),
+                maxUsage: ((c['maxUsage'] ?? c['limit'] ?? 100) as num).toInt(),
+              );
+            }).toList();
       }
     } catch (e) {
       debugPrint('Error fetching coupons: $e');
     } finally {
       isLoading.value = false;
     }
+    await loadPackages();
   }
+
+  // No backend packages/subscription-catalog endpoint exists yet — leave
+  // `packages` empty rather than call a route that doesn't exist. Wire this
+  // up once a real subscription catalog endpoint is added server-side.
+  Future<void> loadPackages() async {}
 
   final Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
 
@@ -75,12 +93,13 @@ class CouponController extends GetxController
       initialDate: selectedDate.value ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF10B981)),
-        ),
-        child: child!,
-      ),
+      builder:
+          (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(primary: Color(0xFF10B981)),
+            ),
+            child: child!,
+          ),
     );
     if (picked != null) {
       selectedDate.value = picked;
@@ -117,10 +136,7 @@ class CouponController extends GetxController
   // Actions sur un coupon
   void editCoupon(Coupon coupon) {
     Get.bottomSheet(
-      EditCouponSheet(
-        coupon: coupon,
-        onSuccess: loadData,
-      ),
+      EditCouponSheet(coupon: coupon, onSuccess: loadData),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
@@ -226,7 +242,9 @@ class CouponController extends GetxController
                     child: GestureDetector(
                       onTap: () async {
                         Get.back();
-                        final res = await ApiService().delete('/rewards/coupons/${coupon.id}');
+                        final res = await ApiService().delete(
+                          '/rewards/coupons/${coupon.id}',
+                        );
                         if (res.success) {
                           coupons.remove(coupon);
                           safeSnackbar(
@@ -290,16 +308,47 @@ class CouponController extends GetxController
     );
   }
 
-  void toggleCouponStatus(Coupon coupon) {
+  Future<void> toggleCouponStatus(Coupon coupon) async {
     final index = coupons.indexWhere((c) => c.id == coupon.id);
-    if (index != -1) {
-      coupons[index] = coupon.copyWith(
-        status:
-            coupon.status == CouponStatus.active
-                ? CouponStatus.inactive
-                : CouponStatus.active,
-      );
+    if (index == -1) return;
+
+    final newStatus =
+        coupon.status == CouponStatus.active
+            ? CouponStatus.inactive
+            : CouponStatus.active;
+
+    // Update locally first for immediate feedback.
+    coupons[index] = coupon.copyWith(status: newStatus);
+    coupons.refresh();
+
+    try {
+      final res = await ApiService().put('/rewards/coupons/${coupon.id}', {
+        'isActive': newStatus == CouponStatus.active,
+      });
+      if (!res.success) {
+        // Revert on failure.
+        coupons[index] = coupon;
+        coupons.refresh();
+        safeSnackbar(
+          'Error',
+          res.message.isNotEmpty
+              ? res.message
+              : 'Failed to update coupon status',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      coupons[index] = coupon;
       coupons.refresh();
+      safeSnackbar(
+        'Error',
+        'Failed to update coupon status: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -354,7 +403,8 @@ class Coupon {
     );
   }
 
-  double get usagePercentage => (usageCount / maxUsage) * 100;
+  double get usagePercentage =>
+      maxUsage == 0 ? 0 : (usageCount / maxUsage) * 100;
   bool get isExpired => DateTime.now().isAfter(expiryDate);
   int get daysLeft => expiryDate.difference(DateTime.now()).inDays;
 }

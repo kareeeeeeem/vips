@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../controllers/business_registration_controller.dart';
 
-class AddressDetailsView extends StatelessWidget {
+class AddressDetailsView extends GetView<BusinessRegistrationController> {
   const AddressDetailsView({super.key});
 
   @override
@@ -63,7 +64,7 @@ class AddressDetailsView extends StatelessWidget {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
@@ -79,11 +80,11 @@ class AddressDetailsView extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  _buildTextField('Your Location', prefixIcon: Icons.location_on_outlined),
+                  _buildTextField('Your Location', ctrl: controller.addressCtrl, prefixIcon: Icons.location_on_outlined),
                   SizedBox(height: 16.h),
-                  _buildTextField('Apartment'),
+                  _buildTextField('Apartment', ctrl: controller.apartmentCtrl),
                   SizedBox(height: 16.h),
-                  _buildTextField('Location Name'),
+                  _buildTextField('Location Name', ctrl: controller.locationNameCtrl),
                   SizedBox(height: 40.h),
                 ],
               ),
@@ -121,8 +122,9 @@ class AddressDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String hint, {IconData? prefixIcon}) {
+  Widget _buildTextField(String hint, {required TextEditingController ctrl, IconData? prefixIcon}) {
     return TextFormField(
+      controller: ctrl,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp),

@@ -208,7 +208,8 @@ class MerchantSettingsView extends StatelessWidget {
             Text('Contact our support team for assistance.', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)), textAlign: TextAlign.center),
             SizedBox(height: 24.h),
             _supportOption(Icons.email_outlined, 'Email Support', 'support@vips.tn'),
-            _supportOption(Icons.phone_outlined, 'Phone Support', '+216 71 000 000'),
+            // TODO: placeholder pending the real support contact number before launch
+            _supportOption(Icons.phone_outlined, 'Phone Support', '+216 XX XXX XXX'),
             _supportOption(Icons.chat_bubble_outline_rounded, 'Live Chat', 'Available 9am - 6pm'),
             SizedBox(height: 16.h),
           ],

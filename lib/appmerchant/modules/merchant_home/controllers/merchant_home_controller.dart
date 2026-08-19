@@ -84,7 +84,7 @@ class MerchantHomeController extends GetxController {
         final data = response.data;
         storeName.value = data['storeName'] ?? data['fullName'] ?? '';
         storePhone.value = data['phone'] ?? '';
-        storeImageUrl.value = data['profileImageUrl'] ?? data['logoUrl'] ?? '';
+        storeImageUrl.value = data['logo'] ?? data['profileImage'] ?? '';
         merchantId.value = data['_id']?.toString() ?? '';
       }
     } catch (_) {}

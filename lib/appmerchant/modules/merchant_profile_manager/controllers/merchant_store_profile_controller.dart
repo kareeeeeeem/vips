@@ -34,8 +34,8 @@ class MerchantStoreProfileController extends GetxController {
         final data = response.data;
         storeName.value = data['storeName'] ?? data['fullName'] ?? '';
         category.value = data['storeCategory'] ?? '';
-        logoImage.value = data['profileImageUrl'] ?? data['logoUrl'] ?? '';
-        bannerImage.value = data['coverImageUrl'] ?? '';
+        logoImage.value = data['logo'] ?? data['profileImage'] ?? '';
+        bannerImage.value = data['coverImage'] ?? '';
         phone.value = data['phone'] ?? '';
         address.value = data['address'] ?? '';
       }
@@ -53,7 +53,7 @@ class MerchantStoreProfileController extends GetxController {
       final url = await _uploadImage(picked);
       if (url != null) {
         logoImage.value = url;
-        await ApiService().put('/merchant/profile', {'profileImageUrl': url});
+        await ApiService().put('/merchant/profile', {'logo': url});
       }
     } finally {
       isUploadingLogo.value = false;
@@ -68,7 +68,7 @@ class MerchantStoreProfileController extends GetxController {
       final url = await _uploadImage(picked);
       if (url != null) {
         bannerImage.value = url;
-        await ApiService().put('/merchant/profile', {'coverImageUrl': url});
+        await ApiService().put('/merchant/profile', {'coverImage': url});
       }
     } finally {
       isUploadingBanner.value = false;

@@ -3,9 +3,42 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/core/services/api_service.dart';
 
-class InvoiceReceiptView extends StatelessWidget {
+class InvoiceReceiptView extends StatefulWidget {
   const InvoiceReceiptView({super.key});
+
+  @override
+  State<InvoiceReceiptView> createState() => _InvoiceReceiptViewState();
+}
+
+class _InvoiceReceiptViewState extends State<InvoiceReceiptView> {
+  String _storeName = 'VIPsApp';
+  String _storeAddress = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoreProfile();
+  }
+
+  Future<void> _loadStoreProfile() async {
+    try {
+      final response = await ApiService().get('/merchant/profile');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        final name = (data['storeName'] ?? data['fullName'] ?? '').toString();
+        if (mounted && name.isNotEmpty) {
+          setState(() {
+            _storeName = name;
+            _storeAddress = (data['address'] ?? '').toString();
+          });
+        }
+      }
+    } catch (_) {
+      // Keep the default branding on failure.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +135,9 @@ class InvoiceReceiptView extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('VIPsApp', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
-                                  Text('House # 20, Road # 03, Block - B, Banasree, Dhaka - 1219', textAlign: TextAlign.right, style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280))),
+                                  Text(_storeName, textAlign: TextAlign.right, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
+                                  if (_storeAddress.isNotEmpty)
+                                    Text(_storeAddress, textAlign: TextAlign.right, style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280))),
                                 ],
                               ),
                             ),
@@ -198,7 +232,7 @@ class InvoiceReceiptView extends StatelessWidget {
               ],
             ),
             SizedBox(height: 32.h),
-            Text('© 2023 VIPs App. All rights reserved', style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF))),
+            Text('© ${DateTime.now().year} VIPs App. All rights reserved', style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF))),
           ],
         ),
       ),

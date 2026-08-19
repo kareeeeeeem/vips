@@ -16,16 +16,25 @@ class ShippingController extends GetxController {
     loadTrips();
   }
 
-  Future<void> loadTrips() async {
+  Future<void> loadTrips({String? status}) async {
     try {
       isLoading.value = true;
-      final response = await ApiService().get('/order/trips');
+      final response = await ApiService().get(
+        '/order/trips',
+        queryParams:
+            (status != null && status != 'All') ? {'status': status} : null,
+      );
       if (response.success && response.data != null) {
         final List<dynamic> data = response.data;
-        trips.value = data.map((e) => {
-          ...e as Map<String, dynamic>,
-          'icon': Icons.directions_car
-        }).toList();
+        trips.value =
+            data
+                .map(
+                  (e) => {
+                    ...e as Map<String, dynamic>,
+                    'icon': Icons.directions_car,
+                  },
+                )
+                .toList();
       }
     } catch (e) {
       safeSnackbar('Error', 'Failed to load trips: $e');
@@ -66,16 +75,24 @@ class ShippingController extends GetxController {
   Future<void> loadTripsInRange(DateTime from, DateTime to) async {
     try {
       isLoading.value = true;
-      final response = await ApiService().get('/order/trips', queryParams: {
-        'from': from.toIso8601String(),
-        'to': to.toIso8601String(),
-      });
+      final response = await ApiService().get(
+        '/order/trips',
+        queryParams: {
+          'from': from.toIso8601String(),
+          'to': to.toIso8601String(),
+        },
+      );
       if (response.success && response.data != null) {
         final List<dynamic> data = response.data;
-        trips.value = data.map((e) => {
-          ...e as Map<String, dynamic>,
-          'icon': Icons.directions_car
-        }).toList();
+        trips.value =
+            data
+                .map(
+                  (e) => {
+                    ...e as Map<String, dynamic>,
+                    'icon': Icons.directions_car,
+                  },
+                )
+                .toList();
       }
     } catch (e) {
       safeSnackbar('Error', 'Failed to load trips');
@@ -105,18 +122,63 @@ class ShippingController extends GetxController {
     );
   }
 
-  void deleteTrip(String tripId) {
-    trips.removeWhere((trip) => trip['id']?.toString() == tripId);
+  Future<void> deleteTrip(String tripId) async {
     Get.back();
+    final removedIndex = trips.indexWhere(
+      (trip) => trip['id']?.toString() == tripId,
+    );
+    final removedTrip = removedIndex != -1 ? trips[removedIndex] : null;
+
+    // Update locally first for immediate feedback.
+    trips.removeWhere((trip) => trip['id']?.toString() == tripId);
+
+    try {
+      final res = await ApiService().delete('/order/trips/$tripId');
+      if (!res.success) {
+        if (removedTrip != null && removedIndex != -1) {
+          trips.insert(removedIndex, removedTrip);
+        }
+        safeSnackbar(
+          'Error',
+          res.message.isNotEmpty ? res.message : 'Failed to delete trip',
+        );
+      }
+    } catch (e) {
+      if (removedTrip != null && removedIndex != -1) {
+        trips.insert(removedIndex, removedTrip);
+      }
+      safeSnackbar('Error', 'Failed to delete trip: $e');
+    }
   }
 
-  void markTrip(String tripId) {
-    final index = trips.indexWhere((t) => t['id']?.toString() == tripId);
-    if (index != -1) {
-      trips[index] = {...trips[index], 'isMarked': !(trips[index]['isMarked'] == true)};
-      trips.refresh();
-    }
+  Future<void> markTrip(String tripId) async {
     Get.back();
+    final index = trips.indexWhere((t) => t['id']?.toString() == tripId);
+    if (index == -1) return;
+
+    final newMarked = !(trips[index]['isMarked'] == true);
+
+    // Update locally first for immediate feedback.
+    trips[index] = {...trips[index], 'isMarked': newMarked};
+    trips.refresh();
+
+    try {
+      final res = await ApiService().patch('/order/trips/$tripId/mark', {
+        'isMarked': newMarked,
+      });
+      if (!res.success) {
+        trips[index] = {...trips[index], 'isMarked': !newMarked};
+        trips.refresh();
+        safeSnackbar(
+          'Error',
+          res.message.isNotEmpty ? res.message : 'Failed to update trip',
+        );
+      }
+    } catch (e) {
+      trips[index] = {...trips[index], 'isMarked': !newMarked};
+      trips.refresh();
+      safeSnackbar('Error', 'Failed to update trip: $e');
+    }
   }
 
   Widget _buildFilterSheet() {
@@ -145,15 +207,16 @@ class ShippingController extends GetxController {
           SizedBox(height: 20.h),
           Wrap(
             spacing: 8,
-            children: ['All', 'Pending', 'Active', 'Completed', 'Cancelled'].map((s) {
-              return ActionChip(
-                label: Text(s),
-                onPressed: () {
-                  Get.back();
-                  loadTrips();
-                },
-              );
-            }).toList(),
+            children:
+                ['All', 'Pending', 'Active', 'Completed', 'Cancelled'].map((s) {
+                  return ActionChip(
+                    label: Text(s),
+                    onPressed: () {
+                      Get.back();
+                      loadTrips(status: s);
+                    },
+                  );
+                }).toList(),
           ),
           SizedBox(height: 20.h),
         ],

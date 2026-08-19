@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CreatepinController extends GetxController {
@@ -44,9 +44,12 @@ class CreatepinController extends GetxController {
   Future<void> createPin(String pin) async {
     isCreating.value = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_pin', pin);
-      Get.offAllNamed('/success-account');
+      final response = await ApiService().post('/auth/pin', {'pin': pin});
+      if (response.success) {
+        Get.offAllNamed('/success-account');
+      } else {
+        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to save PIN. Please try again.');
+      }
     } catch (e) {
       safeSnackbar('Error', 'Failed to save PIN. Please try again.');
     } finally {

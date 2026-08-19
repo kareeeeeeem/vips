@@ -8,6 +8,8 @@ class StockListView extends GetView<MerchantStockController> {
 
   @override
   Widget build(BuildContext context) {
+    final searchQuery = ''.obs;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -22,6 +24,12 @@ class StockListView extends GetView<MerchantStockController> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF1F2937)),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Color(0xFF10B981)),
+            onPressed: () => _showAddStockDialog(context),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -49,22 +57,35 @@ class StockListView extends GetView<MerchantStockController> {
                         'Stock Items',
                         style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                        decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(20.r)),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.search, size: 16, color: Color(0xFF6B7280)),
-                            SizedBox(width: 4.w),
-                            Text('Search', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                          ],
-                        ),
+                      GestureDetector(
+                        onTap: () => _showSearchDialog(context, searchQuery),
+                        child: Obx(() => Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(20.r)),
+                          child: Row(
+                            children: [
+                              Icon(searchQuery.value.isEmpty ? Icons.search : Icons.close, size: 16, color: const Color(0xFF6B7280)),
+                              SizedBox(width: 4.w),
+                              Text(
+                                searchQuery.value.isEmpty ? 'Search' : searchQuery.value,
+                                style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+                              ),
+                            ],
+                          ),
+                        )),
                       ),
                     ],
                   ),
                   SizedBox(height: 16.h),
                   Expanded(
                     child: Obx(() {
+                      final query = searchQuery.value.trim().toLowerCase();
+                      final items = query.isEmpty
+                          ? controller.stockItems
+                          : controller.stockItems
+                              .where((i) => i.name.toLowerCase().contains(query) || i.category.toLowerCase().contains(query))
+                              .toList();
+
                       if (controller.stockItems.isEmpty) {
                         return Center(
                           child: Column(
@@ -76,17 +97,23 @@ class StockListView extends GetView<MerchantStockController> {
                                   style: TextStyle(fontSize: 16.sp, color: Colors.grey.shade500,
                                       fontWeight: FontWeight.w600)),
                               SizedBox(height: 8.h),
-                              Text('Add items from your catalog to track inventory',
+                              Text('Tap the + button to add your first item',
                                   style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade400),
                                   textAlign: TextAlign.center),
                             ],
                           ),
                         );
                       }
+                      if (items.isEmpty) {
+                        return Center(
+                          child: Text('No items match "$query"',
+                              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade500)),
+                        );
+                      }
                       return ListView.builder(
-                        itemCount: controller.stockItems.length,
+                        itemCount: items.length,
                         itemBuilder: (context, index) {
-                          final item = controller.stockItems[index];
+                          final item = items[index];
                           return _buildStockItem(item);
                         },
                       );
@@ -138,6 +165,98 @@ class StockListView extends GetView<MerchantStockController> {
         ),
       ),
     );
+  }
+
+  void _showSearchDialog(BuildContext context, RxString searchQuery) {
+    final queryController = TextEditingController(text: searchQuery.value);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search Stock'),
+        content: TextField(
+          controller: queryController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Item name or category'),
+          onSubmitted: (v) {
+            searchQuery.value = v;
+            Get.back();
+          },
+        ),
+        actions: [
+          if (searchQuery.value.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                searchQuery.value = '';
+                Get.back();
+              },
+              child: const Text('Clear'),
+            ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              searchQuery.value = queryController.text;
+              Get.back();
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    ).then((_) => queryController.dispose());
+  }
+
+  void _showAddStockDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+    final stockController = TextEditingController();
+    final thresholdController = TextEditingController(text: '10');
+    final priceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Stock Item'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Item Name')),
+              TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Category')),
+              TextField(controller: stockController, decoration: const InputDecoration(labelText: 'Current Stock'), keyboardType: TextInputType.number),
+              TextField(controller: thresholdController, decoration: const InputDecoration(labelText: 'Low Stock Threshold'), keyboardType: TextInputType.number),
+              TextField(controller: priceController, decoration: const InputDecoration(labelText: 'Unit Price'), keyboardType: TextInputType.number),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final currentStock = int.tryParse(stockController.text) ?? 0;
+              final threshold = int.tryParse(thresholdController.text) ?? 10;
+              final price = double.tryParse(priceController.text) ?? 0;
+              if (nameController.text.isNotEmpty) {
+                controller.addStockItem(StockItem(
+                  id: '',
+                  name: nameController.text,
+                  category: categoryController.text.isEmpty ? 'General' : categoryController.text,
+                  currentStock: currentStock,
+                  lowStockThreshold: threshold,
+                  unitPrice: price,
+                ));
+                Get.back();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      nameController.dispose();
+      categoryController.dispose();
+      stockController.dispose();
+      thresholdController.dispose();
+      priceController.dispose();
+    });
   }
 
   Widget _buildStockItem(StockItem item) {

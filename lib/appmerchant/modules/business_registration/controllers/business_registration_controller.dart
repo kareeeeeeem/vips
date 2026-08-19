@@ -15,8 +15,13 @@ class BusinessRegistrationController extends GetxController {
   final storeNameLatinCtrl  = TextEditingController();
   final storeNameArabicCtrl = TextEditingController();
   final addressCtrl        = TextEditingController();
+  final apartmentCtrl      = TextEditingController();
+  final locationNameCtrl   = TextEditingController();
   final descriptionCtrl    = TextEditingController();
   final tinCtrl            = TextEditingController();
+  final facebookCtrl       = TextEditingController();
+  final instagramCtrl      = TextEditingController();
+  final websiteCtrl        = TextEditingController();
 
   // Dropdown selections
   final jobTitle    = 'Choose'.obs;
@@ -60,8 +65,13 @@ class BusinessRegistrationController extends GetxController {
     storeNameLatinCtrl.dispose();
     storeNameArabicCtrl.dispose();
     addressCtrl.dispose();
+    apartmentCtrl.dispose();
+    locationNameCtrl.dispose();
     descriptionCtrl.dispose();
     tinCtrl.dispose();
+    facebookCtrl.dispose();
+    instagramCtrl.dispose();
+    websiteCtrl.dispose();
     super.onClose();
   }
 
@@ -104,6 +114,13 @@ class BusinessRegistrationController extends GetxController {
       safeSnackbar('Incomplete', 'Please fill in your name and store name', snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    // The backend's BusinessRegistration record requires both — submitting
+    // without them fails with a raw Mongoose validation error instead of a
+    // clean prompt, so catch it here first.
+    if (emailCtrl.text.trim().isEmpty || addressCtrl.text.trim().isEmpty) {
+      safeSnackbar('Incomplete', 'Please fill in your email and address', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
 
     isLoading.value = true;
     try {
@@ -114,7 +131,12 @@ class BusinessRegistrationController extends GetxController {
         if (phone.isNotEmpty) 'phone': phone,
         if (emailCtrl.text.isNotEmpty) 'email': emailCtrl.text.trim(),
         if (addressCtrl.text.isNotEmpty) 'address': addressCtrl.text.trim(),
+        if (apartmentCtrl.text.isNotEmpty) 'apartment': apartmentCtrl.text.trim(),
+        if (locationNameCtrl.text.isNotEmpty) 'locationName': locationNameCtrl.text.trim(),
         if (descriptionCtrl.text.isNotEmpty) 'description': descriptionCtrl.text.trim(),
+        if (facebookCtrl.text.isNotEmpty) 'facebook': facebookCtrl.text.trim(),
+        if (instagramCtrl.text.isNotEmpty) 'instagram': instagramCtrl.text.trim(),
+        if (websiteCtrl.text.isNotEmpty) 'website': websiteCtrl.text.trim(),
       });
 
       // 2 — Submit partnership / business registration
@@ -129,11 +151,16 @@ class BusinessRegistrationController extends GetxController {
         'phone':          phone,
         'email':          emailCtrl.text.trim(),
         'address':        addressCtrl.text.trim(),
+        'apartment':      apartmentCtrl.text.trim(),
+        'locationName':   locationNameCtrl.text.trim(),
         'description':    descriptionCtrl.text.trim(),
         'schedule':       schedule,
         'loyaltyType':    isPrivetLoyalty.value ? 'private' : 'everywhere',
         'documents':      documentUrls,
         'tin':            tinCtrl.text.trim(),
+        'facebook':       facebookCtrl.text.trim(),
+        'instagram':      instagramCtrl.text.trim(),
+        'website':        websiteCtrl.text.trim(),
       });
 
       if (response.success) {

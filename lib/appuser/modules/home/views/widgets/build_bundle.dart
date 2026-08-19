@@ -9,6 +9,9 @@ class BuildBundle extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    // "extra discounts on top" copy below implies this should be the
+    // steepest-discount deals, not the same unfiltered list as Hot Deals.
+    final bundleDeals = controller.getBestDiscountDeals();
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.h),
       decoration: BoxDecoration(
@@ -104,9 +107,9 @@ class BuildBundle extends GetView<HomeController> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: controller.hotDeals.length,
+              itemCount: bundleDeals.length,
               itemBuilder: (context, index) {
-                final deal = controller.hotDeals[index];
+                final deal = bundleDeals[index];
                 final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
                 final isFav = controller.favorites.any((f) => (f['itemId']?.toString() ?? '') == id);
                 return Container(

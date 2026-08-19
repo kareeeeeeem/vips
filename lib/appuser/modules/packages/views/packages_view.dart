@@ -1048,44 +1048,59 @@ class PackagesView extends GetView<PackagesController> {
 
             SizedBox(height: 12.h),
 
-            GestureDetector(
-              onTap: controller.buyPackage,
-              child: Container(
-                height: 56.h,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF1F2937), const Color(0xFF374151)],
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1F2937).withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+            // isBuying previously wasn't read anywhere: nothing stopped a
+            // user from tapping "Subscribe Now" repeatedly while the
+            // subscribe request was still in flight, firing duplicate
+            // purchase calls. Gate the tap and show a spinner instead.
+            Obx(
+              () => GestureDetector(
+                onTap: controller.isBuying.value ? null : controller.buyPackage,
+                child: Container(
+                  height: 56.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [const Color(0xFF1F2937), const Color(0xFF374151)],
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.shopping_bag_outlined,
-                        color: Colors.white,
-                        size: 22.sp,
-                      ),
-                      SizedBox(width: 12.w),
-                      Text(
-                        'Subscribe Now',
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          fontFamily: 'SF Pro Display',
-                          letterSpacing: -0.3,
-                        ),
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1F2937).withValues(alpha: 0.3),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
                     ],
+                  ),
+                  child: Center(
+                    child: controller.isBuying.value
+                        ? SizedBox(
+                            width: 22.sp,
+                            height: 22.sp,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                color: Colors.white,
+                                size: 22.sp,
+                              ),
+                              SizedBox(width: 12.w),
+                              Text(
+                                'Subscribe Now',
+                                style: TextStyle(
+                                  fontSize: 17.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  fontFamily: 'SF Pro Display',
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),

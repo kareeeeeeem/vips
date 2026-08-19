@@ -521,29 +521,32 @@ class MobilesView extends GetView<MobilesController> {
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
         ),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-          collapsedIconColor: Colors.grey.shade400,
-          iconColor: Colors.grey.shade600,
-          title: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          children: [
-            Text(
-              content,
+        child: Material(
+          type: MaterialType.transparency,
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+            collapsedIconColor: Colors.grey.shade400,
+            iconColor: Colors.grey.shade600,
+            title: Text(
+              title,
               style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey.shade600,
-                height: 1.5,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
-          ],
+            children: [
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

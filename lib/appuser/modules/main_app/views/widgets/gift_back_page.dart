@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class GiftBackPage extends StatefulWidget {
   const GiftBackPage({super.key});
@@ -11,7 +13,7 @@ class GiftBackPage extends StatefulWidget {
 
 class _GiftBackPageState extends State<GiftBackPage> {
   final TextEditingController phoneIdController = TextEditingController(
-    text: '#12345678',
+    text: '',
   );
   final TextEditingController amountController = TextEditingController(
     text: '0.000',
@@ -21,6 +23,72 @@ class _GiftBackPageState extends State<GiftBackPage> {
   final FocusNode amountFocus = FocusNode();
 
   String selectedCurrency = 'D';
+  bool isSubmitting = false;
+
+  bool isLoadingLimits = true;
+  double minAmount = 0;
+  double maxAmountPerTransaction = 0;
+  double dailyLimitAmount = 0;
+  double remainingTodayAmount = 0;
+  double monthlyLimitAmount = 0;
+  double remainingThisMonthAmount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLimits();
+  }
+
+  Future<void> _loadLimits() async {
+    try {
+      final res = await ApiService().get('/rewards/limits');
+      if (res.success && res.data != null) {
+        final gift = res.data['giftBack'] as Map;
+        setState(() {
+          minAmount = (gift['minAmount'] as num).toDouble();
+          maxAmountPerTransaction = (gift['maxAmountPerTransaction'] as num).toDouble();
+          dailyLimitAmount = (gift['dailyLimitAmount'] as num).toDouble();
+          remainingTodayAmount = (gift['remainingTodayAmount'] as num).toDouble();
+          monthlyLimitAmount = (gift['monthlyLimitAmount'] as num).toDouble();
+          remainingThisMonthAmount = (gift['remainingThisMonthAmount'] as num).toDouble();
+        });
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => isLoadingLimits = false);
+    }
+  }
+
+  Future<void> _proceed() async {
+    final recipientPhone = phoneIdController.text.trim();
+    final amount = double.tryParse(amountController.text.trim());
+    if (recipientPhone.isEmpty) {
+      safeSnackbar('Missing recipient', 'Enter the recipient\'s phone number.', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (amount == null || amount <= 0) {
+      safeSnackbar('Invalid amount', 'Enter an amount greater than 0.', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    setState(() => isSubmitting = true);
+    try {
+      final response = await ApiService().post('/rewards/send-gift', {
+        'recipientPhone': recipientPhone,
+        'amount': amount,
+      });
+      if (response.success) {
+        Get.back();
+        safeSnackbar('Success', 'Gift sent to $recipientPhone!', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not send gift. Please try again.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      if (mounted) setState(() => isSubmitting = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -115,7 +183,10 @@ class _GiftBackPageState extends State<GiftBackPage> {
                             child: TextField(
                               controller: phoneIdController,
                               focusNode: phoneIdFocus,
+                              keyboardType: TextInputType.phone,
                               decoration: InputDecoration(
+                                hintText: 'Recipient phone number',
+                                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15.sp),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -349,98 +420,103 @@ class _GiftBackPageState extends State<GiftBackPage> {
                           ),
                           SizedBox(height: 20.h),
 
-                          // Daily Limit Row
-                          _buildLimitRow(
-                            leftLabel: 'Daily Limit',
-                            leftValue: '1000.0000 USD',
-                            rightLabel: 'Remaining Daily Limit',
-                            rightValue: '60.3954 USD',
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Divider
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
+                          if (isLoadingLimits)
+                            const Center(child: CircularProgressIndicator())
+                          else ...[
+                            // Real numbers from GET /rewards/limits, backed
+                            // by this user's actual Transaction history.
+                            _buildLimitRow(
+                              leftLabel: 'Daily Limit',
+                              leftValue: '${dailyLimitAmount.toStringAsFixed(0)} D',
+                              rightLabel: 'Remaining Today',
+                              rightValue: '${remainingTodayAmount.toStringAsFixed(3)} D',
                             ),
-                          ),
 
-                          SizedBox(height: 18.h),
+                            SizedBox(height: 18.h),
 
-                          // Monthly Limit Row
-                          _buildLimitRow(
-                            leftLabel: 'Monthly Limit',
-                            leftValue: '10000.0000 USD',
-                            rightLabel: 'Remaining Monthly Limit',
-                            rightValue: '10000.0000 USD',
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Divider
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Color(0xFF5ED5A8).withValues(alpha: 0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: 18.h),
-
-                          // Transaction Limit
-                          Container(
-                            padding: EdgeInsets.all(14.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.swap_horiz_rounded,
-                                  size: 18.sp,
-                                  color: Color(0xFF2E7D5F),
-                                ),
-                                SizedBox(width: 10.w),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Transaction Limit',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Color(0xFF5ED5A8),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      '1.0000 - 1000.0000 USD',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: Color(0xFF2E7D5F),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
+                            // Divider
+                            Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Color(0xFF5ED5A8).withValues(alpha: 0.2),
+                                    Colors.transparent,
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+
+                            SizedBox(height: 18.h),
+
+                            // Monthly Limit Row
+                            _buildLimitRow(
+                              leftLabel: 'Monthly Limit',
+                              leftValue: '${monthlyLimitAmount.toStringAsFixed(0)} D',
+                              rightLabel: 'Remaining This Month',
+                              rightValue: '${remainingThisMonthAmount.toStringAsFixed(3)} D',
+                            ),
+
+                            SizedBox(height: 18.h),
+
+                            // Divider
+                            Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Color(0xFF5ED5A8).withValues(alpha: 0.2),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: 18.h),
+
+                            // Transaction Limit
+                            Container(
+                              padding: EdgeInsets.all(14.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.swap_horiz_rounded,
+                                    size: 18.sp,
+                                    color: Color(0xFF2E7D5F),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Transaction Limit',
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Color(0xFF5ED5A8),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        '${minAmount.toStringAsFixed(0)} - ${maxAmountPerTransaction.toStringAsFixed(0)} D',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: Color(0xFF2E7D5F),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -507,9 +583,7 @@ class _GiftBackPageState extends State<GiftBackPage> {
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: () {
-                        // Handle proceed action
-                      },
+                      onTap: isSubmitting ? null : _proceed,
                       child: Container(
                         height: 54.h,
                         decoration: BoxDecoration(
@@ -526,26 +600,32 @@ class _GiftBackPageState extends State<GiftBackPage> {
                           ],
                         ),
                         child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Proceed',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
+                          child: isSubmitting
+                              ? SizedBox(
+                                  width: 20.sp,
+                                  height: 20.sp,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Proceed',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 18.sp,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 18.sp,
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),

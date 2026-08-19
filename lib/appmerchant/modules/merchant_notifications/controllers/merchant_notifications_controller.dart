@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class NotificationItem {
   final String id;
@@ -74,7 +75,12 @@ class MerchantNotificationsController extends GetxController {
     }
     try {
       await ApiService().put('/merchant/notifications/$id/read', {});
-    } catch (_) {}
+    } catch (_) {
+      // Local state already flipped optimistically — resync with the
+      // server on failure so it doesn't silently drift (e.g. showing read
+      // here but reverting to unread on the next load with no explanation).
+      await loadNotifications();
+    }
   }
 
   Future<void> markAllAsRead() async {
@@ -85,7 +91,9 @@ class MerchantNotificationsController extends GetxController {
     _updateUnreadCount();
     try {
       await ApiService().post('/merchant/notifications/read-all', {});
-    } catch (_) {}
+    } catch (_) {
+      await loadNotifications();
+    }
   }
 
   Future<void> deleteNotification(String id) async {
@@ -93,6 +101,9 @@ class MerchantNotificationsController extends GetxController {
     _updateUnreadCount();
     try {
       await ApiService().delete('/merchant/notifications/$id');
-    } catch (_) {}
+    } catch (_) {
+      safeSnackbar('Error', 'Could not delete notification. Refreshing...', snackPosition: SnackPosition.BOTTOM);
+      await loadNotifications();
+    }
   }
 }

@@ -157,9 +157,14 @@ class ApiClient extends GetxService {
   ) {
     if (handleError) {
       if (response.statusCode == 401) {
-        token = null;
-        sharedPreferences.remove(AppConstants.token);
-        Get.offAllNamed(MerchantRoutes.LOGIN);
+        final isAuthUri = uri.contains('/auth/merchant-login') ||
+            uri.contains('/auth/login') ||
+            uri.contains(AppConstants.loginUri);
+        if (!isAuthUri) {
+          token = null;
+          sharedPreferences.remove(AppConstants.token);
+          Get.offAllNamed(MerchantRoutes.LOGIN);
+        }
       }
     }
 

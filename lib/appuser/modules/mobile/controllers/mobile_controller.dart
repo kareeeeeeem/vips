@@ -78,8 +78,18 @@ class MobilesController extends GetxController {
       safeSnackbar('Error', 'Please select an operator', snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    final operator = operators[selectedOperatorIndex.value!]['name'] as String;
+    final option = creditOptions[selectedCreditOption.value];
+    final amount = ((option['value'] as int) * (option['quantity'] as int)).toDouble();
     Get.put(BillInquiryController());
-    Get.to(() => BillInquiryView());
+    Get.to(
+      () => BillInquiryView(),
+      arguments: {
+        'operator': operator,
+        'amount': amount,
+        'phoneNumber': phoneController.text.trim(),
+      },
+    );
   }
 
   Future<void> recharge({required String phoneNumber}) async {

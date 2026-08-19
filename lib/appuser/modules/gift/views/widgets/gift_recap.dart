@@ -1,57 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
-import '../../../../design_system/organisms/pin/pin.dart';
 import '../../../mobile/views/widgets/order_details.dart';
 
 class GiftRecapController extends GetxController {
-  // Gift details
-  final String transferTo = '#12355866';
-  final String offerId = '#123456';
-  final bool isExpressDelivery = true;
-  final double giftAmount = 2000.0;
-  final double fees = 200.0;
-  final double vpToAwards = 1000.0;
-
-  String _userPin = '0000';
+  // The gift was already sent for real (POST /rewards/send-gift succeeded)
+  // by the time this screen is reached — these are the real recipient/amount
+  // passed through from GiftController.proceed(), not placeholder data.
+  late final String transferTo;
+  late final double giftAmount;
 
   @override
   void onInit() {
     super.onInit();
-    SharedPreferences.getInstance().then((prefs) {
-      _userPin = prefs.getString('user_pin') ?? '0000';
-    });
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    transferTo = (args['transferTo'] as String?) ?? '';
+    giftAmount = (args['giftAmount'] as num?)?.toDouble() ?? 0.0;
   }
 
-  double get totalVP => vpToAwards + fees;
-
+  // The transfer already completed on the previous screen — this is a
+  // receipt, not a pending action, so there's nothing left to PIN-confirm.
   void proceed() {
     Get.to(
-      () => PinValidator(
-        pinLength: 4,
-        primaryColor: Colors.orange,
-        validatePin: (pin) {
-          return pin == _userPin;
-        },
-        validateBiometrics: () async {
-          final LocalAuthentication localAuth = LocalAuthentication();
-          return await localAuth.authenticate(
-            localizedReason: 'Authentifiez-vous',
-            options: const AuthenticationOptions(
-              stickyAuth: true,
-              biometricOnly: true,
-            ),
-          );
-        },
-        onValidPin: () {
-          Get.to(() => OrderDetailsView());
-        },
-        supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
-      ),
+      () => OrderDetailsView(),
+      arguments: {
+        'orderType': 'Gift',
+        'phone': transferTo,
+        'paymentMethod': 'Wallet',
+        'status': 'PAID',
+        'items': [
+          {'quantity': 1, 'name': 'Gift to $transferTo', 'price': giftAmount},
+        ],
+        'amount': giftAmount,
+      },
     );
   }
 
@@ -137,8 +120,6 @@ class GiftRecapView extends GetView<GiftRecapController> {
           _buildDivider(),
           SizedBox(height: 18.h),
           _buildGiftDetails(),
-          SizedBox(height: 16.h),
-          _buildDeliveryType(),
         ],
       ),
     );
@@ -200,58 +181,13 @@ class GiftRecapView extends GetView<GiftRecapController> {
   Widget _buildGiftDetails() {
     return Column(
       children: [
-        _buildDetailRow('Offer ID', controller.offerId),
-        SizedBox(height: 12.h),
         _buildDetailRow('Gift Amount', controller.giftAmount),
-        SizedBox(height: 12.h),
-        _buildDetailRow('Fees', controller.fees),
-        SizedBox(height: 12.h),
-        _buildDetailRow('VP to Awards', controller.vpToAwards),
         Padding(
           padding: EdgeInsets.symmetric(vertical: 16.h),
           child: _buildDivider(),
         ),
         _buildTotalRow(),
       ],
-    );
-  }
-
-  Widget _buildDeliveryType() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFD5C1), Color(0xFFFFE5D9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: AppColors.AppPrimaryColor.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Delivery Type',
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          Text(
-            controller.isExpressDelivery ? 'Express' : 'Standard',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.AppPrimaryColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -286,7 +222,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Total VP',
+          'Total',
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -294,7 +230,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
           ),
         ),
         Text(
-          '${controller.totalVP.toStringAsFixed(0)} VP',
+          '${controller.giftAmount.toStringAsFixed(0)} TND',
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -323,7 +259,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
                 elevation: 0,
               ),
               child: Text(
-                'Confirm Gift',
+                'View Receipt',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -347,7 +283,7 @@ class GiftRecapView extends GetView<GiftRecapController> {
                 ),
               ),
               child: Text(
-                'Cancel',
+                'Done',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,

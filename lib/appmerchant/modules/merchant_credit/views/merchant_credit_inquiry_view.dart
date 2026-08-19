@@ -53,20 +53,14 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Bill Inquiry',
+                                'Credit Inquiry',
                                 style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: Colors.white),
                               ),
                               SizedBox(height: 12.h),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r)),
-                                    child: Text('PAID', style: TextStyle(color: const Color(0xFFF97316), fontSize: 10.sp, fontWeight: FontWeight.bold)),
-                                  ),
-                                  SizedBox(width: 12.w),
-                                  Text('Cash On Delivery', style: TextStyle(fontSize: 12.sp, color: Colors.white, fontWeight: FontWeight.w500)),
-                                ],
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r)),
+                                child: Text('PENDING', style: TextStyle(color: const Color(0xFFF97316), fontSize: 10.sp, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -89,31 +83,96 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                   ),
                   SizedBox(height: 24.h),
 
-                  // Agent Info
-                  Row(
-                    children: [
-                      Container(
-                        width: 56.w,
-                        height: 56.w,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE5E7EB),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Icon(Icons.person, color: const Color(0xFF9CA3AF), size: 32.sp),
-                      ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  // Who this credit is for
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFF3F4F6)),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Agent Ali', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
-                            Text('House: 80, Road: 00, Test City', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                            Text('01/Jun/2025: 10:47', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                            Text('Phone: 71******', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+                            Text('Customer', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
+                            Obx(() => controller.selectedCustomerId.value != null
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle, size: 14.sp, color: const Color(0xFF10B981)),
+                                      SizedBox(width: 4.w),
+                                      Text('Existing customer', style: TextStyle(fontSize: 11.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600)),
+                                    ],
+                                  )
+                                : const SizedBox.shrink()),
                           ],
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 8.h),
+                        // Search box — looks up real customers who've
+                        // transacted with this merchant before via
+                        // GET /merchant/customers?search=
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search existing customer by name or phone',
+                            isDense: true,
+                            prefixIcon: Icon(Icons.search, size: 18.sp, color: const Color(0xFF9CA3AF)),
+                          ),
+                          onChanged: controller.searchCustomers,
+                        ),
+                        Obx(() {
+                          if (controller.isSearching.value) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.h),
+                              child: SizedBox(
+                                width: 16.w,
+                                height: 16.w,
+                                child: const CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            );
+                          }
+                          if (controller.searchResults.isEmpty) return const SizedBox.shrink();
+                          return Container(
+                            margin: EdgeInsets.only(top: 8.h),
+                            constraints: BoxConstraints(maxHeight: 180.h),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFFF3F4F6)),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: controller.searchResults.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                              itemBuilder: (context, index) {
+                                final c = controller.searchResults[index];
+                                return ListTile(
+                                  dense: true,
+                                  title: Text((c['fullName'] ?? 'Unknown').toString(), style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                                  subtitle: Text((c['phone'] ?? '').toString(), style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+                                  onTap: () => controller.selectCustomer(c),
+                                );
+                              },
+                            ),
+                          );
+                        }),
+                        SizedBox(height: 12.h),
+                        Text('Or enter manually', style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF))),
+                        SizedBox(height: 8.h),
+                        TextField(
+                          controller: controller.customerNameCtrl,
+                          decoration: const InputDecoration(hintText: 'Customer name', isDense: true),
+                          onChanged: (_) => controller.clearSelectedCustomer(),
+                        ),
+                        SizedBox(height: 8.h),
+                        TextField(
+                          controller: controller.customerPhoneCtrl,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(hintText: 'Customer phone', isDense: true),
+                          onChanged: (_) => controller.clearSelectedCustomer(),
+                        ),
+                      ],
+                    ),
                   ),
                   SizedBox(height: 24.h),
 
@@ -128,9 +187,7 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                       children: [
                         _buildDetailRow('Trans Type', 'Credit'),
                         const Divider(color: Color(0xFFF3F4F6)),
-                        _buildDetailRow('Customer Name', 'Jamil Test'),
-                        _buildDetailRow('Phone', '959190000'),
-                        _buildDetailRow('Trans Address', 'House: 80, Road: 00, Test City'),
+                        _buildDetailRow('Payment Method', 'Bank'),
                       ],
                     ),
                   ),

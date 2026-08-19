@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../controllers/bills_controller.dart';
 import 'product_detail_page.dart';
@@ -8,10 +10,15 @@ import 'product_detail_page.dart';
 class ProductListPage extends StatelessWidget {
   final String? category;
   final String title;
+  // Optional explicit curated list (Best Selling / Trending / Feature) —
+  // when omitted, falls back to allProducts (optionally filtered by
+  // [category], used by the category chip taps).
+  final List<ProductItem>? products;
 
   const ProductListPage({super.key,
     this.category,
     this.title = 'Best Selling Theme',
+    this.products,
   });
 
   @override
@@ -74,6 +81,23 @@ class ProductListPage extends StatelessWidget {
                   ),
                 );
               }
+
+              final items = products ??
+                  (category != null
+                      ? controller.allProducts
+                          .where((p) => p.category == category)
+                          .toList()
+                      : controller.allProducts);
+
+              if (items.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No products found in this category yet.',
+                    style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+                  ),
+                );
+              }
+
               return GridView.builder(
                 padding: EdgeInsets.all(12.w),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -82,9 +106,9 @@ class ProductListPage extends StatelessWidget {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
-                itemCount: controller.allProducts.length,
+                itemCount: items.length,
                 itemBuilder: (context, index) {
-                  return _buildProductGridItem(controller.allProducts[index]);
+                  return _buildProductGridItem(items[index]);
                 },
               );
             }),
@@ -203,16 +227,29 @@ class ProductListPage extends StatelessWidget {
                 Positioned(
                   top: 8,
                   left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      color: Color(0xFF0066FF),
-                      size: 18,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final res = await ApiService().post('/favorites/toggle', {
+                        'itemId': product.id,
+                        'itemType': 'Product',
+                      });
+                      safeSnackbar(
+                        res.success ? 'Favorites' : 'Error',
+                        res.success ? 'Updated your favorites' : res.message,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.favorite_border,
+                        color: Color(0xFF0066FF),
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -285,14 +322,14 @@ class ProductListPage extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      ...List.generate(
-                        5,
-                        (index) => const Icon(
-                          Icons.star,
-                          size: 12,
-                          color: Colors.amber,
+                      if (product.reviewCount > 0) ...[
+                        const Icon(Icons.star, size: 12, color: Colors.amber),
+                        const SizedBox(width: 2),
+                        Text(
+                          product.avgRating.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

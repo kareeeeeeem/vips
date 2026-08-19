@@ -158,98 +158,16 @@ class RedeemController extends GetxController {
   Future<void> redeemVoucher() async {
     if (selectedVoucher.value == null) return;
 
-    // Show loading
-    Get.dialog(
-      Center(
-        child: CircularProgressIndicator(
-          color: selectedVoucher.value!.primaryColor,
-        ),
-      ),
-      barrierDismissible: false,
-    );
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    Get.back();
-
-    // Show success dialog
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      selectedVoucher.value!.primaryColor,
-                      selectedVoucher.value!.secondaryColor,
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Voucher Redeemed!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'SF Pro Display',
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Your ${selectedVoucher.value!.title} has been successfully redeemed.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                  fontFamily: 'SF Pro Text',
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    Get.back();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedVoucher.value!.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'View My Vouchers',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontFamily: 'SF Pro Display',
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // No backend concept exists for spending loyalty points on a voucher
+    // offer (the vouchers list itself is hardcoded, not from a real API) —
+    // this used to fake a 1-second "API call" and always claim success.
+    // Be honest instead of pretending points were spent and a real voucher
+    // was issued. Real gift-card purchases (paid in TND, not points) are
+    // already wired for real via POST /rewards/purchase-voucher on Home.
+    Get.snackbar(
+      'Coming Soon',
+      'Redeeming vouchers with points will be available in a future update.',
+      snackPosition: SnackPosition.BOTTOM,
     );
   }
 }

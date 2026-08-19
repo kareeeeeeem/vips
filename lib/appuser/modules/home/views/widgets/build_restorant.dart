@@ -10,6 +10,7 @@ class BuildRestorant extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    final foodDeals = controller.getHotDealsByCategory('food');
     return Container(
       margin: EdgeInsets.symmetric(vertical: 16.h),
       padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -94,15 +95,17 @@ class BuildRestorant extends GetView<HomeController> {
 
           SizedBox(height: 16.h),
 
-          // Liste horizontale des deals
+          // Liste horizontale des deals — filtered to the "food" category so
+          // this section actually shows restaurant/food deals instead of the
+          // exact same unfiltered list as Hot Deals and Bundles.
           SizedBox(
             height: 250.h,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              itemCount: controller.hotDeals.length,
+              itemCount: foodDeals.length,
               itemBuilder: (context, index) {
-                final deal = controller.hotDeals[index];
+                final deal = foodDeals[index];
                 return Container(
                   width: 190.w,
                   margin: EdgeInsets.only(right: 12.w),

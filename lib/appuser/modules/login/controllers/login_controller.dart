@@ -1,22 +1,25 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/services/auth_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginController extends GetxController {
+  final AuthService _authService = AuthService();
+
   // Text Controllers
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController otpPhoneController = TextEditingController();
 
   // Reactive Variables
   final RxBool _rememberMe = false.obs;
   final RxBool _isPasswordVisible = false.obs;
   final RxBool isLoading = false.obs;
+  final RxString phoneVerificationId = ''.obs;
+  final RxString otpPhoneNumber = ''.obs;
 
   // Getters
   bool get rememberMe => _rememberMe.value;
@@ -55,20 +58,31 @@ class LoginController extends GetxController {
     }
 
     isLoading.value = true;
+    debugPrint('[LOGIN] login() (phone+password) started');
     try {
+      debugPrint('[LOGIN] POST /auth/login (phone)...');
       final response = await ApiService().post('/auth/login', {
         'phone': phoneController.text.trim(),
         'password': passwordController.text,
       });
+      debugPrint('[LOGIN] login() response received, success=${response.success}');
 
-      if (response.success && response.data != null) {
-        final token = response.data['token'];
+      if (response.success && response.data is Map && response.data['requires2FA'] == true) {
+        Get.toNamed('/verification', arguments: {'email': response.data['email'], 'isLogin2FA': true});
+        return;
+      }
+
+      final token =
+          response.data is Map ? response.data['token'] as String? : null;
+      if (response.success && token != null && token.isNotEmpty) {
         await ApiService().setToken(token);
-        _handleSuccessfulLogin(null);
+        final userData = response.data is Map ? response.data['user'] : null;
+        _handleSuccessfulLogin(userData is Map ? Map<String, dynamic>.from(userData) : null);
       } else {
         _handleLoginError(response.message);
       }
     } catch (e) {
+      debugPrint('[LOGIN] login() threw: $e');
       _handleLoginError(e.toString());
     } finally {
       isLoading.value = false;
@@ -90,20 +104,31 @@ class LoginController extends GetxController {
     }
 
     isLoading.value = true;
+    debugPrint('[LOGIN] emailLogin() started');
     try {
+      debugPrint('[LOGIN] POST /auth/login (email)...');
       final response = await ApiService().post('/auth/login', {
         'email': emailController.text.trim(),
         'password': passwordController.text,
       });
+      debugPrint('[LOGIN] emailLogin() response received, success=${response.success}');
 
-      if (response.success && response.data != null) {
-        final token = response.data['token'];
+      if (response.success && response.data is Map && response.data['requires2FA'] == true) {
+        Get.toNamed('/verification', arguments: {'email': response.data['email'], 'isLogin2FA': true});
+        return;
+      }
+
+      final token =
+          response.data is Map ? response.data['token'] as String? : null;
+      if (response.success && token != null && token.isNotEmpty) {
         await ApiService().setToken(token);
-        _handleSuccessfulLogin(null);
+        final userData = response.data is Map ? response.data['user'] : null;
+        _handleSuccessfulLogin(userData is Map ? Map<String, dynamic>.from(userData) : null);
       } else {
         _handleLoginError(response.message);
       }
     } catch (e) {
+      debugPrint('[LOGIN] emailLogin() threw: $e');
       _handleLoginError(e.toString());
     } finally {
       isLoading.value = false;
@@ -112,94 +137,185 @@ class LoginController extends GetxController {
 
   // Google Login Method
   Future<void> googleLogin() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    debugPrint('[LOGIN] googleLogin() started');
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return; // User canceled
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-
+      final userCredential = await _authService.signInWithGoogle();
+      if (userCredential == null) {
+        debugPrint('[LOGIN] googleLogin() canceled by user');
+        return;
+      }
+      debugPrint('[LOGIN] Firebase auth done, exchanging with backend...');
       await _loginWithBackend(userCredential.user, 'google');
+      debugPrint('[LOGIN] googleLogin() finished');
     } catch (e) {
+      debugPrint('[LOGIN] googleLogin() threw: $e');
       _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 
   // Facebook Login Method
   Future<void> facebookLogin() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    debugPrint('[LOGIN] facebookLogin() started');
     try {
-      final LoginResult loginResult = await FacebookAuth.instance.login();
-
-      if (loginResult.status != LoginStatus.success) {
+      final userCredential = await _authService.signInWithFacebook();
+      if (userCredential == null) {
+        debugPrint('[LOGIN] facebookLogin() canceled by user');
         return;
       }
-
-      final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
-
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(facebookAuthCredential);
-
+      debugPrint('[LOGIN] Facebook auth done, exchanging with backend...');
       await _loginWithBackend(userCredential.user, 'facebook');
+      debugPrint('[LOGIN] facebookLogin() finished');
     } catch (e) {
-      _handleLoginError(e);
+      debugPrint('[LOGIN] facebookLogin() threw: $e');
+      _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 
   // Apple Login Method
   Future<void> appleLogin() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    debugPrint('[LOGIN] appleLogin() started');
     try {
-      final AuthorizationCredentialAppleID appleCredential =
-          await SignInWithApple.getAppleIDCredential(
-            scopes: [
-              AppleIDAuthorizationScopes.email,
-              AppleIDAuthorizationScopes.fullName,
-            ],
-          );
-
-      final OAuthCredential credential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-
+      final userCredential = await _authService.signInWithApple();
+      debugPrint('[LOGIN] Apple auth done, exchanging with backend...');
       await _loginWithBackend(userCredential.user, 'apple');
+      debugPrint('[LOGIN] appleLogin() finished');
     } catch (e) {
-      _handleLoginError(e);
+      debugPrint('[LOGIN] appleLogin() threw: $e');
+      _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
+
+  // Navigate to the phone-number entry screen for OTP sign-in
+  void navigateToPhoneLogin() {
+    Get.toNamed('/phone-login');
+  }
+
+  // Phone OTP Login — Step 1: send the code
+  Future<void> sendPhoneOtp(String phoneNumber) async {
+    if (isLoading.value) return;
+    if (phoneNumber.trim().isEmpty) {
+      safeSnackbar(
+        'Validation Error',
+        'Please enter a valid phone number.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    debugPrint('[LOGIN] sendPhoneOtp() started for $phoneNumber');
+    try {
+      final verificationId = await _authService.signInWithPhone(phoneNumber.trim());
+      if (verificationId.isEmpty) {
+        // Device auto-verified the number — already signed in, no OTP needed.
+        debugPrint('[LOGIN] sendPhoneOtp() auto-verified, exchanging with backend...');
+        await _loginWithBackend(_authService.getCurrentUser(), 'phone');
+        return;
+      }
+      debugPrint('[LOGIN] sendPhoneOtp() code sent, verificationId len=${verificationId.length}');
+      phoneVerificationId.value = verificationId;
+      otpPhoneNumber.value = phoneNumber.trim();
+      Get.toNamed('/otp-verify');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[LOGIN] sendPhoneOtp() FirebaseAuthException: ${e.code} ${e.message}');
+      _handleLoginError(_authService.mapFirebaseError(e));
+    } catch (e) {
+      debugPrint('[LOGIN] sendPhoneOtp() threw: $e');
+      _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Phone OTP Login — Step 2: verify the code
+  Future<void> verifyPhoneOtp(String smsCode) async {
+    if (isLoading.value) return;
+    if (phoneVerificationId.value.isEmpty) {
+      _handleLoginError('Please request a new OTP code.');
+      return;
+    }
+
+    isLoading.value = true;
+    debugPrint('[LOGIN] verifyPhoneOtp() started');
+    try {
+      final userCredential = await _authService.verifyPhoneOTP(
+        phoneVerificationId.value,
+        smsCode,
+      );
+      debugPrint('[LOGIN] verifyPhoneOtp() Firebase verified, exchanging with backend...');
+      await _loginWithBackend(userCredential.user, 'phone');
+      debugPrint('[LOGIN] verifyPhoneOtp() finished');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[LOGIN] verifyPhoneOtp() FirebaseAuthException: ${e.code} ${e.message}');
+      _handleLoginError(_authService.mapFirebaseError(e));
+    } catch (e) {
+      debugPrint('[LOGIN] verifyPhoneOtp() threw: $e');
+      _handleLoginError(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> resendPhoneOtp() => sendPhoneOtp(otpPhoneNumber.value);
 
   // Guest Login Method — no auth required, browse as guest
   Future<void> guestLogin() async {
     Get.offAllNamed('/main-app');
   }
 
-  // Exchange Firebase social credentials for a VIPs JWT token
+  // Exchange Firebase social/phone credentials for a VIPs JWT token
   Future<void> _loginWithBackend(User? firebaseUser, String provider) async {
     try {
+      debugPrint('[LOGIN] _loginWithBackend: getting Firebase ID token...');
+      final idToken = await firebaseUser?.getIdToken();
+      debugPrint('[LOGIN] _loginWithBackend: POST /auth/social (provider=$provider)...');
       final response = await ApiService().post('/auth/social', {
-        'email'      : firebaseUser?.email,
-        'name'       : firebaseUser?.displayName,
-        'providerUid': firebaseUser?.uid,
-        'provider'   : provider,
+        'idToken' : idToken,
+        'provider': provider,
       });
-      if (response.success && response.data != null) {
-        await ApiService().setToken(response.data['token']);
+      debugPrint('[LOGIN] _loginWithBackend: response received, success=${response.success}');
+      final token = response.data is Map ? response.data['token'] as String? : null;
+      if (response.success && token != null && token.isNotEmpty) {
+        await ApiService().setToken(token);
+        final userData = response.data is Map ? response.data['user'] : null;
+        _handleSuccessfulLogin(userData is Map ? Map<String, dynamic>.from(userData) : null);
+      } else {
+        await _authService.signOut();
+        _handleLoginError(response.message.isNotEmpty
+            ? response.message
+            : 'Could not complete sign-in. Please try again.');
       }
-    } catch (_) {}
-    _handleSuccessfulLogin(firebaseUser);
+    } catch (e) {
+      debugPrint('[LOGIN] _loginWithBackend threw: $e');
+      await _authService.signOut();
+      _handleLoginError('Could not complete sign-in. Please try again.');
+    }
   }
 
   // Handle Successful Login
-  void _handleSuccessfulLogin(User? user) {
+  void _handleSuccessfulLogin(Map<String, dynamic>? userData) {
+    // Accounts created before the PIN feature existed (or via social
+    // sign-in, which can silently create a brand new account) may not
+    // have one yet — route them to set one up instead of landing them in
+    // the app with a PIN gate they can never pass.
+    if (userData != null && userData['hasPin'] != true) {
+      Get.offAllNamed('/createpin');
+      return;
+    }
     Get.offAllNamed('/main-app');
   }
 
@@ -233,5 +349,14 @@ class LoginController extends GetxController {
   // Navigate to Sign Up
   void navigateToSignUp() {
     Get.toNamed('/signup');
+  }
+
+  @override
+  void onClose() {
+    phoneController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    otpPhoneController.dispose();
+    super.onClose();
   }
 }

@@ -53,7 +53,7 @@ class BuildRestaurenCard extends StatelessWidget {
                         height: 120.h,
                         width: double.infinity,
                         child: Image.network(
-                          deal['image'],
+                          deal['image']?.toString() ?? '',
                           fit: BoxFit.cover,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
@@ -218,7 +218,7 @@ class BuildRestaurenCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                deal['title'],
+                                deal['title']?.toString() ?? '',
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w400,
@@ -260,7 +260,7 @@ class BuildRestaurenCard extends StatelessWidget {
                             SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
-                                deal['description'],
+                                deal['description']?.toString() ?? '',
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   fontWeight: FontWeight.bold,

@@ -190,7 +190,7 @@ class BuildExploreSection extends GetView<HomeController> {
             children: [
               // Image de fond
               Image.network(
-                outing['image'],
+                outing['image']?.toString() ?? '',
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
@@ -250,7 +250,7 @@ class BuildExploreSection extends GetView<HomeController> {
                   children: [
                     // Titre
                     Text(
-                      outing['title'],
+                      outing['title']?.toString() ?? '',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,

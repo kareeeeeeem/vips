@@ -115,4 +115,10 @@ const Map<String, String> enUS = {
   'was': 'Was',
   'you_save': 'You Save',
   'instant_confirmation': 'Instant confirmation after purchase',
+  'no_hot_deals_found': 'No hot deals found',
+  'no_merchants_found': 'No merchants found',
+  'no_merchant_data': 'No merchant data available',
+  'merchant_details': 'Merchant Details',
+  'merchant_details_description': 'View this merchant\'s store information and offers.',
+  'no_deal_data': 'No deal data available',
 };

@@ -43,6 +43,9 @@ class VIPsRankView extends GetView<VIPsRankController> {
 
   @override
   Widget build(BuildContext context) {
+    if (!Get.isRegistered<VIPsRankController>()) {
+      Get.put(VIPsRankController());
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

@@ -4,9 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:vip/appuser/core/util/images.dart';
-import 'package:vip/appuser/modules/packages/views/packages_view.dart';
 import 'package:vip/appuser/modules/profile/views/widgets/redeem_page.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class WalletPointsController extends GetxController {
   final selectedTab = 'Redeem History'.obs;
@@ -23,6 +23,15 @@ class WalletPointsController extends GetxController {
 
   // Live transaction data — populated from /user/transactions API
   final allTransactions = <Map<String, dynamic>>[].obs;
+
+  // Live wallet points total — populated from /user/wallet API
+  final walletPoints = 0.obs;
+
+  // Live diamond stats — populated from /auth/me (User model fields
+  // pendingDiamonds/suspendedDiamonds; "Approved" is the wallet points
+  // balance itself, i.e. diamonds that already cleared).
+  final pendingDiamonds = 0.obs;
+  final suspendedDiamonds = 0.obs;
 
   List<Map<String, dynamic>> get filteredTransactions {
     var filtered =
@@ -69,6 +78,34 @@ class WalletPointsController extends GetxController {
     super.onInit();
     expandedTransactions.value = List.generate(allTransactions.length, (_) => false);
     fetchTransactions();
+    fetchWalletBalance();
+    fetchDiamondStats();
+  }
+
+  Future<void> fetchWalletBalance() async {
+    try {
+      final response = await _api.get('/user/wallet');
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        walletPoints.value = (data['points'] as num?)?.toInt() ?? 0;
+      }
+    } catch (e) {
+      debugPrint('fetchWalletBalance error: $e');
+    }
+  }
+
+  Future<void> fetchDiamondStats() async {
+    try {
+      final response = await _api.get('/auth/me');
+      if (response.success && response.data is Map) {
+        final raw = response.data['user'] ?? response.data;
+        final user = raw is Map ? raw : <String, dynamic>{};
+        pendingDiamonds.value = (user['pendingDiamonds'] as num?)?.toInt() ?? 0;
+        suspendedDiamonds.value = (user['suspendedDiamonds'] as num?)?.toInt() ?? 0;
+      }
+    } catch (e) {
+      debugPrint('fetchDiamondStats error: $e');
+    }
   }
 
   Future<void> fetchTransactions() async {
@@ -529,46 +566,19 @@ class WalletPointsView extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 12.w),
-                    Text(
-                      '112 00',
+                    Obx(() => Text(
+                      controller.walletPoints.value.toString(),
                       style: TextStyle(
                         fontSize: 48.sp,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: 2,
                       ),
-                    ),
+                    )),
                   ],
                 ),
 
-                SizedBox(height: 20.h),
-
-                // Expiring Points
-                Text(
-                  '200 points expiring on 31/12/2025',
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-
                 SizedBox(height: 24.h),
-
-                // Point History Button
-                SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    'Point history',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 12.h),
               ],
             ),
           ),
@@ -580,14 +590,16 @@ class WalletPointsView extends StatelessWidget {
             bottom: -30.h, // Half outside
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Row(
-                children: [
-                  _buildStatCard('600', 'Pending', Colors.white),
-                  SizedBox(width: 8.w),
-                  _buildStatCard('600', 'Approved', Colors.white),
-                  SizedBox(width: 8.w),
-                  _buildStatCard('600', 'Suspended', Colors.white),
-                ],
+              child: Obx(
+                () => Row(
+                  children: [
+                    _buildStatCard(controller.pendingDiamonds.value.toString(), 'Pending', Colors.white),
+                    SizedBox(width: 8.w),
+                    _buildStatCard(controller.walletPoints.value.toString(), 'Approved', Colors.white),
+                    SizedBox(width: 8.w),
+                    _buildStatCard(controller.suspendedDiamonds.value.toString(), 'Suspended', Colors.white),
+                  ],
+                ),
               ),
             ),
           ),
@@ -646,7 +658,7 @@ class WalletPointsView extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: () {
-                Get.to(() => PackagesView());
+                Get.toNamed('/packages');
               },
               child: Container(
                 height: 160.h,
@@ -828,28 +840,39 @@ class WalletPointsView extends StatelessWidget {
 
   // ==================== ADD CARD ====================
   Widget _buildAddCard() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(3.w),
-            decoration: BoxDecoration(
-              color: primaryColor,
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: () {
+        // No real payment processor wired yet — same honest state used in
+        // the Credit / Buy VIPS Credits screen's add-card sheet.
+        safeSnackbar(
+          'Coming Soon',
+          'Adding payment cards will be available in a future update',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(3.w),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add, color: Colors.white, size: 24.sp),
             ),
-            child: Icon(Icons.add, color: Colors.white, size: 24.sp),
-          ),
-          SizedBox(width: 12.w),
-          Text(
-            'Add New Card',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
+            SizedBox(width: 12.w),
+            Text(
+              'Add New Card',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -83,7 +83,13 @@ class GiftController extends GetxController {
 
       if (response.success) {
         Get.put(GiftRecapController());
-        Get.to(() => const GiftRecapView());
+        Get.to(
+          () => const GiftRecapView(),
+          arguments: {
+            'transferTo': userIdController.text,
+            'giftAmount': amount,
+          },
+        );
       } else {
         safeSnackbar('Error', response.message);
       }

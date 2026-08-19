@@ -2,7 +2,6 @@ import 'package:carousel_slider/carousel_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:vip/appuser/modules/search/views/search_view.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
 import 'package:vip/core/services/api_service.dart';
 
@@ -72,6 +71,25 @@ class HomeController extends GetxController {
     // Load favorites and cart state
     refreshFavorites();
     refreshCart();
+    refreshNotificationCount();
+  }
+
+  // Fetch unread notification count for the bell badge
+  Future<void> refreshNotificationCount() async {
+    try {
+      final response = await ApiService().get('/user/notifications');
+      if (response.success && response.data != null) {
+        final raw = response.data;
+        final List<dynamic> data = raw is List
+            ? raw
+            : (raw is Map ? (raw['notifications'] as List? ?? []) : <dynamic>[]);
+        notificationCount.value = data
+            .where((n) => n is Map && n['isRead'] != true)
+            .length;
+      }
+    } catch (e) {
+      debugPrint('Error fetching notification count: $e');
+    }
   }
 
   bool _disposed = false;
@@ -129,7 +147,7 @@ class HomeController extends GetxController {
 
   // Méthodes de navigation existantes et nouvelles
   void navigateToSearch() {
-    Get.to(() => SearchView());
+    Get.toNamed('/search');
   }
 
   void navigateToNotifications() {
@@ -188,7 +206,7 @@ class HomeController extends GetxController {
   }
 
   void navigateToFavorites() {
-    Get.toNamed(Routes.SEARCH);
+    Get.toNamed(Routes.FAVORITES);
   }
 
   void navigateToFitness() {
@@ -424,6 +442,31 @@ Catégorie: ${outing['category']}
 
   List<Map<String, dynamic>> favorites = [];
 
+  // Real denormalized favorites from GET /favorites/details — the backend
+  // now joins each {itemId, itemType} against the actual Deal/Product/
+  // Outing/Merchant collection server-side, so this is never a stale or
+  // partial client-side guess. Items whose target was deleted are dropped
+  // by the backend rather than shown as stubs.
+  final RxList<Map<String, dynamic>> favoriteDealItems = <Map<String, dynamic>>[].obs;
+  final RxBool isFavoritesLoading = false.obs;
+
+  Future<void> refreshFavoriteDetails() async {
+    isFavoritesLoading.value = true;
+    try {
+      final response = await ApiService().get('/favorites/details');
+      if (response.success && response.data != null) {
+        final List<dynamic> raw = response.data;
+        favoriteDealItems.value = raw
+            .where((f) => (f['itemType']?.toString().toLowerCase() ?? '') == 'deal')
+            .map((f) => Map<String, dynamic>.from(f['item'] as Map))
+            .toList();
+      }
+    } catch (_) {
+    } finally {
+      isFavoritesLoading.value = false;
+    }
+  }
+
   // Refresh favorites from backend
   Future<void> refreshFavorites() async {
     try {
@@ -488,9 +531,30 @@ Catégorie: ${outing['category']}
           count += (it['quantity'] ?? 0) as int;
         }
         cartItemCount.value = count;
+      } else if (!ApiService().isLoggedIn) {
+        safeSnackbar(
+          'Sign in required',
+          'Please log in to add items to your cart.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } else {
+        safeSnackbar(
+          'Error',
+          response.message.isNotEmpty ? response.message : 'Could not add item to cart.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
       debugPrint('Error adding to cart: $e');
+      safeSnackbar(
+        'Error',
+        'Could not add item to cart.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
     update();
   }

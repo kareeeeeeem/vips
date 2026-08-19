@@ -351,7 +351,7 @@ class DonationView extends GetView<DonationController> {
       child: Row(
         children: [
           Text(
-            '\$',
+            'TND',
             style: TextStyle(
               fontSize: 24.sp,
               fontWeight: FontWeight.w600,
@@ -403,7 +403,7 @@ class DonationView extends GetView<DonationController> {
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Text(
-                      '\$$amount',
+                      '$amount TND',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,

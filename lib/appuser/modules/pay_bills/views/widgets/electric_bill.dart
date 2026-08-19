@@ -24,18 +24,27 @@ class ElectricBillController extends GetxController {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     billServiceId = args['billServiceId']?.toString() ?? '';
     operatorName = args['title']?.toString() ?? 'Bill Payment';
-    operatorIcon = args['logo']?.toString().isNotEmpty == true
-        ? args['logo'].toString()
-        : 'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
+    operatorIcon =
+        args['logo']?.toString().isNotEmpty == true
+            ? args['logo'].toString()
+            : 'https://cdn-icons-png.flaticon.com/512/1792/1792931.png';
   }
 
   Future<void> proceed() async {
     if (subscriberNumberController.text.isEmpty) {
-      safeSnackbar('Required', 'Please enter your subscriber number', snackPosition: SnackPosition.BOTTOM);
+      safeSnackbar(
+        'Required',
+        'Please enter your subscriber number',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
     if (accountNumberController.text.isEmpty) {
-      safeSnackbar('Required', 'Please enter your account number', snackPosition: SnackPosition.BOTTOM);
+      safeSnackbar(
+        'Required',
+        'Please enter your account number',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
@@ -61,11 +70,22 @@ class ElectricBillController extends GetxController {
           },
         );
       } else {
-        safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Could not fetch bill details',
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+        safeSnackbar(
+          'Error',
+          response.message.isNotEmpty
+              ? response.message
+              : 'Could not fetch bill details',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to look up bill: $e', snackPosition: SnackPosition.BOTTOM);
+      safeSnackbar(
+        'Error',
+        'Failed to look up bill: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -121,7 +141,7 @@ class ElectricBillView extends GetView<ElectricBillController> {
         ),
         SizedBox(width: 8.w),
         Text(
-          'Electric Bill',
+          controller.operatorName,
           style: TextStyle(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
@@ -355,7 +375,9 @@ class ElectricBillView extends GetView<ElectricBillController> {
               borderRadius: BorderRadius.circular(12.r),
             ),
             elevation: 0,
-            disabledBackgroundColor: AppColors.AppPrimaryColor.withValues(alpha: 0.6),
+            disabledBackgroundColor: AppColors.AppPrimaryColor.withValues(
+              alpha: 0.6,
+            ),
           ),
           child:
               controller.isLoading.value

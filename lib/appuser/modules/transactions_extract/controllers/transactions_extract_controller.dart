@@ -92,9 +92,20 @@ class TransactionsExtractController extends GetxController {
   }
 
   // Filtrer les transactions
+  List<Transaction> get _typeFiltered {
+    switch (selectedFilter.value) {
+      case 'Rewards':
+        return transactions.where((t) => t.type == TransactionType.reward).toList();
+      case 'Extract':
+        return transactions.where((t) => t.type == TransactionType.extract).toList();
+      default:
+        return transactions;
+    }
+  }
+
   List<Transaction> get todayTransactions {
     final today = DateTime.now();
-    return transactions.where((t) {
+    return _typeFiltered.where((t) {
       return t.date.year == today.year &&
           t.date.month == today.month &&
           t.date.day == today.day;
@@ -103,10 +114,22 @@ class TransactionsExtractController extends GetxController {
 
   List<Transaction> get yesterdayTransactions {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
-    return transactions.where((t) {
+    return _typeFiltered.where((t) {
       return t.date.year == yesterday.year &&
           t.date.month == yesterday.month &&
           t.date.day == yesterday.day;
+    }).toList();
+  }
+
+  // Everything older than yesterday that still matches the type filter —
+  // the view only had Today/Yesterday sections, silently dropping every
+  // other transaction with no way to see it. Surfaced as "Earlier" below.
+  List<Transaction> get earlierTransactions {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final cutoff = DateTime(yesterday.year, yesterday.month, yesterday.day);
+    return _typeFiltered.where((t) {
+      final d = DateTime(t.date.year, t.date.month, t.date.day);
+      return d.isBefore(cutoff);
     }).toList();
   }
 
@@ -240,7 +263,7 @@ class TransactionsExtractController extends GetxController {
       return;
     }
     final buffer = StringBuffer();
-    buffer.writeln('VIPs Transaction Extract — $selectedMonth');
+    buffer.writeln('VIPs Transaction Extract — ${selectedMonth.value}');
     buffer.writeln('Total Rewards: ${totalRewards.value.toStringAsFixed(3)} TND');
     buffer.writeln('Net Balance:   ${netBalance.value.toStringAsFixed(3)} TND');
     buffer.writeln('─' * 40);
@@ -251,7 +274,7 @@ class TransactionsExtractController extends GetxController {
     }
     SharePlus.instance.share(ShareParams(
       text: buffer.toString(),
-      subject: 'VIPs Transactions — $selectedMonth',
+      subject: 'VIPs Transactions — ${selectedMonth.value}',
     ));
   }
 

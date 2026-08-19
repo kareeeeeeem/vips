@@ -21,18 +21,102 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int _cartCount = 0;
   bool _addingToCart = false;
   final _commentController = TextEditingController();
+  bool _submittingComment = false;
+
+  // Real product detail (description, comments with real commenter names,
+  // aggregated rating/sales, seller) from GET /content/products/:id —
+  // this screen used to show the exact same hardcoded SaaS-theme
+  // description, a single fake "John doe" comment/review, and fabricated
+  // "TRUSTED"/certificate copy for every product regardless of which one
+  // was actually opened.
+  bool _loadingDetail = true;
+  String? _detailError;
+  String _description = '';
+  String? _merchantName;
+  double _avgRating = 0;
+  int _reviewCount = 0;
+  int _salesCount = 0;
+  List<Map<String, dynamic>> _comments = [];
+  DateTime? _createdAt;
+  DateTime? _updatedAt;
 
   @override
   void initState() {
     super.initState();
+    _avgRating = widget.product.avgRating;
+    _reviewCount = widget.product.reviewCount;
+    _salesCount = widget.product.sellCount;
+    _description = widget.product.description;
+    _merchantName = widget.product.merchantName;
     _loadCartCount();
+    _loadProductDetail();
+  }
+
+  Future<void> _loadProductDetail() async {
+    setState(() => _loadingDetail = true);
+    try {
+      final r = await ApiService().get('/content/products/${widget.product.id}');
+      if (r.success && r.data is Map && mounted) {
+        final data = r.data as Map;
+        setState(() {
+          _description = (data['description'] ?? '').toString();
+          _merchantName = data['merchantName']?.toString();
+          _avgRating = (data['avgRating'] as num?)?.toDouble() ?? 0;
+          _reviewCount = (data['reviewCount'] as num?)?.toInt() ?? 0;
+          _salesCount = (data['salesCount'] as num?)?.toInt() ?? 0;
+          _comments = ((data['comments'] as List?) ?? [])
+              .map((c) => Map<String, dynamic>.from(c as Map))
+              .toList();
+          _createdAt = data['createdAt'] != null ? DateTime.tryParse(data['createdAt']) : null;
+          _updatedAt = data['updatedAt'] != null ? DateTime.tryParse(data['updatedAt']) : null;
+          _detailError = null;
+        });
+      } else if (mounted) {
+        setState(() => _detailError = r.message.isNotEmpty ? r.message : 'Could not load product details.');
+      }
+    } catch (_) {
+      if (mounted) setState(() => _detailError = 'Could not load product details.');
+    } finally {
+      if (mounted) setState(() => _loadingDetail = false);
+    }
+  }
+
+  Future<void> _submitComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
+    setState(() => _submittingComment = true);
+    try {
+      final r = await ApiService().post('/content/products/${widget.product.id}/comment', {'comment': text});
+      if (r.success) {
+        _commentController.clear();
+        safeSnackbar('Comment Submitted', 'Thank you for your feedback!',
+            backgroundColor: const Color(0xFF10B981), colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM);
+        // Refresh so the real comment (with the real commenter name the
+        // backend resolves) shows up immediately instead of only ever
+        // appearing after leaving and reopening this screen.
+        await _loadProductDetail();
+      } else {
+        safeSnackbar('Error', r.message.isNotEmpty ? r.message : 'Could not submit comment.',
+            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not submit comment.',
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      if (mounted) setState(() => _submittingComment = false);
+    }
   }
 
   Future<void> _loadCartCount() async {
     try {
       final r = await ApiService().get('/cart');
+      // GET /cart returns a plain array (`{success, data: [...]}`), not
+      // `{items: [...]}` — indexing a List with a String key throws at
+      // runtime, so this was silently caught below and _cartCount never
+      // updated from its initial 0.
       if (r.success && mounted) {
-        final items = r.data?['items'] as List? ?? [];
+        final items = r.data as List? ?? [];
         setState(() => _cartCount = items.length);
       }
     } catch (_) {}
@@ -139,12 +223,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const Icon(Icons.file_download_outlined, size: 18),
                       const SizedBox(width: 4),
                       Text(
-                        '${widget.product.sellCount} Sell',
+                        '$_salesCount Sell',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
                         ),
                       ),
+                      if (_reviewCount > 0) ...[
+                        const SizedBox(width: 12),
+                        const Icon(Icons.star, size: 16, color: Colors.amber),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${_avgRating.toStringAsFixed(1)} ($_reviewCount)',
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -164,7 +257,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     _buildTab('Comment', 1),
                     _buildTab('Review', 2),
                     _buildTab('Product Info', 3),
-                    _buildTab('VIPs Certificate', 4),
                     IconButton(
                       icon: const Icon(Icons.share_outlined, size: 20),
                       onPressed: () => SharePlus.instance.share(ShareParams(
@@ -309,17 +401,39 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         return _buildReviewTab();
       case 3: // Product Info
         return _buildProductInfoTab();
-      case 4: // VIPs Certificate
-        return _buildVIPsCertificateTab();
       default:
         return _buildDescriptionTab();
     }
   }
 
   Widget _buildDescriptionTab() {
+    if (_loadingDetail) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator(color: Color(0xFF0066FF))),
+      );
+    }
     return Column(
       children: [
-        // Description Section
+        if (_detailError != null)
+          Container(
+            width: double.infinity,
+            color: Colors.orange.shade50,
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, size: 18, color: Colors.orange.shade800),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _detailError!,
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
+                  ),
+                ),
+                TextButton(onPressed: _loadProductDetail, child: const Text('Retry')),
+              ],
+            ),
+          ),
         Container(
           color: Colors.white,
           padding: EdgeInsets.all(16.w),
@@ -335,86 +449,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                    height: 1.5,
-                  ),
+              Text(
+                _description.isNotEmpty ? _description : 'No description provided for this product yet.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _description.isNotEmpty ? Colors.grey[700] : Colors.grey[400],
+                  height: 1.5,
+                  fontStyle: _description.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+                ),
+              ),
+              if (_merchantName != null) ...[
+                const SizedBox(height: 12),
+                Row(
                   children: [
-                    TextSpan(
-                      text:
-                          'Creating a captivating and effective Software as a Service (SaaS) landing page is crucial for capturing visitor attention and ultimately converting visitors into customers. To achieve this, you need a meticulously crafted SaaS landing... ',
-                    ),
-                    TextSpan(
-                      text: 'read more',
-                      style: TextStyle(
-                        color: Color(0xFF0066FF),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Icon(Icons.storefront_outlined, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Sold by $_merchantName',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // User Review
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(16.w),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.orange,
-                child: const Text(
-                  'JD',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'John doe',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Text(
-                          '834 days ago',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'The SaaS Landing Software Theme is user-friendly and budget-friendly, making it a pra...',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -444,6 +500,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               TextField(
                 controller: _commentController,
                 maxLines: 3,
+                enabled: !_submittingComment,
                 decoration: InputDecoration(
                   hintText: 'leave a comment',
                   hintStyle: TextStyle(color: Colors.grey[400]),
@@ -462,17 +519,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final text = _commentController.text.trim();
-                    if (text.isEmpty) return;
-                    try {
-                      await ApiService().post('/content/products/${widget.product.id}/comment', {'comment': text});
-                    } catch (_) {}
-                    _commentController.clear();
-                    safeSnackbar('Comment Submitted', 'Thank you for your feedback!',
-                        backgroundColor: const Color(0xFF10B981), colorText: Colors.white,
-                        snackPosition: SnackPosition.BOTTOM);
-                  },
+                  onPressed: _submittingComment ? null : _submitComment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0066FF),
                     shape: RoundedRectangleBorder(
@@ -480,14 +527,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Submit Comment',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _submittingComment
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Submit Comment',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -496,228 +548,176 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
         const SizedBox(height: 8),
 
-        // Comments List
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(16.w),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.orange,
-                child: const Text(
-                  'JD',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+        // Real comments (with real commenter names) fetched from
+        // GET /content/products/:id — this used to always show a single
+        // hardcoded "John doe" comment no matter what was actually
+        // submitted, so a real submission was never visible anywhere.
+        if (_loadingDetail)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator(color: Color(0xFF0066FF))),
+          )
+        else if (_comments.isEmpty)
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.all(24.w),
+            child: Center(
+              child: Text(
+                'No comments yet. Be the first to leave one!',
+                style: TextStyle(color: Colors.grey[500]),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'John doe',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Text(
-                          '834 days ago',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'The SaaS Landing Software Theme is user-friendly and budget-friendly, making it a practical choice.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          )
+        else
+          ..._comments.map((c) => _buildCommentCard(c)),
       ],
     );
   }
 
+  Widget _buildCommentCard(Map<String, dynamic> comment) {
+    final userName = (comment['userName'] ?? 'VIPs User').toString();
+    final initials = userName.trim().isNotEmpty
+        ? userName.trim().split(RegExp(r'\s+')).map((w) => w[0]).take(2).join().toUpperCase()
+        : 'U';
+    final createdAt = comment['createdAt'] != null ? DateTime.tryParse(comment['createdAt'].toString()) : null;
+
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.all(16.w),
+      margin: const EdgeInsets.only(top: 1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.orange,
+            child: Text(
+              initials,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
+                    ),
+                    if (createdAt != null)
+                      Text(
+                        '${createdAt.day}/${createdAt.month}/${createdAt.year}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  (comment['text'] ?? '').toString(),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Reviews come from POST /order/:id/review — a rating left on a real
+  // completed order, not a standalone per-product review, so there's no
+  // individual review text to list here (an order can contain several
+  // products and rates them all at once). What's shown is the real
+  // aggregate: average rating and how many order-reviews it's based on.
   Widget _buildReviewTab() {
-    return Column(
-      children: [
-        // Rating Section
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(16.w),
-          child: Row(
-            children: [
-              const Text(
-                '0.0',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: List.generate(
-                        5,
-                        (index) => const Icon(
-                          Icons.star_border,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '0 Review',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    if (_loadingDetail) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator(color: Color(0xFF0066FF))),
+      );
+    }
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.all(16.w),
+      child: Row(
+        children: [
+          Text(
+            _reviewCount > 0 ? _avgRating.toStringAsFixed(1) : '—',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // User Comment with Rating
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(16.w),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.orange,
-                child: const Text(
-                  'JD',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: List.generate(5, (index) {
+                    final filled = index < _avgRating.round();
+                    return Icon(
+                      filled ? Icons.star : Icons.star_border,
+                      size: 16,
+                      color: filled ? Colors.amber : Colors.grey,
+                    );
+                  }),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'John doe',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Text(
-                          '834 days ago',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'The SaaS Landing Software Theme is a cost-effective solution for crafting a sleek landing...',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: List.generate(
-                        5,
-                        (index) => const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Colors.amber,
-                        ),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  _reviewCount > 0
+                      ? '$_reviewCount review${_reviewCount > 1 ? 's' : ''} from verified purchases'
+                      : 'No reviews yet — reviews appear here after a customer rates an order containing this product.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildProductInfoTab() {
+    final relatedProducts = Get.isRegistered<BillsController>()
+        ? Get.find<BillsController>()
+            .allProducts
+            .where((p) => p.category == widget.product.category && p.id != widget.product.id)
+            .take(6)
+            .toList()
+        : <ProductItem>[];
+
     return Column(
       children: [
-        // Product Details
+        // Product Details — real fields (this used to be entirely
+        // hardcoded software-marketplace boilerplate: "File Type: script",
+        // "High Resolution: Yes", fake fixed release/update dates, and a
+        // fixed Tags list — none of it tied to the real product at all).
         Container(
           color: Colors.white,
           padding: EdgeInsets.all(16.w),
           child: Column(
             children: [
-              _buildDetailRow('Released', 'September 21, 2023'),
-              _buildDetailRow('Updated', 'September 30, 2023'),
-              _buildDetailRow('File Type', 'script'),
-              _buildDetailRow('High Resolution', 'Yes'),
-              _buildDetailRow('Cross browser', 'Yes'),
-              _buildDetailRow('Documentation', 'Yes'),
-              _buildDetailRow('Responsive', 'Yes'),
-              const Divider(height: 24),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    const Text(
-                      'Tags',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    _buildTag('Saas'),
-                    _buildTag('Landing'),
-                    _buildTag('Software'),
-                    _buildTag('Theme'),
-                    _buildTag('Joomla'),
-                    _buildTag('Shopify'),
-                    _buildTag('PHP'),
-                    _buildTag('JS'),
-                    _buildTag('HTML'),
-                  ],
-                ),
-              ),
+              _buildDetailRow('Category', widget.product.category),
+              _buildDetailRow('Price', '\$${widget.product.price.toStringAsFixed(2)}'),
+              if (_createdAt != null) _buildDetailRow('Listed', _formatDate(_createdAt!)),
+              if (_updatedAt != null && _updatedAt != _createdAt) _buildDetailRow('Updated', _formatDate(_updatedAt!)),
+              if (_merchantName != null) _buildDetailRow('Sold by', _merchantName!),
             ],
           ),
         ),
 
         const SizedBox(height: 8),
 
-        // Author Profile avec TRUSTED BADGE
+        // Contact seller — real action, unchanged. The fake "Trusted" /
+        // certificate claim ("reviewed by VIPsApp") that used to sit next
+        // to this is gone — nothing on this platform actually reviews or
+        // certifies products, so claiming it was simply false.
         Container(
           color: Colors.white,
           padding: EdgeInsets.all(16.w),
@@ -725,118 +725,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Author Profile',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // SECTION TRUSTED - MISE EN ÉVIDENCE
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'If the download didn\'t start, click here',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.cyan,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Trusted',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'September 19, 2023',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => SharePlus.instance.share(ShareParams(
-                        text: 'VIPs Certificate\nProduct: ${widget.product.title}\nRating: ${widget.product.rating}/5',
-                        subject: 'VIPs Certificate — ${widget.product.title}',
-                      )),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        'View Certificate',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Get.toNamed('/contact'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0066FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        'Send Message',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Related Products
-        Container(
-          color: Colors.white,
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Relative Product',
+                'Questions about this product?',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -845,103 +734,71 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 2,
-                  itemBuilder: (context, index) {
-                    return _buildRelatedProductCard(index);
-                  },
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.toNamed('/contact'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0066FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    'Send Message',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
 
-  Widget _buildVIPsCertificateTab() {
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'VIPs Certificate',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 16),
+        if (relatedProducts.isNotEmpty) ...[
+          const SizedBox(height: 8),
+
+          // Related Products — real products sharing this one's category,
+          // not two hardcoded "FoodBari" cards shown for every product
+          // regardless of what it actually was.
           Container(
-            width: double.infinity,
-
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            color: Colors.white,
+            padding: EdgeInsets.all(16.w),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.cyan,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'TRUSTED',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 const Text(
-                  'The product was reviewed by VIPsApp',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => SharePlus.instance.share(ShareParams(
-                    text: 'VIPs Verified Certificate\nProduct: ${widget.product.title}\nSeller Rating: ${widget.product.rating}/5\n✓ Certified by VIPs Platform',
-                    subject: 'VIPs Certificate',
-                  )),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
+                  'Related Products',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  child: const Text(
-                    'View Certificate',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: relatedProducts.length,
+                    itemBuilder: (context, index) {
+                      return _buildRelatedProductCard(relatedProducts[index]);
+                    },
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
+      ],
     );
+  }
+
+  String _formatDate(DateTime d) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -964,115 +821,113 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildTag(String tag) {
-    return Chip(
-      label: Text(
-        tag,
-        style: const TextStyle(fontSize: 11, color: Color(0xFF0066FF)),
-      ),
-      backgroundColor: const Color(0xFF0066FF).withValues(alpha: 0.1),
-      padding: EdgeInsets.zero,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
-  }
-
-  Widget _buildRelatedProductCard(int index) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=300&h=200&fit=crop',
-                  height: 100,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0066FF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '\$15.0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildRelatedProductCard(ProductItem product) {
+    return GestureDetector(
+      onTap: () {
+        Get.off(() => ProductDetailPage(product: product));
+      },
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
               children: [
-                const Text(
-                  'Joomla',
-                  style: TextStyle(
-                    color: Color(0xFF0066FF),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                  child: Image.network(
+                    product.imageUrl,
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 100,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 32),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  index == 0
-                      ? 'FoodBari Flutter - Food Res...'
-                      : 'FoodBari - Flutter Re...',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0066FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '\$${product.price.toStringAsFixed(1)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.download, size: 10, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '0 Sell',
-                      style: TextStyle(fontSize: 9, color: Colors.grey),
-                    ),
-                    const Spacer(),
-                    ...List.generate(
-                      5,
-                      (index) =>
-                          const Icon(Icons.star, size: 8, color: Colors.amber),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.category,
+                    style: const TextStyle(
+                      color: Color(0xFF0066FF),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.download, size: 10, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${product.sellCount} Sell',
+                        style: const TextStyle(fontSize: 9, color: Colors.grey),
+                      ),
+                      const Spacer(),
+                      if (product.reviewCount > 0) ...[
+                        const Icon(Icons.star, size: 10, color: Colors.amber),
+                        Text(
+                          product.avgRating.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 9, color: Colors.grey),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

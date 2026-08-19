@@ -126,6 +126,11 @@ class CartController extends GetxController
 
   // Wallet points loaded from API
   var walletPoints = 0.obs;
+  // How many of those points the user has chosen to redeem against this
+  // order's total. Actually deducted server-side in /order/create — this
+  // is only a preview of that same math so the UI matches what will happen.
+  var walletPointsToRedeem = 0.obs;
+  var vipsToTndRate = 0.1.obs;
 
   // Order Type Management
   var selectedOrderType = 0.obs; // 0: Delivery, 1: Takeaway, 2: In Store
@@ -153,13 +158,33 @@ class CartController extends GetxController
       selectedTipAmount.value > 0
           ? selectedTipAmount.value
           : customTipAmount.value;
-  double get total =>
+  double get walletDiscount => walletPointsToRedeem.value * vipsToTndRate.value;
+  double get preWalletTotal =>
       subtotal +
       deliveryFee -
       couponDiscount +
       serviceCharge +
       vatTax +
       tipAmount;
+  double get total => (preWalletTotal - walletDiscount).clamp(0.0, double.infinity);
+
+  // Maximum points worth applying: capped by both the user's real balance
+  // and what's left to pay so redeeming can never take the total negative.
+  int get maxRedeemablePoints {
+    final byBalance = walletPoints.value;
+    final byTotal = vipsToTndRate.value > 0 ? (preWalletTotal / vipsToTndRate.value).floor() : 0;
+    return byBalance < byTotal ? byBalance : byTotal;
+  }
+
+  void applyWalletPoints() {
+    walletPointsToRedeem.value = maxRedeemablePoints;
+    update();
+  }
+
+  void removeWalletPoints() {
+    walletPointsToRedeem.value = 0;
+    update();
+  }
   int get itemCount => cartItems.fold(0, (sum, item) => sum + item.quantity);
 
   @override
@@ -225,6 +250,14 @@ class CartController extends GetxController
       if (res.success && res.data != null) {
         final d = res.data as Map<String, dynamic>;
         walletPoints.value = ((d['walletPoints'] ?? d['points'] ?? 0) as num).toInt();
+      }
+    } catch (_) {}
+
+    try {
+      final ratesRes = await ApiService().get('/config/rates');
+      if (ratesRes.success && ratesRes.data != null) {
+        final rate = ratesRes.data['vipsToTnd'] ?? ratesRes.data['conversionRate'];
+        if (rate != null) vipsToTndRate.value = (rate as num).toDouble();
       }
     } catch (_) {}
   }
@@ -339,6 +372,13 @@ class CartController extends GetxController
                 'D ${deliveryFee.toStringAsFixed(3)}',
               ),
               _buildBreakdownRow('Vat/Tax', 'D ${vatTax.toStringAsFixed(3)}'),
+              _buildBreakdownRow(
+                'VIPS Points Redeemed',
+                walletDiscount > 0
+                    ? '- D ${walletDiscount.toStringAsFixed(3)} (${walletPointsToRedeem.value} pts)'
+                    : 'None',
+                isDiscount: walletDiscount > 0,
+              ),
 
               SizedBox(height: 24.h),
 
@@ -654,9 +694,21 @@ class CartController extends GetxController
     }
   }
 
+  // Must resolve to one of the Order schema's enum values
+  // (['wallet','cash','card','online']) — any other string fails Mongoose
+  // validation and order creation throws. The specific gateway (paypal,
+  // stripe, ...) isn't a column on Order itself; it's tracked by whichever
+  // payment session created the charge, and 'online' is the bucket for all
+  // of them once that's wired up.
   String get normalizedPaymentMethod {
-    if (selectedPaymentMethod.value == 'cash_on_delivery') return 'cash';
-    return selectedPaymentMethod.value.toLowerCase();
+    switch (selectedPaymentMethod.value) {
+      case 'cash_on_delivery':
+        return 'cash';
+      case 'wallet':
+        return 'wallet';
+      default:
+        return 'online';
+    }
   }
 
   void selectPaymentMethod() {
@@ -725,18 +777,46 @@ class CartController extends GetxController
           )
           .toList();
 
+      final merchantId = cartItems.first.merchantId;
+
       final response = await ApiService().post('/order/create', {
-        'merchantId': cartItems.first.merchantId ?? '',
+        // Omit entirely rather than send '' — merchantId is optional
+        // (plenty of real seeded deals have no merchant attached) but an
+        // empty string still fails Mongoose's ObjectId cast.
+        if (merchantId != null && merchantId.isNotEmpty) 'merchantId': merchantId,
         'items': items,
         'paymentMethod': normalizedPaymentMethod,
         'deliveryAddress':
             selectedOrderType.value == 0 ? deliveryAddress.value : 'Pickup',
+        // Must match the Order schema enum: ['delivery','takeaway','dine_in'].
+        'orderType': selectedOrderType.value == 0
+            ? 'delivery'
+            : selectedOrderType.value == 1
+                ? 'takeaway'
+                : 'dine_in',
+        if (couponCode.value.isNotEmpty) 'couponCode': couponCode.value,
+        if (appliedCouponDiscount.value > 0) 'couponDiscountAmount': appliedCouponDiscount.value,
+        if (walletPointsToRedeem.value > 0) 'walletPointsRedeemed': walletPointsToRedeem.value,
       });
 
       Get.back(); // close loading dialog
 
       if (response.success) {
-        Get.to(() => const OrderSuccessView());
+        final order = response.data is Map ? response.data as Map : {};
+        // Server already deducted these; refresh so the UI reflects the
+        // real remaining balance instead of the stale pre-order snapshot.
+        if (walletPointsToRedeem.value > 0) {
+          walletPointsToRedeem.value = 0;
+          _loadWalletPoints();
+        }
+        Get.to(
+          () => const OrderSuccessView(),
+          arguments: {
+            'orderId': (order['_id'] ?? '').toString(),
+            'total': (order['totalAmount'] is num) ? (order['totalAmount'] as num).toDouble() : total,
+            'orderType': (order['orderType'] ?? 'delivery').toString(),
+          },
+        );
         clearCartLocally();
       } else {
         safeSnackbar(
@@ -769,7 +849,15 @@ class CartController extends GetxController
   Future<void> clearCartLocally() async {
     cartItems.clear();
     selectedItems.clear();
-    try { await ApiService().post('/cart/clear', {}); } catch (_) {}
+    try {
+      await ApiService().post('/cart/clear', {});
+    } catch (_) {
+      // Local state already cleared optimistically — if the server call
+      // failed, reload from the server so a silently-failed clear doesn't
+      // leave items reappearing unexplained on the next cart load.
+      safeSnackbar('Error', 'Could not clear cart. Refreshing...', snackPosition: SnackPosition.BOTTOM);
+      await _loadCartItems();
+    }
   }
 
   void toggleFavorite(CartItem item) {
@@ -910,7 +998,12 @@ class CartController extends GetxController
                         cartItems.remove(item);
                         selectedItems.remove(item.id);
                         Get.back();
-                        try { await ApiService().delete('/cart/remove/${item.id}'); } catch (_) {}
+                        try {
+                          await ApiService().delete('/cart/remove/${item.id}');
+                        } catch (_) {
+                          safeSnackbar('Error', 'Could not remove item. Refreshing cart...', snackPosition: SnackPosition.BOTTOM);
+                          await _loadCartItems();
+                        }
                       },
                       child: Container(
                         height: 48.h,
@@ -1041,7 +1134,12 @@ class CartController extends GetxController
                         isSelectionMode.value = false;
                         deliveryNote.value = '';
                         Get.back();
-                        try { await ApiService().post('/cart/clear', {}); } catch (_) {}
+                        try {
+                          await ApiService().post('/cart/clear', {});
+                        } catch (_) {
+                          safeSnackbar('Error', 'Could not clear cart. Refreshing...', snackPosition: SnackPosition.BOTTOM);
+                          await _loadCartItems();
+                        }
                       },
                       child: Container(
                         height: 48.h,
@@ -1119,8 +1217,17 @@ class CartController extends GetxController
               selectedItems.clear();
               isSelectionMode.value = false;
               Get.back();
+              bool anyFailed = false;
               for (final id in toDelete) {
-                try { await ApiService().delete('/cart/remove/$id'); } catch (_) {}
+                try {
+                  await ApiService().delete('/cart/remove/$id');
+                } catch (_) {
+                  anyFailed = true;
+                }
+              }
+              if (anyFailed) {
+                safeSnackbar('Error', 'Some items could not be removed. Refreshing cart...', snackPosition: SnackPosition.BOTTOM);
+                await _loadCartItems();
               }
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),

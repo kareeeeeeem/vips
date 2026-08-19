@@ -286,7 +286,12 @@ class MerchantOrderController extends GetxController {
       case 'delivered':
         return Colors.green;
       case 'canceled':
+      case 'cancelled':
         return Colors.red;
+      case 'refund_requested':
+        return Colors.deepOrange;
+      case 'refunded':
+        return Colors.redAccent;
       default:
         return Colors.grey;
     }
@@ -306,7 +311,12 @@ class MerchantOrderController extends GetxController {
       case 'delivered':
         return Icons.delivery_dining;
       case 'canceled':
+      case 'cancelled':
         return Icons.cancel;
+      case 'refund_requested':
+        return Icons.assignment_return_outlined;
+      case 'refunded':
+        return Icons.currency_exchange;
       default:
         return Icons.help;
     }

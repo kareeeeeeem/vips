@@ -42,13 +42,27 @@ class SettingsController extends GetxController {
     super.onInit();
     loadSettings();
     checkBiometricAvailability();
+    _loadTwoFactorState();
+  }
+
+  // Real server-side state — this used to be a purely local SharedPreferences
+  // flag that never actually affected login (POST /auth/login didn't check
+  // anything client-side could set), so switching it "on" gave a false
+  // sense of protection.
+  Future<void> _loadTwoFactorState() async {
+    final response = await ApiService().get('/auth/me');
+    if (response.success && response.data != null) {
+      final user = response.data['user'] ?? response.data;
+      if (user is Map) {
+        isTwoFactorEnabled.value = user['twoFactorEnabled'] == true;
+      }
+    }
   }
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     isDarkMode.value = prefs.getBool('settings_dark_mode') ?? false;
     isBiometricEnabled.value = prefs.getBool('settings_biometric_enabled') ?? false;
-    isTwoFactorEnabled.value = prefs.getBool('settings_two_factor_enabled') ?? false;
     isPushNotificationsEnabled.value = prefs.getBool('settings_push_notifications') ?? true;
     isEmailNotificationsEnabled.value = prefs.getBool('settings_email_notifications') ?? true;
     isSmsNotificationsEnabled.value = prefs.getBool('settings_sms_notifications') ?? false;
@@ -68,7 +82,6 @@ class SettingsController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('settings_dark_mode', isDarkMode.value);
     await prefs.setBool('settings_biometric_enabled', isBiometricEnabled.value);
-    await prefs.setBool('settings_two_factor_enabled', isTwoFactorEnabled.value);
     await prefs.setBool('settings_push_notifications', isPushNotificationsEnabled.value);
     await prefs.setBool('settings_email_notifications', isEmailNotificationsEnabled.value);
     await prefs.setBool('settings_sms_notifications', isSmsNotificationsEnabled.value);
@@ -216,21 +229,175 @@ class SettingsController extends GetxController {
     saveSettings();
   }
 
+  final RxBool isTogglingTwoFactor = false.obs;
+
+  // Real: enabling/disabling this now actually changes whether
+  // POST /auth/login requires an emailed code before issuing a token.
+  // Requires the current password both ways, same as Change Password —
+  // an attacker with a stolen unlocked session shouldn't be able to
+  // silently turn protection off (or force it on to lock the real owner
+  // out via an email they don't control).
   void toggleTwoFactor(bool value) {
-    isTwoFactorEnabled.value = value;
-    saveSettings();
+    final passwordController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        title: Text(value ? 'Enable Two-Factor Authentication' : 'Disable Two-Factor Authentication'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value
+                ? 'A code will be emailed to you each time you sign in with your password.'
+                : 'You will no longer be asked for an emailed code when signing in.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm your password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          Obx(
+            () => TextButton(
+              onPressed: isTogglingTwoFactor.value
+                  ? null
+                  : () async {
+                      isTogglingTwoFactor.value = true;
+                      final response = await ApiService().put('/auth/2fa', {
+                        'enabled': value,
+                        'currentPassword': passwordController.text,
+                      });
+                      isTogglingTwoFactor.value = false;
+                      Get.back();
+                      if (response.success) {
+                        isTwoFactorEnabled.value = value;
+                        safeSnackbar(
+                          'Success',
+                          value ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      } else {
+                        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+                      }
+                    },
+              child: isTogglingTwoFactor.value
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Confirm'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void navigateToChangePassword() {
-    Get.toNamed('/forgot-password');
+    Get.toNamed('/change-password');
   }
 
+  // vips.com/privacy and /terms are a parked domain that redirects every
+  // path (including these) to a generic "/lander" page — there's no real
+  // policy text there. Show the same real (if placeholder-legal-copy)
+  // in-app text the Home drawer menu already uses instead of sending users
+  // to a dead external link.
   void navigateToPrivacyPolicy() {
-    _launchUrl('https://vips.com/privacy');
+    _showLegalText('Privacy Policy', _privacyPolicyText);
   }
 
   void navigateToTermsOfService() {
-    _launchUrl('https://vips.com/terms');
+    _showLegalText('Terms of Use', _termsOfUseText);
+  }
+
+  static const String _privacyPolicyText =
+      'Last updated: 2026\n\n'
+      'VIPs ("we", "our", "us") operates a loyalty rewards and payments app for users in Tunisia and Egypt. This Privacy Policy explains what information we collect, how we use it, and your choices.\n\n'
+      '1. Information We Collect\n'
+      'Account information such as your name, phone number, email, and profile details (city, civil status, postal code, profession, gender, number of children) that you choose to provide. Transaction and wallet activity, including purchases, top-ups, coupons redeemed, and reward points earned. Device and usage information, such as app version, device type, and general usage analytics. Location information, only when a feature (such as finding nearby merchants) requires it and you have granted permission.\n\n'
+      '2. How We Use Your Information\n'
+      'To operate your account, process payments and top-ups, and award loyalty points. To personalize offers, coupons, and packages relevant to you. To communicate with you about your account, transactions, and customer support requests. To maintain the security and integrity of the app and detect fraudulent activity.\n\n'
+      '3. Sharing of Information\n'
+      'We do not sell your personal information. We may share limited information with payment processors, merchants you transact with, and service providers who help us operate the app, solely to provide the service.\n\n'
+      '4. Data Retention & Security\n'
+      'We retain your information for as long as your account is active or as needed to provide services and comply with legal obligations. We use reasonable technical and organizational measures to protect your data, though no system is completely secure.\n\n'
+      '5. Your Choices\n'
+      'You may review and update your profile information at any time from Edit Profile. You may request account deletion or data export by contacting us.\n\n'
+      '6. Contact Us\n'
+      'If you have questions about this Privacy Policy or how your data is handled, please contact us through Help & Support in the app.';
+
+  static const String _termsOfUseText =
+      'Last updated: 2026\n\n'
+      'These Terms of Use govern your access to and use of the VIPs app, a loyalty rewards and payments platform available in Tunisia and Egypt. By creating an account or using the app, you agree to these terms.\n\n'
+      '1. Eligibility & Account Responsibility\n'
+      'You must provide accurate information when creating your account and keep your login credentials, PIN, and payment details confidential. You are responsible for all activity that occurs under your account. Notify us immediately if you suspect unauthorized use.\n\n'
+      '2. Acceptable Use\n'
+      'You agree not to misuse the app, including attempting to defraud merchants or other users, tampering with coupons, wallet balances, or reward points, reverse-engineering or interfering with the app\'s normal operation, or using the app for any unlawful purpose.\n\n'
+      '3. Wallet, Points & Coupons\n'
+      'Reward points, wallet balances, and coupons have no cash value unless explicitly stated and may be adjusted, expired, or revoked in cases of suspected fraud or abuse. Bill payments, top-ups, and transfers are processed on a best-effort basis and are subject to verification.\n\n'
+      '4. Merchant Transactions\n'
+      'VIPs facilitates transactions between users and participating merchants but is not responsible for the quality of goods or services provided by merchants.\n\n'
+      '5. Limitation of Liability\n'
+      'To the maximum extent permitted by law, VIPs is not liable for indirect, incidental, or consequential damages arising from your use of the app, including service interruptions, transaction delays, or third-party actions. Our total liability for any claim is limited to the amount of the disputed transaction, where applicable.\n\n'
+      '6. Changes to the Service\n'
+      'We may update, suspend, or discontinue features of the app at any time. We may also update these Terms of Use, and continued use of the app after changes constitutes acceptance.\n\n'
+      '7. Contact Us\n'
+      'Questions about these Terms of Use can be directed to us through Help & Support in the app.';
+
+  void _showLegalText(String title, String body) {
+    Get.bottomSheet(
+      Container(
+        height: Get.height * 0.85,
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Text(
+                  body,
+                  style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.6),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Get.back(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: const Text('Close', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   void navigateToAbout() {

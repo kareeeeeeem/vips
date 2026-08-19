@@ -10,6 +10,7 @@ enum PromotionType { orderOffer, shippingOffer }
 
 class Promotion {
   final String id;
+  final String code;
   final String title;
   final String brandName;
   final String? brandLogo;
@@ -22,6 +23,7 @@ class Promotion {
 
   Promotion({
     required this.id,
+    required this.code,
     required this.title,
     required this.brandName,
     this.brandLogo,
@@ -76,7 +78,12 @@ class PromotionsController extends GetxController
       if (response.success && response.data != null) {
         final List<dynamic> raw = response.data;
         final all = raw.map((p) => Promotion(
-          id: p['id'] ?? '',
+          // Real records only have Mongo's `_id` — `id` was never a field
+          // the backend returns, so every promotion collapsed onto the
+          // same empty-string id and selecting one silently selected all
+          // of them together.
+          id: (p['_id'] ?? p['id'] ?? '').toString(),
+          code: (p['code'] ?? '').toString(),
           title: p['title'] ?? '',
           brandName: p['subtitle'] ?? '',
           validUntil: p['expiresAt'] != null
@@ -94,10 +101,17 @@ class PromotionsController extends GetxController
     isLoading.value = false;
   }
 
+  // /rewards/apply-coupon only recognizes merchant-created Coupon
+  // documents — a different collection from the seeded site-wide
+  // Promotion codes shown on this screen (SAVE20, WELCOME15, ...), so it
+  // rejected every real promotion as "invalid". /rewards/validate-qr
+  // already resolves gift codes, merchant ids, Coupons, and (as of this
+  // fix) Promotions too, so it's the correct endpoint for any code typed
+  // or tapped here.
   Future<void> applyPromoCode(String code) async {
     if (code.isEmpty) return;
     try {
-      final response = await ApiService().post('/rewards/apply-coupon', {'code': code});
+      final response = await ApiService().post('/rewards/validate-qr', {'code': code});
       if (response.success) {
         safeSnackbar(
           'Promo Code Applied',
@@ -360,13 +374,45 @@ class PromotionsController extends GetxController
     );
   }
 
-  // Apply selected promotions
-  void applyPromotions() {
-    if (selectedPromotions.isEmpty) {
-      return;
-    }
+  // Apply selected promotions. This screen is reached standalone (from
+  // Home's Offers filter), not always as a picker another screen awaits a
+  // result from, so applying has to actually do something real here
+  // rather than just popping with a result nothing may consume.
+  Future<void> applyPromotions() async {
+    if (selectedPromotions.isEmpty) return;
 
-    Get.back(result: selectedPromotions);
+    final all = [...orderOffers, ...shippingOffers];
+    final selected = all.where((p) => selectedPromotions.contains(p.id) && p.code.isNotEmpty).toList();
+
+    isLoading.value = true;
+    int applied = 0;
+    String? lastError;
+    for (final promo in selected) {
+      final response = await ApiService().post('/rewards/validate-qr', {'code': promo.code});
+      if (response.success) {
+        applied++;
+      } else {
+        lastError = response.message;
+      }
+    }
+    isLoading.value = false;
+
+    if (applied > 0) {
+      safeSnackbar(
+        'Applied',
+        applied == selected.length
+            ? '$applied promotion${applied > 1 ? 's' : ''} applied!'
+            : '$applied of ${selected.length} promotions applied. ${lastError ?? ''}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
+        colorText: Colors.white,
+      );
+      selectedPromotions.clear();
+      orderOffers.refresh();
+      shippingOffers.refresh();
+    } else {
+      safeSnackbar('Error', lastError ?? 'Could not apply promotions', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   // Go back
@@ -474,24 +520,46 @@ class PromotionsController extends GetxController
 
               SizedBox(height: 24.h),
 
+              if (promotion.code.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      applyPromoCode(promotion.code);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B35),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child: Text(
+                      'Apply This Promo',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        fontFamily: 'SF Pro Display',
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+              ],
+
               // Close button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: TextButton(
                   onPressed: () => Get.back(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B35),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                  ),
                   child: Text(
                     'Got it',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: const Color(0xFF6B7280),
                       fontFamily: 'SF Pro Display',
                     ),
                   ),

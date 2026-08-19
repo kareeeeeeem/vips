@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
@@ -11,6 +13,20 @@ class MerchantCreditController extends GetxController {
   final points = '000'.obs;
   final selectedPaymentMethod = 'Bank'.obs;
   final isLoading = false.obs;
+
+  // Who this credit transaction is for — captured on the inquiry screen.
+  // Filled either by picking a real customer from search (selectedCustomerId
+  // set) or by typing name/phone manually for a first-time customer with no
+  // transaction history yet (selectedCustomerId stays null; backend accepts
+  // that fallback).
+  final customerNameCtrl = TextEditingController();
+  final customerPhoneCtrl = TextEditingController();
+  final selectedCustomerId = Rx<String?>(null);
+
+  // Customer search (GET /merchant/customers?search=)
+  final searchResults = <Map<String, dynamic>>[].obs;
+  final isSearching = false.obs;
+  Timer? _searchDebounce;
 
   // Credits list
   final credits = <Map<String, dynamic>>[].obs;
@@ -84,10 +100,61 @@ class MerchantCreditController extends GetxController {
     Get.toNamed(MerchantRoutes.MERCHANT_CREDIT_INQUIRY);
   }
 
-  Future<void> confirmCredit({String? customerId, String? customerName, String? customerPhone}) async {
+  // Debounced live search against real customers who have transacted with
+  // this merchant before (GET /merchant/customers?search=). Empty query
+  // clears results instead of listing everyone.
+  void searchCustomers(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty) {
+      searchResults.clear();
+      isSearching.value = false;
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
+      isSearching.value = true;
+      try {
+        final response = await _api.get('/merchant/customers', queryParams: {'search': query.trim()});
+        if (response.success && response.data != null) {
+          final data = response.data as Map<String, dynamic>;
+          searchResults.value = List<Map<String, dynamic>>.from(data['customers'] ?? []);
+        }
+      } catch (e) {
+        debugPrint('searchCustomers error: $e');
+      } finally {
+        isSearching.value = false;
+      }
+    });
+  }
+
+  void selectCustomer(Map<String, dynamic> customer) {
+    // Set the text fields first: TextField's onChanged fires on any
+    // controller.text assignment (not just user input) and calls
+    // clearSelectedCustomer() — so selectedCustomerId must be set last,
+    // or it would be wiped out immediately by that side effect.
+    customerNameCtrl.text = (customer['fullName'] ?? '').toString();
+    customerPhoneCtrl.text = (customer['phone'] ?? '').toString();
+    searchResults.clear();
+    selectedCustomerId.value = (customer['_id'] ?? customer['id'])?.toString();
+  }
+
+  // Editing the name/phone by hand after picking a search result means
+  // we're no longer sure it matches the selected customer — fall back to
+  // the manual-entry path rather than sending a stale customerId.
+  void clearSelectedCustomer() {
+    selectedCustomerId.value = null;
+  }
+
+  Future<void> confirmCredit() async {
     final parsedAmount = double.tryParse(amount.value) ?? 0.0;
     if (parsedAmount <= 0) {
       safeSnackbar('Error', 'Please enter a valid amount',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final customerName = customerNameCtrl.text.trim();
+    final customerPhone = customerPhoneCtrl.text.trim();
+    if (customerName.isEmpty || customerPhone.isEmpty) {
+      safeSnackbar('Incomplete', 'Please enter the customer\'s name and phone',
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -96,9 +163,9 @@ class MerchantCreditController extends GetxController {
     try {
       final response = await _api.post('/merchant/credits', {
         'amount': parsedAmount,
-        if (customerId != null) 'customerId': customerId,
-        if (customerName != null) 'customerName': customerName,
-        if (customerPhone != null) 'customerPhone': customerPhone,
+        if (selectedCustomerId.value != null) 'customerId': selectedCustomerId.value,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
       });
 
       if (response.success) {
@@ -110,6 +177,9 @@ class MerchantCreditController extends GetxController {
             colorText: const Color(0xFFFFFFFF));
         amount.value = '0.000';
         points.value = '000';
+        customerNameCtrl.clear();
+        customerPhoneCtrl.clear();
+        selectedCustomerId.value = null;
         await loadCredits();
       } else {
         safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to issue credit',
@@ -147,5 +217,13 @@ class MerchantCreditController extends GetxController {
     } catch (e) {
       debugPrint('cancelCredit error: $e');
     }
+  }
+
+  @override
+  void onClose() {
+    _searchDebounce?.cancel();
+    customerNameCtrl.dispose();
+    customerPhoneCtrl.dispose();
+    super.onClose();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/modules/signup/controllers/signup_controller.dart';
 
@@ -33,6 +34,11 @@ class SignupView extends GetView<SignupController> {
 
               // Formulaire
               _buildForm(),
+
+              SizedBox(height: 30.h),
+
+              // Réseaux sociaux
+              _buildSocialSignUps(),
 
               SizedBox(height: 30.h),
 
@@ -313,6 +319,48 @@ class SignupView extends GetView<SignupController> {
         ),
       );
     });
+  }
+
+  Widget _buildSocialSignUps() {
+    return Column(
+      children: [
+        Text(
+          'Or sign up with',
+          style: TextStyle(color: Colors.grey, fontSize: 14.sp),
+        ),
+        SizedBox(height: 16.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildSocialButton(
+              icon: 'assets/icons/Google.svg',
+              onTap: controller.signUpWithGoogle,
+            ),
+            SizedBox(width: 16.w),
+            _buildSocialButton(
+              icon: 'assets/icons/Facebook.svg',
+              onTap: controller.signUpWithFacebook,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton({
+    required String icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: IconButton(
+        icon: SvgPicture.asset(icon, width: 24.w, height: 24.h),
+        onPressed: onTap,
+      ),
+    );
   }
 
   Widget _buildSignInLink() {

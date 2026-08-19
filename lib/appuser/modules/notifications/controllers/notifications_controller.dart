@@ -163,15 +163,18 @@ class NotificationsController extends GetxController
   void markAsRead(NotificationItem notification) {
     notification.isRead = true;
     notifications.refresh();
+    ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': true});
   }
 
   void markAsUnread(NotificationItem notification) {
     notification.isRead = false;
     notifications.refresh();
+    ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': false});
   }
 
   void deleteNotification(NotificationItem notification) {
     notifications.remove(notification);
+    ApiService().delete('/user/notifications/${notification.id}');
   }
 
   void handleNotificationTap(NotificationItem notification) {
@@ -367,7 +370,14 @@ class NotificationsController extends GetxController
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.asset(notification.image!, fit: BoxFit.cover),
+          child: Image.network(
+            notification.image!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Icon(
+              getTypeIcon(notification.type),
+              color: getTypeColor(notification.type),
+            ),
+          ),
         ),
       );
     }

@@ -1,13 +1,10 @@
 // lib/app/modules/profile/controllers/profile_controller.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../design_system/organisms/pin/pin.dart';
-import '../../edit_profile/views/edit_profile_view.dart';
 import '../views/widgets/vips_id_view.dart';
 import '../views/widgets/wallet_points_view.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -16,13 +13,14 @@ class ProfileController extends GetxController {
   final RxString selectedRole = 'Customer'.obs;
   final RxBool isUserSelected = true.obs;
   final RxBool isAdminSelected = false.obs;
-  var temporaryRole = 'Customer'.obs;
   final RxString userName = 'Full Name'.obs;
   final RxString userEmail = 'user@email.com'.obs;
-  final RxDouble profileCompletion = 0.31.obs;
+  // Computed for real in fetchUserProfile() from which /auth/update-profile
+  // fields are actually filled in — this used to be permanently stuck at
+  // 31% regardless of the account's actual state.
+  final RxDouble profileCompletion = 0.0.obs;
   final RxInt totalCredits = 0.obs;
   final RxInt totalExpenses = 0.obs;
-  final RxBool isStoresExpanded = false.obs;
   final RxBool isLoading = true.obs;
 
   // Dynamic profile fields
@@ -41,24 +39,26 @@ class ProfileController extends GetxController {
   final RxString businessDrivers = '0'.obs;
   final RxString businessCustomers = '0'.obs;
 
-  final RxString selectedStore = 'Store 1'.obs;
   final RxString userId = ''.obs;
   final RxDouble vipProgress = 0.0.obs;
   final RxInt vipPoints = 0.obs;
   final RxInt unreadNotificationsCount = 0.obs;
 
-  String _userPin = '0000';
+  // Real state from /auth/me's hasPin field — the PIN itself is never
+  // sent to the client, only whether one has been set.
+  final RxBool hasPin = false.obs;
+
+  // Backs the "Premium" requirements card — this used to show both
+  // requirements permanently unmet with a red X, with no way to act on
+  // either one, regardless of the account's real state.
+  final RxBool isVerified = false.obs;
+  final RxBool hasPaymentMethod = false.obs;
+  final RxBool isSendingVerification = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadPin();
     fetchUserProfile();
-  }
-
-  Future<void> _loadPin() async {
-    final prefs = await SharedPreferences.getInstance();
-    _userPin = prefs.getString('user_pin') ?? '0000';
   }
 
   Future<void> fetchUserProfile() async {
@@ -66,10 +66,13 @@ class ProfileController extends GetxController {
     try {
       final userResponse = await ApiService().get('/auth/me');
       if (userResponse.success && userResponse.data != null) {
-        final user = userResponse.data['user'] ?? userResponse.data;
+        final userRaw = userResponse.data['user'] ?? userResponse.data;
+        final user = userRaw is Map ? userRaw : <String, dynamic>{};
         userId.value = (user['_id'] ?? user['id'] ?? '').toString();
         userName.value = user['fullName'] ?? user['name'] ?? 'User';
         userEmail.value = user['email'] ?? '';
+        hasPin.value = user['hasPin'] == true;
+        isVerified.value = user['isVerified'] == true;
         packageName.value =
             user['package'] ?? user['packageName'] ?? user['plan'] ?? '--';
         if (user['lastLogin'] != null || user['lastConnection'] != null) {
@@ -83,7 +86,8 @@ class ProfileController extends GetxController {
           }
         }
 
-        final stats = user['stats'] ?? {};
+        final statsRaw = user['stats'];
+        final stats = statsRaw is Map ? statsRaw : {};
         vendorProducts.value =
             (stats['products'] ?? stats['productCount'] ?? 0).toString();
         vendorSales.value =
@@ -102,22 +106,42 @@ class ProfileController extends GetxController {
             (stats['drivers'] ?? stats['driverCount'] ?? 0).toString();
         businessCustomers.value =
             (stats['customers'] ?? stats['customerCount'] ?? 0).toString();
+
+        // Matches the exact field set PUT /auth/update-profile accepts.
+        final fields = [
+          user['fullName'],
+          user['phone'],
+          user['email'],
+          user['profileImage'],
+          user['city'],
+          user['civilStatus'],
+          user['postalCode'],
+          user['profession'],
+          user['gender'],
+          user['numberOfChildren'],
+        ];
+        final filled = fields.where((f) => f != null && f.toString().trim().isNotEmpty).length;
+        profileCompletion.value = filled / fields.length;
       }
 
       final walletResponse = await ApiService().get('/user/wallet');
-      if (walletResponse.success && walletResponse.data != null) {
-        totalCredits.value =
-            (walletResponse.data['balance'] as num?)?.toInt() ?? 0;
-        totalExpenses.value =
-            (walletResponse.data['points'] as num?)?.toInt() ?? 0;
+      if (walletResponse.success && walletResponse.data is Map) {
+        final walletData = walletResponse.data as Map;
+        totalCredits.value = (walletData['balance'] as num?)?.toInt() ?? 0;
+        totalExpenses.value = (walletData['points'] as num?)?.toInt() ?? 0;
+      }
+
+      final paymentResponse = await ApiService().get('/user/payment-methods');
+      if (paymentResponse.success && paymentResponse.data is Map) {
+        final cards = (paymentResponse.data as Map)['cards'];
+        hasPaymentMethod.value = cards is List && cards.isNotEmpty;
       }
 
       final clubResponse = await ApiService().get('/user/vips-club');
-      if (clubResponse.success && clubResponse.data != null) {
+      if (clubResponse.success && clubResponse.data is Map) {
+        final clubData = clubResponse.data as Map;
         final pts =
-            (clubResponse.data['points'] ??
-                    clubResponse.data['convertibleDiamonds'] ??
-                    0)
+            (clubData['points'] ?? clubData['convertibleDiamonds'] ?? 0)
                 as num;
         vipPoints.value = pts.toInt();
         const vipThreshold = 1000;
@@ -128,12 +152,11 @@ class ProfileController extends GetxController {
         '/user/notifications',
         queryParams: {'unread': 'true', 'limit': '1'},
       );
-      if (notifResponse.success && notifResponse.data != null) {
+      if (notifResponse.success && notifResponse.data is Map) {
+        final notifData = notifResponse.data as Map;
         unreadNotificationsCount.value =
-            (notifResponse.data['unreadCount'] ??
-                    notifResponse.data['count'] ??
-                    0)
-                as int;
+            ((notifData['unreadCount'] ?? notifData['count'] ?? 0) as num)
+                .toInt();
       }
 
       await _loadOrdersFromApi();
@@ -147,12 +170,13 @@ class ProfileController extends GetxController {
   Future<void> _loadOrdersFromApi() async {
     try {
       final response = await ApiService().get('/order/my-orders');
-      if (response.success && response.data != null) {
-        final List<dynamic> raw = response.data;
+      if (response.success && response.data is List) {
+        final raw = (response.data as List).whereType<Map>();
         ordersList.value =
             raw
                 .map(
                   (o) => {
+                    'orderId': o['_id']?.toString() ?? '',
                     'id':
                         o['_id']?.toString().substring(
                           o['_id'].toString().length - 7,
@@ -161,6 +185,8 @@ class ProfileController extends GetxController {
                     'store': o['merchantId']?['storeName'] ?? 'VIPs Store',
                     'amount': (o['totalAmount'] ?? 0).toString(),
                     'items': (o['items'] as List?)?.length ?? 1,
+                    'rawItems': o['items'] ?? [],
+                    'merchantId': o['merchantId']?['_id']?.toString(),
                     'date':
                         o['createdAt'] != null
                             ? DateTime.parse(
@@ -169,7 +195,10 @@ class ProfileController extends GetxController {
                             : '',
                     'time': '',
                     'status': _capitalize(o['status'] ?? 'pending'),
-                    'type': o['deliveryType'] ?? 'Delivery',
+                    // Backend field is `orderType` (e.g. "delivery"/"pickup"),
+                    // not `deliveryType` — that key never existed in the API
+                    // response, so this badge always showed "Delivery".
+                    'type': _capitalize(o['orderType'] ?? 'delivery'),
                     'statusColor': _statusColor(o['status']),
                   },
                 )
@@ -193,6 +222,71 @@ class ProfileController extends GetxController {
     }
   }
 
+  final RxBool isOrderActionLoading = false.obs;
+
+  bool orderIsCancelable(Map<String, dynamic> order) {
+    final status = (order['status'] as String? ?? '').toLowerCase();
+    return status == 'pending' || status == 'confirmed';
+  }
+
+  Future<void> cancelOrder(Map<String, dynamic> order) async {
+    final orderId = order['orderId'] as String? ?? '';
+    if (orderId.isEmpty || isOrderActionLoading.value) return;
+
+    isOrderActionLoading.value = true;
+    try {
+      final response =
+          await ApiService().put('/order/$orderId/cancel', {});
+      if (response.success) {
+        final index = ordersList.indexWhere((o) => o['orderId'] == orderId);
+        if (index != -1) {
+          ordersList[index] = {...ordersList[index], 'status': 'Cancelled'};
+        }
+        safeSnackbar('Order Cancelled', 'Your order has been cancelled.',
+            backgroundColor: Colors.green, colorText: Colors.white);
+      } else {
+        safeSnackbar('Error', response.message,
+            backgroundColor: Colors.redAccent, colorText: Colors.white);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Could not cancel order. Please try again.',
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      isOrderActionLoading.value = false;
+    }
+  }
+
+  // Re-adds every item from a past order to the cart via the same
+  // /cart/add endpoint CartController uses, then hands off to the cart
+  // screen so the user can review quantities before checking out again.
+  Future<void> reorder(Map<String, dynamic> order) async {
+    final items = order['rawItems'] as List? ?? [];
+    if (items.isEmpty || isOrderActionLoading.value) return;
+
+    isOrderActionLoading.value = true;
+    try {
+      for (final item in items) {
+        if (item is! Map) continue;
+        await ApiService().post('/cart/add', {
+          'itemId': item['productId']?.toString() ?? '',
+          'itemType': 'product',
+          'name': item['item_name'] ?? 'Product',
+          'price': (item['price'] ?? 0),
+          'quantity': item['quantity'] ?? 1,
+          'merchantId': order['merchantId'],
+        });
+      }
+      safeSnackbar('Added to Cart', 'Items from this order were added to your cart.',
+          backgroundColor: Colors.green, colorText: Colors.white);
+      Get.toNamed('/cart');
+    } catch (e) {
+      safeSnackbar('Error', 'Could not reorder. Please try again.',
+          backgroundColor: Colors.redAccent, colorText: Colors.white);
+    } finally {
+      isOrderActionLoading.value = false;
+    }
+  }
+
   // Gestion des filtres de commandes
   final RxString selectedOrderFilter = 'Active'.obs;
   final RxString selectedTypeFilter = 'All'.obs;
@@ -202,8 +296,6 @@ class ProfileController extends GetxController {
   final Rx<DateTime> toDate = DateTime.now().obs;
 
   final RxList<Map<String, dynamic>> ordersList = <Map<String, dynamic>>[].obs;
-
-  final RxList<Map<String, dynamic>> storesList = <Map<String, dynamic>>[].obs;
 
   // Filtrer les commandes selon les critères sélectionnés
   List<Map<String, dynamic>> get filteredOrders {
@@ -361,11 +453,6 @@ class ProfileController extends GetxController {
     return '${date.month}/${date.day}';
   }
 
-  // Méthode pour toggle l'état
-  void toggleStoresExpanded() {
-    isStoresExpanded.value = !isStoresExpanded.value;
-  }
-
   // Getter pour la couleur primaire
   Color get primaryColor {
     switch (selectedRole.value) {
@@ -389,8 +476,7 @@ class ProfileController extends GetxController {
       return [
         {'icon': Icons.credit_card, 'title': 'Credit', 'route': '/credit'},
         {'icon': Icons.card_giftcard, 'title': 'Gifted', 'route': '/gift'},
-        {'icon': Icons.payment, 'title': 'Pay Bill', 'route': 'pay-bills'},
-        {'icon': Icons.refresh, 'title': 'Recovery', 'route': '/recovery'},
+        {'icon': Icons.payment, 'title': 'Pay Bill', 'route': '/pay-bills'},
         {'icon': Icons.local_offer, 'title': 'Offers', 'route': '/coupon'},
         {'icon': Icons.assessment, 'title': 'Report', 'route': '/report'},
         {
@@ -402,16 +488,16 @@ class ProfileController extends GetxController {
       ];
     } else if (selectedRole.value == 'Vendor') {
       return [
-        {'icon': Icons.store, 'title': 'My Store', 'route': '/store'},
-        {'icon': Icons.inventory, 'title': 'Products', 'route': '/products'},
-        {'icon': Icons.shopping_cart, 'title': 'Orders', 'route': '/orders'},
-        {'icon': Icons.analytics, 'title': 'Analytics', 'route': '/analytics'},
+        {'icon': Icons.store, 'title': 'My Store', 'route': '/vendor-home'},
+        {'icon': Icons.inventory, 'title': 'Products', 'route': '/vendor-home'},
+        {'icon': Icons.shopping_cart, 'title': 'Orders', 'route': '/vendor-order'},
+        {'icon': Icons.analytics, 'title': 'Analytics', 'route': '/vendor-home'},
         {
           'icon': Icons.local_offer,
           'title': 'Promotions',
           'route': '/promotions',
         },
-        {'icon': Icons.reviews, 'title': 'Reviews', 'route': '/reviews'},
+        {'icon': Icons.reviews, 'title': 'Reviews', 'route': '/vendor-home'},
         {'icon': Icons.settings, 'title': 'Settings', 'route': '/settings'},
       ];
     } else {
@@ -444,362 +530,34 @@ class ProfileController extends GetxController {
     }
   }
 
-  void showRoleSwitcher() {
-    Get.bottomSheet(
-      _buildRoleSwitcherSheet(),
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-    );
-  }
-
-  void validateRoleChange(String newRole) {
-    // Sauvegarder temporairement le nouveau rôle
-    temporaryRole.value = newRole;
-
-    // Fermer le bottomsheet
-    Get.back();
-
-    // Afficher l'écran de validation PIN
-    Get.to(
-      () => PinValidator(
-        pinLength: 4,
-        primaryColor: primaryColor,
-        validatePin: (pin) {
-          return pin == _userPin;
-        },
-        validateBiometrics: () async {
-          final LocalAuthentication localAuth = LocalAuthentication();
-          try {
-            return await localAuth.authenticate(
-              localizedReason: 'Authenticate to switch role',
-              options: const AuthenticationOptions(
-                stickyAuth: true,
-                biometricOnly: true,
-              ),
-            );
-          } catch (e) {
-            return false;
-          }
-        },
-        onValidPin: () {
-          // Appliquer le changement de rôle
-          selectedRole.value = temporaryRole.value;
-          Get.back();
-        },
-        supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
-      ),
-      transition: Transition.downToUp,
-    );
-  }
-
-  Widget _buildRoleSwitcherSheet() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // Title with icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.swap_horiz_rounded, color: Colors.blue, size: 24.sp),
-                SizedBox(width: 8.w),
-                Text(
-                  'Switch Role',
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 8.h),
-
-            // Subtitle
-            Text(
-              'Choose the role you want to switch to',
-              style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
-            ),
-
-            SizedBox(height: 24.h),
-
-            // Role options with GetX
-            Obx(() {
-              final currentRole = selectedRole.value;
-
-              return Column(
-                children: [
-                  // Customer option
-                  _buildEnhancedRoleOption(
-                    title: 'Customer',
-                    subtitle: 'Access customer features and services',
-                    icon: Icons.person_rounded,
-                    isSelected: currentRole == 'Customer',
-                    onTap: () => validateRoleChange('Customer'),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // Vendor option
-                  _buildEnhancedRoleOption(
-                    title: 'Vendor',
-                    subtitle: 'Manage your store and products',
-                    icon: Icons.store_rounded,
-                    isSelected: currentRole == 'Vendor',
-                    onTap: () => validateRoleChange('Vendor'),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  // Agent option
-                  _buildEnhancedRoleOption(
-                    title: 'Agent',
-                    subtitle: 'Deliver orders to customers',
-                    icon: Icons.delivery_dining_rounded,
-                    isSelected: currentRole == 'Agent',
-                    onTap: () => validateRoleChange('Agent'),
-                  ),
-                ],
-              );
-            }),
-
-            SizedBox(height: 24.h),
-
-            // Action buttons
-            Row(
-              children: [
-                // Cancel button
-                Expanded(
-                  child: SizedBox(
-                    height: 52.h,
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(width: 12.w),
-
-                // Save button
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 52.h,
-                    child: ElevatedButton(
-                      onPressed: () => Get.back(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Apply Changes',
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEnhancedRoleOption({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? primaryColor.withValues(alpha: 0.08)
-                  : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isSelected ? primaryColor : Colors.grey.shade200,
-            width: isSelected ? 2 : 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Icon with background
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? primaryColor.withValues(alpha: 0.15)
-                        : Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? primaryColor : Colors.grey.shade600,
-                size: 28.sp,
-              ),
-            ),
-
-            SizedBox(width: 16.w),
-
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? primaryColor : Colors.black87,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Selection indicator
-            AnimatedContainer(
-              duration: Duration(milliseconds: 200),
-              width: 24.w,
-              height: 24.h,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? primaryColor : Colors.transparent,
-                border: Border.all(
-                  color: isSelected ? primaryColor : Colors.grey.shade400,
-                  width: 2,
-                ),
-              ),
-              child:
-                  isSelected
-                      ? Icon(Icons.check, size: 16.sp, color: Colors.white)
-                      : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void navigateToEditProfile() {
-    Get.to(() => EditProfileView());
+    Get.toNamed('/edit-profile');
   }
 
-  void validateStoreChange(String newStore) {
-    // Sauvegarder temporairement le nouveau store
-    final String tempStore = newStore;
+  void navigateToPaymentMethods() {
+    Get.toNamed('/credit');
+  }
 
-    // Afficher l'écran de validation PIN
-    Get.to(
-      () => PinValidator(
-        pinLength: 4,
-        primaryColor: primaryColor,
-        validatePin: (pin) {
-          return pin == _userPin;
-        },
-        validateBiometrics: () async {
-          final LocalAuthentication localAuth = LocalAuthentication();
-          try {
-            return await localAuth.authenticate(
-              localizedReason: 'Authenticate to switch store',
-              options: const AuthenticationOptions(
-                stickyAuth: true,
-                biometricOnly: true,
-              ),
-            );
-          } catch (e) {
-            return false;
-          }
-        },
-        onValidPin: () {
-          // Appliquer le changement de store
-          selectedStore.value = tempStore;
-          Get.back();
-
-          // Fermer la liste des stores
-          isStoresExpanded.value = false;
-
-          // Afficher un message de confirmation
-          safeSnackbar(
-            'Store Changed',
-            'You are now managing $tempStore',
-            backgroundColor: primaryColor.withValues(alpha: 0.1),
-            colorText: primaryColor,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: EdgeInsets.all(16.w),
-            borderRadius: 12.r,
-            duration: Duration(seconds: 2),
-          );
-        },
-        supportedMethods: [ValidationMethod.pin, ValidationMethod.biometrics],
-      ),
-      transition: Transition.downToUp,
-    );
+  // Reuses the same OTP mechanism /auth/forgot-password already sends
+  // (email, not password-reset specific) to (re)start email verification
+  // for an account that predates the PIN/verification flow, or skipped
+  // it at signup — then hands off to the same real Verification screen
+  // signup uses.
+  Future<void> verifyAccountNow() async {
+    if (isSendingVerification.value || userEmail.value.isEmpty) return;
+    isSendingVerification.value = true;
+    try {
+      final response = await ApiService().post('/auth/forgot-password', {'email': userEmail.value});
+      if (response.success) {
+        Get.toNamed('/verification', arguments: {'email': userEmail.value});
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not send verification code. Please try again.', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isSendingVerification.value = false;
+    }
   }
 
   void navigateToVipsId() {
@@ -811,18 +569,31 @@ class ProfileController extends GetxController {
   }
 
   void navigateToWallet() {
+    if (!hasPin.value) {
+      // Nothing to verify against yet — send them to set one up first
+      // instead of showing a PIN prompt that can never succeed.
+      safeSnackbar(
+        'Set up a PIN first',
+        'Create a security PIN to protect access to your Wallet.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      Get.toNamed('/createpin');
+      return;
+    }
+
     Get.to(
       () => PinValidator(
         pinLength: 4,
         primaryColor: primaryColor,
-        validatePin: (pin) {
-          return pin == _userPin;
+        validatePin: (pin) async {
+          final response = await ApiService().post('/auth/pin/verify', {'pin': pin});
+          return response.success;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
           try {
             return await localAuth.authenticate(
-              localizedReason: 'Authenticate to switch role',
+              localizedReason: 'Authenticate to access your wallet',
               options: const AuthenticationOptions(
                 stickyAuth: true,
                 biometricOnly: true,

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/core/services/api_service.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../design_system/atoms/app_colors.dart';
@@ -53,7 +54,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
         MenuItem(
           icon: AppIcons.shareNodes,
           title: 'Refer Friends & Earn',
-          onTap: () => Get.toNamed(Routes.SPIN_WHEEL),
+          onTap: () => Get.toNamed(Routes.V_I_PS_CLUB),
         ),
       ],
     ),
@@ -84,18 +85,54 @@ class _DrawerMenuState extends State<DrawerMenu> {
         MenuItem(
           icon: AppIcons.privacyPolicy,
           title: 'Privacy Policy',
-          onTap: () => _showLegalText('Privacy Policy'),
+          onTap: () => _showLegalText('Privacy Policy', _privacyPolicyText),
         ),
         MenuItem(
           icon: AppIcons.privacyPolicy,
           title: 'Terms of Use',
-          onTap: () => _showLegalText('Terms of Use'),
+          onTap: () => _showLegalText('Terms of Use', _termsOfUseText),
         ),
       ],
     ),
   ];
 
-  void _showLegalText(String title) {
+  // NOTE: placeholder legal copy — generic text pending review by legal
+  // counsel before real launch. Not final Privacy Policy / Terms of Use.
+  static const String _privacyPolicyText =
+      'Last updated: 2026\n\n'
+      'VIPs ("we", "our", "us") operates a loyalty rewards and payments app for users in Tunisia and Egypt. This Privacy Policy explains what information we collect, how we use it, and your choices.\n\n'
+      '1. Information We Collect\n'
+      'Account information such as your name, phone number, email, and profile details (city, civil status, postal code, profession, gender, number of children) that you choose to provide. Transaction and wallet activity, including purchases, top-ups, coupons redeemed, and reward points earned. Device and usage information, such as app version, device type, and general usage analytics. Location information, only when a feature (such as finding nearby merchants) requires it and you have granted permission.\n\n'
+      '2. How We Use Your Information\n'
+      'To operate your account, process payments and top-ups, and award loyalty points. To personalize offers, coupons, and packages relevant to you. To communicate with you about your account, transactions, and customer support requests. To maintain the security and integrity of the app and detect fraudulent activity.\n\n'
+      '3. Sharing of Information\n'
+      'We do not sell your personal information. We may share limited information with payment processors, merchants you transact with, and service providers who help us operate the app, solely to provide the service.\n\n'
+      '4. Data Retention & Security\n'
+      'We retain your information for as long as your account is active or as needed to provide services and comply with legal obligations. We use reasonable technical and organizational measures to protect your data, though no system is completely secure.\n\n'
+      '5. Your Choices\n'
+      'You may review and update your profile information at any time from Edit Profile. You may request account deletion or data export by contacting us.\n\n'
+      '6. Contact Us\n'
+      'If you have questions about this Privacy Policy or how your data is handled, please contact us through Help & Support in the app.';
+
+  static const String _termsOfUseText =
+      'Last updated: 2026\n\n'
+      'These Terms of Use govern your access to and use of the VIPs app, a loyalty rewards and payments platform available in Tunisia and Egypt. By creating an account or using the app, you agree to these terms.\n\n'
+      '1. Eligibility & Account Responsibility\n'
+      'You must provide accurate information when creating your account and keep your login credentials, PIN, and payment details confidential. You are responsible for all activity that occurs under your account. Notify us immediately if you suspect unauthorized use.\n\n'
+      '2. Acceptable Use\n'
+      'You agree not to misuse the app, including attempting to defraud merchants or other users, tampering with coupons, wallet balances, or reward points, reverse-engineering or interfering with the app\'s normal operation, or using the app for any unlawful purpose.\n\n'
+      '3. Wallet, Points & Coupons\n'
+      'Reward points, wallet balances, and coupons have no cash value unless explicitly stated and may be adjusted, expired, or revoked in cases of suspected fraud or abuse. Bill payments, top-ups, and transfers are processed on a best-effort basis and are subject to verification.\n\n'
+      '4. Merchant Transactions\n'
+      'VIPs facilitates transactions between users and participating merchants but is not responsible for the quality of goods or services provided by merchants.\n\n'
+      '5. Limitation of Liability\n'
+      'To the maximum extent permitted by law, VIPs is not liable for indirect, incidental, or consequential damages arising from your use of the app, including service interruptions, transaction delays, or third-party actions. Our total liability for any claim is limited to the amount of the disputed transaction, where applicable.\n\n'
+      '6. Changes to the Service\n'
+      'We may update, suspend, or discontinue features of the app at any time. We may also update these Terms of Use, and continued use of the app after changes constitutes acceptance.\n\n'
+      '7. Contact Us\n'
+      'Questions about these Terms of Use can be directed to us through Help & Support in the app.';
+
+  void _showLegalText(String title, String body) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -134,7 +171,7 @@ class _DrawerMenuState extends State<DrawerMenu> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.\n\nUt enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?',
+                      body,
                       style: TextStyle(
                         fontSize: 15.sp,
                         color: const Color(0xFF4B5563),
@@ -459,8 +496,9 @@ class _DrawerMenuState extends State<DrawerMenu> {
                     SizedBox(width: 16.w),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
+                          await ApiService().clearToken();
                           Get.offAllNamed(Routes.LOGIN);
                         },
                         style: ElevatedButton.styleFrom(

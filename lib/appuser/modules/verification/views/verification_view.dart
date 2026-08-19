@@ -53,6 +53,11 @@ class VerificationView extends GetView<VerificationController> {
               // Lien de renvoi
               _buildResendLink(),
 
+              if (!fromReset && !controller.isLogin2FA) ...[
+                SizedBox(height: 16.h),
+                _buildSkipLink(),
+              ],
+
               Spacer(),
             ],
           ),
@@ -81,7 +86,7 @@ class VerificationView extends GetView<VerificationController> {
     return Column(
       children: [
         Text(
-          'Verify Your Email',
+          controller.isLogin2FA ? 'Two-Factor Verification' : 'Verify Your Email',
           style: TextStyle(
             fontSize: 28.sp,
             fontWeight: FontWeight.w700,
@@ -159,7 +164,7 @@ class VerificationView extends GetView<VerificationController> {
       () => Pinput(
         controller: controller.pinController,
         focusNode: controller.focusNode,
-        length: 5,
+        length: 6,
         defaultPinTheme: defaultPinTheme,
         focusedPinTheme: focusedPinTheme,
         submittedPinTheme: submittedPinTheme,
@@ -181,7 +186,7 @@ class VerificationView extends GetView<VerificationController> {
   Widget _buildVerifyButton() {
     return Obx(() {
       final isLoading = controller.isVerifying.value;
-      final hasCode = controller.pinController.text.length == 5;
+      final hasCode = controller.pinController.text.length == 6;
 
       return SizedBox(
         width: double.infinity,
@@ -254,5 +259,19 @@ class VerificationView extends GetView<VerificationController> {
         ),
       );
     });
+  }
+
+  Widget _buildSkipLink() {
+    return GestureDetector(
+      onTap: controller.skipVerification,
+      child: Text(
+        'Skip for now',
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade500,
+        ),
+      ),
+    );
   }
 }

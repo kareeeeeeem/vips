@@ -342,7 +342,10 @@ class VendorHomeView extends StatelessWidget {
                       top: 0,
                       bottom: 0,
                       child: GestureDetector(
-                        onTap: () => Get.toNamed('/merchant-wallet'),
+                        // '/merchant-wallet' belongs to the separate appmerchant
+                        // route table and isn't reachable from this app — point
+                        // to appuser's own wallet/transactions screen instead.
+                        onTap: () => Get.toNamed(Routes.TRANSACTIONS_EXTRACT),
                         child: Container(
                           width: 34.w,
                           decoration: BoxDecoration(
@@ -535,7 +538,14 @@ class VendorHomeView extends StatelessWidget {
                 top: 8.h,
                 right: 8.w,
                 child: GestureDetector(
-                  onTap: () => Get.toNamed('/merchant-profile'),
+                  // '/merchant-profile' belongs to the separate appmerchant route
+                  // table (unreachable from this app) and there's no store-profile
+                  // editor equivalent here — be honest instead of navigating nowhere.
+                  onTap: () => safeSnackbar(
+                    'Not Available',
+                    'Editing your store profile isn\'t available in this app yet.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  ),
                   child: Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
@@ -659,7 +669,13 @@ class VendorHomeView extends StatelessWidget {
                     SizedBox(width: 6.w),
                     _buildIconButton(
                       Icons.edit,
-                      () => Get.toNamed('/merchant-profile'),
+                      // Same rationale as above — no reachable store-profile
+                      // editor exists in this app, so show an honest message.
+                      () => safeSnackbar(
+                        'Not Available',
+                        'Editing your store profile isn\'t available in this app yet.',
+                        snackPosition: SnackPosition.BOTTOM,
+                      ),
                       color: vendorGreen,
                     ),
                   ],

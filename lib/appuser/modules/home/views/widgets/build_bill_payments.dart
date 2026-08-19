@@ -99,7 +99,7 @@ class BuildBillPayments extends GetView<HomeController> {
 
           // Liste horizontale des services de factures
           SizedBox(
-            height: 100.h,
+            height: 110.h,
             child: controller.billTypes.isEmpty
                 ? Center(
                     child: Padding(
@@ -121,6 +121,14 @@ class BuildBillPayments extends GetView<HomeController> {
                     itemCount: controller.billTypes.length,
                     itemBuilder: (context, index) {
                       final billType = controller.billTypes[index];
+                      // NOTE: every category chip here (Education, Mobile
+                      // Bills, Donation, ...) opens the same generic Pay
+                      // Bills screen with no pre-selection, because
+                      // BillsController has no category-selection state for
+                      // an incoming screen to read. Passing `billType` as a
+                      // route argument would do nothing until that's added
+                      // on the receiving end — that's a real feature gap,
+                      // not fixable from this widget alone.
                       return Container(
                         width: 60.w,
                         margin: EdgeInsets.only(right: 16.w),
@@ -163,9 +171,9 @@ class BuildBillPayments extends GetView<HomeController> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16.r),
               child:
-                  billType['imageUrl'] != null
+                  (billType['imageUrl'] ?? billType['logo']) != null
                       ? Image.network(
-                        billType['imageUrl'],
+                        billType['imageUrl'] ?? billType['logo'],
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
@@ -216,7 +224,7 @@ class BuildBillPayments extends GetView<HomeController> {
 
           // Texte du type de facture
           Text(
-            billType['name'],
+            billType['name']?.toString() ?? '',
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,

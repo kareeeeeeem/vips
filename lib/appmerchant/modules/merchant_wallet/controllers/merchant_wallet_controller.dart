@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum TransactionType { vipsIn, vipsOut, recovery, reward, credit }
 
@@ -55,10 +57,65 @@ class MerchantWalletController extends GetxController {
   final RxList<TransactionItem> transactions = <TransactionItem>[].obs;
   final RxBool isLoading = true.obs;
 
+  // Real spendable currency balance (GET /merchant/wallet's `balance`,
+  // i.e. User.walletBalance) — separate from the VIPS points shown above,
+  // and what a payout request actually draws down.
+  final RxDouble availableBalance = 0.0.obs;
+  final RxBool isRequestingPayout = false.obs;
+  final RxList<Map<String, dynamic>> payouts = <Map<String, dynamic>>[].obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadWalletData();
+    _loadBalance();
+    _loadPayouts();
+  }
+
+  Future<void> _loadBalance() async {
+    try {
+      final response = await ApiService().get('/merchant/wallet');
+      if (response.success && response.data != null) {
+        availableBalance.value = (response.data['balance'] ?? 0).toDouble();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadPayouts() async {
+    try {
+      final response = await ApiService().get('/merchant/wallet/payouts');
+      if (response.success && response.data is List) {
+        payouts.value = (response.data as List).cast<Map<String, dynamic>>();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> requestPayout({
+    required double amount,
+    required String bankName,
+    required String accountName,
+    required String accountNumber,
+  }) async {
+    isRequestingPayout.value = true;
+    try {
+      final response = await ApiService().post('/merchant/wallet/payout', {
+        'amount': amount,
+        'bankName': bankName,
+        'accountName': accountName,
+        'accountNumber': accountNumber,
+      });
+      if (response.success) {
+        safeSnackbar('Payout Requested', 'We\'ll process your request soon.',
+            backgroundColor: Colors.green, colorText: Colors.white);
+        await Future.wait([_loadBalance(), _loadPayouts()]);
+      } else {
+        safeSnackbar('Error', response.message);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to request payout: $e');
+    } finally {
+      isRequestingPayout.value = false;
+    }
   }
 
   Future<void> _loadWalletData() async {

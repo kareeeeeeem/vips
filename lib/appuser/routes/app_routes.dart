@@ -20,6 +20,7 @@ abstract class Routes {
   static const SUCCESS_ACCOUNT = _Paths.SUCCESS_ACCOUNT;
   static const FORGOT_PASSWORD = _Paths.FORGOT_PASSWORD;
   static const RESET_PASSWORD = _Paths.RESET_PASSWORD;
+  static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
   static const CONTACT = _Paths.CONTACT;
   static const DONATION = _Paths.DONATION;
@@ -28,6 +29,7 @@ abstract class Routes {
   static const PAY_BILLS = _Paths.PAY_BILLS;
   static const HOT_DEALS = _Paths.HOT_DEALS;
   static const DEAL_DETAILS = _Paths.DEAL_DETAILS;
+  static const FAVORITES = _Paths.FAVORITES;
   static const ALL_MERCHANTS = _Paths.ALL_MERCHANTS;
   static const MERCHANT_DETAILS = _Paths.MERCHANT_DETAILS;
   static const GIFT = _Paths.GIFT;
@@ -49,6 +51,8 @@ abstract class Routes {
   static const PACKAGES = _Paths.PACKAGES;
   static const V_I_PS_CLUB = _Paths.V_I_PS_CLUB;
   static const SPIN_WHEEL = _Paths.SPIN_WHEEL;
+  static const PHONE_LOGIN = _Paths.PHONE_LOGIN;
+  static const OTP_VERIFY = _Paths.OTP_VERIFY;
 }
 
 abstract class _Paths {
@@ -69,6 +73,7 @@ abstract class _Paths {
   static const SUCCESS_ACCOUNT = '/success-account';
   static const FORGOT_PASSWORD = '/forgot-password';
   static const RESET_PASSWORD = '/reset-password';
+  static const CHANGE_PASSWORD = '/change-password';
   static const EDIT_PROFILE = '/edit-profile';
   static const CONTACT = '/contact';
   static const DONATION = '/donation';
@@ -77,6 +82,7 @@ abstract class _Paths {
   static const PAY_BILLS = '/pay-bills';
   static const HOT_DEALS = '/hot-deals';
   static const DEAL_DETAILS = '/deal-details';
+  static const FAVORITES = '/favorites';
   static const ALL_MERCHANTS = '/all-merchants';
   static const MERCHANT_DETAILS = '/merchant-details';
   static const GIFT = '/gift';
@@ -98,4 +104,6 @@ abstract class _Paths {
   static const PACKAGES = '/packages';
   static const V_I_PS_CLUB = '/v-i-ps-club';
   static const SPIN_WHEEL = '/spin-wheel';
+  static const PHONE_LOGIN = '/phone-login';
+  static const OTP_VERIFY = '/otp-verify';
 }

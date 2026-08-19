@@ -92,115 +92,83 @@ class OrderRequestController extends GetxController {
   // QR Code
   var qrData = ''.obs;
 
+  var isLoading = false.obs;
+  var loadError = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadOrderData();
-    _generateQRCode();
   }
 
-  void _loadOrderData() {
-    // Charger les données depuis les arguments
-    if (Get.arguments != null) {
-      final args = Get.arguments as Map<String, dynamic>;
+  // Loads the real order from the backend by id — this screen previously
+  // fell back to entirely fabricated data (Pizza Hut / McDonald's / "Jamil
+  // Test" / a Tunis address) whenever the caller didn't pass every single
+  // field, which was effectively always, since OrderSuccessController only
+  // ever passed orderId + grandTotal. A real order id is always available
+  // by the time this screen is reachable, so fetch the real thing instead.
+  Future<void> _loadOrderData() async {
+    final args = Get.arguments as Map<String, dynamic>?;
+    final id = args?['orderId']?.toString() ?? '';
 
-      orderId.value = args['orderId'] ?? '100113';
-      orderStatus.value = args['status'] ?? 'Pending';
-      paymentMethod.value = args['paymentMethod'] ?? 'Cash On Delivery';
-      deliveryType.value = args['deliveryType'] ?? 'Home Delivery';
+    if (id.isEmpty) {
+      loadError.value = 'Order not found.';
+      return;
+    }
+    orderId.value = id;
 
-      // Step
-      currentOrderStep.value = args['currentStep'] ?? 0;
-
-      // Restaurant
-      restaurantName.value = args['restaurantName'] ?? 'Pizza Hut';
-      restaurantAddress.value =
-          args['restaurantAddress'] ??
-          'House: 80, Road: 00, Test City\n01/Jun/2025: 10:47';
-      restaurantPhone.value = args['restaurantPhone'] ?? '71******';
-
-      // Customer
-      customerName.value = args['customerName'] ?? 'Jamil Test';
-      customerPhone.value = args['customerPhone'] ?? '95910000';
-      deliveryAddress.value =
-          args['deliveryAddress'] ?? 'Rue Hédi Nouira, 1002 Tunis';
-
-      // Items
-      if (args['items'] != null) {
-        orderItems.value =
-            (args['items'] as List)
-                .map((item) => OrderItem.fromJson(item))
-                .toList();
-      } else {
-        // Sample data
-        orderItems.value = [
-          OrderItem(
-            id: '1',
-            name: 'McDonald\'s',
-            image:
-                'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
-            price: 80.0,
-            quantity: 1,
-            couponCount: 3,
-          ),
-        ];
+    isLoading.value = true;
+    try {
+      final response = await ApiService().get('/order/$id');
+      if (!response.success || response.data == null) {
+        loadError.value = response.message.isNotEmpty ? response.message : 'Order not found.';
+        return;
       }
 
-      // Pricing
-      itemPrice.value = args['itemPrice'] ?? 80.0;
-      addonCost.value = args['addonCost'] ?? 0.0;
-      subtotal.value = args['subtotal'] ?? 80.0;
-      vipDiscount.value = args['vipDiscount'] ?? 100;
-      couponDiscount.value = args['couponDiscount'] ?? 400;
-      serviceCharge.value = args['serviceCharge'] ?? 0.0;
-      deliveryCharge.value = args['deliveryCharge'] ?? 0.0;
-      vatTax.value = args['vatTax'] ?? 7.0;
-      grandTotal.value = args['grandTotal'] ?? 87.0;
-    } else {
-      // Données par défaut
-      _loadDefaultData();
+      final order = Map<String, dynamic>.from(response.data);
+
+      orderStatus.value = (order['status'] ?? 'pending').toString();
+      paymentMethod.value = (order['paymentMethod'] ?? 'cash').toString();
+      paymentStatus.value = order['status'] == 'delivered' ? 'PAID' : 'PENDING';
+      deliveryType.value = (order['orderType'] ?? 'delivery').toString();
+
+      final merchant = order['merchantId'];
+      if (merchant is Map) {
+        restaurantName.value = (merchant['storeName'] ?? merchant['fullName'] ?? '').toString();
+        restaurantAddress.value = (merchant['address'] ?? '').toString();
+        restaurantPhone.value = (merchant['phone'] ?? '').toString();
+      }
+
+      final addr = order['deliveryAddress'];
+      deliveryAddress.value = addr is Map ? (addr['address'] ?? '').toString() : (addr ?? '').toString();
+
+      final meRes = await ApiService().get('/auth/me');
+      if (meRes.success && meRes.data is Map) {
+        final me = meRes.data['user'] is Map ? meRes.data['user'] : meRes.data;
+        customerName.value = (me['fullName'] ?? '').toString();
+        customerPhone.value = (me['phone'] ?? '').toString();
+      }
+
+      final items = (order['items'] as List? ?? []);
+      orderItems.value = items.map((item) => OrderItem(
+            id: (item['productId'] ?? '').toString(),
+            name: (item['item_name'] ?? 'Item').toString(),
+            price: (item['price'] as num?)?.toDouble() ?? 0.0,
+            quantity: (item['quantity'] as num?)?.toInt() ?? 1,
+          )).toList();
+
+      subtotal.value = items.fold<double>(0.0, (sum, item) =>
+          sum + ((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1));
+      itemPrice.value = subtotal.value;
+      couponDiscount.value = ((order['couponDiscountAmount'] as num?) ?? 0).toInt();
+      grandTotal.value = (order['totalAmount'] as num?)?.toDouble() ?? subtotal.value;
+
+      _generateQRCode();
+    } catch (e) {
+      loadError.value = 'Could not load order details.';
+    } finally {
+      isLoading.value = false;
     }
-  }
-
-  void _loadDefaultData() {
-    orderId.value = '100113';
-    orderStatus.value = 'Pending';
-    paymentMethod.value = 'Cash On Delivery';
-    paymentStatus.value = 'PAID';
-    deliveryType.value = 'Home Delivery';
-
-    currentOrderStep.value = 0;
-
-    restaurantName.value = 'Pizza Hut';
-    restaurantAddress.value =
-        'House: 80, Road: 00, Test City\n01/Jun/2025: 10:47';
-    restaurantPhone.value = '71******';
-
-    customerName.value = 'Jamil Test';
-    customerPhone.value = '95910000';
-    deliveryAddress.value = 'Rue Hédi Nouira, 1002 Tunis';
-
-    orderItems.value = [
-      OrderItem(
-        id: '1',
-        name: 'McDonald\'s',
-        image:
-            'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400',
-        price: 80.0,
-        quantity: 1,
-        couponCount: 3,
-      ),
-    ];
-
-    itemPrice.value = 80.0;
-    addonCost.value = 0.0;
-    subtotal.value = 80.0;
-    vipDiscount.value = 100;
-    couponDiscount.value = 400;
-    serviceCharge.value = 0.0;
-    deliveryCharge.value = 0.0;
-    vatTax.value = 7.0;
-    grandTotal.value = 87.0;
   }
 
   void _generateQRCode() {
@@ -474,57 +442,74 @@ class OrderRequestView extends GetView<OrderRequestController> {
 
             // Scrollable Content
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Orange Card with QR
-                    _buildOrangeCard(),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (controller.loadError.value.isNotEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.w),
+                      child: Text(
+                        controller.loadError.value,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 15.sp),
+                      ),
+                    ),
+                  );
+                }
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Orange Card with QR
+                      _buildOrangeCard(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Stepper
-                    _buildOrderStepper(),
+                      // Stepper
+                      _buildOrderStepper(),
 
-                    SizedBox(height: 24.h),
+                      SizedBox(height: 24.h),
 
-                    // Restaurant Info
-                    _buildRestaurantInfo(),
+                      // Restaurant Info
+                      _buildRestaurantInfo(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Pending Badge & Delivery Type
-                    _buildPendingSection(),
+                      // Pending Badge & Delivery Type
+                      _buildPendingSection(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Order Details Card
-                    _buildOrderDetailsCard(),
+                      // Order Details Card
+                      _buildOrderDetailsCard(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Items List
-                    _buildItemsSection(),
+                      // Items List
+                      _buildItemsSection(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Price Breakdown
-                    _buildPriceBreakdown(),
+                      // Price Breakdown
+                      _buildPriceBreakdown(),
 
-                    SizedBox(height: 20.h),
+                      SizedBox(height: 20.h),
 
-                    // Accept Request Button
-                    _buildAcceptRequestButton(),
+                      // Accept Request Button
+                      _buildAcceptRequestButton(),
 
-                    SizedBox(height: 16.h),
+                      SizedBox(height: 16.h),
 
-                    // Copyright
-                    _buildCopyright(),
+                      // Copyright
+                      _buildCopyright(),
 
-                    SizedBox(height: 20.h),
-                  ],
-                ),
-              ),
+                      SizedBox(height: 20.h),
+                    ],
+                  ),
+                );
+              }),
             ),
           ],
         ),

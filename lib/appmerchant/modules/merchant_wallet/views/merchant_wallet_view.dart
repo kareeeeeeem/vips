@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../controllers/merchant_wallet_controller.dart';
 
@@ -70,6 +71,8 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               _buildHeaderSection(),
               SizedBox(height: 40.h), // Space for overlapping cards
               _buildActionCards(),
+              SizedBox(height: 24.h),
+              _buildPayoutSection(),
               SizedBox(height: 24.h),
               _buildAddCardButton(),
               SizedBox(height: 24.h),
@@ -360,25 +363,150 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
     );
   }
 
-  Widget _buildAddCardButton() {
+  Widget _buildPayoutSection() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2563EB), // Blue
-              shape: BoxShape.circle,
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Available Balance', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+                  SizedBox(height: 4.h),
+                  Obx(() => Text(
+                        'D ${controller.availableBalance.value.toStringAsFixed(3)}',
+                        style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
+                      )),
+                ],
+              ),
             ),
-            child: Icon(Icons.add, color: Colors.white, size: 16.sp),
+            ElevatedButton.icon(
+              onPressed: () => _showPayoutDialog(),
+              icon: Icon(Icons.account_balance_outlined, size: 18.sp),
+              label: const Text('Request Payout'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3AC264),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPayoutDialog() {
+    final amountCtrl = TextEditingController();
+    final bankCtrl = TextEditingController();
+    final accountNameCtrl = TextEditingController();
+    final accountNumberCtrl = TextEditingController();
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Request Payout', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                SizedBox(height: 4.h),
+                Obx(() => Text(
+                      'Available: D ${controller.availableBalance.value.toStringAsFixed(3)}',
+                      style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+                    )),
+                SizedBox(height: 16.h),
+                TextField(
+                  controller: amountCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(labelText: 'Amount', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: bankCtrl,
+                  decoration: InputDecoration(labelText: 'Bank Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: accountNameCtrl,
+                  decoration: InputDecoration(labelText: 'Account Holder Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: accountNumberCtrl,
+                  decoration: InputDecoration(labelText: 'Account / IBAN Number', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r))),
+                ),
+                SizedBox(height: 20.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: Obx(() => ElevatedButton(
+                        onPressed: controller.isRequestingPayout.value
+                            ? null
+                            : () {
+                                final amount = double.tryParse(amountCtrl.text) ?? 0;
+                                if (amount <= 0 || accountNameCtrl.text.trim().isEmpty || accountNumberCtrl.text.trim().isEmpty) {
+                                  safeSnackbar('Incomplete', 'Please fill in amount and account details', snackPosition: SnackPosition.BOTTOM);
+                                  return;
+                                }
+                                Get.back();
+                                controller.requestPayout(
+                                  amount: amount,
+                                  bankName: bankCtrl.text.trim(),
+                                  accountName: accountNameCtrl.text.trim(),
+                                  accountNumber: accountNumberCtrl.text.trim(),
+                                );
+                              },
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3AC264)),
+                        child: controller.isRequestingPayout.value
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Submit Request', style: TextStyle(color: Colors.white)),
+                      )),
+                ),
+              ],
+            ),
           ),
-          SizedBox(width: 12.w),
-          Text(
-            'Add New Card',
-            style: TextStyle(fontSize: 16.sp, color: const Color(0xFF6B7280)),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddCardButton() {
+    return GestureDetector(
+      onTap: () {
+        // No payment processor SDK is integrated and storing raw card numbers
+        // would be a PCI-DSS violation, so this is an honest placeholder.
+        safeSnackbar('Add payment method', 'Coming soon', snackPosition: SnackPosition.BOTTOM);
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: const BoxDecoration(
+                color: Color(0xFF2563EB), // Blue
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add, color: Colors.white, size: 16.sp),
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              'Add New Card',
+              style: TextStyle(fontSize: 16.sp, color: const Color(0xFF6B7280)),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../Cart/controllers/cart_controller.dart';
@@ -19,11 +22,18 @@ class CheckoutController extends GetxController {
   // Payment Method
   var paymentMethod = 'Cash'.obs;
 
-  // Promotions
-  var activePromotions = <String>['FREE SHIPPING', '20%'].obs;
+  // Promotions — only ever populated with a promo actually applied via
+  // _applyPromoCode(), never pre-seeded, so this can't claim a discount is
+  // active when nothing has actually been applied to the order.
+  var activePromotions = <String>[].obs;
+  var couponCode = ''.obs;
+
+  // Real promotions loaded from /content/promotions for the picker sheet.
+  var availablePromotions = <Map<String, dynamic>>[].obs;
+  var isLoadingPromotions = false.obs;
 
   // Tip/Thanks
-  var selectedTip = 1.0.obs;
+  var selectedTip = 0.0.obs;
   var customTip = 0.0.obs;
   final TextEditingController customTipController = TextEditingController();
 
@@ -32,8 +42,9 @@ class CheckoutController extends GetxController {
   var deliveryFee = 6.0.obs;
   var discount = 0.0.obs;
 
-  // VIP Points
-  var vipPoints = 250.obs;
+  // Current VIPS wallet points balance (informational only — /order/create
+  // doesn't award points, so this is never displayed as "earned").
+  var vipPoints = 0.obs;
 
   // Computed
   double get grandTotal {
@@ -47,18 +58,39 @@ class CheckoutController extends GetxController {
     return total;
   }
 
+  // Which online gateways the backend actually has real credentials for
+  // (GET /api/payment/methods — mirrors utils/paymee.js / utils/paypal.js's
+  // getInitStatus()). Populated once at startup; Paymee/PayPal stay
+  // disabled in the picker until the corresponding env vars are set on the
+  // backend, same graceful-degrade pattern as SendGrid email.
+  var gatewayAvailable = <String, bool>{'paymee': false, 'paypal': false}.obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadCheckoutData();
     _loadUserPoints();
+    _loadPaymentMethods();
+  }
+
+  Future<void> _loadPaymentMethods() async {
+    try {
+      final response = await ApiService().get('/payment/methods');
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        gatewayAvailable.value = {
+          'paymee': data['paymee']?['configured'] == true,
+          'paypal': data['paypal']?['configured'] == true,
+        };
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadUserPoints() async {
     try {
       final response = await ApiService().get('/user/wallet');
       if (response.success && response.data != null) {
-        vipPoints.value = ((response.data['points'] ?? 250) as num).toInt();
+        vipPoints.value = ((response.data['points'] ?? 0) as num).toInt();
       }
     } catch (_) {}
   }
@@ -121,7 +153,10 @@ class CheckoutController extends GetxController {
             paymentMethod.value = 'Apple Pay';
             break;
           default:
-            paymentMethod.value = method.isNotEmpty ? method.capitalizeFirst ?? method : paymentMethod.value;
+            paymentMethod.value =
+                method.isNotEmpty
+                    ? method.capitalizeFirst ?? method
+                    : paymentMethod.value;
             break;
         }
       }
@@ -147,6 +182,20 @@ class CheckoutController extends GetxController {
       margin: EdgeInsets.all(16.w),
       borderRadius: 12.r,
     );
+  }
+
+  // Must match the Order schema's enum exactly (['delivery','takeaway',
+  // 'dine_in']) — any other string fails Mongoose validation and the whole
+  // order creation throws.
+  String _orderTypeString(OrderType type) {
+    switch (type) {
+      case OrderType.delivery:
+        return 'delivery';
+      case OrderType.takeaway:
+        return 'takeaway';
+      case OrderType.inStore:
+        return 'dine_in';
+    }
   }
 
   String _getOrderTypeName(OrderType type) {
@@ -175,126 +224,66 @@ class CheckoutController extends GetxController {
   // ==================== DELIVERY ADDRESS ====================
 
   void selectDeliveryAddress() {
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            Text(
-              'Select Delivery Address',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'SF Pro Display',
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            _buildAddressOption(
-              'Home',
-              '221B Baker Street, London, United Kingdom',
-              Icons.home_outlined,
-            ),
-            SizedBox(height: 12.h),
-            _buildAddressOption(
-              'Work',
-              '10 Downing Street, Westminster, London, UK',
-              Icons.business_outlined,
-            ),
-            SizedBox(height: 12.h),
-            _buildAddressOption(
-              'Other',
-              'Add new address',
-              Icons.add_location_outlined,
-            ),
-          ],
-        ),
-      ),
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-    );
-  }
-
-  Widget _buildAddressOption(String label, String address, IconData icon) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: () {
-          deliveryType.value = 'Deliver to -> $label';
-          deliveryAddress.value = address;
-          Get.back();
-
-          safeSnackbar(
-            'Address Updated',
-            'Delivering to $label',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-            margin: EdgeInsets.all(16.w),
-            borderRadius: 12.r,
-          );
-        },
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Row(
+    final addressController = TextEditingController(text: deliveryAddress.value);
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: const Color(0xFFFF6B35), size: 24.sp),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      address,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF6B7280),
-                        fontFamily: 'SF Pro Text',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+              Text(
+                'Enter Delivery Address',
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 20.h),
+              TextField(
+                controller: addressController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'e.g. Street, building, city...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B35), width: 2),
+                  ),
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: const Color(0xFF9CA3AF),
-                size: 24.sp,
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final address = addressController.text.trim();
+                        if (address.isNotEmpty) {
+                          deliveryAddress.value = address;
+                          deliveryType.value = 'Deliver to -> $address';
+                        }
+                        Get.back();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B35),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                      child: const Text('Save', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -342,11 +331,34 @@ class CheckoutController extends GetxController {
 
             _buildPaymentOption('Cash', Icons.money),
             SizedBox(height: 12.h),
-            _buildPaymentOption('Credit Card', Icons.credit_card),
+            Obx(
+              () => _buildPaymentOption(
+                'Paymee',
+                Icons.account_balance_wallet,
+                enabled: gatewayAvailable['paymee'] == true,
+                disabledReason: 'Paymee is not activated on this account yet',
+              ),
+            ),
             SizedBox(height: 12.h),
-            _buildPaymentOption('PayPal', Icons.account_balance_wallet),
+            Obx(
+              () => _buildPaymentOption(
+                'PayPal',
+                Icons.account_balance_wallet_outlined,
+                enabled: gatewayAvailable['paypal'] == true,
+                disabledReason: 'PayPal is not activated on this account yet',
+              ),
+            ),
             SizedBox(height: 12.h),
-            _buildPaymentOption('Apple Pay', Icons.apple),
+            // Card entry would need a PCI-compliant tokenization flow (a
+            // real processor's client SDK) that isn't wired up — genuinely
+            // out of scope here, unlike Paymee/PayPal above which are fully
+            // built and just waiting on the backend's API keys.
+            _buildPaymentOption(
+              'Credit Card',
+              Icons.credit_card,
+              enabled: false,
+              disabledReason: 'Card payments require a card processor integration',
+            ),
           ],
         ),
       ),
@@ -355,85 +367,125 @@ class CheckoutController extends GetxController {
     );
   }
 
-  Widget _buildPaymentOption(String method, IconData icon) {
+  Widget _buildPaymentOption(
+    String method,
+    IconData icon, {
+    bool enabled = true,
+    String? disabledReason,
+  }) {
     return Obx(() {
       final isSelected = paymentMethod.value == method;
-      return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12.r),
-        onTap: () {
-          paymentMethod.value = method;
-          Get.back();
+      return Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.r),
+          onTap: !enabled
+              ? () => safeSnackbar(
+                    'Not Available',
+                    disabledReason ?? '$method is not available right now',
+                    snackPosition: SnackPosition.BOTTOM,
+                  )
+              : () {
+            paymentMethod.value = method;
+            Get.back();
 
-          safeSnackbar(
-            'Payment Method Updated',
-            'Selected: $method',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
-            colorText: Colors.white,
-            duration: const Duration(seconds: 2),
-            margin: EdgeInsets.all(16.w),
-            borderRadius: 12.r,
-          );
-        },
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color:
-                  isSelected
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFFE5E7EB),
-              width: isSelected ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(12.r),
-            color:
-                isSelected
-                    ? const Color(0xFFFF6B35).withValues(alpha: 0.05)
-                    : Colors.transparent,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
+            safeSnackbar(
+              'Payment Method Updated',
+              'Selected: $method',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
+              colorText: Colors.white,
+              duration: const Duration(seconds: 2),
+              margin: EdgeInsets.all(16.w),
+              borderRadius: 12.r,
+            );
+          },
+          child: Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              border: Border.all(
                 color:
                     isSelected
                         ? const Color(0xFFFF6B35)
-                        : const Color(0xFF6B7280),
-                size: 24.sp,
+                        : const Color(0xFFE5E7EB),
+                width: isSelected ? 2 : 1,
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  method,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected ? const Color(0xFFFF6B35) : Colors.black,
-                    fontFamily: 'SF Pro Display',
-                  ),
-                ),
-              ),
-              if (isSelected)
+              borderRadius: BorderRadius.circular(12.r),
+              color:
+                  isSelected
+                      ? const Color(0xFFFF6B35).withValues(alpha: 0.05)
+                      : Colors.transparent,
+            ),
+            child: Row(
+              children: [
                 Icon(
-                  Icons.check_circle,
-                  color: const Color(0xFFFF6B35),
+                  icon,
+                  color:
+                      isSelected
+                          ? const Color(0xFFFF6B35)
+                          : const Color(0xFF6B7280),
                   size: 24.sp,
                 ),
-            ],
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    method,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          isSelected ? const Color(0xFFFF6B35) : Colors.black,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                ),
+                if (!enabled)
+                  Text(
+                    'Soon',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF9CA3AF),
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  )
+                else if (isSelected)
+                  Icon(
+                    Icons.check_circle,
+                    color: const Color(0xFFFF6B35),
+                    size: 24.sp,
+                  ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+        ),
+      );
     }); // end Obx
   }
 
   // ==================== PROMOTIONS ====================
 
+  Future<void> _loadPromotions() async {
+    isLoadingPromotions.value = true;
+    try {
+      final res = await ApiService().get('/content/promotions');
+      if (res.success && res.data != null) {
+        availablePromotions.value = List<Map<String, dynamic>>.from(res.data);
+      }
+    } catch (_) {
+    } finally {
+      isLoadingPromotions.value = false;
+    }
+  }
+
   void viewPromotions() {
+    _loadPromotions();
     Get.bottomSheet(
       Container(
+        constraints: BoxConstraints(maxHeight: Get.height * 0.75),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -457,7 +509,7 @@ class CheckoutController extends GetxController {
             SizedBox(height: 20.h),
 
             Text(
-              'Active Promotions',
+              'Available Promotions',
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
@@ -466,39 +518,60 @@ class CheckoutController extends GetxController {
             ),
             SizedBox(height: 20.h),
 
-            // List of promotions
-            _buildPromotionItem(
-              'FREE SHIPPING',
-              'Free delivery on all orders',
-              true,
-            ),
-            SizedBox(height: 12.h),
-            _buildPromotionItem('20% OFF', '20% discount on your order', true),
-            SizedBox(height: 12.h),
-            _buildPromotionItem(
-              'FIRST ORDER',
-              '10% off for new customers',
-              false,
+            Flexible(
+              child: Obx(() {
+                if (isLoadingPromotions.value) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (availablePromotions.isEmpty) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Text(
+                      'No promotions available right now.',
+                      style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp),
+                    ),
+                  );
+                }
+                return SingleChildScrollView(
+                  child: Column(
+                    children: availablePromotions
+                        .map((promo) => Padding(
+                              padding: EdgeInsets.only(bottom: 12.h),
+                              child: _buildPromotionItem(promo),
+                            ))
+                        .toList(),
+                  ),
+                );
+              }),
             ),
 
-            SizedBox(height: 20.h),
+            SizedBox(height: 8.h),
 
             // Add promo code button
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFFF6B35)),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Center(
-                child: Text(
-                  'Add Promo Code',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFFFF6B35),
-                    fontFamily: 'SF Pro Display',
+            GestureDetector(
+              onTap: () {
+                Get.back(); // close the promotions sheet first
+                _promptPromoCode();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFFF6B35)),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Center(
+                  child: Text(
+                    'Have a code? Enter it manually',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFFF6B35),
+                      fontFamily: 'SF Pro Display',
+                    ),
                   ),
                 ),
               ),
@@ -511,60 +584,215 @@ class CheckoutController extends GetxController {
     );
   }
 
-  Widget _buildPromotionItem(String title, String description, bool isActive) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: isActive ? const Color(0xFFFF6B35) : const Color(0xFFE5E7EB),
-        ),
+  Widget _buildPromotionItem(Map<String, dynamic> promo) {
+    final title = (promo['title'] ?? '').toString();
+    final subtitle = (promo['subtitle'] ?? '').toString();
+    final code = (promo['code'] ?? '').toString();
+    final isApplied = couponCode.value.isNotEmpty && couponCode.value.toUpperCase() == code.toUpperCase();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(12.r),
-        color:
-            isActive ? const Color(0xFFFF6B35).withValues(alpha: 0.05) : Colors.white,
+        onTap: code.isEmpty || isApplied ? null : () => _applyPromoCode(code, closeSheet: true),
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isApplied ? const Color(0xFF22C55E) : const Color(0xFFE5E7EB),
+            ),
+            borderRadius: BorderRadius.circular(12.r),
+            color: isApplied
+                ? const Color(0xFF22C55E).withValues(alpha: 0.05)
+                : Colors.white,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBBF24),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(Icons.local_offer, color: Colors.white, size: 20.sp),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        fontFamily: 'SF Pro Display',
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: const Color(0xFF6B7280),
+                        fontFamily: 'SF Pro Text',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isApplied)
+                Icon(
+                  Icons.check_circle,
+                  color: const Color(0xFF22C55E),
+                  size: 24.sp,
+                ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFBBF24),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Icon(Icons.local_offer, color: Colors.white, size: 20.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                    fontFamily: 'SF Pro Display',
+    );
+  }
+
+  final RxBool isApplyingPromo = false.obs;
+
+  Future<void> _applyPromoCode(String code, {bool closeSheet = false}) async {
+    if (code.isEmpty) return;
+    isApplyingPromo.value = true;
+    try {
+      final res = await ApiService().post('/rewards/validate-qr', {'code': code});
+      final type = res.data is Map ? res.data['type'] : null;
+      if (res.success && type == 'coupon') {
+        final coupon = res.data['coupon'];
+        final pct = ((coupon['discountPercentage'] ?? 0) as num).toDouble();
+        discount.value = subtotal.value * (pct / 100);
+        couponCode.value = code;
+        activePromotions.value = [(coupon['title'] ?? code).toString()];
+        if (closeSheet) Get.back();
+        safeSnackbar(
+          'Promo Applied',
+          '${pct.toInt()}% discount applied!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF22C55E),
+          colorText: Colors.white,
+        );
+      } else if (res.success && type == 'promotion') {
+        // Seeded site-wide promotions — a separate collection from
+        // merchant Coupons, with its own field names and a minimum
+        // order value that isn't enforced server-side on this endpoint
+        // (validate-qr only checks the code is real/active), so it has
+        // to be checked here before treating the discount as applied.
+        final promo = res.data['promotion'];
+        final minOrder = ((promo['minOrderValue'] ?? 0) as num).toDouble();
+        if (subtotal.value < minOrder) {
+          safeSnackbar(
+            'Minimum Order Not Met',
+            'This promotion requires a minimum order of ${minOrder.toStringAsFixed(0)} TND.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+        final pct = ((promo['discount'] ?? 0) as num).toDouble();
+        // A "shipping" promo discounts the delivery fee, not the item
+        // subtotal — applying its percentage to the subtotal instead
+        // would hand out a much larger discount than the promotion means.
+        final isShipping = promo['type'] == 'shipping';
+        if (isShipping) {
+          discount.value = deliveryFee.value * (pct / 100);
+        } else {
+          discount.value = subtotal.value * (pct / 100);
+        }
+        couponCode.value = code;
+        activePromotions.value = [(promo['title'] ?? code).toString()];
+        if (closeSheet) Get.back();
+        safeSnackbar(
+          'Promo Applied',
+          isShipping ? 'Free shipping applied!' : '${pct.toInt()}% discount applied!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF22C55E),
+          colorText: Colors.white,
+        );
+      } else {
+        safeSnackbar(
+          'Invalid Code',
+          res.message.isNotEmpty ? res.message : 'Promo code not found',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not validate promo code', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isApplyingPromo.value = false;
+    }
+  }
+
+  void _promptPromoCode() {
+    final codeController = TextEditingController();
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter Promo Code',
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 16.h),
+              TextField(
+                controller: codeController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'e.g. SAVE20',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF6B7280),
-                    fontFamily: 'SF Pro Text',
+              ),
+              SizedBox(height: 20.h),
+              SizedBox(
+                width: double.infinity,
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed: isApplyingPromo.value
+                        ? null
+                        : () => _applyPromoCode(codeController.text.trim(), closeSheet: true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B35),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                    ),
+                    child:
+                        isApplyingPromo.value
+                            ? SizedBox(
+                              width: 20.w,
+                              height: 20.h,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : Text(
+                              'Apply',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          if (isActive)
-            Icon(
-              Icons.check_circle,
-              color: const Color(0xFF22C55E),
-              size: 24.sp,
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -628,9 +856,10 @@ class CheckoutController extends GetxController {
         // CartController not found or empty
       }
 
-      final cartController = Get.isRegistered<CartController>()
-          ? Get.find<CartController>()
-          : null;
+      final cartController =
+          Get.isRegistered<CartController>()
+              ? Get.find<CartController>()
+              : null;
 
       if (cartController == null || cartController.cartItems.isEmpty) {
         Get.back();
@@ -642,36 +871,47 @@ class CheckoutController extends GetxController {
         return;
       }
 
-      final merchantId = cartController.cartItems.first.merchantId ?? '';
-      if (merchantId.isEmpty) {
-        Get.back();
-        safeSnackbar(
-          'Error',
-          'Merchant information is missing.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
+      // merchantId is legitimately optional — plenty of real seeded deals
+      // have no merchant attached. Blocking the order here used to make
+      // checkout fail for every one of them before it even reached the
+      // backend.
+      final merchantId = cartController.cartItems.first.merchantId;
 
       final response = await ApiService().post('/order/create', {
-        'merchantId': merchantId,
+        if (merchantId != null && merchantId.isNotEmpty) 'merchantId': merchantId,
         'items': items,
-        'paymentMethod': paymentMethod.value == 'Cash'
-            ? 'cash'
-            : paymentMethod.value.toLowerCase(),
+        'paymentMethod':
+            paymentMethod.value == 'Cash'
+                ? 'cash'
+                : paymentMethod.value.toLowerCase(),
         'deliveryAddress':
             selectedOrderType.value == OrderType.delivery
                 ? deliveryAddress.value
                 : 'Pickup',
+        'orderType': _orderTypeString(selectedOrderType.value),
+        if (couponCode.value.isNotEmpty) 'couponCode': couponCode.value,
+        if (discount.value > 0) 'couponDiscountAmount': discount.value,
       });
 
       Get.back(); // Close loading dialog
 
       if (response.success) {
-        _showOrderSuccessDialog();
         try {
           Get.find<CartController>().clearCartLocally();
         } catch (_) {}
+
+        final orderId = response.data is Map ? response.data['_id']?.toString() : null;
+        final gateway = paymentMethod.value == 'Paymee'
+            ? 'paymee'
+            : paymentMethod.value == 'PayPal'
+                ? 'paypal'
+                : null;
+
+        if (gateway != null && orderId != null) {
+          await _startOnlinePayment(orderId, gateway);
+        } else {
+          _showOrderSuccessDialog();
+        }
       } else {
         safeSnackbar(
           'Error',
@@ -687,6 +927,155 @@ class CheckoutController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  // ==================== ONLINE PAYMENT (Paymee / PayPal) ====================
+  //
+  // Both gateways host their own checkout page — there's no in-app card
+  // form here, so the flow is: open that page in the system browser, then
+  // poll our backend (which the gateway's webhook updates) until the
+  // payment resolves. The order already exists in 'pending' status at this
+  // point; nothing is lost if the user abandons the browser, they just land
+  // back on an unpaid order they can retry from Order History.
+  Future<void> _startOnlinePayment(String orderId, String gateway) async {
+    try {
+      final initiateResponse = await ApiService().post(
+        gateway == 'paymee' ? '/payment/paymee/initiate' : '/payment/paypal/create',
+        {'orderId': orderId},
+      );
+
+      if (!initiateResponse.success || initiateResponse.data == null) {
+        safeSnackbar(
+          'Payment Unavailable',
+          initiateResponse.message,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final data = initiateResponse.data as Map;
+      final url = gateway == 'paymee' ? data['paymentUrl'] : data['approveUrl'];
+      if (url == null || url.toString().isEmpty) {
+        safeSnackbar('Error', 'Payment link unavailable.', snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+
+      final launched = await launchUrl(Uri.parse(url.toString()), mode: LaunchMode.externalApplication);
+      if (!launched) {
+        safeSnackbar('Error', 'Could not open the payment page.', snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+
+      _showAwaitingPaymentDialog(orderId, gateway);
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to start payment: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void _showAwaitingPaymentDialog(String orderId, String gateway) {
+    final isChecking = false.obs;
+    Timer? pollTimer;
+
+    Future<void> checkStatus({bool manual = false}) async {
+      if (isChecking.value) return;
+      isChecking.value = true;
+      try {
+        String? paymentStatus;
+        if (gateway == 'paypal') {
+          // PayPal requires an explicit capture call after approval — it
+          // doesn't settle just by the user approving in the browser. Safe
+          // to call repeatedly: the backend no-ops once already paid.
+          final captureResponse = await ApiService().post('/payment/paypal/capture', {'orderId': orderId});
+          if (captureResponse.data is Map) {
+            paymentStatus = captureResponse.data['paymentStatus']?.toString();
+          }
+        } else {
+          final statusResponse = await ApiService().get('/payment/paymee/status/$orderId');
+          if (statusResponse.data is Map) {
+            paymentStatus = statusResponse.data['paymentStatus']?.toString();
+          }
+        }
+        if (paymentStatus == 'paid') {
+          pollTimer?.cancel();
+          Get.back(); // close awaiting dialog
+          _showOrderSuccessDialog();
+        } else if (manual) {
+          safeSnackbar(
+            'Not Confirmed Yet',
+            'Payment hasn\'t completed yet. Finish it in the browser, then try again.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      } catch (_) {
+      } finally {
+        isChecking.value = false;
+      }
+    }
+
+    Get.dialog(
+      PopScope(
+        canPop: false,
+        child: Center(
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 32.w),
+            padding: EdgeInsets.all(24.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFFFF6B35)),
+                SizedBox(height: 16.h),
+                Text(
+                  'Waiting for payment confirmation…',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  'Complete the payment in your browser, then come back here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600),
+                ),
+                SizedBox(height: 20.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        pollTimer?.cancel();
+                        Get.back();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => checkStatus(manual: true),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B35)),
+                      child: const Text('I\'ve Paid', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    // Auto-poll every 4s for up to 2 minutes in case the webhook lands
+    // before the user taps back into the app.
+    var elapsed = 0;
+    pollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      elapsed += 4;
+      if (elapsed >= 120) {
+        timer.cancel();
+        return;
+      }
+      checkStatus();
+    });
   }
 
   void _showOrderSuccessDialog() {
@@ -742,7 +1131,7 @@ class CheckoutController extends GetxController {
 
               // Message
               Text(
-                'Your order has been successfully placed.\nYou earned ${vipPoints.value} VIP points!',
+                'Your order has been successfully placed.\nWe\'ll notify you once the merchant confirms it.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14.sp,
@@ -766,8 +1155,9 @@ class CheckoutController extends GetxController {
                     _buildOrderDetailRow('Order Total', grandTotal),
                     SizedBox(height: 8.h),
                     _buildOrderDetailRow(
-                      'VIP Points Earned',
-                      vipPoints.value.toDouble(),
+                      'Payment Method',
+                      0,
+                      customValue: paymentMethod.value,
                     ),
                     SizedBox(height: 8.h),
                     _buildOrderDetailRow(
@@ -788,7 +1178,7 @@ class CheckoutController extends GetxController {
                     child: GestureDetector(
                       onTap: () {
                         Get.back(); // Close dialog
-                        Get.back(); // Go back to home/cart
+                        Get.offAllNamed('/main-app');
                       },
                       child: Container(
                         height: 48.h,
@@ -825,7 +1215,9 @@ class CheckoutController extends GetxController {
                           borderRadius: BorderRadius.circular(12.r),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFFFF6B35,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),

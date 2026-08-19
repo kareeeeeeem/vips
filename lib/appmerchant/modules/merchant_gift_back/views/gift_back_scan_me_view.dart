@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
+import '../controllers/merchant_gift_back_controller.dart';
 
 class GiftBackScanMeView extends StatefulWidget {
   const GiftBackScanMeView({super.key});
@@ -19,6 +22,21 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
   _ScanScreenState _screenState = _ScanScreenState.scan;
   bool _isFlashOn = false;
   bool _handledScan = false;
+  String? _merchantId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMerchantId();
+  }
+
+  Future<void> _loadMerchantId() async {
+    final response = await ApiService().get('/merchant/profile');
+    if (!mounted) return;
+    if (response.success && response.data is Map) {
+      setState(() => _merchantId = response.data['_id']?.toString());
+    }
+  }
 
   @override
   void dispose() {
@@ -26,20 +44,37 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onDetect(BarcodeCapture capture) async {
     if (_handledScan || _screenState != _ScanScreenState.scan) return;
-    _handledScan = true;
     final String? value = capture.barcodes.first.rawValue;
-    final bool isValid = value != null && value.trim().isNotEmpty;
+    // Consumer-side QR is generated as 'VIPS_USER_<mongoId>' — see
+    // vips_id_view.dart. Anything else scanned isn't a VIPs customer code.
+    final match = value != null ? RegExp(r'^VIPS_USER_([a-fA-F0-9]{24})$').firstMatch(value.trim()) : null;
 
-    if (!mounted) return;
-    setState(() {
-      _screenState = isValid ? _ScanScreenState.scan : _ScanScreenState.invalid;
-    });
-
-    if (isValid) {
-      Get.toNamed(MerchantRoutes.GIFT_BACK_STATUS);
+    if (match == null) {
+      if (!mounted) return;
+      setState(() => _screenState = _ScanScreenState.invalid);
+      return;
     }
+
+    _handledScan = true;
+    final userId = match.group(1)!;
+
+    final response = await ApiService().get('/merchant/gift-back/lookup?userId=$userId');
+    if (!mounted) return;
+
+    if (response.success && response.data is Map) {
+      final data = response.data as Map;
+      Get.find<MerchantGiftBackController>().applyScannedCustomer(
+        userId: data['userId'].toString(),
+        phone: data['phone']?.toString() ?? '',
+      );
+      Get.toNamed(MerchantRoutes.GIFT_BACK_FORM);
+    } else {
+      setState(() => _screenState = _ScanScreenState.invalid);
+      safeSnackbar('Not Found', response.message, snackPosition: SnackPosition.BOTTOM);
+    }
+
     Future.delayed(const Duration(milliseconds: 900), () {
       _handledScan = false;
     });
@@ -267,11 +302,17 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
                 style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12.sp),
               ),
               SizedBox(height: 14.h),
-              QrImageView(
-                data: 'merchant_vips_qr_123456',
-                version: QrVersions.auto,
-                size: 180.w,
-                gapless: false,
+              SizedBox(
+                width: 180.w,
+                height: 180.w,
+                child: _merchantId == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : QrImageView(
+                        data: 'vips_merchant_$_merchantId',
+                        version: QrVersions.auto,
+                        size: 180.w,
+                        gapless: false,
+                      ),
               ),
             ],
           ),

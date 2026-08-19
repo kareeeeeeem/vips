@@ -54,9 +54,9 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                         hintStyle: TextStyle(color: const Color(0xFFD1D5DB), fontSize: 24.sp),
                         filled: true,
                         fillColor: const Color(0xFFF9FAFB),
-                        suffixIcon: Padding(
-                          padding: EdgeInsets.all(12.w),
-                          child: Icon(Icons.qr_code_scanner, color: const Color(0xFF10B981), size: 32.sp),
+                        suffixIcon: IconButton(
+                          onPressed: controller.onScanQR,
+                          icon: Icon(Icons.qr_code_scanner, color: const Color(0xFF10B981), size: 32.sp),
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.r),

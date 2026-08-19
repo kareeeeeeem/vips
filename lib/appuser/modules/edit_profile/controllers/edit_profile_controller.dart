@@ -44,11 +44,29 @@ class EditProfileController extends GetxController {
     try {
       final response = await ApiService().get('/auth/me');
       if (response.success && response.data != null) {
-        final user = response.data['user'];
+        final user = response.data['user'] ?? response.data;
         nameController.text = user['fullName'] ?? '';
         emailController.text = user['email'] ?? '';
         phoneController.text = user['phone'] ?? '';
         profileImageUrl.value = user['profileImage'];
+
+        // These were previously left at their defaults on load — saving
+        // the form without touching them would silently overwrite the
+        // user's real saved values (e.g. gender always reset to male).
+        final gender = user['gender']?.toString();
+        if (gender != null) isMale.value = gender != 'female';
+        final city = user['city']?.toString();
+        if (city != null && cities.contains(city)) selectedCity.value = city;
+        final civilStatus = user['civilStatus']?.toString();
+        if (civilStatus != null && civilStatuses.contains(civilStatus)) {
+          selectedCivilStatus.value = civilStatus;
+        }
+        final numberOfChildren = user['numberOfChildren'];
+        if (numberOfChildren != null) {
+          childrenController.text = numberOfChildren.toString();
+        }
+        postalCodeController.text = user['postalCode']?.toString() ?? '';
+        professionalController.text = user['profession']?.toString() ?? '';
       }
     } catch (e) {
       debugPrint('Error fetching profile: $e');
@@ -150,6 +168,13 @@ class EditProfileController extends GetxController {
           'phone': phoneController.text.trim(),
           if (profileImageUrl.value != null)
             'profileImage': profileImageUrl.value!,
+          'gender': isMale.value ? 'male' : 'female',
+          if (selectedCity.value != null) 'city': selectedCity.value!,
+          if (selectedCivilStatus.value != null)
+            'civilStatus': selectedCivilStatus.value!,
+          'numberOfChildren': int.tryParse(childrenController.text.trim()) ?? 0,
+          'postalCode': postalCodeController.text.trim(),
+          'profession': professionalController.text.trim(),
         });
         Get.back();
 

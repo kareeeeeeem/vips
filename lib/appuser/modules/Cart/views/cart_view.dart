@@ -449,7 +449,12 @@ class CartView extends GetView<CartController> {
 
   Widget _buildDeliveryAddressWidget() {
     return GestureDetector(
-      onTap: () => Get.to(() => MyLocationsView()),
+      onTap: () async {
+        final result = await Get.to(() => MyLocationsView());
+        if (result is SavedLocation) {
+          controller.deliveryAddress.value = result.fullAddress;
+        }
+      },
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
@@ -905,7 +910,7 @@ class CartView extends GetView<CartController> {
                       Row(
                         children: [
                           Text(
-                            '+ D ${(amount * 1000).toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                            '+ D ${amount.toStringAsFixed(3)}',
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: Colors.black,

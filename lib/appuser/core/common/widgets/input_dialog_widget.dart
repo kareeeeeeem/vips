@@ -26,6 +26,13 @@ class InputDialogWidget extends StatefulWidget {
 
 class _InputDialogWidgetState extends State<InputDialogWidget> {
   final TextEditingController _textEditingController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(

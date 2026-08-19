@@ -212,7 +212,10 @@ class StaffManagementView extends GetView<MerchantHRMController> {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-    );
+    ).then((_) {
+      nameCtrl.dispose();
+      salaryCtrl.dispose();
+    });
   }
 
   void _confirmRemove(String id, String name) {

@@ -47,6 +47,56 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
                   )),
                   SizedBox(height: 16.h),
 
+                  // ── Ad Image ────────────────────────────────
+                  _label('Ad Image (optional)'),
+                  SizedBox(height: 6.h),
+                  Obx(() {
+                    final url = controller.uploadedImageUrl.value;
+                    final uploading = controller.isUploadingImage.value;
+                    return GestureDetector(
+                      onTap: uploading ? null : controller.pickAndUploadAdImage,
+                      child: Container(
+                        height: 140.h,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          image: url.isNotEmpty
+                              ? DecorationImage(image: NetworkImage(url), fit: BoxFit.cover)
+                              : null,
+                        ),
+                        child: uploading
+                            ? const Center(child: CircularProgressIndicator())
+                            : url.isEmpty
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_a_photo_outlined, size: 28.sp, color: const Color(0xFF9CA3AF)),
+                                      SizedBox(height: 6.h),
+                                      Text('Tap to add an image', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
+                                    ],
+                                  )
+                                : Align(
+                                    alignment: Alignment.topRight,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(6.w),
+                                      child: CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: Colors.black54,
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: const Icon(Icons.close, size: 16, color: Colors.white),
+                                          onPressed: () => controller.uploadedImageUrl.value = '',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                      ),
+                    );
+                  }),
+                  SizedBox(height: 16.h),
+
                   // ── Title ───────────────────────────────────
                   _label('Title'),
                   SizedBox(height: 6.h),

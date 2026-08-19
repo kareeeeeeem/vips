@@ -2,11 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import 'package:vip/core/services/api_service.dart';
 
-class QrReceiveView extends StatelessWidget {
+class QrReceiveView extends StatefulWidget {
   const QrReceiveView({super.key});
+
+  @override
+  State<QrReceiveView> createState() => _QrReceiveViewState();
+}
+
+class _QrReceiveViewState extends State<QrReceiveView> {
+  bool _isLoading = true;
+  String _merchantId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMerchantId();
+  }
+
+  Future<void> _loadMerchantId() async {
+    try {
+      final response = await ApiService().get('/merchant/profile');
+      if (response.success && response.data != null) {
+        _merchantId = response.data['_id']?.toString() ?? '';
+      }
+    } catch (_) {
+      // Keep _merchantId empty; UI shows a fallback below.
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +128,20 @@ class QrReceiveView extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.qr_code_2, size: 200.sp, color: const Color(0xFF1F2937)),
+                      if (_isLoading)
+                        SizedBox(
+                          height: 200.sp,
+                          child: const Center(child: CircularProgressIndicator(color: Color(0xFF10B981))),
+                        )
+                      else if (_merchantId.isNotEmpty)
+                        QrImageView(
+                          data: _merchantId,
+                          version: QrVersions.auto,
+                          size: 200.sp,
+                          backgroundColor: Colors.white,
+                        )
+                      else
+                        Icon(Icons.qr_code_2, size: 200.sp, color: const Color(0xFF1F2937)),
                       SizedBox(height: 24.h),
                       Text(
                         'QR Address',
@@ -110,7 +152,7 @@ class QrReceiveView extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        'ID: 12345678',
+                        _merchantId.isNotEmpty ? 'ID: $_merchantId' : (_isLoading ? 'Loading…' : 'ID unavailable'),
                         style: TextStyle(
                           fontSize: 24.sp,
                           fontWeight: FontWeight.w800,
@@ -192,12 +234,13 @@ class QrReceiveView extends StatelessWidget {
                   _buildActionButton(
                     Icons.download_rounded,
                     const Color(0xFFFFB800),
-                    onTap: () {
-                      // QR download: copy the ID to clipboard as a placeholder
-                      Clipboard.setData(const ClipboardData(text: '12345678'));
-                      Get.snackbar('Download', 'QR data copied to clipboard',
-                          snackPosition: SnackPosition.BOTTOM);
-                    },
+                    onTap: _merchantId.isEmpty
+                        ? null
+                        : () {
+                            Clipboard.setData(ClipboardData(text: _merchantId));
+                            Get.snackbar('Download', 'QR data copied to clipboard',
+                                snackPosition: SnackPosition.BOTTOM);
+                          },
                   ),
                   _buildActionButton(
                     Icons.grid_view_rounded,
@@ -215,11 +258,13 @@ class QrReceiveView extends StatelessWidget {
                   _buildActionButton(
                     Icons.share_rounded,
                     const Color(0xFF1F2937),
-                    onTap: () {
-                      SharePlus.instance.share(
-                        ShareParams(text: 'My VIPs merchant QR ID: 12345678'),
-                      );
-                    },
+                    onTap: _merchantId.isEmpty
+                        ? null
+                        : () {
+                            SharePlus.instance.share(
+                              ShareParams(text: 'My VIPs merchant QR ID: $_merchantId'),
+                            );
+                          },
                   ),
                 ],
               ),
@@ -240,7 +285,7 @@ class QrReceiveView extends StatelessWidget {
           color: Colors.white,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 24.sp),
+        child: Icon(icon, color: onTap == null ? color.withValues(alpha: 0.4) : color, size: 24.sp),
       ),
     );
   }

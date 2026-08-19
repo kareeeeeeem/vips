@@ -5,7 +5,6 @@ import 'package:vip/appuser/modules/vIPsClub/views/widgets/invite_friends.dart';
 import 'package:vip/appuser/modules/vIPsClub/views/widgets/vips_rank.dart';
 
 import '../../../routes/app_pages.dart';
-import '../../spin_wheel/views/spin_wheel_view.dart';
 import '../../vips_club_history/views/vips_club_history_view.dart';
 import '../controllers/v_i_ps_club_controller.dart';
 
@@ -498,7 +497,7 @@ class VIPsClubView extends GetView<VIPsClubController> {
         ),
         SizedBox(height: 12.h),
         InkWell(
-          onTap: () => Get.to(() => SpinWheelView()),
+          onTap: () => Get.toNamed('/spin-wheel'),
 
           child: _buildMissionItem('Spin the wheel', '+500 diamants', false),
         ),

@@ -363,9 +363,10 @@ class VendorOrderView extends StatelessWidget {
     VendorOrderController controller,
     Map<String, dynamic> order,
   ) {
-    if (order['status'] != 'Pending') {
-      Get.to(() => OrderDetailsPage(order: order));
-    }
+    // Previously this only navigated when status != 'Pending', silently
+    // no-op'ing the tap for pending orders. Users need to view details
+    // regardless of order status.
+    Get.to(() => OrderDetailsPage(order: order));
   }
 
 }

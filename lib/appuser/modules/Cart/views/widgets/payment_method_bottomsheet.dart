@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
+import '../../controllers/cart_controller.dart';
+
 class PaymentMethodBottomSheet extends StatelessWidget {
   final double totalBill;
   final int walletPoints;
@@ -11,7 +13,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
 
   const PaymentMethodBottomSheet({super.key,
     required this.totalBill,
-    this.walletPoints = 28560,
+    this.walletPoints = 0,
     this.selectedMethod,
     required this.onMethodSelected,
   });
@@ -109,7 +111,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Pay Via Online',
+                      'Pay Via Online (Coming Soon)',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -121,13 +123,19 @@ class PaymentMethodBottomSheet extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // Online Payment Options
+                  // No online payment gateway is actually integrated yet —
+                  // these were previously selectable and silently placed
+                  // real orders tagged as e.g. "stripe" with no payment ever
+                  // taken. Shown disabled until a real gateway is wired up,
+                  // so only the working Cash on Delivery option can be
+                  // selected.
                   _buildPaymentOption(
                     controller: controller,
                     id: 'paypal',
                     title: 'Paypal',
                     iconUrl:
                         'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -138,6 +146,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     title: 'Bkash',
                     iconUrl:
                         'https://seeklogo.com/images/B/bkash-logo-835789094F-seeklogo.com.png',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -148,6 +157,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     title: 'Stripe',
                     iconUrl:
                         'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -158,6 +168,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     title: 'Razor pay',
                     iconUrl:
                         'https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -168,6 +179,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     title: 'Semang pay',
                     iconUrl:
                         'https://via.placeholder.com/100x40/4A90E2/FFFFFF?text=Semang',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -177,6 +189,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     id: 'flutterwave',
                     title: 'Flutterwave',
                     iconUrl: 'https://flutterwave.com/images/logo/full.svg',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 12.h),
@@ -187,6 +200,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                     title: 'Paystack',
                     iconUrl:
                         'https://paystack.com/assets/img/logo/full-logo-primary.svg',
+                    enabled: false,
                   ),
 
                   SizedBox(height: 100.h),
@@ -263,91 +277,112 @@ class PaymentMethodBottomSheet extends StatelessWidget {
     required String id,
     required String title,
     String? iconUrl,
+    bool enabled = true,
   }) {
     return Obx(() {
       final isSelected = controller.selectedPaymentMethod.value == id;
 
-      return GestureDetector(
-        onTap: () => controller.selectPaymentMethod(id),
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color:
-                  isSelected
-                      ? const Color(0xFFFF6B35)
-                      : const Color(0xFFE5E7EB),
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              // Icon/Logo
-              if (iconUrl != null)
-                Container(
-                  width: 40.w,
-                  height: 24.h,
-                  child: Image.network(
-                    iconUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.payment,
-                        color: const Color(0xFF6B7280),
-                        size: 24.sp,
-                      );
-                    },
+      return Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: GestureDetector(
+          onTap: enabled
+              ? () => controller.selectPaymentMethod(id)
+              : () => safeSnackbar(
+                    'Coming Soon',
+                    '$title will be available in a future update',
+                    snackPosition: SnackPosition.BOTTOM,
                   ),
-                )
-              else
-                SizedBox(width: 40.w),
-
-              SizedBox(width: 12.w),
-
-              // Title
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                    fontFamily: 'SF Pro Display',
-                  ),
-                ),
-              ),
-
-              // Radio Button
-              Container(
-                width: 24.w,
-                height: 24.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color:
-                        isSelected
-                            ? const Color(0xFFFF6B35)
-                            : const Color(0xFFD1D5DB),
-                    width: 2,
-                  ),
-                ),
-                child:
+          child: Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color:
                     isSelected
-                        ? Center(
-                          child: Container(
-                            width: 12.w,
-                            height: 12.h,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFFFF6B35),
-                            ),
-                          ),
-                        )
-                        : null,
+                        ? const Color(0xFFFF6B35)
+                        : const Color(0xFFE5E7EB),
+                width: isSelected ? 2 : 1,
               ),
-            ],
+            ),
+            child: Row(
+              children: [
+                // Icon/Logo
+                if (iconUrl != null)
+                  Container(
+                    width: 40.w,
+                    height: 24.h,
+                    child: Image.network(
+                      iconUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.payment,
+                          color: const Color(0xFF6B7280),
+                          size: 24.sp,
+                        );
+                      },
+                    ),
+                  )
+                else
+                  SizedBox(width: 40.w),
+
+                SizedBox(width: 12.w),
+
+                // Title
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                ),
+
+                if (!enabled)
+                  Text(
+                    'Soon',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF9CA3AF),
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  )
+                else
+                  // Radio Button
+                  Container(
+                    width: 24.w,
+                    height: 24.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? const Color(0xFFFF6B35)
+                                : const Color(0xFFD1D5DB),
+                        width: 2,
+                      ),
+                    ),
+                    child:
+                        isSelected
+                            ? Center(
+                              child: Container(
+                                width: 12.w,
+                                height: 12.h,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFFFF6B35),
+                                ),
+                              ),
+                            )
+                            : null,
+                  ),
+              ],
+            ),
           ),
         ),
       );
@@ -434,16 +469,27 @@ class PaymentMethodController extends GetxController {
                 child: ElevatedButton(
                   onPressed: () {
                     Get.back();
-                    safeSnackbar(
-                      'Wallet Points Applied',
-                      'Your wallet points have been applied',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
-                      colorText: Colors.white,
-                      duration: const Duration(seconds: 2),
-                      margin: EdgeInsets.all(16.w),
-                      borderRadius: 12.r,
-                    );
+                    try {
+                      final cart = Get.find<CartController>();
+                      cart.applyWalletPoints();
+                      if (cart.walletPointsToRedeem.value > 0) {
+                        safeSnackbar(
+                          'Wallet Points Applied',
+                          '${cart.walletPointsToRedeem.value} pts (D ${cart.walletDiscount.toStringAsFixed(3)}) applied to your order',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                          margin: EdgeInsets.all(16.w),
+                          borderRadius: 12.r,
+                        );
+                      } else {
+                        safeSnackbar('No Points Available', 'You have no VIPS points to redeem.',
+                            snackPosition: SnackPosition.BOTTOM);
+                      }
+                    } catch (_) {
+                      safeSnackbar('Error', 'Could not apply wallet points.', snackPosition: SnackPosition.BOTTOM);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF22C55E),

@@ -152,7 +152,8 @@ class BuildEndingSoon extends StatelessWidget {
                     onAddToBasket: () => onAddToBasket(deal),
                     isFavorite: isFav,
                     onToggleFavorite: () => onToggleFavorite(deal),
-                    endTime: deal['endTime'],
+                    endTime: DateTime.tryParse(deal['endTime']?.toString() ?? '') ??
+                        DateTime.now().add(const Duration(hours: 1)),
                   ),
                 );
               },
@@ -260,7 +261,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                     height: 120.h,
                     width: double.infinity,
                     child: Image.network(
-                      widget.deal['image'],
+                      widget.deal['image']?.toString() ?? '',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -386,7 +387,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
 
                         // Titre
                         Text(
-                          widget.deal['title'],
+                          widget.deal['title']?.toString() ?? '',
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w400,
@@ -401,7 +402,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
 
                         // Description
                         Text(
-                          widget.deal['description'],
+                          widget.deal['description']?.toString() ?? '',
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
+import 'package:vip/appuser/modules/profile/controllers/profile_controller.dart';
 
 class QRScannerController extends GetxController
     with GetTickerProviderStateMixin {
@@ -163,7 +164,12 @@ class QRScannerController extends GetxController
 
   void showMyQRCode() {
     Get.back();
-    Get.toNamed('/vips-id');
+    if (Get.isRegistered<ProfileController>()) {
+      Get.find<ProfileController>().navigateToVipsId();
+    } else {
+      safeSnackbar('Error', 'Could not open your VIPs ID.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   @override
