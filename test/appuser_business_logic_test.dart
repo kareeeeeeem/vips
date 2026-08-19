@@ -458,20 +458,11 @@ void main() {
       expect(profile.refundedOrdersCount, equals(1));
     });
 
-    test('primaryColor depends on selectedRole', () {
-      profile.selectedRole.value = 'Vendor';
-      expect(profile.primaryColor, equals(const Color(0xFFFFC107)));
-      profile.selectedRole.value = 'Customer';
+    test('primaryColor is always the Customer color (no other role is reachable)', () {
       expect(profile.primaryColor, equals(Colors.orange));
     });
 
-    test('servicesList returns a role-specific menu', () {
-      profile.selectedRole.value = 'Admin';
-      expect(
-        profile.servicesList.any((s) => s['title'] == 'Report'),
-        isTrue,
-      );
-      profile.selectedRole.value = 'Customer';
+    test('servicesList returns the real Customer menu', () {
       expect(
         profile.servicesList.any((s) => s['title'] == 'VIPs Club'),
         isTrue,

@@ -24,7 +24,6 @@ import 'package:vip/appuser/modules/QR_scanner/controllers/q_r_scanner_controlle
 import 'package:vip/appuser/modules/search/controllers/search_controller.dart'
     as app_search;
 import 'package:vip/appuser/modules/settings/controllers/settings_controller.dart';
-import 'package:vip/appuser/modules/teams/controllers/teams_controller.dart';
 import 'package:vip/appuser/modules/vIPsClub/controllers/v_i_ps_club_controller.dart';
 import 'package:vip/appuser/modules/notifications/controllers/notifications_controller.dart';
 
@@ -375,97 +374,6 @@ void main() {
     // calls PUT /auth/2fa on confirm — like other dialog-driven actions in
     // this codebase, that requires a mounted GetMaterialApp/navigator to
     // test meaningfully, not a bare unit test.
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // TeamsController — Employee model, status extension & filtering
-  // ═══════════════════════════════════════════════════════════
-  group('TeamsController', () {
-    late TeamsController c;
-
-    Employee employee({
-      String id = '1',
-      String name = 'Test',
-      EmployeeStatus status = EmployeeStatus.active,
-    }) {
-      return Employee(
-        id: id,
-        name: name,
-        role: 'Staff',
-        status: status,
-        email: '$name@example.com',
-        joinDate: DateTime(2025, 1, 1),
-      );
-    }
-
-    setUp(() {
-      c = TeamsController();
-    });
-
-    test('default state: no employees, tab 0, not loading', () {
-      expect(c.employees, isEmpty);
-      expect(c.filteredEmployees, isEmpty);
-      expect(c.tabIndex, equals(0));
-      expect(c.isLoading, isFalse);
-    });
-
-    test('filterEmployees on the default "All" tab returns every employee',
-        () {
-      c.employees.addAll([
-        employee(id: '1', status: EmployeeStatus.active),
-        employee(id: '2', status: EmployeeStatus.pending),
-        employee(id: '3', status: EmployeeStatus.removed),
-      ]);
-      c.filterEmployees();
-      expect(c.filteredEmployees.length, equals(3));
-    });
-
-    test('Employee.copyWith overrides only the given fields', () {
-      final original = employee(id: '9', name: 'Original');
-      final copy = original.copyWith(status: EmployeeStatus.removed);
-      expect(copy.id, equals('9'));
-      expect(copy.name, equals('Original'));
-      expect(copy.status, equals(EmployeeStatus.removed));
-    });
-
-    test('Employee.fromJson maps known statuses and defaults unknown to pending',
-        () {
-      final active = Employee.fromJson({
-        '_id': '1',
-        'name': 'A',
-        'role': 'Admin',
-        'status': 'active',
-        'email': 'a@a.com',
-      });
-      expect(active.status, equals(EmployeeStatus.active));
-
-      final removed = Employee.fromJson({'status': 'removed'});
-      expect(removed.status, equals(EmployeeStatus.removed));
-
-      final unknown = Employee.fromJson({'status': 'something-else'});
-      expect(unknown.status, equals(EmployeeStatus.pending));
-    });
-
-    test('Employee.toJson serializes the expected fields', () {
-      final e = employee(id: '5', name: 'Zed', status: EmployeeStatus.active);
-      final json = e.toJson();
-      expect(json['name'], equals('Zed'));
-      expect(json['role'], equals('Staff'));
-      expect(json['status'], equals('active'));
-      expect(json['email'], equals('Zed@example.com'));
-    });
-
-    test('EmployeeStatusExtension.displayName maps every status', () {
-      expect(EmployeeStatus.active.displayName, equals('Active'));
-      expect(EmployeeStatus.pending.displayName, equals('Pending'));
-      expect(EmployeeStatus.removed.displayName, equals('Removed'));
-    });
-
-    test('EmployeeStatusExtension.color maps every status', () {
-      expect(EmployeeStatus.active.color, equals(const Color(0xff4CAF50)));
-      expect(EmployeeStatus.pending.color, equals(const Color(0xffFF9800)));
-      expect(EmployeeStatus.removed.color, equals(const Color(0xffF44336)));
-    });
   });
 
   // ═══════════════════════════════════════════════════════════

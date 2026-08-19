@@ -24,10 +24,6 @@ import '../modules/createpin/bindings/createpin_binding.dart';
 import '../modules/createpin/views/createpin_view.dart';
 import '../modules/credit/bindings/credit_binding.dart';
 import '../modules/credit/views/credit_view.dart';
-import '../modules/delivery_driver/bindings/delivery_driver_binding.dart';
-import '../modules/delivery_driver/views/delivery_driver_view.dart';
-import '../modules/delivery_order_details/bindings/delivery_order_details_binding.dart';
-import '../modules/delivery_order_details/views/delivery_order_details_view.dart';
 import '../modules/edit_profile/bindings/edit_profile_binding.dart';
 import '../modules/edit_profile/views/edit_profile_view.dart';
 import '../modules/expense_to_reward/bindings/expense_to_reward_binding.dart';
@@ -78,16 +74,10 @@ import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/success_account/bindings/success_account_binding.dart';
 import '../modules/success_account/views/success_account_view.dart';
-import '../modules/teams/bindings/teams_binding.dart';
-import '../modules/teams/views/teams_view.dart';
 import '../modules/transactions_extract/bindings/transactions_extract_binding.dart';
 import '../modules/transactions_extract/views/transactions_extract_view.dart';
 import '../modules/vIPsClub/bindings/v_i_ps_club_binding.dart';
 import '../modules/vIPsClub/views/v_i_ps_club_view.dart';
-import '../modules/vendor_home/bindings/vendor_home_binding.dart';
-import '../modules/vendor_home/views/vendor_home_view.dart';
-import '../modules/vendor_order/bindings/vendor_order_binding.dart';
-import '../modules/vendor_order/views/vendor_order_view.dart';
 import '../modules/verification/bindings/verification_binding.dart';
 import '../modules/verification/views/verification_view.dart';
 import '../modules/vips_club_history/bindings/vips_club_history_binding.dart';
@@ -284,39 +274,14 @@ class AppPages {
       binding: CouponBinding(),
     ),
     GetPage(
-      name: _Paths.TEAMS,
-      page: () => const TeamsView(),
-      binding: TeamsBinding(),
-    ),
-    GetPage(
       name: _Paths.REPORT,
       page: () => const ReportView(),
       binding: ReportBinding(),
     ),
     GetPage(
-      name: _Paths.VENDOR_HOME,
-      page: () => const VendorHomeView(),
-      binding: VendorHomeBinding(),
-    ),
-    GetPage(
-      name: _Paths.VENDOR_ORDER,
-      page: () => const VendorOrderView(),
-      binding: VendorOrderBinding(),
-    ),
-    GetPage(
       name: _Paths.Q_R_SCANNER,
       page: () => QRScannerView(),
       binding: QRScannerBinding(),
-    ),
-    GetPage(
-      name: _Paths.DELIVERY_DRIVER,
-      page: () => const DeliveryDriverView(),
-      binding: DeliveryDriverBinding(),
-    ),
-    GetPage(
-      name: _Paths.DELIVERY_ORDER_DETAILS,
-      page: () => const DeliveryOrderDetailsView(),
-      binding: DeliveryOrderDetailsBinding(),
     ),
     GetPage(
       name: _Paths.VIPS_CLUB_HISTORY,

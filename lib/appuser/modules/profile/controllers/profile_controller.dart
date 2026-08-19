@@ -453,81 +453,36 @@ class ProfileController extends GetxController {
     return '${date.month}/${date.day}';
   }
 
-  // Getter pour la couleur primaire
-  Color get primaryColor {
-    switch (selectedRole.value) {
-      case 'Vendor':
-        return Color(0xFFFFC107);
-
-      case 'Agent':
-        return Color(0xFF2196F3);
-
-      case 'Business':
-        return Colors.blue;
-      case 'Customer':
-        return Colors.orange;
-      default:
-        return Colors.blue;
-    }
-  }
+  // No other role is reachable — see selectedRole's declaration.
+  Color get primaryColor => Colors.orange;
 
   List<Map<String, dynamic>> get servicesList {
-    if (selectedRole.value == 'Admin') {
-      return [
-        {'icon': Icons.credit_card, 'title': 'Credit', 'route': '/credit'},
-        {'icon': Icons.card_giftcard, 'title': 'Gifted', 'route': '/gift'},
-        {'icon': Icons.payment, 'title': 'Pay Bill', 'route': '/pay-bills'},
-        {'icon': Icons.local_offer, 'title': 'Offers', 'route': '/coupon'},
-        {'icon': Icons.assessment, 'title': 'Report', 'route': '/report'},
-        {
-          'icon': Icons.volunteer_activism,
-          'title': 'Donation',
-          'route': '/donation',
-        },
-        {'icon': Icons.group, 'title': 'Team', 'route': '/teams'},
-      ];
-    } else if (selectedRole.value == 'Vendor') {
-      return [
-        {'icon': Icons.store, 'title': 'My Store', 'route': '/vendor-home'},
-        {'icon': Icons.inventory, 'title': 'Products', 'route': '/vendor-home'},
-        {'icon': Icons.shopping_cart, 'title': 'Orders', 'route': '/vendor-order'},
-        {'icon': Icons.analytics, 'title': 'Analytics', 'route': '/vendor-home'},
-        {
-          'icon': Icons.local_offer,
-          'title': 'Promotions',
-          'route': '/promotions',
-        },
-        {'icon': Icons.reviews, 'title': 'Reviews', 'route': '/vendor-home'},
-        {'icon': Icons.settings, 'title': 'Settings', 'route': '/settings'},
-      ];
-    } else {
-      return [
-        {
-          'icon': Icons.phone_android,
-          'title': 'Mob credit',
-          'route': '/mobile',
-        },
-        {'icon': Icons.card_giftcard, 'title': 'Gifted', 'route': '/gift'},
-        {'icon': Icons.payment, 'title': 'Pay Bill', 'route': '/pay-bills'},
-        {'icon': Icons.discount, 'title': 'Promotions', 'route': '/promotions'},
-        {
-          'icon': Icons.emoji_events,
-          'title': 'VIPs Club',
-          'route': '/v-i-ps-club',
-        },
-        {'icon': Icons.contacts, 'title': 'Contacts', 'route': '/contact'},
-        {
-          'icon': Icons.volunteer_activism,
-          'title': 'Donation',
-          'route': '/donation',
-        },
-        {
-          'icon': Icons.local_shipping,
-          'title': 'Shipping',
-          'route': '/shipping',
-        },
-      ];
-    }
+    return [
+      {
+        'icon': Icons.phone_android,
+        'title': 'Mob credit',
+        'route': '/mobile',
+      },
+      {'icon': Icons.card_giftcard, 'title': 'Gifted', 'route': '/gift'},
+      {'icon': Icons.payment, 'title': 'Pay Bill', 'route': '/pay-bills'},
+      {'icon': Icons.discount, 'title': 'Promotions', 'route': '/promotions'},
+      {
+        'icon': Icons.emoji_events,
+        'title': 'VIPs Club',
+        'route': '/v-i-ps-club',
+      },
+      {'icon': Icons.contacts, 'title': 'Contacts', 'route': '/contact'},
+      {
+        'icon': Icons.volunteer_activism,
+        'title': 'Donation',
+        'route': '/donation',
+      },
+      {
+        'icon': Icons.local_shipping,
+        'title': 'Shipping',
+        'route': '/shipping',
+      },
+    ];
   }
 
   void navigateToEditProfile() {

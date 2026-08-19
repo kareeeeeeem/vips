@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 import 'package:vip/appuser/modules/checkout/controllers/checkout_controller.dart';
-import 'package:vip/appuser/modules/delivery_order_details/controllers/delivery_order_details_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -45,22 +44,5 @@ void main() {
     controller.deliveryFee.value = 6.0;
     expect(controller.deliveryFee.value, equals(6.0));
   });
-
-    test('4. DeliveryOrderDetailsController helper properties parsing', () {
-      final controller = DeliveryOrderDetailsController();
-      controller.order.value = {
-        'status': 'delivered',
-        'totalAmount': 45.5,
-        'items': [
-          {'name': 'Burger', 'price': 15.0},
-        ],
-        'merchantId': {'storeName': 'VIPs Burger Joint'},
-      };
-
-      expect(controller.status, equals('delivered'));
-      expect(controller.totalAmount, equals(45.5));
-      expect(controller.merchantName, equals('VIPs Burger Joint'));
-      expect(controller.items.length, equals(1));
-    });
   });
 }

@@ -37,13 +37,8 @@ abstract class Routes {
   static const TRANSACTIONS_EXTRACT = _Paths.TRANSACTIONS_EXTRACT;
   static const CREDIT = _Paths.CREDIT;
   static const COUPON = _Paths.COUPON;
-  static const TEAMS = _Paths.TEAMS;
   static const REPORT = _Paths.REPORT;
-  static const VENDOR_HOME = _Paths.VENDOR_HOME;
-  static const VENDOR_ORDER = _Paths.VENDOR_ORDER;
   static const Q_R_SCANNER = _Paths.Q_R_SCANNER;
-  static const DELIVERY_DRIVER = _Paths.DELIVERY_DRIVER;
-  static const DELIVERY_ORDER_DETAILS = _Paths.DELIVERY_ORDER_DETAILS;
   static const VIPS_CLUB_HISTORY = _Paths.VIPS_CLUB_HISTORY;
   static const SETTINGS = _Paths.SETTINGS;
   static const CHECKOUT = _Paths.CHECKOUT;
@@ -90,13 +85,8 @@ abstract class _Paths {
   static const TRANSACTIONS_EXTRACT = '/transactions-extract';
   static const CREDIT = '/credit';
   static const COUPON = '/coupon';
-  static const TEAMS = '/teams';
   static const REPORT = '/report';
-  static const VENDOR_HOME = '/vendor-home';
-  static const VENDOR_ORDER = '/vendor-order';
   static const Q_R_SCANNER = '/q-r-scanner';
-  static const DELIVERY_DRIVER = '/delivery-driver';
-  static const DELIVERY_ORDER_DETAILS = '/delivery-order-details';
   static const VIPS_CLUB_HISTORY = '/vips-club-history';
   static const SETTINGS = '/settings';
   static const CHECKOUT = '/checkout';
