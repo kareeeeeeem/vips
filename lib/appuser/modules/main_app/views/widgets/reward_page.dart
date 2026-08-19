@@ -12,13 +12,11 @@ class RewardPage extends StatefulWidget {
 }
 
 class _RewardPageState extends State<RewardPage> {
-  final TextEditingController promoCodeController = TextEditingController();
   final TextEditingController phoneIdController = TextEditingController();
   final TextEditingController amountController = TextEditingController(
     text: '0.000',
   );
 
-  final FocusNode promoCodeFocus = FocusNode();
   final FocusNode phoneIdFocus = FocusNode();
   final FocusNode amountFocus = FocusNode();
 
@@ -53,6 +51,23 @@ class _RewardPageState extends State<RewardPage> {
     }
   }
 
+  // Same pattern as expense_to_reward_controller.dart's scanQRCode(): the
+  // scanner validates via POST /rewards/validate-qr and returns that
+  // response's `data` map — a scanned merchant VIPs ID QR comes back as
+  // {type: 'user', user: {id, ...}}.
+  void _scanMerchantQR() {
+    Get.toNamed('/q-r-scanner')?.then((result) {
+      if (result is Map && result['type'] == 'user') {
+        final id = result['user']?['id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          setState(() => phoneIdController.text = id);
+        }
+      } else if (result is Map) {
+        safeSnackbar('Not a Merchant QR', 'Scan the merchant\'s VIPs ID, not a coupon code.', snackPosition: SnackPosition.BOTTOM);
+      }
+    });
+  }
+
   Future<void> _proceed() async {
     final amount = double.tryParse(amountController.text.trim());
     if (amount == null || amount <= 0) {
@@ -64,6 +79,7 @@ class _RewardPageState extends State<RewardPage> {
     try {
       final response = await ApiService().post('/rewards/expense-to-reward', {
         'amount': amount,
+        if (phoneIdController.text.trim().isNotEmpty) 'merchantId': phoneIdController.text.trim(),
       });
       if (response.success) {
         final pointsEarned = response.data is Map ? response.data['pointsEarned'] : null;
@@ -87,10 +103,8 @@ class _RewardPageState extends State<RewardPage> {
 
   @override
   void dispose() {
-    promoCodeController.dispose();
     phoneIdController.dispose();
     amountController.dispose();
-    promoCodeFocus.dispose();
     phoneIdFocus.dispose();
     amountFocus.dispose();
     super.dispose();
@@ -162,49 +176,6 @@ class _RewardPageState extends State<RewardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Promo Code Section with enhanced design
-                    _buildInputCard(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: promoCodeController,
-                              focusNode: promoCodeFocus,
-                              decoration: InputDecoration(
-                                hintText: 'Promo Code',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                              ),
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.all(8.w),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFF8F8F8),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Icon(
-                              Icons.qr_code_scanner_rounded,
-                              color: Color(0xFF5ED5A8),
-                              size: 22.sp,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 24.h),
-
                     // Phone / ID Section with refined styling
                     Text(
                       'Phone / ID',
@@ -236,16 +207,19 @@ class _RewardPageState extends State<RewardPage> {
                               ),
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.all(8.w),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFF8F8F8),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Icon(
-                              Icons.qr_code_scanner_rounded,
-                              color: Color(0xFF5ED5A8),
-                              size: 22.sp,
+                          GestureDetector(
+                            onTap: _scanMerchantQR,
+                            child: Container(
+                              padding: EdgeInsets.all(8.w),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8F8F8),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: Color(0xFF5ED5A8),
+                                size: 22.sp,
+                              ),
                             ),
                           ),
                         ],
@@ -293,45 +267,31 @@ class _RewardPageState extends State<RewardPage> {
                             ),
                           ),
                           SizedBox(width: 12.w),
-                          GestureDetector(
-                            onTap: () {
-                              // Show currency picker
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 18.w,
-                                vertical: 20.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF2E7D5F),
-                                borderRadius: BorderRadius.circular(10.r),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0xFF2E7D5F).withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selectedCurrency,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    color: Colors.white,
-                                    size: 22.sp,
-                                  ),
-                                ],
+                          // Static badge, not a picker — TND ('D') is the
+                          // only currency this app supports anywhere.
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 20.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF2E7D5F),
+                              borderRadius: BorderRadius.circular(10.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF2E7D5F).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              selectedCurrency,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
@@ -391,7 +351,7 @@ class _RewardPageState extends State<RewardPage> {
                                 ),
                               ),
                               Text(
-                                '1 - 1000 D',
+                                'Up to ${maxExpensePerTransaction.toStringAsFixed(0)} D',
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   color: Color(0xFF2E7D5F),

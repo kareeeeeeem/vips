@@ -6,7 +6,6 @@ import '../views/widgets/gift_recap.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class GiftController extends GetxController {
-  final TextEditingController offerIdController = TextEditingController();
   final TextEditingController userIdController = TextEditingController();
 
   final RxBool isUserIdEnabled = true.obs;
@@ -26,18 +25,23 @@ class GiftController extends GetxController {
     isExpressSelected.value = !isExpressSelected.value;
   }
 
-  void scanOfferQR() {
-    Get.toNamed('/q-r-scanner')?.then((result) {
-      if (result != null && result is String) {
-        offerIdController.text = result;
-      }
-    });
-  }
-
+  // The scanner (QRScannerController) always validates via
+  // POST /rewards/validate-qr first and returns that response's `data`
+  // map — never a raw String — so a scanned VIPs ID QR
+  // ('VIPS_USER_<id>', see vips_id_view.dart) comes back as
+  // {type: 'user', user: {id, fullName, phone}}. send-gift takes a phone
+  // number, so that's what gets filled in here.
   void scanUserQR() {
     Get.toNamed('/q-r-scanner')?.then((result) {
-      if (result != null && result is String) {
-        userIdController.text = result;
+      if (result is Map && result['type'] == 'user') {
+        final phone = result['user']?['phone']?.toString();
+        if (phone != null && phone.isNotEmpty) {
+          userIdController.text = phone;
+        } else {
+          safeSnackbar('No Phone Number', 'This account has no phone number on file.');
+        }
+      } else if (result is Map) {
+        safeSnackbar('Not a User QR', 'Scan a recipient\'s VIPs ID, not a coupon or merchant code.');
       }
     });
   }
@@ -106,7 +110,6 @@ class GiftController extends GetxController {
 
   @override
   void onClose() {
-    offerIdController.dispose();
     userIdController.dispose();
     amountController.dispose();
     super.onClose();

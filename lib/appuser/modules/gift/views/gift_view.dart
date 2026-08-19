@@ -88,8 +88,6 @@ class GiftView extends GetView<GiftController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 20.h),
-                _buildOfferIdSection(),
-                SizedBox(height: 20.h),
                 _buildAmountSection(),
                 SizedBox(height: 10.h),
                 Obx(
@@ -145,71 +143,6 @@ class GiftView extends GetView<GiftController> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildOfferIdSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Offer ID',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                ),
-                child: TextField(
-                  controller: controller.offerIdController,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '123456',
-                    hintStyle: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 14.sp,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 12.w),
-            GestureDetector(
-              onTap: controller.scanOfferQR,
-              child: Container(
-                width: 50.w,
-                height: 50.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: Colors.grey.shade300, width: 1.5),
-                ),
-                child: Icon(
-                  Icons.qr_code_scanner,
-                  color: AppColors.AppPrimaryColor,
-                  size: 24.sp,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 

@@ -86,8 +86,22 @@ class ExpenseToRewardController extends GetxController {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
+  // The scanner (QRScannerController) validates via
+  // POST /rewards/validate-qr and returns that response's `data` map. A
+  // scanned merchant VIPs ID QR ('VIPS_USER_<id>', see vips_id_view.dart)
+  // comes back as {type: 'user', user: {id, ...}} — that id is exactly
+  // what submitExpense() sends as merchantId below.
   void scanQRCode() {
-    Get.toNamed('/q-r-scanner');
+    Get.toNamed('/q-r-scanner')?.then((result) {
+      if (result is Map && result['type'] == 'user') {
+        final id = result['user']?['id']?.toString();
+        if (id != null && id.isNotEmpty) {
+          userIdController.text = id;
+        }
+      } else if (result is Map) {
+        safeSnackbar('Not a Merchant QR', 'Scan the merchant\'s VIPs ID, not a coupon code.');
+      }
+    });
   }
 
   // Afficher dialogue timeout
