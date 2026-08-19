@@ -57,154 +57,76 @@ class PackagesController extends GetxController {
   var quantity = 1.obs;
   var showDetails = false.obs;
 
+  final isLoading = true.obs;
+
   @override
   void onInit() {
     super.onInit();
     _loadPackages();
   }
 
-  void _loadPackages() {
-    packages.value = [
-      Package(
-        id: 'basic',
-        tier: PackageTier.basic,
-        name: 'Basic',
-        price: 0,
-        monthlyPrice: 0,
-        redeemPoints: 1000,
-        giftPoints: 800,
-        primaryColor: const Color(0xFF8B7355),
-        accentColor: const Color(0xFFBFA084),
-        isCurrent: true,
-        badge: 'Current',
-        benefits: [
-          PackageBenefit(
-            title: 'Standard Support',
-            description: 'Email support within 48 hours',
-            icon: Icons.support_agent_outlined,
-            iconColor: const Color(0xFF8B7355),
-          ),
-          PackageBenefit(
-            title: 'Basic Rewards',
-            description: '1x points on purchases',
-            icon: Icons.stars_outlined,
-            iconColor: const Color(0xFF8B7355),
-          ),
-          PackageBenefit(
-            title: 'Monthly Newsletter',
-            description: 'Exclusive deals & updates',
-            icon: Icons.mail_outline,
-            iconColor: const Color(0xFF8B7355),
-          ),
-        ],
-      ),
-      Package(
-        id: 'silver',
-        tier: PackageTier.silver,
-        name: 'Silver',
-        price: 15,
-        monthlyPrice: 1.25,
-        redeemPoints: 1500,
-        giftPoints: 1200,
-        primaryColor: const Color(0xFFC0C0C0),
-        accentColor: const Color(0xFFD1D5DB),
-        badge: '',
-        benefits: [
-          PackageBenefit(
-            title: 'Priority Support',
-            description: 'Email support within 24 hours',
-            icon: Icons.headset_mic_outlined,
-            iconColor: const Color(0xFFC0C0C0),
-          ),
-          PackageBenefit(
-            title: 'Enhanced Rewards',
-            description: '1.5x points on all purchases',
-            icon: Icons.auto_awesome_outlined,
-            iconColor: const Color(0xFFC0C0C0),
-          ),
-          PackageBenefit(
-            title: 'Monthly Bonus',
-            description: 'Exclusive monthly offers',
-            icon: Icons.card_giftcard_outlined,
-            iconColor: const Color(0xFFC0C0C0),
-          ),
-        ],
-      ),
-      Package(
-        id: 'gold',
-        tier: PackageTier.gold,
-        name: 'Gold',
-        price: 25,
-        monthlyPrice: 2.08,
-        redeemPoints: 2500,
-        giftPoints: 2200,
-        primaryColor: const Color(0xFFFFB800),
-        accentColor: const Color(0xFFFFD700),
-        isPopular: true,
-        badge: 'Most Popular',
-        benefits: [
-          PackageBenefit(
-            title: 'Birthday Treat',
-            description:
-                'Receive a personalized 15% discount code or a free gift during your birthday month.',
-            icon: Icons.card_giftcard,
-            iconColor: const Color(0xFFFFB800),
-          ),
-          PackageBenefit(
-            title: 'Increased Earning Rate',
-            description:
-                'Unlock bonus diamants challenges for additional earning opportunities.',
-            icon: Icons.add_circle,
-            iconColor: const Color(0xFFFFB800),
-          ),
-          PackageBenefit(
-            title: 'Tier Upgrade Bonus',
-            description:
-                'Enjoy priority email support with a guaranteed response within 24 hours.',
-            icon: Icons.card_giftcard_outlined,
-            iconColor: const Color(0xFFFFB800),
-          ),
-        ],
-      ),
-      Package(
-        id: 'platinum',
-        tier: PackageTier.platinum,
-        name: 'Platinum',
-        price: 50,
-        monthlyPrice: 4.17,
-        redeemPoints: 5000,
-        giftPoints: 4500,
-        primaryColor: const Color(0xFF4A5568),
-        accentColor: const Color(0xFF6B7280),
-        badge: 'Elite',
-        benefits: [
-          PackageBenefit(
-            title: 'Concierge Service',
-            description: 'Dedicated personal assistant',
-            icon: Icons.person_pin_outlined,
-            iconColor: const Color(0xFF4A5568),
-          ),
-          PackageBenefit(
-            title: 'Maximum Rewards',
-            description: '3x points on all purchases',
-            icon: Icons.auto_graph_outlined,
-            iconColor: const Color(0xFF4A5568),
-          ),
-          PackageBenefit(
-            title: 'Platinum Perks',
-            description: 'Exclusive platinum-only deals',
-            icon: Icons.military_tech_outlined,
-            iconColor: const Color(0xFF4A5568),
-          ),
-        ],
-      ),
-    ];
+  // Purely decorative per-tier styling — real price/points/benefits come
+  // from GET /services/packages below, and which tier is "Current" comes
+  // from GET /services/packages/current (previously hardcoded to Basic
+  // client-side, so it never reflected an actual purchase).
+  static const _tierStyle = {
+    'basic': (color: Color(0xFF8B7355), accent: Color(0xFFBFA084), icon: Icons.support_agent_outlined),
+    'silver': (color: Color(0xFFC0C0C0), accent: Color(0xFFD1D5DB), icon: Icons.headset_mic_outlined),
+    'gold': (color: Color(0xFFFFB800), accent: Color(0xFFFFD700), icon: Icons.card_giftcard),
+    'platinum': (color: Color(0xFF4A5568), accent: Color(0xFF6B7280), icon: Icons.military_tech_outlined),
+  };
 
-    // Auto-select Gold package by default
-    selectedPackage.value = packages.firstWhere(
-      (pkg) => pkg.tier == PackageTier.gold,
-      orElse: () => packages[2],
-    );
+  Future<void> _loadPackages() async {
+    isLoading.value = true;
+    try {
+      final results = await Future.wait([
+        ApiService().get('/services/packages'),
+        ApiService().get('/services/packages/current'),
+      ]);
+
+      final packagesRes = results[0];
+      final currentRes = results[1];
+      final currentTier = (currentRes.success && currentRes.data != null)
+          ? currentRes.data['tier']?.toString() ?? 'basic'
+          : 'basic';
+
+      if (packagesRes.success && packagesRes.data is List) {
+        packages.value = (packagesRes.data as List).map((p) {
+          final id = p['id']?.toString() ?? 'basic';
+          final style = _tierStyle[id] ?? _tierStyle['basic']!;
+          final benefitTitles = (p['benefits'] as List?)?.cast<String>() ?? [];
+          return Package(
+            id: id,
+            tier: PackageTier.values.firstWhere((t) => t.name == id, orElse: () => PackageTier.basic),
+            name: p['name']?.toString() ?? id,
+            price: ((p['price'] ?? 0) as num).toDouble(),
+            monthlyPrice: ((p['monthlyPrice'] ?? 0) as num).toDouble(),
+            redeemPoints: ((p['redeemPoints'] ?? 0) as num).toInt(),
+            giftPoints: ((p['giftPoints'] ?? 0) as num).toInt(),
+            primaryColor: style.color,
+            accentColor: style.accent,
+            isCurrent: id == currentTier,
+            isPopular: p['isPopular'] == true,
+            badge: id == currentTier ? 'Current' : (p['isPopular'] == true ? 'Most Popular' : ''),
+            benefits: benefitTitles.map((title) => PackageBenefit(
+              title: title,
+              description: title,
+              icon: style.icon,
+              iconColor: style.color,
+            )).toList(),
+          );
+        }).toList();
+      }
+
+      // Select the real current tier by default; fall back to Gold, then
+      // whatever loaded first.
+      selectedPackage.value = packages.firstWhereOrNull((pkg) => pkg.isCurrent) ??
+          packages.firstWhereOrNull((pkg) => pkg.tier == PackageTier.gold) ??
+          packages.firstOrNull;
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Package get currentPackage {
