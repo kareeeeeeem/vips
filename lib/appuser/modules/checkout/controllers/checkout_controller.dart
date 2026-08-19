@@ -665,14 +665,37 @@ class CheckoutController extends GetxController {
       final type = res.data is Map ? res.data['type'] : null;
       if (res.success && type == 'coupon') {
         final coupon = res.data['coupon'];
-        final pct = ((coupon['discountPercentage'] ?? 0) as num).toDouble();
-        discount.value = subtotal.value * (pct / 100);
+        final minOrder = ((coupon['minOrderAmount'] ?? 0) as num).toDouble();
+        if (subtotal.value < minOrder) {
+          safeSnackbar(
+            'Minimum Order Not Met',
+            'This voucher requires a minimum order of ${minOrder.toStringAsFixed(0)} TND.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+        final value = ((coupon['discount'] ?? 0) as num).toDouble();
+        final couponType = coupon['type']?.toString() ?? 'percentage';
+        String appliedMessage;
+        switch (couponType) {
+          case 'fixed':
+            discount.value = value.clamp(0, subtotal.value);
+            appliedMessage = '$value TND discount applied!';
+            break;
+          case 'shipping':
+            discount.value = deliveryFee.value;
+            appliedMessage = 'Free shipping applied!';
+            break;
+          default:
+            discount.value = subtotal.value * (value / 100);
+            appliedMessage = '${value.toInt()}% discount applied!';
+        }
         couponCode.value = code;
-        activePromotions.value = [(coupon['title'] ?? code).toString()];
+        activePromotions.value = [(coupon['description'] ?? coupon['title'] ?? code).toString()];
         if (closeSheet) Get.back();
         safeSnackbar(
           'Promo Applied',
-          '${pct.toInt()}% discount applied!',
+          appliedMessage,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFF22C55E),
           colorText: Colors.white,

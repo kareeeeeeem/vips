@@ -1,35 +1,68 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VoucherOffer {
   final String id;
   final String title;
   final String subtitle;
-  final int discountPercent;
+  final String badgeLabel;
   final int pointsRequired;
-  final String memberType;
   final Color primaryColor;
   final Color secondaryColor;
   final String description;
   final String termsAndConditions;
   final bool isPopular;
-  final String? badge;
 
   VoucherOffer({
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.discountPercent,
+    required this.badgeLabel,
     required this.pointsRequired,
-    required this.memberType,
     required this.primaryColor,
     required this.secondaryColor,
     required this.description,
     required this.termsAndConditions,
     this.isPopular = false,
-    this.badge,
   });
+
+  // GET /rewards/voucher-catalog returns a fixed real tier list (see
+  // routes/rewards.js) — colors/copy here are purely decorative, the id,
+  // title, and points cost are the real values driving redemption.
+  factory VoucherOffer.fromCatalog(Map<String, dynamic> json) {
+    final type = json['type']?.toString() ?? 'percentage';
+    final discount = (json['discount'] ?? 0).toString();
+    final badge = type == 'percentage'
+        ? '$discount% off'
+        : type == 'shipping'
+            ? 'Free shipping'
+            : '$discount TND off';
+    const palette = [
+      [Color(0xFFB24BF3), Color(0xFF8B2FC9)],
+      [Color(0xFF6C63FF), Color(0xFF5449CC)],
+      [Color(0xFFFF9B3D), Color(0xFFFF7A00)],
+      [Color(0xFF10B981), Color(0xFF059669)],
+      [Color(0xFFEF4444), Color(0xFFDC2626)],
+    ];
+    final colorPair = palette[json['id'].hashCode.abs() % palette.length];
+    return VoucherOffer(
+      id: json['id'].toString(),
+      title: json['title'].toString(),
+      subtitle: 'Redeemable with points',
+      badgeLabel: badge,
+      pointsRequired: (json['pointsCost'] ?? 0) as int,
+      primaryColor: colorPair[0],
+      secondaryColor: colorPair[1],
+      description:
+          'Trade your VIPS points for this voucher — once redeemed, apply the code at checkout for real savings on your order.',
+      termsAndConditions:
+          '• Valid for 30 days from redemption\n• Single use, one order at a time\n• Cannot be combined with other offers\n• Non-transferable\n• No cash alternative',
+    );
+  }
 }
 
 class PromoBanner {
@@ -50,6 +83,120 @@ class RedeemController extends GetxController {
   final selectedVoucher = Rx<VoucherOffer?>(null);
   final selectedTab = 'Detail'.obs;
   final currentBannerIndex = 0.obs;
+  final currentPoints = 0.obs;
+  final isLoading = true.obs;
+  final isRedeeming = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadCatalog();
+    _loadPoints();
+  }
+
+  Future<void> _loadPoints() async {
+    try {
+      final response = await ApiService().get('/user/wallet');
+      if (response.success && response.data != null) {
+        currentPoints.value = ((response.data['points'] ?? 0) as num).toInt();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadCatalog() async {
+    isLoading.value = true;
+    try {
+      final response = await ApiService().get('/rewards/voucher-catalog');
+      if (response.success && response.data is List) {
+        vouchers.value = (response.data as List)
+            .map((e) => VoucherOffer.fromCatalog(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> redeemVoucher() async {
+    final voucher = selectedVoucher.value;
+    if (voucher == null || isRedeeming.value) return;
+    if (currentPoints.value < voucher.pointsRequired) {
+      safeSnackbar('Not Enough Points', 'You need ${voucher.pointsRequired} points for this voucher.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    isRedeeming.value = true;
+    try {
+      final response = await ApiService().post('/rewards/redeem-points', {'tierId': voucher.id});
+      if (response.success && response.data != null) {
+        currentPoints.value = ((response.data['newPointsBalance'] ?? 0) as num).toInt();
+        final code = response.data['voucher']?['code']?.toString() ?? '';
+        selectedVoucher.value = null;
+        _showVoucherCodeDialog(code);
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      safeSnackbar('Error', 'Failed to redeem voucher: $e', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isRedeeming.value = false;
+    }
+  }
+
+  void _showVoucherCodeDialog(String code) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.celebration, color: const Color(0xFFFF9B3D), size: 40.sp),
+              SizedBox(height: 12.h),
+              Text('Voucher Redeemed!', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700)),
+              SizedBox(height: 12.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(code, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    SizedBox(width: 8.w),
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: code));
+                        safeSnackbar('Copied', 'Voucher code copied to clipboard', snackPosition: SnackPosition.BOTTOM);
+                      },
+                      child: Icon(Icons.copy, size: 18.sp),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text('Enter this code at checkout to apply it.',
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600)),
+              SizedBox(height: 20.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF9B3D)),
+                  child: const Text('Done', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // Promo banners
   final promoBanners =
@@ -71,68 +218,9 @@ class RedeemController extends GetxController {
         ),
       ].obs;
 
-  // Voucher offers
-  final vouchers =
-      <VoucherOffer>[
-        VoucherOffer(
-          id: '1',
-          title: '10% discount voucher',
-          subtitle: 'For all members',
-          discountPercent: 10,
-          pointsRequired: 1500,
-          memberType: 'All Members',
-          primaryColor: const Color(0xFFB24BF3),
-          secondaryColor: const Color(0xFF8B2FC9),
-          description:
-              'Sure thing! Your "10% discount voucher" is a fabulous offer that allows you to enjoy 10% off the regular price on selected items or services.\n\nThis voucher is your ticket to some sweet savings—whether you\'re treating yourself or snagging a great deal for someone special.',
-          termsAndConditions:
-              '• Valid for 30 days from redemption\n• Cannot be combined with other offers\n• Applicable to selected items only\n• Non-transferable\n• No cash alternative',
-        ),
-        VoucherOffer(
-          id: '2',
-          title: '25% discount voucher',
-          subtitle: 'For platinum member',
-          discountPercent: 25,
-          pointsRequired: 3000,
-          memberType: 'Platinum Member',
-          primaryColor: const Color(0xFF6C63FF),
-          secondaryColor: const Color(0xFF5449CC),
-          isPopular: true,
-          badge: 'Popular',
-          description:
-              'Sure thing! Your "25% discount voucher" is a fabulous offer that allows you to enjoy a quarter off the regular price on selected items or services.\n\nThis voucher is your ticket to some sweet savings—whether you\'re treating yourself or snagging a great deal for someone special.',
-          termsAndConditions:
-              '• Valid for 60 days from redemption\n• Exclusive to Platinum members\n• Cannot be combined with other offers\n• Applicable to selected items only\n• Non-transferable\n• No cash alternative',
-        ),
-        VoucherOffer(
-          id: '3',
-          title: '20% discount voucher',
-          subtitle: 'For gold member',
-          discountPercent: 20,
-          pointsRequired: 2500,
-          memberType: 'Gold Member',
-          primaryColor: const Color(0xFFFF9B3D),
-          secondaryColor: const Color(0xFFFF7A00),
-          description:
-              'Sure thing! Your "20% discount voucher" is a fabulous offer that allows you to enjoy 20% off the regular price on selected items or services.\n\nThis voucher is your ticket to some sweet savings—whether you\'re treating yourself or snagging a great deal for someone special.',
-          termsAndConditions:
-              '• Valid for 45 days from redemption\n• Exclusive to Gold members\n• Cannot be combined with other offers\n• Applicable to selected items only\n• Non-transferable\n• No cash alternative',
-        ),
-        VoucherOffer(
-          id: '4',
-          title: '15% discount voucher',
-          subtitle: 'For silver member',
-          discountPercent: 15,
-          pointsRequired: 2000,
-          memberType: 'Silver Member',
-          primaryColor: const Color(0xFFC0C0C0),
-          secondaryColor: const Color(0xFFA8A8A8),
-          description:
-              'Sure thing! Your "15% discount voucher" is a fabulous offer that allows you to enjoy 15% off the regular price on selected items or services.\n\nThis voucher is your ticket to some sweet savings—whether you\'re treating yourself or snagging a great deal for someone special.',
-          termsAndConditions:
-              '• Valid for 30 days from redemption\n• Exclusive to Silver members\n• Cannot be combined with other offers\n• Applicable to selected items only\n• Non-transferable\n• No cash alternative',
-        ),
-      ].obs;
+  // Voucher offers — populated from GET /rewards/voucher-catalog by
+  // _loadCatalog() in onInit(), not hardcoded.
+  final vouchers = <VoucherOffer>[].obs;
 
   void selectVoucher(VoucherOffer voucher) {
     selectedVoucher.value = voucher;
@@ -153,22 +241,6 @@ class RedeemController extends GetxController {
     } else {
       Get.back();
     }
-  }
-
-  Future<void> redeemVoucher() async {
-    if (selectedVoucher.value == null) return;
-
-    // No backend concept exists for spending loyalty points on a voucher
-    // offer (the vouchers list itself is hardcoded, not from a real API) —
-    // this used to fake a 1-second "API call" and always claim success.
-    // Be honest instead of pretending points were spent and a real voucher
-    // was issued. Real gift-card purchases (paid in TND, not points) are
-    // already wired for real via POST /rewards/purchase-voucher on Home.
-    Get.snackbar(
-      'Coming Soon',
-      'Redeeming vouchers with points will be available in a future update.',
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 }
 
@@ -591,7 +663,7 @@ class RedeemView extends GetView<RedeemController> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${voucher.discountPercent}% off',
+                          voucher.badgeLabel,
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -800,7 +872,7 @@ class RedeemView extends GetView<RedeemController> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${voucher.discountPercent}% off',
+                          voucher.badgeLabel,
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
@@ -893,8 +965,9 @@ class RedeemView extends GetView<RedeemController> {
         top: false,
         child: Obx(() {
           final voucher = controller.selectedVoucher.value!;
+          final isRedeeming = controller.isRedeeming.value;
           return GestureDetector(
-            onTap: controller.redeemVoucher,
+            onTap: isRedeeming ? null : controller.redeemVoucher,
             child: Container(
               height: 56.h,
               decoration: BoxDecoration(
@@ -910,7 +983,15 @@ class RedeemView extends GetView<RedeemController> {
                   ),
                 ],
               ),
-              child: Row(
+              child: isRedeeming
+                  ? const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
