@@ -49,15 +49,18 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
               );
             }),
 
-            // Earlier Transactions — everything older than yesterday used to
-            // be fetched but never shown anywhere in this view.
+            // Earlier Transactions — everything older than yesterday, or
+            // (once the date picker has been used) just the picked day.
             Obx(() {
               final earlierTrans = controller.earlierTransactions;
               if (earlierTrans.isEmpty)
                 return SliverToBoxAdapter(child: SizedBox.shrink());
 
               return SliverToBoxAdapter(
-                child: _buildTransactionSection('Earlier', earlierTrans),
+                child: _buildTransactionSection(
+                  controller.hasCustomDate.value ? 'Selected Date' : 'Earlier',
+                  earlierTrans,
+                ),
               );
             }),
 

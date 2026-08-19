@@ -96,8 +96,14 @@ class TransactionsExtractController extends GetxController {
     switch (selectedFilter.value) {
       case 'Rewards':
         return transactions.where((t) => t.type == TransactionType.reward).toList();
-      case 'Extract':
+      // Matches the label the filter sheet actually sets
+      // (widgets/filter.dart's "Extracts Only" option) — this used to say
+      // 'Extract' (no "s"), so it never matched and silently fell through
+      // to showing everything.
+      case 'Extracts':
         return transactions.where((t) => t.type == TransactionType.extract).toList();
+      case 'Pending':
+        return transactions.where((t) => t.status == TransactionStatus.pending).toList();
       default:
         return transactions;
     }
@@ -124,7 +130,22 @@ class TransactionsExtractController extends GetxController {
   // Everything older than yesterday that still matches the type filter —
   // the view only had Today/Yesterday sections, silently dropping every
   // other transaction with no way to see it. Surfaced as "Earlier" below.
+  //
+  // Once openDatePicker() has been used, this narrows to just the picked
+  // day instead of "everything before yesterday" — previously picking a
+  // date only showed a toast claiming to filter and never touched the
+  // actual list.
+  final RxBool hasCustomDate = false.obs;
+
   List<Transaction> get earlierTransactions {
+    if (hasCustomDate.value) {
+      final picked = selectedDate.value;
+      return _typeFiltered.where((t) {
+        return t.date.year == picked.year &&
+            t.date.month == picked.month &&
+            t.date.day == picked.day;
+      }).toList();
+    }
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     final cutoff = DateTime(yesterday.year, yesterday.month, yesterday.day);
     return _typeFiltered.where((t) {
@@ -202,7 +223,7 @@ class TransactionsExtractController extends GetxController {
 
     if (picked != null) {
       selectedDate.value = picked;
-      loadTransactions();
+      hasCustomDate.value = true;
 
       // Feedback visuel
       safeSnackbar(
