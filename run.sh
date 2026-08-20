@@ -1,4 +1,13 @@
 #!/bin/bash
+set -e
+
+# الفلافور: consumer (appuser, default) أو merchant (appmerchant)
+FLAVOR="${1:-consumer}"
+case "$FLAVOR" in
+  consumer) TARGET="lib/main.dart" ;;
+  merchant) TARGET="lib/main_merchant.dart" ;;
+  *) echo "Usage: ./run.sh [consumer|merchant]"; exit 1 ;;
+esac
 
 # 1. تنظيف كاش فلاتر القديم
 echo "🧹 Cleaning Flutter cache..."
@@ -8,15 +17,10 @@ flutter clean
 echo "📦 Getting pub packages..."
 flutter pub get
 
-# 3. الدخول لمجلد iOS لإعادة بناء الكاكوبودز من الصفر باستخدام بيئة FVM
-echo "🍎 Rebuilding iOS Pods with FVM environment..."
-cd ios
-rm -rf Pods Podfile.lock .symlinks
+# 3. الدخول لمجلد iOS لإعادة بناء الكاكوبودز من الصفر
+echo "🍎 Rebuilding iOS Pods..."
+(cd ios && rm -rf Pods Podfile.lock .symlinks && pod install)
 
-# التعديل هنا: تشغيل pod install من خلال fvm لتوحيد الـ SDK Paths
-exec pod install 
-
-# 4. العودة للمجلد الرئيسي وتشغيل التطبيق
-echo "🚀 Running App..."
-cd ..
- flutter run
+# 4. تشغيل التطبيق بالفلافور المطلوب
+echo "🚀 Running $FLAVOR app ($TARGET)..."
+flutter run --flavor "$FLAVOR" -t "$TARGET"

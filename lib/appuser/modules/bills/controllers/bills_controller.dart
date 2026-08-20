@@ -334,13 +334,19 @@ class BillsController extends GetxController {
 
   void onServiceTap(String serviceName) {
     final name = serviceName.toLowerCase();
-    if (name.contains('recharge') || name.contains('mobile')) {
+    // 'recharge' = prepaid airtime top-up (-> /mobile). 'mobile bills' is a
+    // real seeded BillService (type: 'mobile', provider: Ooredoo) and
+    // belongs on the bill-payment list like every other bill (-> /pay-bills)
+    // — it used to match the 'mobile' check below and land on the wrong
+    // screen (airtime top-up instead of the bill it's actually named for).
+    if (name.contains('recharge')) {
       Get.toNamed('/mobile');
     } else if (name.contains('electric') || name.contains('water') ||
         name.contains('internet') || name.contains('adsl') ||
         name.contains('phone') || name.contains('land') ||
         name.contains('traffic') || name.contains('education') ||
-        name.contains('health') || name.contains('construction')) {
+        name.contains('health') || name.contains('construction') ||
+        name.contains('mobile')) {
       Get.toNamed('/pay-bills');
     } else if (name.contains('donation')) {
       Get.toNamed('/donation');

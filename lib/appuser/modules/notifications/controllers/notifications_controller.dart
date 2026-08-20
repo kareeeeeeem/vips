@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
 
@@ -147,34 +148,75 @@ class NotificationsController extends GetxController
   }
 
   Future<void> markAllAsRead() async {
+    final previouslyUnread = notifications.where((n) => !n.isRead).toList();
     for (var notification in notifications) {
       notification.isRead = true;
     }
     notifications.refresh();
     try {
-      await ApiService().post('/user/notifications/read-all', {});
-    } catch (_) {}
+      final response = await ApiService().post('/user/notifications/read-all', {});
+      if (!response.success) {
+        for (var notification in previouslyUnread) {
+          notification.isRead = false;
+        }
+        notifications.refresh();
+        safeSnackbar('Error', 'Could not mark all as read.', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      for (var notification in previouslyUnread) {
+        notification.isRead = false;
+      }
+      notifications.refresh();
+      safeSnackbar('Error', 'Could not mark all as read.', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
   }
 
-  void markAsRead(NotificationItem notification) {
+  Future<void> markAsRead(NotificationItem notification) async {
     notification.isRead = true;
     notifications.refresh();
-    ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': true});
+    try {
+      final response = await ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': true});
+      if (!response.success) {
+        notification.isRead = false;
+        notifications.refresh();
+      }
+    } catch (_) {
+      notification.isRead = false;
+      notifications.refresh();
+    }
   }
 
-  void markAsUnread(NotificationItem notification) {
+  Future<void> markAsUnread(NotificationItem notification) async {
     notification.isRead = false;
     notifications.refresh();
-    ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': false});
+    try {
+      final response = await ApiService().put('/user/notifications/${notification.id}/read-status', {'isRead': false});
+      if (!response.success) {
+        notification.isRead = true;
+        notifications.refresh();
+      }
+    } catch (_) {
+      notification.isRead = true;
+      notifications.refresh();
+    }
   }
 
-  void deleteNotification(NotificationItem notification) {
+  Future<void> deleteNotification(NotificationItem notification) async {
     notifications.remove(notification);
-    ApiService().delete('/user/notifications/${notification.id}');
+    try {
+      final response = await ApiService().delete('/user/notifications/${notification.id}');
+      if (!response.success) {
+        notifications.add(notification);
+        safeSnackbar('Error', 'Could not delete notification.', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      notifications.add(notification);
+      safeSnackbar('Error', 'Could not delete notification.', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   void handleNotificationTap(NotificationItem notification) {

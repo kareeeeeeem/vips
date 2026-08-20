@@ -127,9 +127,14 @@ class OrderRequestController extends GetxController {
 
       final order = Map<String, dynamic>.from(response.data);
 
-      orderStatus.value = (order['status'] ?? 'pending').toString();
+      final statusStr = (order['status'] ?? 'pending').toString();
+      orderStatus.value = statusStr;
+      currentOrderStep.value = _stepForStatus(statusStr);
       paymentMethod.value = (order['paymentMethod'] ?? 'cash').toString();
-      paymentStatus.value = order['status'] == 'delivered' ? 'PAID' : 'PENDING';
+      // Cash-on-delivery orders aren't actually paid until delivered — a
+      // real gateway payment (paymee/paypal) is captured up front instead.
+      final isCardPayment = paymentMethod.value != 'cash';
+      paymentStatus.value = (isCardPayment || statusStr == 'delivered') ? 'PAID' : 'PENDING';
       deliveryType.value = (order['orderType'] ?? 'delivery').toString();
 
       final merchant = order['merchantId'];
@@ -150,17 +155,29 @@ class OrderRequestController extends GetxController {
       }
 
       final items = (order['items'] as List? ?? []);
-      orderItems.value = items.map((item) => OrderItem(
-            id: (item['productId'] ?? '').toString(),
-            name: (item['item_name'] ?? 'Item').toString(),
-            price: (item['price'] as num?)?.toDouble() ?? 0.0,
-            quantity: (item['quantity'] as num?)?.toInt() ?? 1,
-          )).toList();
+      orderItems.value = items.map((item) {
+        final img = (item['item_image_full_url'] ?? '').toString();
+        return OrderItem(
+          id: (item['productId'] ?? '').toString(),
+          name: (item['item_name'] ?? 'Item').toString(),
+          image: img.isEmpty ? null : img,
+          price: (item['price'] as num?)?.toDouble() ?? 0.0,
+          quantity: (item['quantity'] as num?)?.toInt() ?? 1,
+        );
+      }).toList();
 
       subtotal.value = items.fold<double>(0.0, (sum, item) =>
           sum + ((item['price'] as num?)?.toDouble() ?? 0.0) * ((item['quantity'] as num?)?.toInt() ?? 1));
       itemPrice.value = subtotal.value;
+      // Real per-order figures — these all used to be left at their zero
+      // defaults regardless of what the order actually had.
+      addonCost.value = items.fold<double>(0.0, (sum, item) =>
+          sum + ((item['total_add_on_price'] as num?)?.toDouble() ?? 0.0));
       couponDiscount.value = ((order['couponDiscountAmount'] as num?) ?? 0).toInt();
+      vipDiscount.value = ((order['walletPointsRedeemed'] as num?) ?? 0).toInt();
+      serviceCharge.value = (order['additionalCharge'] as num?)?.toDouble() ?? 0.0;
+      deliveryCharge.value = (order['deliveryCharge'] as num?)?.toDouble() ?? 0.0;
+      vatTax.value = (order['totalTaxAmount'] as num?)?.toDouble() ?? 0.0;
       grandTotal.value = (order['totalAmount'] as num?)?.toDouble() ?? subtotal.value;
 
       _generateQRCode();
@@ -170,6 +187,73 @@ class OrderRequestController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  // Maps the real backend status enum (models/Order.js) onto the 3-step
+  // Assigned/Picked/On The Way tracker shown on this screen.
+  int _stepForStatus(String status) {
+    switch (status) {
+      case 'processing':
+      case 'ready':
+        return 1;
+      case 'handover':
+      case 'picked_up':
+      case 'delivered':
+        return 2;
+      default: // pending, confirmed
+        return 0;
+    }
+  }
+
+  String get orderStatusLabel {
+    switch (orderStatus.value) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'processing':
+        return 'Processing';
+      case 'ready':
+        return 'Ready';
+      case 'handover':
+        return 'Handover';
+      case 'picked_up':
+        return 'Picked Up';
+      case 'delivered':
+        return 'Delivered';
+      case 'canceled':
+      case 'cancelled':
+        return 'Cancelled';
+      case 'refund_requested':
+        return 'Refund Requested';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return orderStatus.value;
+    }
+  }
+
+  Color get orderStatusColor {
+    switch (orderStatus.value) {
+      case 'delivered':
+        return const Color(0xFF22C55E);
+      case 'canceled':
+      case 'cancelled':
+      case 'refunded':
+        return const Color(0xFFEF4444);
+      case 'refund_requested':
+        return const Color(0xFFF59E0B);
+      default:
+        return const Color(0xFF0891B2);
+    }
+  }
+
+  bool get canCancel => ![
+        'delivered',
+        'canceled',
+        'cancelled',
+        'refund_requested',
+        'refunded',
+      ].contains(orderStatus.value);
 
   void _generateQRCode() {
     qrData.value = '''
@@ -286,7 +370,11 @@ class OrderRequestController extends GetxController {
     );
   }
 
-  void acceptRequest() {
+  // A customer can cancel their own order while it's still in progress —
+  // there is no real "accept this order request" action for a customer to
+  // take on their own order (that was a merchant/rider-shaped action that
+  // ended up on this screen by mistake).
+  void confirmCancelOrder() {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -296,13 +384,13 @@ class OrderRequestController extends GetxController {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.check_circle,
-                color: const Color(0xFF22C55E),
+                Icons.cancel_outlined,
+                color: const Color(0xFFEF4444),
                 size: 48,
               ),
               SizedBox(height: 16),
               Text(
-                'Accept Order Request',
+                'Cancel Order',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -311,7 +399,7 @@ class OrderRequestController extends GetxController {
               ),
               SizedBox(height: 12),
               Text(
-                'Do you want to accept this order request?',
+                'Do you want to cancel this order?',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: const Color(0xFF6B7280)),
               ),
@@ -321,7 +409,7 @@ class OrderRequestController extends GetxController {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(),
-                      child: Text('Cancel'),
+                      child: Text('Keep Order'),
                     ),
                   ),
                   SizedBox(width: 12),
@@ -329,12 +417,12 @@ class OrderRequestController extends GetxController {
                     child: ElevatedButton(
                       onPressed: () async {
                         Get.back();
-                        await _acceptOrder();
+                        await _cancelOrder();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF22C55E),
+                        backgroundColor: const Color(0xFFEF4444),
                       ),
-                      child: Text('Accept'),
+                      child: Text('Cancel Order'),
                     ),
                   ),
                 ],
@@ -346,83 +434,22 @@ class OrderRequestController extends GetxController {
     );
   }
 
-  Future<void> _acceptOrder() async {
-    await updateOrderStatus('confirmed');
-    if (orderStatus.value == 'confirmed') {
-      currentOrderStep.value = 1; // Move to "Picked"
+  Future<void> _cancelOrder() async {
+    try {
+      final response = await ApiService().put('/order/${orderId.value}/cancel', {});
+      if (response.success) {
+        orderStatus.value = 'cancelled';
+        safeSnackbar('Order Cancelled', 'Your order has been cancelled', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (_) {
+      safeSnackbar('Error', 'Could not cancel order. Please try again.', snackPosition: SnackPosition.BOTTOM);
     }
-  }
-
-  void updateOrderStep(int step) {
-    currentOrderStep.value = step;
-
-    String status = '';
-    switch (step) {
-      case 0:
-        status = 'Assigned';
-        break;
-      case 1:
-        status = 'Picked';
-        break;
-      case 2:
-        status = 'On The Way';
-        break;
-      case 3:
-        status = 'Delivered';
-        break;
-    }
-
-    orderStatus.value = status;
   }
 
   void goBack() {
     Get.back();
-  }
-
-  // ==================== API METHODS ====================
-
-  Future<void> fetchOrderDetails(String orderId) async {
-    try {
-      final response = await ApiService().get('/order/$orderId');
-      if (response.success && response.data != null) {
-        final data = response.data;
-        this.orderId.value = data['_id'] ?? orderId;
-        orderStatus.value = data['status'] ?? 'pending';
-      } else {
-        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
-      }
-    } catch (e) {
-      safeSnackbar(
-        'Error',
-        'Failed to load order details',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  Future<void> updateOrderStatus(String status) async {
-    try {
-      final response = await ApiService().put(
-        '/order/${orderId.value}/cancel',
-        {'status': status},
-      );
-      if (response.success) {
-        orderStatus.value = status;
-        safeSnackbar('Success', 'Order status updated', snackPosition: SnackPosition.BOTTOM);
-        return;
-      }
-      safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
-    } catch (e) {
-      safeSnackbar(
-        'Error',
-        'Failed to update order status',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.9),
-        colorText: Colors.white,
-      );
-    }
   }
 }
 
@@ -497,8 +524,8 @@ class OrderRequestView extends GetView<OrderRequestController> {
 
                       SizedBox(height: 20.h),
 
-                      // Accept Request Button
-                      _buildAcceptRequestButton(),
+                      // Cancel Order Button
+                      _buildCancelOrderButton(),
 
                       SizedBox(height: 16.h),
 
@@ -589,13 +616,15 @@ class OrderRequestView extends GetView<OrderRequestController> {
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        'PAID',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          fontFamily: 'SF Pro Display',
+                      child: Obx(
+                        () => Text(
+                          controller.paymentStatus.value,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontFamily: 'SF Pro Display',
+                          ),
                         ),
                       ),
                     ),
@@ -797,27 +826,29 @@ class OrderRequestView extends GetView<OrderRequestController> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 8.w,
-                height: 8.h,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
+          Obx(
+            () => Row(
+              children: [
+                Container(
+                  width: 8.w,
+                  height: 8.h,
+                  decoration: BoxDecoration(
+                    color: controller.orderStatusColor,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              SizedBox(width: 8.w),
-              Text(
-                'Pending',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF22C55E),
-                  fontFamily: 'SF Pro Display',
+                SizedBox(width: 8.w),
+                Text(
+                  controller.orderStatusLabel,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: controller.orderStatusColor,
+                    fontFamily: 'SF Pro Display',
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Obx(
             () => Text(
@@ -1183,47 +1214,50 @@ class OrderRequestView extends GetView<OrderRequestController> {
     );
   }
 
-  Widget _buildAcceptRequestButton() {
-    return GestureDetector(
-      onTap: controller.acceptRequest,
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 16.w),
-        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFF6B35),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Obx(() => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Accept Request',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                fontFamily: 'SF Pro Display',
-              ),
-            ),
-            Row(
-              children: [
-                Icon(Icons.schedule, color: Colors.white, size: 20.sp),
-                SizedBox(width: 6.w),
-                Text(
-                  controller.orderStatus.value,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontFamily: 'SF Pro Display',
-                  ),
+  Widget _buildCancelOrderButton() {
+    return Obx(() {
+      if (!controller.canCancel) return const SizedBox.shrink();
+      return GestureDetector(
+        onTap: controller.confirmCancelOrder,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEF4444),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Cancel Order',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  fontFamily: 'SF Pro Display',
                 ),
-              ],
-            ),
-          ],
-        )),
-      ),
-    );
+              ),
+              Row(
+                children: [
+                  Icon(Icons.schedule, color: Colors.white, size: 20.sp),
+                  SizedBox(width: 6.w),
+                  Text(
+                    controller.orderStatusLabel,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontFamily: 'SF Pro Display',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildCopyright() {
