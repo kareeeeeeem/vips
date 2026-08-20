@@ -82,7 +82,10 @@ class ReportController extends GetxController
         // Handle array response (current backend returns array of all reports)
         if (data is List) {
           final allReportsList = data.map((e) => Report.fromJson(e)).toList();
-          _allReports.value = allReportsList.where((r) => r.type == ReportType.all).toList();
+          // "All" means every report, not just the ones that aren't
+          // coupon/package — a user with only coupon/package activity was
+          // previously seeing an empty All tab despite having real reports.
+          _allReports.value = allReportsList;
           _couponReports.value = allReportsList.where((r) => r.type == ReportType.coupon).toList();
           _packageReports.value = allReportsList.where((r) => r.type == ReportType.package).toList();
         } else if (data is Map) {
@@ -297,7 +300,7 @@ class Report {
   }
 
   String get formattedAmount {
-    return '\$${amount.toStringAsFixed(2)}';
+    return 'D ${amount.toStringAsFixed(3)}';
   }
 
   factory Report.fromJson(Map<String, dynamic> json) {

@@ -97,9 +97,9 @@ void main() {
       );
     });
 
-    test('Report.formattedAmount formats as a 2-decimal currency string', () {
-      expect(makeReport(amount: 1234.5).formattedAmount, equals('\$1234.50'));
-      expect(makeReport(amount: 0).formattedAmount, equals('\$0.00'));
+    test('Report.formattedAmount formats as a 3-decimal TND currency string', () {
+      expect(makeReport(amount: 1234.5).formattedAmount, equals('D 1234.500'));
+      expect(makeReport(amount: 0).formattedAmount, equals('D 0.000'));
     });
 
     test('ReportTypeExtension.displayName maps each type', () {
