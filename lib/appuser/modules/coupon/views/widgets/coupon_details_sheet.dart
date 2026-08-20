@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
 import '../../controllers/coupon_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class CouponDetailsSheet extends StatelessWidget {
   final Coupon coupon;
@@ -342,6 +344,42 @@ class CouponDetailsSheet extends StatelessWidget {
             ),
 
             // Actions
+            Padding(
+              padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 24.h),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: coupon.code));
+                    safeSnackbar(
+                      'Copied',
+                      '${coupon.code} copied — paste it at checkout to apply the discount',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                  icon: Icon(Icons.copy_rounded, size: 18.sp, color: Colors.white),
+                  label: Text(
+                    'Copy Code',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.AppPrimaryColor,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

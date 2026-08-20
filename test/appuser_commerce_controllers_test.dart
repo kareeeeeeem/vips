@@ -21,8 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appuser/modules/Donation/controllers/donation_controller.dart';
 import 'package:vip/appuser/modules/bills/controllers/bills_controller.dart';
-import 'package:vip/appuser/modules/coupon/controllers/coupon_controller.dart'
-    hide Package;
+import 'package:vip/appuser/modules/coupon/controllers/coupon_controller.dart';
 import 'package:vip/appuser/modules/credit/controllers/credit_controller.dart';
 import 'package:vip/appuser/modules/expense_to_reward/controllers/expense_to_reward_controller.dart';
 import 'package:vip/appuser/modules/gift/controllers/gift_controller.dart';
@@ -303,11 +302,8 @@ void main() {
       coupon = CouponController();
     });
 
-    test('starts with default filter, tab index and empty lists', () {
-      expect(coupon.selectedFilter.value, equals('All'));
-      expect(coupon.currentTabIndex.value, equals(0));
+    test('starts with an empty coupons list', () {
       expect(coupon.coupons, isEmpty);
-      expect(coupon.packages, isEmpty);
     });
 
     test('Coupon.usagePercentage computes usage over max as a percentage', () {
@@ -331,44 +327,6 @@ void main() {
         expiryDate: DateTime.now().add(const Duration(days: 100)),
       );
       expect(c.daysLeft, inInclusiveRange(99, 100));
-    });
-
-    test('Coupon.copyWith overrides only the given fields', () {
-      final original = _coupon(id: 'x1', code: 'ORIG', status: CouponStatus.active);
-      final copy = original.copyWith(status: CouponStatus.inactive);
-      expect(copy.id, equals('x1'));
-      expect(copy.code, equals('ORIG'));
-      expect(copy.status, equals(CouponStatus.inactive));
-      expect(original.status, equals(CouponStatus.active)); // unchanged
-    });
-
-    test('toggleCouponStatus flips active <-> inactive for the matching coupon', () {
-      coupon.coupons.addAll([
-        _coupon(id: 'a', status: CouponStatus.active),
-        _coupon(id: 'b', status: CouponStatus.inactive),
-      ]);
-
-      coupon.toggleCouponStatus(coupon.coupons.firstWhere((c) => c.id == 'a'));
-      expect(
-        coupon.coupons.firstWhere((c) => c.id == 'a').status,
-        equals(CouponStatus.inactive),
-      );
-
-      coupon.toggleCouponStatus(coupon.coupons.firstWhere((c) => c.id == 'b'));
-      expect(
-        coupon.coupons.firstWhere((c) => c.id == 'b').status,
-        equals(CouponStatus.active),
-      );
-    });
-
-    test('toggleCouponStatus is a no-op when the coupon id is not found', () {
-      coupon.coupons.add(_coupon(id: 'known', status: CouponStatus.active));
-      final unknown = _coupon(id: 'unknown', status: CouponStatus.active);
-
-      coupon.toggleCouponStatus(unknown);
-
-      expect(coupon.coupons.length, equals(1));
-      expect(coupon.coupons.first.status, equals(CouponStatus.active));
     });
   });
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../controllers/cart_controller.dart';
@@ -111,7 +112,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Pay Via Online (Coming Soon)',
+                      'Pay Via Online',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
@@ -123,85 +124,33 @@ class PaymentMethodBottomSheet extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // No online payment gateway is actually integrated yet —
-                  // these were previously selectable and silently placed
-                  // real orders tagged as e.g. "stripe" with no payment ever
-                  // taken. Shown disabled until a real gateway is wired up,
-                  // so only the working Cash on Delivery option can be
-                  // selected.
-                  _buildPaymentOption(
+                  // Only Paymee/PayPal actually exist as gateways
+                  // server-side (GET /payment/methods, same check
+                  // CheckoutController uses) — each is only tappable once
+                  // the backend reports real credentials configured for it,
+                  // so a selection here never lies about what will happen
+                  // at checkout.
+                  Obx(() => _buildPaymentOption(
+                    controller: controller,
+                    id: 'paymee',
+                    title: 'Paymee',
+                    iconUrl:
+                        'https://paymee.tn/assets/images/logo.png',
+                    enabled: controller.gatewayAvailable['paymee'] == true,
+                    disabledReason: 'Paymee is not activated on this account yet',
+                  )),
+
+                  SizedBox(height: 12.h),
+
+                  Obx(() => _buildPaymentOption(
                     controller: controller,
                     id: 'paypal',
-                    title: 'Paypal',
+                    title: 'PayPal',
                     iconUrl:
                         'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'bkash',
-                    title: 'Bkash',
-                    iconUrl:
-                        'https://seeklogo.com/images/B/bkash-logo-835789094F-seeklogo.com.png',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'stripe',
-                    title: 'Stripe',
-                    iconUrl:
-                        'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'razorpay',
-                    title: 'Razor pay',
-                    iconUrl:
-                        'https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'semangpay',
-                    title: 'Semang pay',
-                    iconUrl:
-                        'https://via.placeholder.com/100x40/4A90E2/FFFFFF?text=Semang',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'flutterwave',
-                    title: 'Flutterwave',
-                    iconUrl: 'https://flutterwave.com/images/logo/full.svg',
-                    enabled: false,
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  _buildPaymentOption(
-                    controller: controller,
-                    id: 'paystack',
-                    title: 'Paystack',
-                    iconUrl:
-                        'https://paystack.com/assets/img/logo/full-logo-primary.svg',
-                    enabled: false,
-                  ),
+                    enabled: controller.gatewayAvailable['paypal'] == true,
+                    disabledReason: 'PayPal is not activated on this account yet',
+                  )),
 
                   SizedBox(height: 100.h),
                 ],
@@ -278,6 +227,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
     required String title,
     String? iconUrl,
     bool enabled = true,
+    String? disabledReason,
   }) {
     return Obx(() {
       final isSelected = controller.selectedPaymentMethod.value == id;
@@ -288,8 +238,8 @@ class PaymentMethodBottomSheet extends StatelessWidget {
           onTap: enabled
               ? () => controller.selectPaymentMethod(id)
               : () => safeSnackbar(
-                    'Coming Soon',
-                    '$title will be available in a future update',
+                    'Not Available',
+                    disabledReason ?? '$title is not available yet',
                     snackPosition: SnackPosition.BOTTOM,
                   ),
           child: Container(
@@ -344,7 +294,7 @@ class PaymentMethodBottomSheet extends StatelessWidget {
 
                 if (!enabled)
                   Text(
-                    'Soon',
+                    'Unavailable',
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
@@ -405,6 +355,10 @@ class PaymentMethodController extends GetxController {
 
   var selectedPaymentMethod = ''.obs;
 
+  // Same live check CheckoutController uses — only show Paymee/PayPal as
+  // selectable once the backend actually has credentials configured.
+  var gatewayAvailable = <String, bool>{'paymee': false, 'paypal': false}.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -413,6 +367,20 @@ class PaymentMethodController extends GetxController {
     } else {
       selectedPaymentMethod.value = 'cash_on_delivery';
     }
+    _loadGatewayAvailability();
+  }
+
+  Future<void> _loadGatewayAvailability() async {
+    try {
+      final response = await ApiService().get('/payment/methods');
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        gatewayAvailable.value = {
+          'paymee': data['paymee']?['configured'] == true,
+          'paypal': data['paypal']?['configured'] == true,
+        };
+      }
+    } catch (_) {}
   }
 
   void selectPaymentMethod(String method) {

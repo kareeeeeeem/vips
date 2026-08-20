@@ -1,37 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/coupon_details_sheet.dart';
-import '../views/widgets/coupon_sheet.dart';
-import '../views/widgets/edit_coupon_sheet.dart';
-import '../views/widgets/package_sheet.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
-class CouponController extends GetxController
-    with GetSingleTickerProviderStateMixin {
-  // Tab Controller
-  late TabController tabController;
-
-  // Observables
-  final RxInt currentTabIndex = 0.obs;
+class CouponController extends GetxController {
   final RxList<Coupon> coupons = <Coupon>[].obs;
-  final RxList<Package> packages = <Package>[].obs;
   final RxBool isLoading = false.obs;
-  final RxString selectedFilter = 'All'.obs;
 
   @override
   void onInit() {
     super.onInit();
-    tabController = TabController(length: 2, vsync: this);
-    tabController.addListener(() {
-      currentTabIndex.value = tabController.index;
-    });
     loadData();
   }
 
-  // Charger les données
   Future<void> loadData() async {
     isLoading.value = true;
     try {
@@ -68,60 +52,16 @@ class CouponController extends GetxController
                 usageCount:
                     ((c['usageCount'] ?? c['usageLimit'] ?? 0) as num).toInt(),
                 maxUsage: ((c['maxUsage'] ?? c['limit'] ?? 100) as num).toInt(),
+                minOrderAmount:
+                    ((c['minOrderAmount'] ?? 0) as num).toDouble(),
               );
-            }).toList();
+            }).where((c) => c.status != CouponStatus.expired).toList();
       }
     } catch (e) {
       debugPrint('Error fetching coupons: $e');
     } finally {
       isLoading.value = false;
     }
-    await loadPackages();
-  }
-
-  // No backend packages/subscription-catalog endpoint exists yet — leave
-  // `packages` empty rather than call a route that doesn't exist. Wire this
-  // up once a real subscription catalog endpoint is added server-side.
-  Future<void> loadPackages() async {}
-
-  final Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
-
-  // Ouvrir le date picker
-  Future<void> openDatePicker() async {
-    final picked = await showDatePicker(
-      context: Get.context!,
-      initialDate: selectedDate.value ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
-      builder:
-          (context, child) => Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(primary: Color(0xFF10B981)),
-            ),
-            child: child!,
-          ),
-    );
-    if (picked != null) {
-      selectedDate.value = picked;
-    }
-  }
-
-  // Créer un coupon
-  void showCreateCouponSheet() {
-    Get.bottomSheet(
-      CreateCouponSheet(),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
-  }
-
-  // Créer un package
-  void showCreatePackageSheet() {
-    Get.bottomSheet(
-      CreatePackageSheet(),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
   }
 
   // Voir les détails d'un coupon
@@ -133,229 +73,16 @@ class CouponController extends GetxController
     );
   }
 
-  // Actions sur un coupon
-  void editCoupon(Coupon coupon) {
-    Get.bottomSheet(
-      EditCouponSheet(coupon: coupon, onSuccess: loadData),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+  void copyCouponCode(Coupon coupon) {
+    Clipboard.setData(ClipboardData(text: coupon.code));
+    safeSnackbar(
+      'Copied',
+      '${coupon.code} copied — paste it at checkout to apply the discount',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
     );
-  }
-
-  void deleteCoupon(Coupon coupon) {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28.r),
-        ),
-        child: Container(
-          padding: EdgeInsets.all(28.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28.r),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon d'avertissement
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 48.sp,
-                  color: Colors.red.shade400,
-                ),
-              ),
-
-              SizedBox(height: 24.h),
-
-              // Titre
-              Text(
-                'Delete Coupon?',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
-              ),
-
-              SizedBox(height: 12.h),
-
-              // Message
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14.sp,
-                    color: Colors.grey.shade600,
-                    height: 1.5,
-                  ),
-                  children: [
-                    TextSpan(text: 'Are you sure you want to delete\n'),
-                    TextSpan(
-                      text: coupon.code,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    TextSpan(text: '?\nThis action cannot be undone.'),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 28.h),
-
-              // Boutons
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        Get.back();
-                        final res = await ApiService().delete(
-                          '/rewards/coupons/${coupon.id}',
-                        );
-                        if (res.success) {
-                          coupons.remove(coupon);
-                          safeSnackbar(
-                            'Deleted',
-                            'Coupon deleted successfully',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.green,
-                            colorText: Colors.white,
-                            duration: Duration(seconds: 2),
-                            margin: EdgeInsets.all(16.w),
-                            borderRadius: 12.r,
-                            icon: Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.white,
-                            ),
-                          );
-                        } else {
-                          safeSnackbar(
-                            'Error',
-                            'Failed to delete coupon',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.redAccent,
-                            colorText: Colors.white,
-                            duration: Duration(seconds: 2),
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade500,
-                          borderRadius: BorderRadius.circular(14.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.shade200,
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          'Delete',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
-    );
-  }
-
-  Future<void> toggleCouponStatus(Coupon coupon) async {
-    final index = coupons.indexWhere((c) => c.id == coupon.id);
-    if (index == -1) return;
-
-    final newStatus =
-        coupon.status == CouponStatus.active
-            ? CouponStatus.inactive
-            : CouponStatus.active;
-
-    // Update locally first for immediate feedback.
-    coupons[index] = coupon.copyWith(status: newStatus);
-    coupons.refresh();
-
-    try {
-      final res = await ApiService().put('/rewards/coupons/${coupon.id}', {
-        'isActive': newStatus == CouponStatus.active,
-      });
-      if (!res.success) {
-        // Revert on failure.
-        coupons[index] = coupon;
-        coupons.refresh();
-        safeSnackbar(
-          'Error',
-          res.message.isNotEmpty
-              ? res.message
-              : 'Failed to update coupon status',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      coupons[index] = coupon;
-      coupons.refresh();
-      safeSnackbar(
-        'Error',
-        'Failed to update coupon status: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  @override
-  void onClose() {
-    tabController.dispose();
-    super.onClose();
   }
 }
 
@@ -369,6 +96,7 @@ class Coupon {
   final DateTime expiryDate;
   final int usageCount;
   final int maxUsage;
+  final double minOrderAmount;
 
   Coupon({
     required this.id,
@@ -379,29 +107,8 @@ class Coupon {
     required this.expiryDate,
     required this.usageCount,
     required this.maxUsage,
+    this.minOrderAmount = 0,
   });
-
-  Coupon copyWith({
-    String? id,
-    String? code,
-    double? discount,
-    CouponType? type,
-    CouponStatus? status,
-    DateTime? expiryDate,
-    int? usageCount,
-    int? maxUsage,
-  }) {
-    return Coupon(
-      id: id ?? this.id,
-      code: code ?? this.code,
-      discount: discount ?? this.discount,
-      type: type ?? this.type,
-      status: status ?? this.status,
-      expiryDate: expiryDate ?? this.expiryDate,
-      usageCount: usageCount ?? this.usageCount,
-      maxUsage: maxUsage ?? this.maxUsage,
-    );
-  }
 
   double get usagePercentage =>
       maxUsage == 0 ? 0 : (usageCount / maxUsage) * 100;
@@ -412,21 +119,3 @@ class Coupon {
 enum CouponType { percentage, fixed }
 
 enum CouponStatus { active, inactive, expired }
-
-class Package {
-  final String id;
-  final String name;
-  final double price;
-  final int duration;
-  final List<String> features;
-  final bool isPopular;
-
-  Package({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.duration,
-    required this.features,
-    this.isPopular = false,
-  });
-}
