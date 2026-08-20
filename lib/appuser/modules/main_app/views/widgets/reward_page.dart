@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/help_sheet.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class RewardPage extends StatefulWidget {
@@ -151,15 +152,18 @@ class _RewardPageState extends State<RewardPage> {
         ),
         centerTitle: true,
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 20.w),
-            child: Center(
-              child: Text(
-                'Help !',
-                style: TextStyle(
-                  color: Color(0xFF5ED5A8),
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () => showHelpSheet(accentColor: const Color(0xFF2E7D5F)),
+            child: Padding(
+              padding: EdgeInsets.only(right: 20.w),
+              child: Center(
+                child: Text(
+                  'Help !',
+                  style: TextStyle(
+                    color: Color(0xFF5ED5A8),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

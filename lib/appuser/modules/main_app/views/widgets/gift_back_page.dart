@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/core/utils/help_sheet.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class GiftBackPage extends StatefulWidget {
@@ -37,6 +38,22 @@ class _GiftBackPageState extends State<GiftBackPage> {
   void initState() {
     super.initState();
     _loadLimits();
+  }
+
+  // Same pattern as reward_page.dart's _scanMerchantQR(): a scanned VIPs ID
+  // QR comes back as {type: 'user', user: {id, fullName, phone}} — the
+  // recipient field here takes a phone number, so populate from that.
+  void _scanRecipientQR() {
+    Get.toNamed('/q-r-scanner')?.then((result) {
+      if (result is Map && result['type'] == 'user') {
+        final phone = result['user']?['phone']?.toString();
+        if (phone != null && phone.isNotEmpty) {
+          setState(() => phoneIdController.text = phone);
+        }
+      } else if (result is Map) {
+        safeSnackbar('Not a VIPs ID', 'Scan the recipient\'s VIPs ID QR code.', snackPosition: SnackPosition.BOTTOM);
+      }
+    });
   }
 
   Future<void> _loadLimits() async {
@@ -140,15 +157,18 @@ class _GiftBackPageState extends State<GiftBackPage> {
         ),
         centerTitle: true,
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 20.w),
-            child: Center(
-              child: Text(
-                'Help !',
-                style: TextStyle(
-                  color: Color(0xFF5ED5A8),
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () => showHelpSheet(accentColor: const Color(0xFF2E7D5F)),
+            child: Padding(
+              padding: EdgeInsets.only(right: 20.w),
+              child: Center(
+                child: Text(
+                  'Help !',
+                  style: TextStyle(
+                    color: Color(0xFF5ED5A8),
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -197,16 +217,19 @@ class _GiftBackPageState extends State<GiftBackPage> {
                               ),
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.all(8.w),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFF8F8F8),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Icon(
-                              Icons.qr_code_scanner_rounded,
-                              color: Color(0xFF5ED5A8),
-                              size: 22.sp,
+                          GestureDetector(
+                            onTap: _scanRecipientQR,
+                            child: Container(
+                              padding: EdgeInsets.all(8.w),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF8F8F8),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: Color(0xFF5ED5A8),
+                                size: 22.sp,
+                              ),
                             ),
                           ),
                         ],
@@ -254,45 +277,32 @@ class _GiftBackPageState extends State<GiftBackPage> {
                             ),
                           ),
                           SizedBox(width: 12.w),
-                          GestureDetector(
-                            onTap: () {
-                              // Show currency picker
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 18.w,
-                                vertical: 20.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF2E7D5F),
-                                borderRadius: BorderRadius.circular(10.r),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0xFF2E7D5F).withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selectedCurrency,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18.sp,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  SizedBox(width: 6.w),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    color: Colors.white,
-                                    size: 22.sp,
-                                  ),
-                                ],
+                          // Static badge, not a picker — TND ('D') is the
+                          // only currency this app supports anywhere (same
+                          // as reward_page.dart's identical amount field).
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 20.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF2E7D5F),
+                              borderRadius: BorderRadius.circular(10.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFF2E7D5F).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              selectedCurrency,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
@@ -352,7 +362,9 @@ class _GiftBackPageState extends State<GiftBackPage> {
                                 ),
                               ),
                               Text(
-                                '10 - 1000 D',
+                                isLoadingLimits
+                                    ? '...'
+                                    : '${minAmount.toStringAsFixed(0)} - ${maxAmountPerTransaction.toStringAsFixed(0)} D',
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   color: Color(0xFF2E7D5F),
