@@ -10,7 +10,6 @@ import 'package:vip/core/utils/safe_snackbar.dart';
 
 class TransactionsExtractController extends GetxController {
   // Observables
-  final RxString selectedMonth = 'Jan'.obs;
   final RxString selectedFilter = 'All'.obs;
   final RxList<Transaction> transactions = <Transaction>[].obs;
   final RxBool isLoading = false.obs;
@@ -154,11 +153,12 @@ class TransactionsExtractController extends GetxController {
     }).toList();
   }
 
-  // Sélectionner un mois
-  void selectMonth(String month) {
-    selectedMonth.value = month;
-    loadTransactions();
-  }
+  // Real active period label — this used to be a static 'Jan' RxString
+  // with a selectMonth() setter no button anywhere ever called, so the
+  // calendar-icon label at the top of the screen always said "Jan"
+  // regardless of the actual date or the real date filter below it.
+  String get currentPeriodLabel =>
+      hasCustomDate.value ? _formatDate(selectedDate.value) : _formatDate(DateTime.now());
 
   // Ouvrir le sélecteur de date
   void openDatePicker(BuildContext context) async {
@@ -284,7 +284,7 @@ class TransactionsExtractController extends GetxController {
       return;
     }
     final buffer = StringBuffer();
-    buffer.writeln('VIPs Transaction Extract — ${selectedMonth.value}');
+    buffer.writeln('VIPs Transaction Extract — $currentPeriodLabel');
     buffer.writeln('Total Rewards: ${totalRewards.value.toStringAsFixed(3)} TND');
     buffer.writeln('Net Balance:   ${netBalance.value.toStringAsFixed(3)} TND');
     buffer.writeln('─' * 40);
@@ -295,7 +295,7 @@ class TransactionsExtractController extends GetxController {
     }
     SharePlus.instance.share(ShareParams(
       text: buffer.toString(),
-      subject: 'VIPs Transactions — ${selectedMonth.value}',
+      subject: 'VIPs Transactions — $currentPeriodLabel',
     ));
   }
 

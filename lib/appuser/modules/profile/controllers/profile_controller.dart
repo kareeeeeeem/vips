@@ -194,12 +194,12 @@ class ProfileController extends GetxController {
                             ).toString().substring(0, 10)
                             : '',
                     'time': '',
-                    'status': _capitalize(o['status'] ?? 'pending'),
+                    'status': _capitalize(_normalizeStatus(o['status'] ?? 'pending')),
                     // Backend field is `orderType` (e.g. "delivery"/"pickup"),
                     // not `deliveryType` — that key never existed in the API
                     // response, so this badge always showed "Delivery".
                     'type': _capitalize(o['orderType'] ?? 'delivery'),
-                    'statusColor': _statusColor(o['status']),
+                    'statusColor': _statusColor(_normalizeStatus(o['status'])),
                   },
                 )
                 .toList();
@@ -209,6 +209,16 @@ class ProfileController extends GetxController {
 
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  // Merchants cancel orders with status 'canceled' (see
+  // appmerchant/.../order_card.dart), while the user-initiated cancel
+  // endpoint (POST /order/:id/cancel) writes 'cancelled' — both spellings
+  // are valid per models/Order.js's enum. filteredOrders/_statusColor only
+  // ever checked for 'Cancelled', so a merchant-cancelled order silently
+  // stayed in the customer's Active tab with the wrong (purple) status
+  // color instead of being excluded and shown in red.
+  String _normalizeStatus(String? s) => s == 'canceled' ? 'cancelled' : (s ?? 'pending');
+
   String _statusColor(String? s) {
     switch (s) {
       case 'delivered':
@@ -294,6 +304,12 @@ class ProfileController extends GetxController {
   // Gestion des dates
   final Rx<DateTime> fromDate = DateTime.now().subtract(Duration(days: 30)).obs;
   final Rx<DateTime> toDate = DateTime.now().obs;
+  // The date range shown in the filter chip was purely cosmetic — picking a
+  // range via selectDateRange() updated fromDate/toDate but filteredOrders
+  // never checked them. Track whether the user actually picked a range so
+  // the default 30-day window doesn't silently hide older orders for
+  // everyone before they've touched the filter.
+  final RxBool _dateFilterActive = false.obs;
 
   final RxList<Map<String, dynamic>> ordersList = <Map<String, dynamic>>[].obs;
 
@@ -317,7 +333,19 @@ class ProfileController extends GetxController {
         matchesType = order['type'] == selectedTypeFilter.value;
       }
 
-      return matchesStatus && matchesType;
+      // Filtre par date (only once the user has actually picked a range)
+      bool matchesDate = true;
+      if (_dateFilterActive.value) {
+        final rawDate = order['date'] as String? ?? '';
+        final orderDate = DateTime.tryParse(rawDate);
+        if (orderDate != null) {
+          final start = DateTime(fromDate.value.year, fromDate.value.month, fromDate.value.day);
+          final end = DateTime(toDate.value.year, toDate.value.month, toDate.value.day, 23, 59, 59);
+          matchesDate = !orderDate.isBefore(start) && !orderDate.isAfter(end);
+        }
+      }
+
+      return matchesStatus && matchesType && matchesDate;
     }).toList();
   }
 
@@ -445,6 +473,7 @@ class ProfileController extends GetxController {
     if (picked != null) {
       fromDate.value = picked.start;
       toDate.value = picked.end;
+      _dateFilterActive.value = true;
     }
   }
 

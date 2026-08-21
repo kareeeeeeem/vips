@@ -279,7 +279,7 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
           SizedBox(width: 8.w),
           Obx(
             () => Text(
-              controller.selectedMonth.value,
+              controller.currentPeriodLabel,
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 14.sp,

@@ -21,7 +21,6 @@ class SettingsController extends GetxController {
 
   // Security settings
   final RxBool isBiometricEnabled = false.obs;
-  final RxBool isFaceIdEnabled = false.obs;
   final RxBool isTwoFactorEnabled = false.obs;
 
   // Notification settings

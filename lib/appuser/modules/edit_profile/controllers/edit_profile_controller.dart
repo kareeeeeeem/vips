@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
-import '../../../design_system/atoms/app_colors.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class EditProfileController extends GetxController {
@@ -14,8 +13,6 @@ class EditProfileController extends GetxController {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
-  final idController = TextEditingController();
-  final expireDateController = TextEditingController();
   final childrenController = TextEditingController();
   final postalCodeController = TextEditingController();
   final professionalController = TextEditingController();
@@ -129,33 +126,6 @@ class EditProfileController extends GetxController {
     }
   }
 
-  Future<void> selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.AppPrimaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      expireDateController.text =
-          "${picked.month.toString().padLeft(2, '0')}/${picked.year}";
-    }
-  }
-
   void saveProfile() async {
     if (formKey.currentState?.validate() ?? false) {
       try {
@@ -209,8 +179,6 @@ class EditProfileController extends GetxController {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
-    idController.dispose();
-    expireDateController.dispose();
     childrenController.dispose();
     postalCodeController.dispose();
     professionalController.dispose();
