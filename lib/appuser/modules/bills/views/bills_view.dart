@@ -514,7 +514,11 @@ class BillsView extends GetView<BillsController> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '\$${product.price.toStringAsFixed(1)}',
+                      // TND ('D') is the only currency this app supports
+                      // anywhere — this used to show '$' on a TND-priced
+                      // product, same currency label bug fixed across
+                      // product_list_page.dart / product_detail_page.dart.
+                      '${product.price.toStringAsFixed(1)} D',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

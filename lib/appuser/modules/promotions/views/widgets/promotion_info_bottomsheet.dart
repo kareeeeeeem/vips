@@ -9,6 +9,7 @@ class PromotionInfoBottomSheet {
     required String description,
     required String promoCode,
     String? discountText,
+    String? validUntil,
   }) {
     Get.bottomSheet(
       Container(
@@ -103,7 +104,12 @@ class PromotionInfoBottomSheet {
                     SizedBox(height: 32.h),
 
                     // Duration
-                    _buildInfoSection('Duration :', '01/05/2025 - 31/05/2025'),
+                    _buildInfoSection(
+                      'Duration :',
+                      (validUntil != null && validUntil.isNotEmpty)
+                          ? 'Valid until $validUntil'
+                          : 'See terms for validity',
+                    ),
 
                     SizedBox(height: 24.h),
 
@@ -123,7 +129,7 @@ class PromotionInfoBottomSheet {
                     // Discount Amount
                     _buildInfoSection(
                       'Discount Amount :',
-                      discountText ?? '100% off shipping (Free shipping).',
+                      discountText ?? 'See promotion for details.',
                     ),
 
                     SizedBox(height: 24.h),

@@ -3,43 +3,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:vip/appuser/modules/promotions/controllers/promotions_controller.dart'
+    show Promotion, PromotionType;
 import 'package:vip/appuser/modules/promotions/views/widgets/promotion_info_bottomsheet.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
-
-enum PromotionType { orderOffer, shippingOffer }
-
-class Promotion {
-  final String id;
-  final String title;
-  final String brandName;
-  final String? brandLogo;
-  final String validUntil;
-  final PromotionType type;
-  final String? description;
-  final double? discountPercentage;
-  final double? discountAmount;
-  bool isSelected;
-
-  Promotion({
-    required this.id,
-    required this.title,
-    required this.brandName,
-    this.brandLogo,
-    required this.validUntil,
-    required this.type,
-    this.description,
-    this.discountPercentage,
-    this.discountAmount,
-    this.isSelected = false,
-  });
-}
 
 class PromotionDetailController extends GetxController {
   // Promotion courante
   var promotion =
       Promotion(
         id: '',
+        code: '',
         title: '',
         brandName: '',
         validUntil: '',
@@ -102,8 +77,12 @@ class PromotionDetailController extends GetxController {
     }
   }
 
+  // The code, not the Mongo id — /rewards/validate-qr (the endpoint every
+  // promo code actually gets checked against, see PromotionsController.
+  // applyPromoCode) matches Promotion.code, not Promotion._id.
   String getQRData() {
-    return promotion.value.id.isNotEmpty ? promotion.value.id : 'V6i8P25s';
+    final promo = promotion.value;
+    return promo.code.isNotEmpty ? promo.code : promo.id;
   }
 
   // ==================== ACTIONS ====================
@@ -121,11 +100,17 @@ class PromotionDetailController extends GetxController {
   }
 
   void showInfo() {
+    final promo = promotion.value;
     PromotionInfoBottomSheet.show(
-      title: 'FREE SHIPPING',
-      description: 'Enjoy free shipping on all orders throughout this month!',
-      promoCode: 'V6i8P25s',
-      discountText: '100% off shipping (Free shipping).',
+      title: promo.title.isNotEmpty ? promo.title : getMainTitle(),
+      description: promo.description ?? getMainTitle(),
+      promoCode: promo.code.isNotEmpty ? promo.code : promo.id,
+      discountText: promo.discountPercentage != null
+          ? '${promo.discountPercentage!.toInt()}% off'
+          : promo.discountAmount != null
+              ? '${promo.discountAmount!.toInt()} TND off'
+              : null,
+      validUntil: promo.validUntil,
     );
   }
 

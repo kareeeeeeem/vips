@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../Cart/controllers/cart_controller.dart';
+import '../../Cart/views/widgets/order_request.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 enum OrderType { delivery, takeaway, inStore }
@@ -933,7 +934,7 @@ class CheckoutController extends GetxController {
         if (gateway != null && orderId != null) {
           await _startOnlinePayment(orderId, gateway);
         } else {
-          _showOrderSuccessDialog();
+          _showOrderSuccessDialog(orderId: orderId);
         }
       } else {
         safeSnackbar(
@@ -1021,7 +1022,7 @@ class CheckoutController extends GetxController {
         if (paymentStatus == 'paid') {
           pollTimer?.cancel();
           Get.back(); // close awaiting dialog
-          _showOrderSuccessDialog();
+          _showOrderSuccessDialog(orderId: orderId);
         } else if (manual) {
           safeSnackbar(
             'Not Confirmed Yet',
@@ -1101,7 +1102,7 @@ class CheckoutController extends GetxController {
     });
   }
 
-  void _showOrderSuccessDialog() {
+  void _showOrderSuccessDialog({String? orderId}) {
     Get.dialog(
       Dialog(
         backgroundColor: Colors.transparent,
@@ -1229,7 +1230,12 @@ class CheckoutController extends GetxController {
                     child: GestureDetector(
                       onTap: () {
                         Get.back();
-                        Get.offAllNamed('/profile');
+                        if (orderId != null && orderId.isNotEmpty) {
+                          Get.offAllNamed('/main-app');
+                          Get.to(() => OrderRequestView(), arguments: {'orderId': orderId});
+                        } else {
+                          Get.offAllNamed('/profile');
+                        }
                       },
                       child: Container(
                         height: 48.h,

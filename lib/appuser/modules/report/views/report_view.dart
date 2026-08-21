@@ -78,27 +78,57 @@ class ReportView extends GetView<ReportController> {
           ),
         ),
 
-        // Calendar button
-        GestureDetector(
-          onTap: () => _showDateFilterOptions(),
-          child: Container(
-            padding: EdgeInsets.all(8.r),
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.appWhite,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.AppBlackColor.withValues(alpha: 0.04),
-                  spreadRadius: 0,
-                  blurRadius: 24,
-                  offset: const Offset(0, 4),
+        Row(
+          children: [
+            // Export button — controller.exportReports() already builds a
+            // full text summary and shares it via the OS share sheet, but
+            // had no button anywhere in the view calling it.
+            GestureDetector(
+              onTap: () => controller.exportReports(),
+              child: Container(
+                alignment: Alignment.center,
+                width: 40.w,
+                height: 40.h,
+                decoration: BoxDecoration(
+                  color: AppColors.appWhite,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.AppBlackColor.withValues(alpha: 0.04),
+                      spreadRadius: 0,
+                      blurRadius: 24,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
+                child: Icon(Icons.ios_share_rounded, size: 20.r, color: AppColors.AppBlackColor),
+              ),
             ),
-            child: SvgPicture.asset(AppIcons.calendar),
-          ),
+            SizedBox(width: 8.w),
+
+            // Calendar button
+            GestureDetector(
+              onTap: () => _showDateFilterOptions(),
+              child: Container(
+                padding: EdgeInsets.all(8.r),
+                width: 40.w,
+                height: 40.h,
+                decoration: BoxDecoration(
+                  color: AppColors.appWhite,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.AppBlackColor.withValues(alpha: 0.04),
+                      spreadRadius: 0,
+                      blurRadius: 24,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: SvgPicture.asset(AppIcons.calendar),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -178,7 +208,7 @@ class ReportView extends GetView<ReportController> {
                 Expanded(
                   child: _buildStatItem(
                     label: 'Total Amount',
-                    value: '\$${controller.totalAmount.toStringAsFixed(2)}',
+                    value: 'D ${controller.totalAmount.toStringAsFixed(3)}',
                     icon: Icons.attach_money,
                   ),
                 ),

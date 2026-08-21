@@ -211,7 +211,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '\$${widget.product.price.toStringAsFixed(1)}',
+                    // TND ('D') is the only currency this app supports.
+                    '${widget.product.price.toStringAsFixed(1)} D',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -260,7 +261,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     IconButton(
                       icon: const Icon(Icons.share_outlined, size: 20),
                       onPressed: () => SharePlus.instance.share(ShareParams(
-                        text: '${widget.product.title} — Check it out on VIPs!\nPrice: \$${widget.product.price.toStringAsFixed(2)}',
+                        text: '${widget.product.title} — Check it out on VIPs!\nPrice: ${widget.product.price.toStringAsFixed(2)} D',
                         subject: widget.product.title,
                       )),
                     ),
@@ -704,7 +705,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           child: Column(
             children: [
               _buildDetailRow('Category', widget.product.category),
-              _buildDetailRow('Price', '\$${widget.product.price.toStringAsFixed(2)}'),
+              _buildDetailRow('Price', '${widget.product.price.toStringAsFixed(2)} D'),
               if (_createdAt != null) _buildDetailRow('Listed', _formatDate(_createdAt!)),
               if (_updatedAt != null && _updatedAt != _createdAt) _buildDetailRow('Updated', _formatDate(_updatedAt!)),
               if (_merchantName != null) _buildDetailRow('Sold by', _merchantName!),
@@ -869,7 +870,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '\$${product.price.toStringAsFixed(1)}',
+                      '${product.price.toStringAsFixed(1)} D',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,

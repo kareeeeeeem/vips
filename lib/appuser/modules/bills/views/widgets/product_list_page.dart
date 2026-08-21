@@ -266,7 +266,8 @@ class ProductListPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '\$${product.price.toStringAsFixed(1)}',
+                      // TND ('D') is the only currency this app supports.
+                      '${product.price.toStringAsFixed(1)} D',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
