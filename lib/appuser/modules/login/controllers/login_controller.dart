@@ -9,7 +9,6 @@ class LoginController extends GetxController {
   final AuthService _authService = AuthService();
 
   // Text Controllers
-  final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController otpPhoneController = TextEditingController();
@@ -25,10 +24,6 @@ class LoginController extends GetxController {
   bool get rememberMe => _rememberMe.value;
   bool get isPasswordVisible => _isPasswordVisible.value;
 
-  // Validation for Phone Login
-  bool get canLogin =>
-      phoneController.text.isNotEmpty && passwordController.text.isNotEmpty;
-
   // Validation for Email Login
   bool get canEmailLogin =>
       emailController.text.isNotEmpty == true &&
@@ -41,52 +36,6 @@ class LoginController extends GetxController {
 
   void togglePasswordVisibility() {
     _isPasswordVisible.toggle();
-  }
-
-  // Phone Login Method
-  void login() async {
-    if (isLoading.value) return;
-    if (!canLogin) {
-      safeSnackbar(
-        'Validation Error',
-        'Please enter a valid phone and password.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    isLoading.value = true;
-    debugPrint('[LOGIN] login() (phone+password) started');
-    try {
-      debugPrint('[LOGIN] POST /auth/login (phone)...');
-      final response = await ApiService().post('/auth/login', {
-        'phone': phoneController.text.trim(),
-        'password': passwordController.text,
-      });
-      debugPrint('[LOGIN] login() response received, success=${response.success}');
-
-      if (response.success && response.data is Map && response.data['requires2FA'] == true) {
-        Get.toNamed('/verification', arguments: {'email': response.data['email'], 'isLogin2FA': true});
-        return;
-      }
-
-      final token =
-          response.data is Map ? response.data['token'] as String? : null;
-      if (response.success && token != null && token.isNotEmpty) {
-        await ApiService().setToken(token);
-        final userData = response.data is Map ? response.data['user'] : null;
-        _handleSuccessfulLogin(userData is Map ? Map<String, dynamic>.from(userData) : null);
-      } else {
-        _handleLoginError(response.message);
-      }
-    } catch (e) {
-      debugPrint('[LOGIN] login() threw: $e');
-      _handleLoginError(e.toString());
-    } finally {
-      isLoading.value = false;
-    }
   }
 
   // Email Login Method
@@ -353,7 +302,6 @@ class LoginController extends GetxController {
 
   @override
   void onClose() {
-    phoneController.dispose();
     emailController.dispose();
     passwordController.dispose();
     otpPhoneController.dispose();

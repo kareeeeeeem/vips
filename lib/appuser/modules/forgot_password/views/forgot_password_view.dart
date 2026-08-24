@@ -192,7 +192,7 @@ class ForgotPasswordView extends GetView<ForgotPasswordController> {
                     ),
                   )
                   : Text(
-                    'Send Reset Link',
+                    'Send Reset Code',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,

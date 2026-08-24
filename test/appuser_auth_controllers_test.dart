@@ -17,7 +17,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appuser/modules/success_account/controllers/success_account_controller.dart';
 import 'package:vip/appuser/modules/forgot_password/controllers/forgot_password_controller.dart';
@@ -298,19 +297,6 @@ void main() {
       expect(controller.isPasswordVisible, isTrue);
       controller.togglePasswordVisibility();
       expect(controller.isPasswordVisible, isFalse);
-    });
-
-    test('canLogin requires both phone and password to be non-empty', () {
-      expect(controller.canLogin, isFalse);
-
-      controller.phoneController.text = '12345678';
-      expect(controller.canLogin, isFalse);
-
-      controller.passwordController.text = 'Secret1';
-      expect(controller.canLogin, isTrue);
-
-      controller.phoneController.text = '';
-      expect(controller.canLogin, isFalse);
     });
 
     test('canEmailLogin requires both email and password to be non-empty',
