@@ -166,18 +166,6 @@ void main() {
       expect(cart.selectedPaymentMethodLabel, equals('Cash on Delivery'));
     });
 
-    test('normalizedPaymentMethod maps to the Order schema enum', () {
-      // Order schema only accepts wallet/cash/card/online — anything else
-      // fails Mongoose validation server-side, so every gateway choice
-      // (paypal, stripe, ...) must resolve to 'online', not its raw name.
-      cart.selectedPaymentMethod.value = 'cash_on_delivery';
-      expect(cart.normalizedPaymentMethod, equals('cash'));
-      cart.selectedPaymentMethod.value = 'wallet';
-      expect(cart.normalizedPaymentMethod, equals('wallet'));
-      cart.selectedPaymentMethod.value = 'paypal';
-      expect(cart.normalizedPaymentMethod, equals('online'));
-    });
-
     test('addItem merges quantity for identical id + options', () {
       cart.addItem(_item(id: 'a', quantity: 1, options: {'size': 'L'}));
       cart.addItem(_item(id: 'a', quantity: 2, options: {'size': 'L'}));

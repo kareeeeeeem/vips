@@ -184,7 +184,7 @@ class CouponView extends GetView<CouponController> {
                         child: Text(
                           coupon.type == CouponType.percentage
                               ? '-${coupon.discount.toInt()}%'
-                              : '-${coupon.discount.toInt()}',
+                              : '-${coupon.discount.toInt()} TND',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 24.sp,

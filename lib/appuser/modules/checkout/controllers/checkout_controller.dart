@@ -140,9 +140,17 @@ class CheckoutController extends GetxController {
 
       if (args.containsKey('paymentMethod')) {
         final method = args['paymentMethod']?.toString() ?? '';
+        // Must land on exactly 'Paymee'/'PayPal' (not a generic bucket like
+        // 'Online') — placeOrder() string-matches this value to decide
+        // whether to launch the real gateway payment session; anything else
+        // silently creates the order with no payment ever collected.
         switch (method.toLowerCase()) {
           case 'cash':
+          case 'cash_on_delivery':
             paymentMethod.value = 'Cash';
+            break;
+          case 'paymee':
+            paymentMethod.value = 'Paymee';
             break;
           case 'paypal':
             paymentMethod.value = 'PayPal';

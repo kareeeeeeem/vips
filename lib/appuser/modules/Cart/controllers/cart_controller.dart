@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:vip/core/services/api_service.dart';
 
-import '../views/widgets/order_success.dart';
 import '../views/widgets/payment_method_bottomsheet.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
@@ -290,232 +289,6 @@ class CartController extends GetxController
     customTipAmount.value = amount;
   }
 
-  // ==================== PRICE BREAKDOWN ====================
-
-  void showPriceBreakdown() {
-    showModalBottomSheet(
-      context: Get.context!,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(20.w),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD1D5DB),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-              SizedBox(height: 24.h),
-
-              // Price breakdown items
-              _buildBreakdownRow(
-                'Item Price',
-                'D ${subtotal.toStringAsFixed(3)}',
-              ),
-              _buildBreakdownRow('Addon Cost', 'D 0.000'),
-
-              SizedBox(height: 8.h),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFED7AA),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Subtotal',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                    Text(
-                      'D ${subtotal.toStringAsFixed(3)}',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 8.h),
-              _buildBreakdownRow(
-                'Coupon Discount',
-                couponDiscount > 0 ? '- D ${couponDiscount.toStringAsFixed(3)}' : 'None',
-                isDiscount: couponDiscount > 0,
-              ),
-              _buildBreakdownRow(
-                'Service Charge',
-                'D ${serviceCharge.toStringAsFixed(3)}',
-              ),
-              _buildBreakdownRow(
-                'Delivery Charge',
-                'D ${deliveryFee.toStringAsFixed(3)}',
-              ),
-              _buildBreakdownRow('Vat/Tax', 'D ${vatTax.toStringAsFixed(3)}'),
-              _buildBreakdownRow(
-                'VIPS Points Redeemed',
-                walletDiscount > 0
-                    ? '- D ${walletDiscount.toStringAsFixed(3)} (${walletPointsToRedeem.value} pts)'
-                    : 'None',
-                isDiscount: walletDiscount > 0,
-              ),
-
-              SizedBox(height: 24.h),
-
-              // Total
-              Container(
-                padding: EdgeInsets.all(20.w),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFFF6B35)),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        'Cart Items ($itemCount)',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFFFF6B35),
-                          fontFamily: 'SF Pro Display',
-                        ),
-                      ),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'D ',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                            fontFamily: 'SF Pro Display',
-                          ),
-                        ),
-                        Text(
-                          '${total.toInt()}',
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                            fontFamily: 'SF Pro Display',
-                          ),
-                        ),
-                        Text(
-                          '.${((total - total.toInt()) * 1000).toInt().toString().padLeft(3, '0')}',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                            fontFamily: 'SF Pro Display',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              // Place Order Button
-              GestureDetector(
-                onTap: () {
-                  Get.back();
-                  placeOrder();
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 52.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Place Order',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        fontFamily: 'SF Pro Display',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBreakdownRow(
-    String label,
-    String value, {
-    bool isDiscount = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: const Color(0xFF6B7280),
-              fontFamily: 'SF Pro Text',
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: isDiscount ? Colors.green : Colors.black,
-              fontFamily: 'SF Pro Display',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ==================== ORDER TYPE MANAGEMENT ====================
 
   void setOrderType(int type) {
@@ -694,23 +467,6 @@ class CartController extends GetxController
     }
   }
 
-  // Must resolve to one of the Order schema's enum values
-  // (['wallet','cash','card','online']) — any other string fails Mongoose
-  // validation and order creation throws. The specific gateway (paypal,
-  // stripe, ...) isn't a column on Order itself; it's tracked by whichever
-  // payment session created the charge, and 'online' is the bucket for all
-  // of them once that's wired up.
-  String get normalizedPaymentMethod {
-    switch (selectedPaymentMethod.value) {
-      case 'cash_on_delivery':
-        return 'cash';
-      case 'wallet':
-        return 'wallet';
-      default:
-        return 'online';
-    }
-  }
-
   void selectPaymentMethod() {
     Get.put(PaymentMethodController(totalBill: total, walletPoints: walletPoints.value));
     showModalBottomSheet(
@@ -749,93 +505,6 @@ class CartController extends GetxController
   }
 
   // ==================== MAIN METHODS ====================
-
-  void placeOrder() async {
-    if (cartItems.isEmpty) {
-      safeSnackbar(
-        'Error',
-        'Your cart is empty',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
-      final items = cartItems
-          .map(
-            (item) => {
-              'productId': item.id,
-              'name': item.name,
-              'price': item.price,
-              'quantity': item.quantity,
-            },
-          )
-          .toList();
-
-      final merchantId = cartItems.first.merchantId;
-
-      final response = await ApiService().post('/order/create', {
-        // Omit entirely rather than send '' — merchantId is optional
-        // (plenty of real seeded deals have no merchant attached) but an
-        // empty string still fails Mongoose's ObjectId cast.
-        if (merchantId != null && merchantId.isNotEmpty) 'merchantId': merchantId,
-        'items': items,
-        'paymentMethod': normalizedPaymentMethod,
-        'deliveryAddress':
-            selectedOrderType.value == 0 ? deliveryAddress.value : 'Pickup',
-        // Must match the Order schema enum: ['delivery','takeaway','dine_in'].
-        'orderType': selectedOrderType.value == 0
-            ? 'delivery'
-            : selectedOrderType.value == 1
-                ? 'takeaway'
-                : 'dine_in',
-        if (couponCode.value.isNotEmpty) 'couponCode': couponCode.value,
-        if (appliedCouponDiscount.value > 0) 'couponDiscountAmount': appliedCouponDiscount.value,
-        if (walletPointsToRedeem.value > 0) 'walletPointsRedeemed': walletPointsToRedeem.value,
-      });
-
-      Get.back(); // close loading dialog
-
-      if (response.success) {
-        final order = response.data is Map ? response.data as Map : {};
-        // Server already deducted these; refresh so the UI reflects the
-        // real remaining balance instead of the stale pre-order snapshot.
-        if (walletPointsToRedeem.value > 0) {
-          walletPointsToRedeem.value = 0;
-          _loadWalletPoints();
-        }
-        Get.to(
-          () => const OrderSuccessView(),
-          arguments: {
-            'orderId': (order['_id'] ?? '').toString(),
-            'total': (order['totalAmount'] is num) ? (order['totalAmount'] as num).toDouble() : total,
-            'orderType': (order['orderType'] ?? 'delivery').toString(),
-          },
-        );
-        clearCartLocally();
-      } else {
-        safeSnackbar(
-          'Error',
-          response.message,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-    } catch (e) {
-      Get.back(); // close loading dialog
-      safeSnackbar(
-        'Error',
-        'Failed to place order: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
-  }
-
-
 
   void addItems() {
     Get.back();
@@ -1309,7 +978,13 @@ class CartController extends GetxController
             : selectedOrderType.value == 1
                 ? 'takeaway'
                 : 'inStore',
-        'paymentMethod': normalizedPaymentMethod,
+        // Pass the raw selected id (e.g. 'paymee'/'paypal'/'cash_on_delivery')
+        // rather than a lossy bucketed value — CheckoutController maps this
+        // to its own gateway-specific paymentMethod.value, which its
+        // placeOrder() needs verbatim ('Paymee'/'PayPal') to know it must
+        // launch the actual payment session instead of silently marking the
+        // order paid with no charge collected.
+        'paymentMethod': selectedPaymentMethod.value,
       },
     );
   }

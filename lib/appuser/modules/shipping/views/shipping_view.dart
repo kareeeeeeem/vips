@@ -38,13 +38,31 @@ class ShippingView extends GetView<ShippingController> {
           constraints: BoxConstraints(),
         ),
         SizedBox(width: 8.w),
-        Text(
-          'Shipping Trips',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
+        Expanded(
+          child: Text(
+            'Shipping Trips',
+            style: TextStyle(
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
           ),
+        ),
+        // Without these, the screen always calls the backend with no
+        // status filter, which defaults to showing only delivered orders
+        // — there was previously no way to ever see Pending/Active/
+        // Cancelled trips or a custom date range.
+        IconButton(
+          icon: Icon(Icons.filter_list, color: Colors.black87),
+          onPressed: controller.showFilter,
+          padding: EdgeInsets.zero,
+          constraints: BoxConstraints(),
+        ),
+        IconButton(
+          icon: Icon(Icons.calendar_today_outlined, color: Colors.black87),
+          onPressed: controller.showCalendar,
+          padding: EdgeInsets.zero,
+          constraints: BoxConstraints(),
         ),
       ],
     );
