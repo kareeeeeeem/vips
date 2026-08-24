@@ -83,6 +83,10 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
       'currentPrice': product['discountPrice'] ?? product['price'],
       'originalPrice': product['discountPrice'] != null ? product['price'] : null,
       'merchantId': product['merchantId'] ?? merchant?['_id'],
+      // DealDetailsView branches its Redeem-vs-Add-to-Cart action on this —
+      // without it, tapping a product here showed "Redeem Deal" and POSTed
+      // to /content/deals/:id/redeem with a Product id, which always fails.
+      'type': 'product',
     };
   }
 

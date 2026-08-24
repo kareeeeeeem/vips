@@ -351,7 +351,10 @@ class SearchView extends GetView<search.SearchController> {
 
   Widget _buildSearchResultItem(Map<String, dynamic> item) {
     final type = (item['type'] ?? '').toString();
-    final title = (item['title'] ?? item['storeName'] ?? '').toString();
+    // Products are name-shaped (no `title` field), unlike deals/outings/
+    // merchants — without this fallback, product search results rendered
+    // with a blank title.
+    final title = (item['title'] ?? item['name'] ?? item['storeName'] ?? '').toString();
 
     String subtitle;
     IconData icon;

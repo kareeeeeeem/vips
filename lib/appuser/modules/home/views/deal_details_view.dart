@@ -150,7 +150,7 @@ class _DealDetailsViewState extends State<DealDetailsView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${price?.toString() ?? '-'} ${deal['currency'] ?? 'TN'}',
+                            '${price?.toString() ?? '-'} ${deal['currency'] ?? 'TND'}',
                             style: TextStyle(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.bold,

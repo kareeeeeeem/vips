@@ -38,12 +38,18 @@ class _FavoritesViewState extends State<FavoritesView> {
         ),
       ),
       body: Obx(() {
-        if (controller.isFavoritesLoading.value && controller.favoriteDealItems.isEmpty) {
+        if (controller.isFavoritesLoading.value && controller.favoriteItems.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final favoriteDeals = controller.favoriteDealItems;
-        if (favoriteDeals.isEmpty) {
+        // Only Deal and Product favorites are ever created elsewhere in the
+        // app (see home_view/build_hot_deals/merchant_details_view); any
+        // other/unrecognized itemType is skipped rather than mis-rendered.
+        final favorites = controller.favoriteItems.where((f) {
+          final type = (f['itemType']?.toString().toLowerCase() ?? '');
+          return type == 'deal' || type == 'product';
+        }).toList();
+        if (favorites.isEmpty) {
           return _buildEmptyState();
         }
 
@@ -55,9 +61,25 @@ class _FavoritesViewState extends State<FavoritesView> {
             crossAxisSpacing: 12.w,
             childAspectRatio: 0.72,
           ),
-          itemCount: favoriteDeals.length,
+          itemCount: favorites.length,
           itemBuilder: (context, index) {
-            final deal = favoriteDeals[index];
+            final favorite = favorites[index];
+            final isProduct = (favorite['itemType']?.toString().toLowerCase() ?? '') == 'product';
+            final itemType = isProduct ? 'Product' : 'Deal';
+            final rawItem = Map<String, dynamic>.from(favorite['item'] as Map);
+            // Products are name/price-shaped; BuildOfferCard reads
+            // title/currentPrice (deal-shaped) — same mapping
+            // merchant_details_view.dart uses for the same cross-type case.
+            final deal = isProduct
+                ? {
+                    ...rawItem,
+                    'title': rawItem['name'],
+                    'currentPrice': rawItem['discountPrice'] ?? rawItem['price'],
+                    'originalPrice': rawItem['discountPrice'] != null ? rawItem['price'] : null,
+                    // DealDetailsView branches Redeem-vs-Add-to-Cart on this.
+                    'type': 'product',
+                  }
+                : rawItem;
             final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
 
             return BuildOfferCard(
@@ -66,7 +88,7 @@ class _FavoritesViewState extends State<FavoritesView> {
               onTap: () => Get.toNamed(Routes.DEAL_DETAILS, arguments: deal),
               onAddToBasket: () => controller.addToCartServer(
                 itemId: id,
-                itemType: 'Deal',
+                itemType: itemType,
                 name: deal['title']?.toString(),
                 price: (deal['currentPrice'] is num)
                     ? (deal['currentPrice'] as num).toDouble()
@@ -75,7 +97,7 @@ class _FavoritesViewState extends State<FavoritesView> {
                 merchantId: deal['merchantId']?.toString(),
               ),
               onToggleFavorite: () async {
-                await controller.toggleFavoriteServer(id, itemType: 'Deal');
+                await controller.toggleFavoriteServer(id, itemType: itemType);
                 controller.refreshFavoriteDetails();
               },
             );

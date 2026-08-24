@@ -443,11 +443,13 @@ Catégorie: ${outing['category']}
   List<Map<String, dynamic>> favorites = [];
 
   // Real denormalized favorites from GET /favorites/details — the backend
-  // now joins each {itemId, itemType} against the actual Deal/Product/
-  // Outing/Merchant collection server-side, so this is never a stale or
-  // partial client-side guess. Items whose target was deleted are dropped
-  // by the backend rather than shown as stubs.
-  final RxList<Map<String, dynamic>> favoriteDealItems = <Map<String, dynamic>>[].obs;
+  // joins each {itemId, itemType} against the actual Deal/Product/Outing/
+  // Merchant collection server-side. Items whose target was deleted are
+  // dropped by the backend rather than shown as stubs. Kept as the raw
+  // {itemId, itemType, addedAt, item} envelope (not just `item`) so the
+  // Favorites screen can tell a Deal apart from a Product and render/act
+  // on it correctly instead of assuming every favorite is a Deal.
+  final RxList<Map<String, dynamic>> favoriteItems = <Map<String, dynamic>>[].obs;
   final RxBool isFavoritesLoading = false.obs;
 
   Future<void> refreshFavoriteDetails() async {
@@ -456,9 +458,8 @@ Catégorie: ${outing['category']}
       final response = await ApiService().get('/favorites/details');
       if (response.success && response.data != null) {
         final List<dynamic> raw = response.data;
-        favoriteDealItems.value = raw
-            .where((f) => (f['itemType']?.toString().toLowerCase() ?? '') == 'deal')
-            .map((f) => Map<String, dynamic>.from(f['item'] as Map))
+        favoriteItems.value = raw
+            .map((f) => Map<String, dynamic>.from(f as Map))
             .toList();
       }
     } catch (_) {
