@@ -58,3 +58,17 @@ repomix-output.xml
 /vips-backend/
 node_modules/
 .env
+
+# Firebase client config — contains live API keys, keep out of this repo
+/android/app/google-services.json
+/android/app/src/*/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/ios/Runner/GoogleService-Info-consumer.plist
+/ios/Runner/GoogleService-Info-merchant.plist
+/macos/Runner/GoogleService-Info.plist
+/lib/firebase_options.dart
+
+# Android release signing — never commit
+/android/key.properties
+/android/app/upload-keystore.jks
+.aider*
