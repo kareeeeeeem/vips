@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../controllers/merchant_create_bill_controller.dart';
+
 class MerchantScanMeView extends StatelessWidget {
   const MerchantScanMeView({super.key});
 
@@ -11,6 +13,8 @@ class MerchantScanMeView extends StatelessWidget {
     final Map<String, dynamic> args = Get.arguments ?? {};
     final double amount = args['amount'] ?? 0.0;
     final String orderId = args['orderId'] ?? 'ORD-000000';
+    // Present when this QR came from a bill the server actually created.
+    final String billId = (args['billId'] ?? '').toString();
     
     // In a real app, this data would be JSON or an encrypted string
     final String qrData = 'vips_order:$orderId:$amount';
@@ -82,7 +86,7 @@ class MerchantScanMeView extends StatelessWidget {
                   SizedBox(height: 64.h),
                   
                   Text(
-                    'Total: \$${amount.toStringAsFixed(2)}',
+                    'Total: D ${amount.toStringAsFixed(2)}',
                     style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w800, color: const Color(0xFF10B981)),
                   ),
                   SizedBox(height: 8.h),
@@ -145,6 +149,31 @@ class MerchantScanMeView extends StatelessWidget {
               padding: EdgeInsets.all(24.w),
               child: Column(
                 children: [
+                  // Bills raised for this QR are created 'pending' so their
+                  // total is not booked as revenue before the customer pays.
+                  // This is how the merchant closes that loop once they have.
+                  if (billId.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final controller =
+                              Get.find<MerchantCreateBillController>();
+                          final ok = await controller.markBillPaid(billId);
+                          if (ok) Get.back();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          elevation: 0,
+                        ),
+                        child: Text('Mark as Paid',
+                            style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

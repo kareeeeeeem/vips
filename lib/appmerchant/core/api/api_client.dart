@@ -25,7 +25,11 @@ class ApiClient extends GetxService {
   late Map<String, String> _mainHeaders;
 
   ApiClient({required this.appBaseUrl, required this.sharedPreferences}) {
-    token = sharedPreferences.getString(AppConstants.token);
+    // Sign-in through ApiService only writes 'auth_token'; this client reads
+    // AppConstants.token. Falling back keeps a single session across both
+    // instead of the Orders screen silently running unauthenticated.
+    token = sharedPreferences.getString(AppConstants.token) ??
+        sharedPreferences.getString('auth_token');
     type = sharedPreferences.getString(AppConstants.type);
     updateHeader(
       token,
@@ -163,6 +167,7 @@ class ApiClient extends GetxService {
         if (!isAuthUri) {
           token = null;
           sharedPreferences.remove(AppConstants.token);
+          sharedPreferences.remove('auth_token');
           Get.offAllNamed(MerchantRoutes.LOGIN);
         }
       }

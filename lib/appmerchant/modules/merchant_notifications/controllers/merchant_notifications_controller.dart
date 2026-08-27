@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
@@ -8,6 +9,9 @@ class NotificationItem {
   final String body;
   final DateTime time;
   final String type;
+  /// The notification's payload (e.g. {orderId, orderNumber}). It was parsed
+  /// away entirely, so a notification could never lead anywhere.
+  final Map<String, dynamic> data;
   bool isRead;
 
   NotificationItem({
@@ -16,6 +20,7 @@ class NotificationItem {
     required this.body,
     required this.time,
     required this.type,
+    this.data = const {},
     this.isRead = false,
   });
 
@@ -24,10 +29,11 @@ class NotificationItem {
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
       body: json['body'] ?? json['message'] ?? '',
-      time: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      time: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       type: json['type'] ?? 'system',
+      data: json['data'] is Map
+          ? Map<String, dynamic>.from(json['data'] as Map)
+          : const {},
       isRead: json['isRead'] ?? false,
     );
   }
@@ -93,6 +99,38 @@ class MerchantNotificationsController extends GetxController {
       await ApiService().post('/merchant/notifications/read-all', {});
     } catch (_) {
       await loadNotifications();
+    }
+  }
+
+  /// Marks the notification read and opens whatever it is about. Tapping a
+  /// notification used to do nothing but flip it to read — an order alert
+  /// could not take the merchant to the order.
+  Future<void> openNotification(NotificationItem n) async {
+    await markAsRead(n.id);
+
+    switch (n.type) {
+      case 'order':
+      case 'review':
+        final orderNumber = n.data['orderNumber'];
+        final parsed = orderNumber is int
+            ? orderNumber
+            : int.tryParse(orderNumber?.toString() ?? '');
+        if (parsed != null) {
+          Get.toNamed(MerchantRoutes.ORDER_DETAIL, arguments: parsed);
+        } else {
+          Get.toNamed(MerchantRoutes.ORDERS);
+        }
+        break;
+      case 'payment':
+      case 'gift_back':
+        Get.toNamed(MerchantRoutes.WALLET);
+        break;
+      case 'subscription':
+        Get.toNamed(MerchantRoutes.BUSINESS_PLAN);
+        break;
+      default:
+        // 'system' / 'alert' carry no destination — the body is the message.
+        break;
     }
   }
 

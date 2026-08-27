@@ -8,6 +8,17 @@ class BillErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The reason the caller actually failed on. This screen used to print the
+    // fixed string "Sorry Insufficient Approved -814" no matter what went
+    // wrong — a merchant who simply mistyped their PIN was told their plan
+    // was insufficient and pushed at the upgrade screen.
+    final args = Get.arguments;
+    final String message = (args is Map && (args['message']?.toString().isNotEmpty ?? false))
+        ? args['message'].toString()
+        : 'That did not go through. Please check the details and try again.';
+    // Only a plan/limit failure has anything to do with upgrading.
+    final bool offerUpgrade = args is Map && args['offerUpgrade'] == true;
+
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: 0.5), // Dimmed background
       body: Stack(
@@ -27,7 +38,6 @@ class BillErrorView extends StatelessWidget {
                 children: [
                    SizedBox(height: 24.h),
                    Icon(Icons.verified_user, color: const Color(0xFFFFB800), size: 40.sp),
-                   // Just a mock background...
                 ],
               ),
             ),
@@ -65,7 +75,7 @@ class BillErrorView extends StatelessWidget {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'Sorry Insufficient Approved -814',
+                    message,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                   ),
@@ -74,20 +84,26 @@ class BillErrorView extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Get.offAllNamed(MerchantRoutes.SUBSCRIPTION_PACKAGES),
+                      onPressed: offerUpgrade
+                          ? () => Get.offAllNamed(MerchantRoutes.SUBSCRIPTION_PACKAGES)
+                          : () => Get.back(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                         elevation: 0,
                       ),
-                      child: Text('Upgrade Package', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        offerUpgrade ? 'Upgrade Package' : 'Try Again',
+                        style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                   SizedBox(height: 16.h),
                   TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('Cancel', style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp, fontWeight: FontWeight.w600)),
+                    onPressed: () => Get.offAllNamed(MerchantRoutes.HOME),
+                    child: Text('Back to Dashboard',
+                        style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp, fontWeight: FontWeight.w600)),
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],

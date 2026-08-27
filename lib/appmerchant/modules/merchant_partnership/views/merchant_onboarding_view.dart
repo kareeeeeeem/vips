@@ -42,7 +42,6 @@ class MerchantOnboardingView extends GetView<MerchantPartnershipController> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Illustration Placeholder
                         Container(
                           height: 240.h,
                           width: double.infinity,
@@ -50,11 +49,11 @@ class MerchantOnboardingView extends GetView<MerchantPartnershipController> {
                             color: const Color(0xFFF3F4F6),
                             borderRadius: BorderRadius.circular(20.r),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
-                              Icons.storefront_outlined,
+                              item['icon'] as IconData,
                               size: 80,
-                              color: Color(0xFF10B981),
+                              color: const Color(0xFF10B981),
                             ),
                           ),
                         ),
@@ -62,7 +61,7 @@ class MerchantOnboardingView extends GetView<MerchantPartnershipController> {
 
                         // Title
                         Text(
-                          item['title']!,
+                          item['title']! as String,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 22.sp,
@@ -74,7 +73,7 @@ class MerchantOnboardingView extends GetView<MerchantPartnershipController> {
 
                         // Subtitle
                         Text(
-                          item['subtitle']!,
+                          item['subtitle']! as String,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15.sp,
@@ -202,6 +201,33 @@ class MerchantOnboardingView extends GetView<MerchantPartnershipController> {
                         ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: 16.h),
+                  // An existing merchant had no way to reach the sign-in screen
+                  // from a fresh install — Onboarding led only forward into the
+                  // authenticated partnership flow.
+                  Center(
+                    child: GestureDetector(
+                      onTap: controller.goToLogin,
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: const Color(0xFF6B7280),
+                          ),
+                          children: const [
+                            TextSpan(text: 'Already have a store? '),
+                            TextSpan(
+                              text: 'Sign in',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -105,6 +105,30 @@ class TaxRatesView extends GetView<MerchantTaxController> {
                         onChanged: (val) => controller.toggleTaxStatus(index),
                         activeThumbColor: const Color(0xFF10B981),
                       ),
+                      // deleteTaxRate() and DELETE /merchant/tax-rates/:id
+                      // both existed with no UI reaching them — a rate could
+                      // only ever be switched off, never removed.
+                      IconButton(
+                        icon: Icon(Icons.delete_outline,
+                            size: 20.sp, color: const Color(0xFFEF4444)),
+                        onPressed: () => Get.dialog(AlertDialog(
+                          title: const Text('Delete tax rate'),
+                          content: Text('Remove "${tax.name}" (${tax.rate}%)?'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Get.back(),
+                                child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () {
+                                Get.back();
+                                controller.deleteTaxRate(tax.id);
+                              },
+                              child: const Text('Delete',
+                                  style: TextStyle(color: Color(0xFFEF4444))),
+                            ),
+                          ],
+                        )),
+                      ),
                     ],
                   ),
                 );

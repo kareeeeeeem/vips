@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_auth_controller.dart';
 
 class MerchantLoginView extends StatefulWidget {
@@ -83,7 +84,7 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
                 controller: controller.phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  hintText: 'e.g. +20 123 456 7890',
+                  hintText: 'e.g. +216 12 345 678',
                   hintStyle: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp),
                   prefixIcon: const Icon(Icons.phone_iphone_rounded, color: Color(0xFF9CA3AF)),
                   filled: true,
@@ -105,26 +106,35 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
               
               SizedBox(height: 40.h),
 
-              SizedBox(
+              Obx(() => SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: controller.login,
+                  onPressed: controller.isLoading.value ? null : controller.login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF97316),
                     elevation: 0,
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                   ),
-                  child: Text(
-                    'Get OTP',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                          height: 20.h,
+                          width: 20.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Get OTP',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
-              ),
+              )),
 
               SizedBox(height: 28.h),
               _buildSocialDivider(),
@@ -134,13 +144,68 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
               SizedBox(height: 24.h),
 
               Center(
-                child: Text(
-                  'By signing in, you agree to our Terms & Conditions',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF9CA3AF),
+                child: GestureDetector(
+                  onTap: () => Get.toNamed(MerchantRoutes.SIGNUP),
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                      children: const [
+                        TextSpan(text: "Don't have a store yet? "),
+                        TextSpan(
+                          text: 'Create one',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFF97316),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+              ),
+
+              SizedBox(height: 20.h),
+
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'By signing in, you agree to our ',
+                      style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
+                    ),
+                    GestureDetector(
+                      onTap: () => Get.toNamed(MerchantRoutes.TERMS),
+                      child: Text(
+                        'Terms & Conditions',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFF97316),
+                          decoration: TextDecoration.underline,
+                          decorationColor: const Color(0xFFF97316),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      ' and ',
+                      style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
+                    ),
+                    GestureDetector(
+                      onTap: () => Get.toNamed(MerchantRoutes.PRIVACY),
+                      child: Text(
+                        'Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFF97316),
+                          decoration: TextDecoration.underline,
+                          decorationColor: const Color(0xFFF97316),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

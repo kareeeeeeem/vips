@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
@@ -11,7 +10,12 @@ class MerchantBillingController extends GetxController {
   final pinLength = 4.obs;
   final currentPin = ''.obs;
   final hasError = false.obs;
-  final merchantPin = '0000'.obs;
+  final isVerifyingPin = false.obs;
+
+  /// Whether this account has a server-side PIN at all (from
+  /// GET /merchant/profile's `hasPin`). Used to tell "wrong PIN" apart from
+  /// "you never set one", instead of silently failing.
+  final hasPin = false.obs;
 
   // Bills list state
   final isLoading = false.obs;
@@ -29,8 +33,36 @@ class MerchantBillingController extends GetxController {
   }
 
   Future<void> _loadMerchantPin() async {
-    final prefs = await SharedPreferences.getInstance();
-    merchantPin.value = prefs.getString('merchant_pin') ?? '0000';
+    try {
+      final response = await _api.get('/merchant/profile');
+      if (response.success && response.data is Map) {
+        hasPin.value = response.data['hasPin'] == true;
+      }
+    } catch (e) {
+      debugPrint('_loadMerchantPin error: $e');
+    }
+  }
+
+  /// Verifies the entered PIN against the account's real PIN via
+  /// POST /auth/pin/verify.
+  ///
+  /// This gate used to compare the typed digits against a SharedPreferences
+  /// key `merchant_pin` that nothing in the app ever wrote — so it always
+  /// fell back to the literal '0000' and anyone holding the device could
+  /// approve a bill by typing four zeros.
+  Future<bool> verifyPin(String pin) async {
+    isVerifyingPin.value = true;
+    try {
+      final response = await _api.post('/auth/pin/verify', {'pin': pin});
+      hasError.value = !response.success;
+      return response.success;
+    } catch (e) {
+      debugPrint('verifyPin error: $e');
+      hasError.value = true;
+      return false;
+    } finally {
+      isVerifyingPin.value = false;
+    }
   }
 
   // ─── PIN helpers ────────────────────────────────────────

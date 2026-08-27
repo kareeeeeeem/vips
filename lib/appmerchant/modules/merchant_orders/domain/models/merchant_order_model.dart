@@ -47,6 +47,7 @@ class MerchantOrder {
   double? totalTaxAmount;
   String? paymentMethod;
   String? orderNote;
+  String? cancellationReason;
   String? orderType;
   String? createdAt;
   String? updatedAt;
@@ -106,6 +107,7 @@ class MerchantOrder {
     this.totalTaxAmount,
     this.paymentMethod,
     this.orderNote,
+    this.cancellationReason,
     this.orderType,
     this.createdAt,
     this.updatedAt,
@@ -166,6 +168,7 @@ class MerchantOrder {
     totalTaxAmount = json['total_tax_amount']?.toDouble();
     paymentMethod = json['payment_method'];
     orderNote = json['order_note'];
+    cancellationReason = json['cancellation_reason'];
     orderType = json['order_type'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
@@ -256,6 +259,7 @@ class MerchantOrder {
     data['total_tax_amount'] = totalTaxAmount;
     data['payment_method'] = paymentMethod;
     data['order_note'] = orderNote;
+    data['cancellation_reason'] = cancellationReason;
     data['order_type'] = orderType;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;

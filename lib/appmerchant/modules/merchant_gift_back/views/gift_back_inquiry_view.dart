@@ -134,6 +134,14 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                       children: [
                         _buildDetailRow('Trans Type', 'Gift Back'),
                         const Divider(color: Color(0xFFF3F4F6)),
+                        Obx(() => controller.recipientName.value.isEmpty
+                            ? const SizedBox.shrink()
+                            : Column(
+                                children: [
+                                  _buildDetailRow('Customer', controller.recipientName.value),
+                                  const Divider(color: Color(0xFFF3F4F6)),
+                                ],
+                              )),
                         _buildDetailRow('Phone', controller.phoneController.text.isNotEmpty ? controller.phoneController.text : '—'),
                         if (controller.messageController.text.isNotEmpty)
                           _buildDetailRow('Message', controller.messageController.text),
@@ -180,7 +188,10 @@ class GiftBackInquiryView extends GetView<MerchantGiftBackController> {
                   Builder(builder: (_) {
                     final amt = double.tryParse(controller.amountController.text) ?? 0;
                     final amtStr = 'D ${amt.toStringAsFixed(3)}';
-                    final pts = (amt * 100).toInt();
+                    // 1:1 with the amount — the backend does
+                    // `recipient.walletPoints += amount`. This used to read
+                    // `(amt * 100).toInt()`, overstating the credit 100x.
+                    final pts = amt.toStringAsFixed(0);
                     return Column(
                       children: [
                         _buildAmountRow('Gift Back Amount', amtStr),

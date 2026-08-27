@@ -79,26 +79,35 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
           SafeArea(
             child: Padding(
               padding: EdgeInsets.all(24.w),
-              child: SizedBox(
+              child: Obx(() => SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: controller.saveProfile,
+                  onPressed: controller.isLoading.value ? null : controller.saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Save',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                          height: 20.h,
+                          width: 20.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Save',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
-              ),
+              )),
             ),
           ),
         ],
@@ -365,55 +374,124 @@ class BusinessRegistrationView extends GetView<BusinessRegistrationController> {
         children: [
           _buildTextField('Enter TIN *', '', ctrl: controller.tinCtrl),
           SizedBox(height: 16.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Not set yet', style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14.sp)),
-                Icon(Icons.calendar_today_outlined, color: const Color(0xFF6B7280), size: 20.sp),
-              ],
+          Text('Licence Expiry Date', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF374151))),
+          SizedBox(height: 8.h),
+          GestureDetector(
+            onTap: () => controller.pickLicenseExpiry(context),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Obx(() {
+                    final d = controller.licenseExpiry.value;
+                    return Text(
+                      d == null
+                          ? 'Not set yet'
+                          : '${d.day.toString().padLeft(2, '0')}/'
+                            '${d.month.toString().padLeft(2, '0')}/${d.year}',
+                      style: TextStyle(
+                        color: d == null ? const Color(0xFF9CA3AF) : const Color(0xFF1F2937),
+                        fontWeight: d == null ? FontWeight.w400 : FontWeight.w600,
+                        fontSize: 14.sp,
+                      ),
+                    );
+                  }),
+                  Icon(Icons.calendar_today_outlined, color: const Color(0xFF6B7280), size: 20.sp),
+                ],
+              ),
             ),
           ),
           SizedBox(height: 16.h),
           Text('License Document', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF374151))),
           SizedBox(height: 8.h),
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE5E7EB), style: BorderStyle.solid),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.cloud_upload_outlined, color: const Color(0xFF9CA3AF), size: 24.sp),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Select a file', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
-                      Text('JPG, PNG or PDF. File size no more than 2MB', style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9CA3AF))),
-                    ],
+          GestureDetector(
+            onTap: controller.pickLicenseDocument,
+            child: Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE5E7EB), style: BorderStyle.solid),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.cloud_upload_outlined, color: const Color(0xFF9CA3AF), size: 24.sp),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Select a file', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                        Text('JPG, PNG, WEBP or PDF. File size no more than 10MB',
+                            style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9CA3AF))),
+                      ],
+                    ),
                   ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFB800),
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text('Select', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold)),
-                ),
-              ],
+                  Obx(() => Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFB800),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: controller.isUploadingDocument.value
+                        ? SizedBox(
+                            height: 14.h,
+                            width: 14.h,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text('Select',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold)),
+                  )),
+                ],
+              ),
             ),
           ),
+          Obx(() {
+            if (controller.documentUrls.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: EdgeInsets.only(top: 12.h),
+              child: Column(
+                children: List.generate(controller.documentUrls.length, (i) {
+                  final name = i < controller.documentNames.length
+                      ? controller.documentNames[i]
+                      : 'Document ${i + 1}';
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Row(
+                      children: [
+                        Icon(Icons.description_outlined,
+                            size: 18.sp, color: const Color(0xFF10B981)),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF374151)),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded, size: 18.sp, color: const Color(0xFFEF4444)),
+                          onPressed: () => controller.removeDocument(i),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
         ],
       ),
     ));

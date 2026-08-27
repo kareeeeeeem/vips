@@ -32,21 +32,47 @@ class MerchantCashiersController extends GetxController {
     isLoading.value = true;
     try {
       final response = await ApiService().get('/merchant/cashiers');
-      if (response.success && response.data != null) {
-        final List<dynamic> data = response.data;
-        cashiers.value = data.map((c) => Map<String, dynamic>.from(c)).toList();
+      if (response.success && response.data is List) {
+        cashiers.value = (response.data as List)
+            .whereType<Map>()
+            .map((c) => Map<String, dynamic>.from(c))
+            .toList();
       }
-    } catch (_) {}
-    finally {
+    } catch (e) {
+      debugPrint('loadCashiers failed: $e');
+      safeSnackbar('Error', 'Could not load your staff. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
       isLoading.value = false;
     }
   }
 
+  /// Id of the cashier currently being edited; null when adding a new one.
+  final RxnString editingId = RxnString();
+
   void showAddCashierSheet() {
+    editingId.value = null;
     nameController.clear();
     emailController.clear();
     phoneController.clear();
     selectedRole.value = 'Cashier';
+    Get.bottomSheet(
+      _AddCashierSheet(controller: this),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  /// PUT /merchant/cashiers/:id has always existed; nothing in the app ever
+  /// called it, so a cashier's name, phone or role could never be corrected
+  /// — only deleted and re-added.
+  void showEditCashierSheet(Map<String, dynamic> cashier) {
+    editingId.value = cashier['_id']?.toString();
+    nameController.text = (cashier['name'] ?? '').toString();
+    emailController.text = (cashier['email'] ?? '').toString();
+    phoneController.text = (cashier['phone'] ?? '').toString();
+    final role = (cashier['role'] ?? 'Cashier').toString();
+    selectedRole.value = roles.contains(role) ? role : 'Cashier';
     Get.bottomSheet(
       _AddCashierSheet(controller: this),
       isScrollControlled: true,
@@ -62,18 +88,38 @@ class MerchantCashiersController extends GetxController {
       safeSnackbar('Error', 'Name and phone are required', snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    if (email.isNotEmpty && !GetUtils.isEmail(email)) {
+      safeSnackbar('Error', 'That email address is not valid',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final id = editingId.value;
     isLoading.value = true;
     try {
-      final response = await ApiService().post('/merchant/cashiers', {
+      final body = {
         'name': name,
         'email': email,
         'phone': phone,
         'role': selectedRole.value,
-      });
+      };
+      final response = id == null
+          ? await ApiService().post('/merchant/cashiers', body)
+          : await ApiService().put('/merchant/cashiers/$id', body);
+
       if (response.success && response.data != null) {
-        cashiers.insert(0, Map<String, dynamic>.from(response.data));
+        final saved = Map<String, dynamic>.from(response.data as Map);
+        if (id == null) {
+          cashiers.insert(0, saved);
+        } else {
+          final index = cashiers.indexWhere((c) => c['_id']?.toString() == id);
+          if (index >= 0) {
+            cashiers[index] = saved;
+          } else {
+            await loadCashiers();
+          }
+        }
         Get.back();
-        safeSnackbar('Success', 'Cashier added successfully',
+        safeSnackbar('Success', id == null ? 'Cashier added successfully' : 'Cashier updated',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: const Color(0xFF10B981),
             colorText: Colors.white);
@@ -81,7 +127,9 @@ class MerchantCashiersController extends GetxController {
         safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to add cashier', snackPosition: SnackPosition.BOTTOM);
+      debugPrint('save cashier failed: $e');
+      safeSnackbar('Error', 'Could not save that cashier. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
@@ -93,8 +141,16 @@ class MerchantCashiersController extends GetxController {
       if (response.success) {
         cashiers.removeWhere((c) => c['_id']?.toString() == id);
         safeSnackbar('Removed', 'Cashier removed', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        // A failed delete used to do nothing at all — the row stayed and no
+        // message was shown, so it read as a silent no-op.
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('removeCashier failed: $e');
+      safeSnackbar('Error', 'Could not remove that cashier. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   Color roleColor(String role) {
@@ -130,7 +186,9 @@ class _AddCashierSheet extends StatelessWidget {
                 decoration: BoxDecoration(color: const Color(0xFFE5E7EB), borderRadius: BorderRadius.circular(2))),
             ),
             const SizedBox(height: 20),
-            const Text('Add Cashier', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Obx(() => Text(
+                  controller.editingId.value == null ? 'Add Cashier' : 'Edit Cashier',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
             const SizedBox(height: 20),
             _field(controller.nameController, 'Full Name', Icons.person_outline),
             const SizedBox(height: 12),
@@ -162,7 +220,9 @@ class _AddCashierSheet extends StatelessWidget {
                 ),
                 child: controller.isLoading.value
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Add Cashier', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    : Text(
+                        controller.editingId.value == null ? 'Add Cashier' : 'Save Changes',
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               )),
             ),
             const SizedBox(height: 8),

@@ -230,11 +230,12 @@ class MerchantCreditInquiryView extends GetView<MerchantCreditController> {
                   // Totals
                   Obx(() {
                     final amt = double.tryParse(controller.amount.value) ?? 0;
-                    final serviceCharge = amt * controller.serviceChargeRate;
-                    final total = amt + serviceCharge;
+                    // POST /merchant/credits records exactly `amount` — no
+                    // service charge, no tax. This used to add a fabricated
+                    // 10% into the Grand Total the merchant confirmed.
                     final amtStr = 'D ${amt.toStringAsFixed(3)}';
-                    final scStr = 'D ${serviceCharge.toStringAsFixed(3)}';
-                    final totalStr = 'D ${total.toStringAsFixed(3)}';
+                    const scStr = 'D 0.000';
+                    final totalStr = amtStr;
                     return Column(
                       children: [
                         _buildAmountRow('Credit Amount', amtStr),

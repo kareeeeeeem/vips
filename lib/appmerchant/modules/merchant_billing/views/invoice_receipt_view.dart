@@ -31,7 +31,10 @@ class _InvoiceReceiptViewState extends State<InvoiceReceiptView> {
         if (mounted && name.isNotEmpty) {
           setState(() {
             _storeName = name;
-            _storeAddress = (data['address'] ?? '').toString();
+            // `address` is not a field on the merchant profile — it is
+            // storeAddress — so the receipt's address line was always blank.
+            _storeAddress =
+                (data['storeAddress'] ?? data['address'] ?? '').toString();
           });
         }
       }

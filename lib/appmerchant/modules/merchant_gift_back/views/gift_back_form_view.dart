@@ -113,20 +113,34 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                               bottomRight: Radius.circular(12.r),
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Text('D', style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold)),
-                              Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 20.sp),
-                            ],
+                          child: Center(
+                            child: Obx(() => Text(
+                                  controller.currency.value,
+                                  style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                                )),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 32.h),
+                    SizedBox(height: 8.h),
+                    // Why Proceed is disabled. The button used to enable on
+                    // "both fields non-empty", so an over-limit amount was only
+                    // rejected by the server after the inquiry and PIN steps.
+                    Obx(() => controller.formError.value.isEmpty
+                        ? SizedBox(height: 16.h)
+                        : Text(
+                            controller.formError.value,
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                color: const Color(0xFFDC2626),
+                                fontWeight: FontWeight.w600),
+                          )),
+                    SizedBox(height: 24.h),
 
-                    // Info items
+                    // Info items. The 'Limit Time: 03"00' row that used to sit
+                    // here counted down nothing — there is no gift-back
+                    // expiry/timer concept in the backend or this flow.
                     _buildInfoItem(Icons.info_outline, 'Service Charge & Vat/Tax: 000 D'),
-                    _buildInfoItem(Icons.timer_outlined, 'Limit Time: 03"00'),
                     SizedBox(height: 32.h),
 
                     // Limit Information Grid
@@ -200,7 +214,9 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                   Expanded(
                     flex: 2,
                     child: Obx(() => ElevatedButton(
-                      onPressed: controller.isFormValid.value ? () => controller.onProceedToInquiry() : null,
+                      onPressed: (controller.isFormValid.value && !controller.isLookingUp.value)
+                          ? () => controller.onProceedToInquiry()
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         disabledBackgroundColor: const Color(0xFFE5E7EB),
@@ -208,7 +224,9 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                         elevation: 0,
                       ),
-                      child: Text('Proceed', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                      child: controller.isLookingUp.value
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : Text('Proceed', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
                     )),
                   ),
                 ],

@@ -43,31 +43,37 @@ class TimeScheduleWidget extends GetView<BusinessRegistrationController> {
                       ),
                     ),
                     Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text(
-                          timeString,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF6B7280),
+                      child: GestureDetector(
+                        onTap: () => controller.pickDayHours(context, day),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            borderRadius: BorderRadius.circular(6.r),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  timeString,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(Icons.schedule_rounded,
+                                  size: 14.sp, color: const Color(0xFF9CA3AF)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(width: 8.w),
                     GestureDetector(
-                      onTap: () {
-                        // Toggle logic
-                        final copy = Map<String, Map<String, dynamic>>.from(controller.schedule);
-                        copy[day]!['enabled'] = !isEnabled;
-                        controller.schedule.value = copy;
-                      },
+                      onTap: () => controller.toggleDay(day, !isEnabled),
                       child: Container(
                         width: 24.w,
                         height: 24.w,

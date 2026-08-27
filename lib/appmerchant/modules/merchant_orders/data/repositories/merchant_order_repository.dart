@@ -46,12 +46,20 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
         AppConstants.currentOrdersUri,
       );
 
+      // GET /merchant/orders answers with the paginated envelope
+      // {total_size, limit, offset, orders: [...]}, not a bare array —
+      // iterating the body directly threw on every call.
       if (response.statusCode == 200) {
         orderList = [];
-        response.body.forEach((order) {
-          MerchantOrder orderModel = MerchantOrder.fromJson(order);
-          orderList!.add(orderModel);
-        });
+        final body = response.body;
+        final raw = body is Map ? body['orders'] : body;
+        if (raw is List) {
+          for (final order in raw) {
+            if (order is Map) {
+              orderList.add(MerchantOrder.fromJson(Map<String, dynamic>.from(order)));
+            }
+          }
+        }
       }
       return orderList;
     } catch (e) {
@@ -86,8 +94,14 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
         '${AppConstants.orderDetailsUri}$orderId',
       );
 
-      if (response.statusCode == 200) {
-        orderModel = MerchantOrder.fromJson(response.body);
+      if (response.statusCode == 200 && response.body is Map) {
+        final body = Map<String, dynamic>.from(response.body as Map);
+        // The single-order route answers with the order object itself; a
+        // couple of merchant routes wrap theirs in {success, data}.
+        final raw = body['data'] is Map
+            ? Map<String, dynamic>.from(body['data'] as Map)
+            : body;
+        orderModel = MerchantOrder.fromJson(raw);
       }
       return orderModel;
     } catch (e) {
@@ -106,9 +120,17 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
 
       if (response.statusCode == 200) {
         orderDetails = [];
-        response.body.forEach((detail) {
-          orderDetails!.add(MerchantOrderDetailsModel.fromJson(detail));
-        });
+        final body = response.body;
+        final raw = body is Map ? (body['items'] ?? body['data']) : body;
+        if (raw is List) {
+          for (final detail in raw) {
+            if (detail is Map) {
+              orderDetails.add(
+                MerchantOrderDetailsModel.fromJson(Map<String, dynamic>.from(detail)),
+              );
+            }
+          }
+        }
       }
       return orderDetails;
     } catch (e) {
@@ -152,7 +174,8 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
   @override
   Future<List<String>?> getCancelReasons() async {
     try {
-      // Assuming similar endpoint structure to user app
+      // GET /merchant/orders?type=store → {reasons: [...]} (CANCEL_REASONS
+      // in routes/merchant.js).
       List<String>? reasons;
       Response response = await apiClient.getData(
         '${AppConstants.orderCancellationUri}?type=store',

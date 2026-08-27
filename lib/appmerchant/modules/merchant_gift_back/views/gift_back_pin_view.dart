@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 import '../controllers/merchant_gift_back_controller.dart';
 
 class GiftBackPinView extends GetView<MerchantGiftBackController> {
@@ -71,7 +73,9 @@ class GiftBackPinView extends GetView<MerchantGiftBackController> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
-                            color: hasValue ? const Color(0xFF10B981) : const Color(0xFFE5E7EB),
+                            color: controller.pinError.value.isNotEmpty
+                                ? const Color(0xFFDC2626)
+                                : (hasValue ? const Color(0xFF10B981) : const Color(0xFFE5E7EB)),
                             width: 2,
                           ),
                         ),
@@ -89,18 +93,31 @@ class GiftBackPinView extends GetView<MerchantGiftBackController> {
                   _buildKeypad(),
                   
                   SizedBox(height: 24.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Obx(() => Checkbox(
-                        value: controller.rememberMe.value,
-                        onChanged: (val) => controller.rememberMe.value = val ?? false,
-                        activeColor: const Color(0xFF10B981),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-                      )),
-                      Text('Remember me', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF4B5563))),
-                    ],
-                  ),
+                  // The "Remember me" checkbox that used to sit here toggled a
+                  // flag nothing ever read. Replaced with the real state of
+                  // the PIN check.
+                  Obx(() {
+                    if (controller.isVerifyingPin.value || controller.isSending.value) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        child: const SizedBox(
+                          width: 22, height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    }
+                    if (controller.pinError.value.isEmpty) {
+                      return SizedBox(height: 22.h);
+                    }
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 4.h),
+                      child: Text(
+                        controller.pinError.value,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13.sp, color: const Color(0xFFDC2626), fontWeight: FontWeight.w600),
+                      ),
+                    );
+                  }),
                   SizedBox(height: 24.h),
                 ],
               ),
@@ -114,7 +131,47 @@ class GiftBackPinView extends GetView<MerchantGiftBackController> {
   Widget _buildTabItem(String label, IconData icon, bool isActive) {
     return Expanded(
       child: GestureDetector(
-        onTap: () => controller.isBiometricTab.value = (label == 'Biometric'),
+        onTap: () async {
+          final wantsBiometric = label == 'Biometric';
+          controller.isBiometricTab.value = wantsBiometric;
+          if (!wantsBiometric) return;
+          // Selecting this tab used to do nothing but move the highlight —
+          // there was no biometric prompt and no way to authorise from here.
+          if (!controller.hasPin.value) {
+            safeSnackbar('No PIN set',
+                'Set a PIN for this account before sending a gift back.');
+            controller.isBiometricTab.value = false;
+            return;
+          }
+          final auth = LocalAuthentication();
+          bool canCheck = false;
+          try {
+            canCheck = await auth.canCheckBiometrics && await auth.isDeviceSupported();
+          } catch (e) {
+            debugPrint('biometric availability check failed: $e');
+          }
+          if (!canCheck) {
+            safeSnackbar('Unavailable',
+                'Biometric authentication is not available on this device',
+                snackPosition: SnackPosition.BOTTOM);
+            controller.isBiometricTab.value = false;
+            return;
+          }
+          bool authenticated = false;
+          try {
+            authenticated = await auth.authenticate(
+              localizedReason: 'Authenticate to send this gift back',
+              options: const AuthenticationOptions(biometricOnly: true),
+            );
+          } catch (e) {
+            debugPrint('biometric authenticate failed: $e');
+          }
+          if (authenticated) {
+            await controller.onAcceptRequest();
+          } else {
+            controller.isBiometricTab.value = false;
+          }
+        },
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 10.h),
           decoration: BoxDecoration(

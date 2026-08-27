@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_catalog_controller.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 import 'widgets/uploads_banner.dart';
-import 'widgets/shipping_options.dart';
 
 class CreateItemView extends GetView<MerchantCatalogController> {
   const CreateItemView({super.key});
@@ -160,14 +160,28 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                     _buildCheckboxRow('This Product has multi variants', controller.hasMultiVariants),
                     SizedBox(height: 12.h),
                     _buildCheckboxRow('Add Promotional Price', controller.hasPromotionalPrice),
-                    SizedBox(height: 24.h),
-
-                    ShippingOptions(
-                      isDelivery: controller.isDelivery,
-                      isTakeaway: controller.isTakeaway,
-                      isDineIn:   controller.isDineIn,
-                      selectedTime: controller.deliveryTime,
-                    ),
+                    // The checkbox had no field behind it and nothing was ever
+                    // sent, so a "promotional price" could never be set.
+                    Obx(() => controller.hasPromotionalPrice.value
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 12.h),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Promotional price *'),
+                                _textField(
+                                  controller.itemPromoPriceCtrl,
+                                  '0.00',
+                                  type: const TextInputType.numberWithOptions(decimal: true),
+                                ),
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+                    // The delivery / takeaway / dine-in + prep-time block that
+                    // used to sit here had no backing anywhere: fulfilment is
+                    // chosen per ORDER (Order.orderType), never per product,
+                    // and none of those toggles were ever sent or stored.
                     SizedBox(height: 32.h),
 
                     // Publish toggle
@@ -198,27 +212,51 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                   onPressed: controller.isLoading.value
                       ? null
                       : () async {
+                          bool ok;
                           if (isEditMode) {
+                            final name = controller.itemNameCtrl.text.trim();
                             final price = double.tryParse(controller.itemPriceCtrl.text.trim()) ?? 0.0;
-                            if (controller.itemNameCtrl.text.trim().isEmpty || price <= 0) return;
-                            await controller.updateItem(editId, {
-                              'name': controller.itemNameCtrl.text.trim(),
-                              'category': controller.selectedCategory.value == 'Select'
-                                  ? 'General'
-                                  : controller.selectedCategory.value,
-                              'price': price,
-                              'image': controller.itemImageUrl.value,
-                              'isFeature': controller.isFeatureProduct.value,
-                              'hasVariants': controller.hasMultiVariants.value,
-                              'isActive': controller.isPublished.value,
-                              'vat': double.tryParse(controller.itemVatCtrl.text.trim()) ?? 0.0,
-                              'code': controller.itemCodeCtrl.text.trim(),
-                              'taxMethod': controller.selectedTaxMethod.value,
-                            });
+                            // Both of these used to `return` in silence,
+                            // leaving the merchant tapping Save with nothing
+                            // happening and no reason given.
+                            if (name.isEmpty) {
+                              safeSnackbar('Error', 'Product name is required',
+                                  snackPosition: SnackPosition.BOTTOM);
+                              return;
+                            }
+                            if (price <= 0) {
+                              safeSnackbar('Error', 'Please enter a valid selling price',
+                                  snackPosition: SnackPosition.BOTTOM);
+                              return;
+                            }
+                            double? promo;
+                            if (controller.hasPromotionalPrice.value) {
+                              promo = double.tryParse(controller.itemPromoPriceCtrl.text.trim());
+                              if (promo == null || promo <= 0) {
+                                safeSnackbar('Error', 'Enter the promotional price',
+                                    snackPosition: SnackPosition.BOTTOM);
+                                return;
+                              }
+                              if (promo >= price) {
+                                safeSnackbar('Error',
+                                    'The promotional price must be lower than the selling price',
+                                    snackPosition: SnackPosition.BOTTOM);
+                                return;
+                              }
+                            }
+                            ok = await controller.updateItem(
+                              editId,
+                              controller.buildItemPayload(
+                                name: name, price: price, promo: promo,
+                              ),
+                            );
                           } else {
-                            await controller.createItemFromForm();
+                            ok = await controller.createItemFromForm();
                           }
-                          if (!controller.isLoading.value) {
+                          // Only leave the form when the save actually landed;
+                          // it used to navigate to the catalog either way, so
+                          // a rejected save looked like a successful one.
+                          if (ok) {
                             Get.offNamed(MerchantRoutes.CATALOG);
                           }
                         },

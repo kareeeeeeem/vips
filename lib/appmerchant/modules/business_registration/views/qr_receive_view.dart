@@ -1,5 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -16,6 +19,7 @@ class QrReceiveView extends StatefulWidget {
 
 class _QrReceiveViewState extends State<QrReceiveView> {
   bool _isLoading = true;
+  bool _isExporting = false;
   String _merchantId = '';
 
   @override
@@ -34,6 +38,63 @@ class _QrReceiveViewState extends State<QrReceiveView> {
       // Keep _merchantId empty; UI shows a fallback below.
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Renders the same QR the screen displays into a real PNG file.
+  /// "Download" used to just copy the merchant id to the clipboard and
+  /// "Print" was a toast telling the merchant to connect a printer — neither
+  /// produced anything the merchant could actually save, send to a printer, or
+  /// stick on the counter.
+  Future<File?> _renderQrToFile() async {
+    try {
+      final painter = QrPainter(
+        data: _merchantId,
+        version: QrVersions.auto,
+        gapless: true,
+        eyeStyle: const QrEyeStyle(
+          eyeShape: QrEyeShape.square,
+          color: Color(0xFF1F2937),
+        ),
+        dataModuleStyle: const QrDataModuleStyle(
+          dataModuleShape: QrDataModuleShape.square,
+          color: Color(0xFF1F2937),
+        ),
+      );
+      final ByteData? bytes =
+          await painter.toImageData(1024, format: ui.ImageByteFormat.png);
+      if (bytes == null) return null;
+
+      final file = File(
+        '${Directory.systemTemp.path}/vips-merchant-qr-$_merchantId.png',
+      );
+      await file.writeAsBytes(bytes.buffer.asUint8List(), flush: true);
+      return file;
+    } catch (e) {
+      debugPrint('QR export failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _exportQr({required String subject, required String text}) async {
+    if (_merchantId.isEmpty || _isExporting) return;
+    setState(() => _isExporting = true);
+    try {
+      final file = await _renderQrToFile();
+      if (file == null) {
+        Get.snackbar('Error', 'Could not generate the QR image',
+            snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: text,
+          subject: subject,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 
@@ -234,13 +295,13 @@ class _QrReceiveViewState extends State<QrReceiveView> {
                   _buildActionButton(
                     Icons.download_rounded,
                     const Color(0xFFFFB800),
-                    onTap: _merchantId.isEmpty
+                    onTap: _merchantId.isEmpty || _isExporting
                         ? null
-                        : () {
-                            Clipboard.setData(ClipboardData(text: _merchantId));
-                            Get.snackbar('Download', 'QR data copied to clipboard',
-                                snackPosition: SnackPosition.BOTTOM);
-                          },
+                        : () => _exportQr(
+                              subject: 'My VIPs store QR code',
+                              text: 'Save this QR code to let customers scan '
+                                  'your store.',
+                            ),
                   ),
                   _buildActionButton(
                     Icons.grid_view_rounded,
@@ -250,10 +311,13 @@ class _QrReceiveViewState extends State<QrReceiveView> {
                   _buildActionButton(
                     Icons.print_rounded,
                     const Color(0xFFEF4444),
-                    onTap: () {
-                      Get.snackbar('Print', 'Connect a printer to print this QR code',
-                          snackPosition: SnackPosition.BOTTOM);
-                    },
+                    onTap: _merchantId.isEmpty || _isExporting
+                        ? null
+                        : () => _exportQr(
+                              subject: 'Print my VIPs store QR code',
+                              text: 'VIPs store QR code — print and display it '
+                                  'at your counter.',
+                            ),
                   ),
                   _buildActionButton(
                     Icons.share_rounded,
@@ -261,8 +325,10 @@ class _QrReceiveViewState extends State<QrReceiveView> {
                     onTap: _merchantId.isEmpty
                         ? null
                         : () {
-                            SharePlus.instance.share(
-                              ShareParams(text: 'My VIPs merchant QR ID: $_merchantId'),
+                            _exportQr(
+                              subject: 'My VIPs store QR code',
+                              text: 'Scan my VIPs store QR code to collect '
+                                  'points.',
                             );
                           },
                   ),

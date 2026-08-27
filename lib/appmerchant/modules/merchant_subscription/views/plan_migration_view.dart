@@ -18,7 +18,7 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
 
     // Sync controller with selected plan from arguments
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.selectPackage(planId, price, 30);
+      controller.selectPackage(planId, price);
     });
 
     return Scaffold(
@@ -49,73 +49,108 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                   ),
                   SizedBox(height: 24.h),
 
-                  // Comparison Row
-                  Row(
-                    children: [
-                      Expanded(child: _buildComparisonCard('Commission Base Plan', '2.5%')),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Icon(Icons.swap_horiz, color: const Color(0xFFEF4444), size: 32.sp),
-                      ),
-                      Expanded(child: _buildComparisonCard(planName, '$currency ${price.toStringAsFixed(2)}', subtitle: '30 days', isGreen: true)),
-                    ],
-                  ),
-                  SizedBox(height: 32.h),
-
-                  // Meta Info Row
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF3F4F6), width: 1), borderRadius: BorderRadius.circular(12.r)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  // What used to sit here: a "Commission Base Plan / 2.5%"
+                  // comparison card (no commission concept exists), a fixed
+                  // "30 days" validity and a "Bill Status: Migrate" meta row,
+                  // a "Wallet Points / VP 0" box whose Apply button actually
+                  // subscribed, and two payment tiles (Cash on Delivery, and
+                  // "Pay Via Online — PayPal, Bkash"). The subscribe endpoint
+                  // takes no gateway at all: it debits User.walletBalance.
+                  Obx(() {
+                    final effective = controller.priceFor(price);
+                    return Column(
                       children: [
-                        _buildMetaItem('Validity', '30 days'),
-                        _buildMetaItem('Price', '$currency ${price.toStringAsFixed(2)}'),
-                        _buildMetaItem('Bill Status', 'Migrate', isBold: true),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 32.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildComparisonCard(
+                                'Current: ${controller.currentPlan['planName'] ?? '—'}',
+                                controller.currentPlan['price'] is num &&
+                                        (controller.currentPlan['price'] as num) > 0
+                                    ? '$currency ${(controller.currentPlan['price'] as num).toStringAsFixed(2)}'
+                                    : 'Free',
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12.w),
+                              child: Icon(Icons.swap_horiz,
+                                  color: const Color(0xFFEF4444), size: 32.sp),
+                            ),
+                            Expanded(
+                              child: _buildComparisonCard(
+                                planName,
+                                effective > 0
+                                    ? '$currency ${effective.toStringAsFixed(2)}'
+                                    : 'Free',
+                                subtitle: '${controller.monthsForCycle} month'
+                                    '${controller.monthsForCycle == 1 ? '' : 's'}',
+                                isGreen: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 24.h),
 
-                  // Wallet Points entry
-                  Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
+                        // Billing cycle — the backend supports monthly and
+                        // yearly (10x monthly, i.e. two months free) but the
+                        // app never sent `billingCycle`, so every subscribe
+                        // silently defaulted to monthly.
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCycleTile('Monthly', 'monthly',
+                                  '$currency ${price.toStringAsFixed(2)} / month'),
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: _buildCycleTile('Yearly', 'yearly',
+                                  '$currency ${(price * 10).toStringAsFixed(2)} / year'
+                                  '${price > 0 ? '  •  2 months free' : ''}'),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 24.h),
+
+                        Container(
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Wallet Points', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-                              SizedBox(height: 4.h),
-                              Obx(() => Text('VP ${controller.walletPoints.value}', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)))),
+                              _buildSummaryRow('Amount due',
+                                  effective > 0 ? '$currency ${effective.toStringAsFixed(2)}' : 'Free'),
+                              SizedBox(height: 8.h),
+                              _buildSummaryRow('Paid from wallet',
+                                  '$currency ${controller.walletBalance.value.toStringAsFixed(2)}'),
+                              if (effective > controller.walletBalance.value) ...[
+                                SizedBox(height: 10.h),
+                                Row(
+                                  children: [
+                                    Icon(Icons.error_outline,
+                                        size: 16.sp, color: const Color(0xFFDC2626)),
+                                    SizedBox(width: 6.w),
+                                    Expanded(
+                                      child: Text(
+                                        'Not enough wallet balance for this plan.',
+                                        style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: const Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: () => controller.subscribe(controller.selectedPackageName.value),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                          ),
-                          child: Text('Apply', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold)),
-                        ),
                       ],
-                    ),
-                  ),
-                  SizedBox(height: 32.h),
+                    );
+                  }),
 
-                  // Payment Methods section
-                  _buildPaymentMethodTile('Cash on Delivery', 'COD'),
-                  SizedBox(height: 16.h),
-                  _buildPaymentMethodTile('Pay Via Online', 'Online', icon: Icons.payment, subText: 'PayPal, Bkash'),
-                  
                   SizedBox(height: 40.h),
                 ],
               ),
@@ -141,30 +176,48 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
                   SizedBox(width: 16.w),
                   Expanded(
                     flex: 2,
-                    child: Obx(() => ElevatedButton(
-                      onPressed: () => Get.toNamed(
-                        MerchantRoutes.BILL_PIN,
-                        arguments: {
-                          'nextSelection': MerchantRoutes.BILL_SCAN_ME,
-                          'nextArgs': {
-                            'buttonText': 'View Request',
-                            'nextRoute': MerchantRoutes.INVOICE_RECEIPT,
-                            'nextArgs': {
-                              'headerTitle': 'REQUEST',
-                              'transType': 'Upgrade to ${controller.selectedPackageName.value}',
-                              'grandTotal': '$currency ${controller.selectedPackagePrice.value.toStringAsFixed(3)}',
-                            },
-                          },
-                        },
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        elevation: 0,
-                      ),
-                      child: Text('Shift Subscription Plan', style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w700)),
-                    )),
+                    // This button used to push the billing PIN → scan-me →
+                    // invoice-receipt chain, rendering a receipt for a plan
+                    // change that never happened — POST /subscribe was never
+                    // called from here at all.
+                    child: Obx(() {
+                      final effective = controller.priceFor(price);
+                      final affordable =
+                          effective <= controller.walletBalance.value;
+                      return ElevatedButton(
+                        onPressed:
+                            (controller.isSubscribing.value || !affordable)
+                                ? null
+                                : () async {
+                                    final ok =
+                                        await controller.subscribe(planId);
+                                    if (ok) {
+                                      Get.until((route) =>
+                                          Get.currentRoute ==
+                                          MerchantRoutes.BUSINESS_PLAN);
+                                    }
+                                  },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          disabledBackgroundColor: const Color(0xFFE5E7EB),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r)),
+                          elevation: 0,
+                        ),
+                        child: controller.isSubscribing.value
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : Text('Shift Subscription Plan',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w700)),
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -211,46 +264,67 @@ class PlanMigrationView extends GetView<MerchantSubscriptionController> {
     );
   }
 
-  Widget _buildMetaItem(String label, String value, {bool isBold = false}) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9CA3AF))),
-        SizedBox(height: 4.h),
-        Text(value, style: TextStyle(fontSize: 12.sp, fontWeight: isBold ? FontWeight.w700 : FontWeight.w500, color: const Color(0xFF1F2937))),
-      ],
-    );
+  Widget _buildCycleTile(String label, String value, String detail) {
+    return Obx(() {
+      final selected = controller.billingCycle.value == value;
+      return GestureDetector(
+        onTap: () => controller.billingCycle.value = value,
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFECFDF5) : Colors.white,
+            border: Border.all(
+                color: selected
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFE5E7EB),
+                width: selected ? 2 : 1),
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    size: 16.sp,
+                    color: selected
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF9CA3AF),
+                  ),
+                  SizedBox(width: 6.w),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1F2937))),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Text(detail,
+                  style: TextStyle(
+                      fontSize: 10.sp, color: const Color(0xFF6B7280))),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
-  Widget _buildPaymentMethodTile(String title, String method, {IconData? icon, String? subText}) {
-    return Obx(() => Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: controller.paymentMethod.value == method ? const Color(0xFF10B981) : const Color(0xFFF3F4F6)),
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF1F2937))),
-                if (subText != null) ...[
-                  SizedBox(height: 4.h),
-                  Text(subText, style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF))),
-                ],
-              ],
-            ),
-          ),
-          Radio<String>(
-            value: method,
-            groupValue: controller.paymentMethod.value,
-            onChanged: (val) => controller.paymentMethod.value = val!,
-            activeColor: const Color(0xFF10B981),
-          ),
-        ],
-      ),
-    ));
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1F2937))),
+      ],
+    );
   }
 }

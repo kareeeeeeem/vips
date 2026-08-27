@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import '../controllers/merchant_partnership_controller.dart';
 
 class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
@@ -46,22 +48,23 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
               // Reward Convention Row
               Row(
                 children: [
-                   _buildInputBox('Minimum', '0.5', '%', controller.minRewardPercent),
+                   _buildInputBox('Minimum', controller.minRewardPercentController, '%'),
                    SizedBox(width: 12.w),
                    Text('FOR', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280))),
                    SizedBox(width: 12.w),
-                   _buildInputBox('Purchase More than', '1', 'D', controller.minPurchaseAmount),
+                   _buildInputBox('Purchase More than', controller.minPurchaseAmountController, 'D'),
                 ],
               ),
               SizedBox(height: 16.h),
-              Text(
-                '0.5% discount will be applicable when order amount exceeds is more than D 1',
+              Obx(() => Text(
+                '${_fmt(controller.minRewardPercent.value)}% discount will be applicable when '
+                'order amount exceeds D ${_fmt(controller.minPurchaseAmount.value)}',
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: const Color(0xFF6B7280),
                   height: 1.4,
                 ),
-              ),
+              )),
 
               SizedBox(height: 40.h),
               Text(
@@ -86,23 +89,24 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
               // Redeem Convention Row
               Row(
                 children: [
-                  _buildLargeInputBox('100 VIPs Points', controller.redeemPointsValue),
+                  _buildUnitInputBox(controller.redeemPointsController, 'VIPs Points', 3),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Text('=', style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold)),
                   ),
-                  _buildDinarInputBox('1 Dinar', controller.redeemDinarValue),
+                  _buildUnitInputBox(controller.redeemDinarController, 'Dinar', 2),
                 ],
               ),
               SizedBox(height: 20.h),
-              Text(
-                'You are about to start permanently Each 100 VIPs points will give the user discount of D 1',
+              Obx(() => Text(
+                'Each ${controller.redeemPointsValue.value} VIPs points will give the user a '
+                'discount of D ${controller.redeemDinarValue.value}',
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: const Color(0xFF6B7280),
                   height: 1.4,
                 ),
-              ),
+              )),
 
               SizedBox(height: 40.h),
               Text(
@@ -155,6 +159,8 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
                               fontWeight: FontWeight.w600,
                               decoration: TextDecoration.underline,
                             ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => Get.toNamed(MerchantRoutes.TERMS),
                           ),
                         ],
                       ),
@@ -166,26 +172,35 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
               SizedBox(height: 32.h),
 
               // Confirm Button
-              SizedBox(
+              Obx(() => SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: controller.confirmSetup,
+                  onPressed: controller.isLoading.value ? null : controller.confirmSetup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Confirm',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                          height: 20.h,
+                          width: 20.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Confirm',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
-              ),
+              )),
               SizedBox(height: 32.h),
             ],
           ),
@@ -194,7 +209,14 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
     );
   }
 
-  Widget _buildInputBox(String label, String value, String unit, RxDouble target) {
+  /// 0.5 -> "0.5", 1.0 -> "1"
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  /// These three used to be read-only Containers with the default values
+  /// painted on as literal text — the merchant could not change the deal they
+  /// were agreeing to, and the RxDouble/RxInt passed in was never read.
+  Widget _buildInputBox(String label, TextEditingController target, String unit) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,21 +224,36 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
           Text(label, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
           SizedBox(height: 8.h),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(color: const Color(0xFFFFB800), width: 1.5),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  value,
-                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
+                Expanded(
+                  child: TextField(
+                    controller: target,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1F2937),
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
                 ),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
+                  ),
                 ),
               ],
             ),
@@ -226,37 +263,44 @@ class MerchantRewardSetupView extends GetView<MerchantPartnershipController> {
     );
   }
 
-  Widget _buildLargeInputBox(String value, RxInt target) {
+  Widget _buildUnitInputBox(TextEditingController target, String unit, int flex) {
     return Expanded(
-      flex: 3,
+      flex: flex,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: const Color(0xFFFFB800), width: 1.5),
         ),
-        child: Text(
-          value,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildDinarInputBox(String value, RxInt target) {
-    return Expanded(
-      flex: 2,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: const Color(0xFFFFB800), width: 1.5),
-        ),
-        child: Text(
-          value,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: target,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937),
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            SizedBox(width: 6.w),
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+          ],
         ),
       ),
     );

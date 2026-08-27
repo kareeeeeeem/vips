@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import 'package:vip/core/services/api_service.dart';
@@ -36,6 +37,17 @@ class MerchantSettingsView extends StatelessWidget {
           _buildSectionHeader('Store Management'),
           _buildListTile(Icons.store_outlined, 'Store Profile', 'View and edit details', () => Get.toNamed(MerchantRoutes.STORE_PROFILE)),
           _buildListTile(Icons.language_outlined, 'Language', 'English', () => _showLanguageDialog()),
+          Obx(() {
+            final homeCtrl = Get.find<MerchantHomeController>();
+            return _buildListTile(
+              Icons.lock_outline_rounded,
+              'Security PIN',
+              homeCtrl.hasPin.value
+                  ? 'Change the PIN used to approve bills'
+                  : 'Not set — required to approve bills',
+              () => _showPinDialog(homeCtrl.hasPin.value),
+            );
+          }),
           
           SizedBox(height: 24.h),
           _buildSectionHeader('Support & Legal'),
@@ -102,18 +114,117 @@ class MerchantSettingsView extends StatelessWidget {
                   style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280)),
                 ),
                 SizedBox(height: 8.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12.r)),
-                  child: Text('Verified', style: TextStyle(color: const Color(0xFF10B981), fontSize: 11.sp, fontWeight: FontWeight.bold)),
-                ),
+                // Was a "Verified" chip painted on unconditionally, whatever
+                // the account's real isVerified flag said.
+                Builder(builder: (_) {
+                  final verified = homeCtrl.isVerified.value;
+                  final color = verified
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF59E0B);
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      verified ? 'Verified' : 'Pending verification',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
-          const Icon(Icons.qr_code_2_rounded, color: Color(0xFF1F2937), size: 28),
+          IconButton(
+            icon: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF1F2937), size: 28),
+            tooltip: 'Store QR code',
+            onPressed: () => Get.toNamed(MerchantRoutes.QR_RECEIVE),
+          ),
         ],
       ),
     ));
+  }
+
+  /// Sets or changes the account's security PIN through the real
+  /// POST /auth/pin endpoint.
+  void _showPinDialog(bool hasPin) {
+    final pinCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final isSaving = false.obs;
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Text(hasPin ? 'Change Security PIN' : 'Set Security PIN'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'This 4-digit PIN approves bills and Gift Back payouts.',
+              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              controller: pinCtrl,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 4,
+              decoration: const InputDecoration(
+                labelText: 'New PIN',
+                counterText: '',
+              ),
+            ),
+            TextField(
+              controller: confirmCtrl,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 4,
+              decoration: const InputDecoration(
+                labelText: 'Confirm PIN',
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          Obx(() => ElevatedButton(
+                onPressed: isSaving.value
+                    ? null
+                    : () async {
+                        final pin = pinCtrl.text.trim();
+                        if (pin.length != 4 || int.tryParse(pin) == null) {
+                          safeSnackbar('Error', 'PIN must be 4 digits',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        if (pin != confirmCtrl.text.trim()) {
+                          safeSnackbar('Error', 'The two PINs do not match',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        isSaving.value = true;
+                        final ok = await Get.find<MerchantHomeController>()
+                            .setSecurityPin(pin);
+                        isSaving.value = false;
+                        if (ok) {
+                          Get.back();
+                          safeSnackbar('Done', 'Your security PIN is set',
+                              snackPosition: SnackPosition.BOTTOM);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981)),
+                child: const Text('Save', style: TextStyle(color: Colors.white)),
+              )),
+        ],
+      ),
+    );
   }
 
   Widget _buildSectionHeader(String title) {
@@ -207,10 +318,12 @@ class MerchantSettingsView extends StatelessWidget {
             SizedBox(height: 8.h),
             Text('Contact our support team for assistance.', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)), textAlign: TextAlign.center),
             SizedBox(height: 24.h),
-            _supportOption(Icons.email_outlined, 'Email Support', 'support@vips.tn'),
-            // TODO: placeholder pending the real support contact number before launch
-            _supportOption(Icons.phone_outlined, 'Phone Support', '+216 XX XXX XXX'),
-            _supportOption(Icons.chat_bubble_outline_rounded, 'Live Chat', 'Available 9am - 6pm'),
+            _supportOption(
+              Icons.email_outlined,
+              'Email Support',
+              'support@vipsapp.com',
+              onTap: () => _launchMailto('support@vipsapp.com', 'VIPs Merchant Help'),
+            ),
             SizedBox(height: 16.h),
           ],
         ),
@@ -219,7 +332,14 @@ class MerchantSettingsView extends StatelessWidget {
     );
   }
 
-  Widget _supportOption(IconData icon, String title, String subtitle) {
+  Future<void> _launchMailto(String email, String subject) async {
+    final uri = Uri.parse('mailto:$email?subject=$subject');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _supportOption(IconData icon, String title, String subtitle, {VoidCallback? onTap}) {
     return ListTile(
       leading: Container(
         padding: EdgeInsets.all(8.w),
@@ -228,6 +348,7 @@ class MerchantSettingsView extends StatelessWidget {
       ),
       title: Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+      onTap: onTap,
     );
   }
 }

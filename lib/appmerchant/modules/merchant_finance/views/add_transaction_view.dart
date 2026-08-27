@@ -18,6 +18,17 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   final amountController = TextEditingController();
   String selectedCategory = 'Sale';
   FinanceType selectedType = FinanceType.income;
+
+  @override
+  void initState() {
+    super.initState();
+    // Callers (the quick-actions sheet) can open this screen straight on the
+    // tab they mean.
+    final args = Get.arguments;
+    if (args is Map && args['type'] == 'expense') {
+      selectedType = FinanceType.expense;
+    }
+  }
   String selectedAccount = 'Cash';
 
   @override
@@ -209,14 +220,20 @@ class _AddTransactionViewState extends State<AddTransactionView> {
       return;
     }
     
-    double? amt = double.tryParse(amountController.text);
+    double? amt = double.tryParse(amountController.text.trim());
     if (amt == null) {
       safeSnackbar('Error', 'Invalid amount', snackPosition: SnackPosition.BOTTOM);
       return;
     }
+    // The backend rejects these too; catching them here gives a clear message
+    // instead of a round-trip that reads as a server failure.
+    if (amt <= 0) {
+      safeSnackbar('Error', 'Amount must be greater than 0', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
 
     controller.addTransaction(
-      title: titleController.text,
+      title: titleController.text.trim(),
       category: selectedCategory,
       amount: amt,
       type: selectedType,

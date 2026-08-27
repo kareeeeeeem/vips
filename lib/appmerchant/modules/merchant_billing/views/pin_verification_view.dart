@@ -22,6 +22,14 @@ class PinVerificationView extends StatelessWidget {
 
     final String nextRoute = Get.arguments?['nextSelection'] ?? MerchantRoutes.INVOICE_RECEIPT;
     final String errorRoute = Get.arguments?['errorSelection'] ?? MerchantRoutes.BILL_ERROR;
+    // Whatever the caller wants the next screen to render. Without this the
+    // PIN screen dropped the payload and the invoice screen fell back to its
+    // "#INV-0000 / D 0.00" placeholders — an approved bill showed an empty
+    // receipt.
+    final Map<String, dynamic>? nextArguments =
+        Get.arguments?['nextArguments'] is Map
+            ? Map<String, dynamic>.from(Get.arguments['nextArguments'] as Map)
+            : null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -65,13 +73,20 @@ class PinVerificationView extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.fingerprint, color: const Color(0xFF6B7280), size: 20.sp),
-                        SizedBox(width: 8.w),
-                        Text('Biometric', style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp, fontWeight: FontWeight.w500)),
-                      ],
+                    child: GestureDetector(
+                      onTap: () => _authenticateBiometric(nextRoute),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.fingerprint, color: const Color(0xFF6B7280), size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Text('Biometric', style: TextStyle(color: const Color(0xFF6B7280), fontSize: 14.sp, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -132,65 +147,55 @@ class PinVerificationView extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
               child: Column(
                 children: [
-                  _buildNumpadRow(['1', '2', '3'], controller),
+                  _buildNumpadRow(['1', '2', '3'], controller, nextRoute: nextRoute, errorRoute: errorRoute, nextArguments: nextArguments),
                   SizedBox(height: 16.h),
-                  _buildNumpadRow(['4', '5', '6'], controller),
+                  _buildNumpadRow(['4', '5', '6'], controller, nextRoute: nextRoute, errorRoute: errorRoute, nextArguments: nextArguments),
                   SizedBox(height: 16.h),
-                  _buildNumpadRow(['7', '8', '9'], controller),
+                  _buildNumpadRow(['7', '8', '9'], controller, nextRoute: nextRoute, errorRoute: errorRoute, nextArguments: nextArguments),
                   SizedBox(height: 16.h),
-                  _buildNumpadRow(['fingerprint', '0', 'delete'], controller, nextRoute: nextRoute, errorRoute: errorRoute),
+                  _buildNumpadRow(['fingerprint', '0', 'delete'], controller, nextRoute: nextRoute, errorRoute: errorRoute, nextArguments: nextArguments),
                 ],
               ),
             ),
 
-            // Remember me
-            Padding(
-              padding: EdgeInsets.only(bottom: 24.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20.w,
-                    height: 20.w,
-                    child: Checkbox(
-                      value: false,
-                      onChanged: (val) {},
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text('Remember me', style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280))),
-                ],
-              ),
-            ),
+            SizedBox(height: 24.h),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNumpadRow(List<String> items, dynamic controller, {String? nextRoute, String? errorRoute}) {
+  /// Device biometrics as an alternative to typing the PIN. Used by both the
+  /// fingerprint key on the numpad and the "Biometric" half of the toggle at
+  /// the top — that half looked like a tab but had no handler at all.
+  static Future<void> _authenticateBiometric(String? nextRoute,
+      [Map<String, dynamic>? nextArguments]) async {
+    final auth = LocalAuthentication();
+    final canCheck = await auth.canCheckBiometrics;
+    if (!canCheck) {
+      safeSnackbar('Unavailable',
+          'Biometric authentication not available on this device',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final authenticated = await auth.authenticate(
+      localizedReason: 'Authenticate to access billing',
+      options: const AuthenticationOptions(biometricOnly: true),
+    );
+    if (authenticated && nextRoute != null) {
+      Get.offAllNamed(nextRoute, arguments: nextArguments);
+    }
+  }
+
+  Widget _buildNumpadRow(List<String> items, dynamic controller,
+      {String? nextRoute, String? errorRoute, Map<String, dynamic>? nextArguments}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: items.map((item) {
         if (item == 'fingerprint') {
           return IconButton(
             icon: Icon(Icons.fingerprint, color: const Color(0xFF1B6DF9), size: 32.sp),
-            onPressed: () async {
-                final auth = LocalAuthentication();
-                final canCheck = await auth.canCheckBiometrics;
-                if (!canCheck) {
-                  safeSnackbar('Unavailable', 'Biometric authentication not available on this device', snackPosition: SnackPosition.BOTTOM);
-                  return;
-                }
-                final authenticated = await auth.authenticate(
-                  localizedReason: 'Authenticate to access billing',
-                  options: const AuthenticationOptions(biometricOnly: true),
-                );
-                if (authenticated && nextRoute != null) {
-                  Get.offAllNamed(nextRoute);
-                }
-              },
+            onPressed: () => _authenticateBiometric(nextRoute, nextArguments),
           );
         } else if (item == 'delete') {
           return IconButton(
@@ -199,15 +204,37 @@ class PinVerificationView extends StatelessWidget {
           );
         } else {
           return GestureDetector(
-            onTap: () {
-              controller?.addPinDigit(item);
-              if (controller?.currentPin.value.length == 4) {
-                if (controller?.currentPin.value == (controller?.merchantPin.value ?? '0000')) {
-                  Get.offNamed(nextRoute ?? MerchantRoutes.INVOICE_RECEIPT);
-                } else {
-                  Get.offNamed(errorRoute ?? MerchantRoutes.BILL_ERROR);
+            onTap: () async {
+              if (controller == null) return;
+              controller.addPinDigit(item);
+              if (controller.currentPin.value.length != 4) return;
+
+              final entered = controller.currentPin.value;
+              controller.currentPin.value = ''; // Reset the dots immediately
+              // Server-side verification. The previous check compared the
+              // digits against a local SharedPreferences value that was never
+              // written, so '0000' always passed.
+              final ok = await controller.verifyPin(entered);
+              if (ok) {
+                Get.offNamed(nextRoute ?? MerchantRoutes.INVOICE_RECEIPT,
+                    arguments: nextArguments);
+              } else {
+                if (controller.hasPin.value == false) {
+                  safeSnackbar(
+                    'No PIN set',
+                    'Set a security PIN in Settings before approving bills.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                  Get.toNamed(MerchantRoutes.SETTINGS);
+                  return;
                 }
-                controller?.currentPin.value = ''; // Reset
+                // Tell the error screen what actually failed — it used to be
+                // handed nothing and fell back to a fixed "insufficient
+                // plan" message for a simple wrong PIN.
+                Get.offNamed(errorRoute ?? MerchantRoutes.BILL_ERROR,
+                    arguments: {
+                      'message': 'That PIN is not correct. Please try again.',
+                    });
               }
             },
             child: Container(

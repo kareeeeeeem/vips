@@ -46,8 +46,11 @@ class MerchantBottomNavBar extends StatelessWidget {
                     ),
                   ],
                 ),
+                // This button opens the "Quick Actions!" sheet, not the
+                // camera — the QR-scanner glyph promised a scanner and
+                // delivered a menu. (Scan QR is one of the tiles inside.)
                 child: Icon(
-                  Icons.qr_code_scanner_rounded,
+                  Icons.bolt_rounded,
                   color: Colors.white,
                   size: 32.sp,
                 ),

@@ -33,15 +33,39 @@ class MerchantOrderController extends GetxController {
   final todayOrders = 0.obs;
 
   // Filter options
+  /// Mirrors `Order.status`'s real enum (models/Order.js). `handover`,
+  /// `picked_up`, `refund_requested` and `refunded` were missing, so orders
+  /// in any of those four states had no tab and could not be reached from
+  /// this screen at all.
   final statusFilters = [
     'all',
     'pending',
     'confirmed',
     'processing',
     'ready',
+    'handover',
+    'picked_up',
     'delivered',
     'canceled',
+    'refund_requested',
+    'refunded',
   ];
+
+  /// Human labels for the tabs — `picked_up` / `refund_requested` read badly
+  /// as raw enum values.
+  static const statusLabels = {
+    'all': 'All',
+    'pending': 'Pending',
+    'confirmed': 'Confirmed',
+    'processing': 'Processing',
+    'ready': 'Ready',
+    'handover': 'Handover',
+    'picked_up': 'Picked Up',
+    'delivered': 'Delivered',
+    'canceled': 'Cancelled',
+    'refund_requested': 'Refund Req.',
+    'refunded': 'Refunded',
+  };
   final selectedStatusFilter = 'all'.obs;
   final selectedDateRange = Rxn<DateTimeRange>();
 
@@ -101,16 +125,25 @@ class MerchantOrderController extends GetxController {
     }
   }
 
-  // Load current/new orders
-  Future<void> loadCurrentOrders() async {
+
+  /// Real cancellation reasons from GET /merchant/orders?type=store. The
+  /// repository has always been able to fetch these, but nothing called it —
+  /// the cancel dialog hardcoded "Merchant canceled" for every cancellation.
+  final cancelReasons = <String>[].obs;
+  final isLoadingCancelReasons = false.obs;
+
+  Future<void> loadCancelReasons() async {
+    if (cancelReasons.isNotEmpty || isLoadingCancelReasons.value) return;
+    isLoadingCancelReasons.value = true;
     try {
-      final result = await orderService.getCurrentOrders();
-      if (result != null) {
-        orders.value = result;
-        _applyFilters();
+      final reasons = await orderService.getCancelReasons();
+      if (reasons != null && reasons.isNotEmpty) {
+        cancelReasons.value = reasons;
       }
     } catch (e) {
-      debugPrint('Error loading current orders: $e');
+      debugPrint('Error loading cancel reasons: $e');
+    } finally {
+      isLoadingCancelReasons.value = false;
     }
   }
 
@@ -187,13 +220,17 @@ class MerchantOrderController extends GetxController {
   void _applyFilters() {
     var filtered = orders.toList();
 
-    // Apply status filter
+    // Apply status filter. Both spellings of cancelled are on the backend
+    // enum, so matching one exactly hid orders stored under the other.
     if (selectedStatusFilter.value != 'all') {
-      filtered =
-          filtered.where((order) {
-            return order.orderStatus?.toLowerCase() ==
-                selectedStatusFilter.value.toLowerCase();
-          }).toList();
+      final wanted = selectedStatusFilter.value.toLowerCase();
+      final accepted = (wanted == 'canceled' || wanted == 'cancelled')
+          ? {'canceled', 'cancelled'}
+          : {wanted};
+      filtered = filtered
+          .where((order) =>
+              accepted.contains(order.orderStatus?.toLowerCase() ?? ''))
+          .toList();
     }
 
     // Apply search query filter
@@ -224,7 +261,10 @@ class MerchantOrderController extends GetxController {
       filtered =
           filtered.where((order) {
             if (order.createdAt == null) return false;
-            final orderDate = DateTime.parse(order.createdAt!);
+            // tryParse — a malformed timestamp must not throw out of the
+            // filter and blank the whole list.
+            final orderDate = DateTime.tryParse(order.createdAt!);
+            if (orderDate == null) return false;
             return orderDate.isAfter(
                   startDate.subtract(const Duration(days: 1)),
                 ) &&

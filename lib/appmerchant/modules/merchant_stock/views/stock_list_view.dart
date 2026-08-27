@@ -309,8 +309,36 @@ class StockListView extends GetView<MerchantStockController> {
               ),
               SizedBox(height: 8.h),
               IconButton(
-                onPressed: () => controller.adjustStock(item.id, -1),
-                icon: const Icon(Icons.remove_circle, color: Color(0xFF6B7280)),
+                onPressed: item.currentStock <= 0
+                    ? null
+                    : () => controller.adjustStock(item.id, -1),
+                icon: Icon(Icons.remove_circle,
+                    color: item.currentStock <= 0
+                        ? const Color(0xFFD1D5DB)
+                        : const Color(0xFF6B7280)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              SizedBox(height: 8.h),
+              // DELETE /merchant/stock/:id existed with nothing calling it,
+              // so a stock line could never be removed.
+              IconButton(
+                onPressed: () => Get.dialog(AlertDialog(
+                  title: const Text('Delete stock item'),
+                  content: Text('Remove "${item.name}" from your stock list?'),
+                  actions: [
+                    TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+                    TextButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.deleteStockItem(item.id);
+                      },
+                      child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+                    ),
+                  ],
+                )),
+                icon: Icon(Icons.delete_outline,
+                    size: 20.sp, color: const Color(0xFFEF4444)),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),

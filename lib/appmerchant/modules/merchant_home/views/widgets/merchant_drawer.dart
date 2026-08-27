@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/appmerchant/modules/merchant_auth/controllers/merchant_auth_controller.dart';
 import 'package:vip/appmerchant/modules/merchant_home/controllers/merchant_home_controller.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
@@ -58,6 +59,11 @@ class MerchantDrawer extends StatelessWidget {
                     icon: Icons.badge_outlined,
                     label: 'Staff Management',
                     onTap: () => Get.toNamed(MerchantRoutes.STAFF_MANAGEMENT),
+                  ),
+                  _drawerItem(
+                    icon: Icons.campaign_outlined,
+                    label: 'Advertisements',
+                    onTap: () => Get.toNamed(MerchantRoutes.ADVERTISEMENTS),
                   ),
                   _drawerItem(
                     icon: Icons.notifications_none_rounded,
@@ -207,17 +213,8 @@ class MerchantDrawer extends StatelessWidget {
                 child: const Icon(Icons.email_outlined, color: Color(0xFF10B981)),
               ),
               title: const Text('Email Support', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('merchant@vips.tn'),
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Icon(Icons.phone_outlined, color: Color(0xFF10B981)),
-              ),
-              title: const Text('Phone Support', style: TextStyle(fontWeight: FontWeight.w600)),
-              // TODO: placeholder pending the real support contact number before launch
-              subtitle: const Text('+216 XX XXX XXX'),
+              subtitle: const Text('support@vipsapp.com'),
+              onTap: () => _launchMailto('support@vipsapp.com', 'VIPs Merchant Help'),
             ),
             const SizedBox(height: 16),
           ],
@@ -225,6 +222,13 @@ class MerchantDrawer extends StatelessWidget {
       ),
       backgroundColor: Colors.transparent,
     );
+  }
+
+  static Future<void> _launchMailto(String email, String subject) async {
+    final uri = Uri.parse('mailto:$email?subject=$subject');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _buildLogoutButton(MerchantAuthController authController) {

@@ -13,11 +13,15 @@ class GiftBackStatusView extends StatefulWidget {
   State<GiftBackStatusView> createState() => _GiftBackStatusViewState();
 }
 
-enum _GiftBackStatusStep { request, success, invoice, thankYou }
+/// The `request` step this enum used to start on rendered an Accept button
+/// wired to `onAcceptRequest()` — but this screen is only pushed *after* a
+/// successful send, so tapping it issued a second real gift back (crediting
+/// the customer twice and consuming the merchant's daily limit twice).
+enum _GiftBackStatusStep { success, invoice, thankYou }
 
 class _GiftBackStatusViewState extends State<GiftBackStatusView> {
   late final MerchantGiftBackController controller;
-  _GiftBackStatusStep _step = _GiftBackStatusStep.request;
+  _GiftBackStatusStep _step = _GiftBackStatusStep.success;
 
   @override
   void initState() {
@@ -27,7 +31,6 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isRequest = _step == _GiftBackStatusStep.request;
     final bool isInvoice = _step == _GiftBackStatusStep.invoice || _step == _GiftBackStatusStep.thankYou;
 
     return Scaffold(
@@ -39,16 +42,16 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
         centerTitle: isInvoice,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Color(0xFF1F2937)),
-          onPressed: () => Get.offAllNamed(MerchantRoutes.HOME),
+          onPressed: () {
+            controller.resetFlow();
+            Get.offAllNamed(MerchantRoutes.HOME);
+          },
         ),
         actions: isInvoice
             ? [
                 IconButton(
                   onPressed: () {
-                    final amt = double.tryParse(controller.amountController.text) ?? 0;
-                    SharePlus.instance.share(ShareParams(
-                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
-                    ));
+                    SharePlus.instance.share(ShareParams(text: _invoiceText()));
                   },
                   icon: Icon(Icons.bookmark_border_rounded, size: 20.sp, color: const Color(0xFF9CA3AF)),
                 )
@@ -65,18 +68,20 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 child: Column(
                   children: [
-                    Builder(builder: (_) {
-                      final amt = double.tryParse(controller.amountController.text) ?? 0;
+                    Obx(() {
+                      final tx = controller.lastTransaction.value;
+                      // Prefer the amount the server actually recorded.
+                      final amt = tx != null && tx['amount'] is num
+                          ? (tx['amount'] as num).toDouble()
+                          : (double.tryParse(controller.amountController.text) ?? 0);
                       final amtStr = 'D ${amt.toStringAsFixed(3)}';
-                      final vat = amt * 0.02;
-                      final total = amt + vat;
-                      final totalStr = 'D ${total.toStringAsFixed(3)}';
-                      final pts = (amt * 100).toInt();
+                      // No VAT/service charge is applied by the gift-back
+                      // endpoint; the receipt used to invent a 2% VAT and add
+                      // it to the Grand Total.
+                      final totalStr = amtStr;
+                      final pts = amt.toStringAsFixed(0);
                       return Column(children: [
-                        _buildInvoiceCard(
-                          title: isRequest ? 'REQUEST' : 'INVOICE',
-                          amount: isRequest ? amtStr : totalStr,
-                        ),
+                        _buildInvoiceCard(title: 'INVOICE', amount: totalStr),
                         SizedBox(height: 18.h),
                         _buildAmountRow('Gift Back Amount', amtStr),
                         _buildAmountRow('Addon Cost', 'D 0.000'),
@@ -93,9 +98,9 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildAmountRow('VIPs Gift', 'Vr $pts'),
+                        _buildAmountRow('VIPs Gift', 'VPt $pts'),
                         _buildAmountRow('Service Charge', 'D 0.000'),
-                        _buildAmountRow('Vat/Tax', 'D ${vat.toStringAsFixed(3)}'),
+                        _buildAmountRow('Vat/Tax', 'D 0.000'),
                         SizedBox(height: 18.h),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -117,11 +122,36 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
                 ),
               ),
             ),
-            _buildBottomActions(isRequest: isRequest),
+            _buildBottomActions(),
           ],
         ],
       ),
     );
+  }
+
+  /// Plain-text receipt shared by the download / print / share buttons.
+  /// They each built their own string that added a 2% VAT the transaction
+  /// never had.
+  String _invoiceText() {
+    final tx = controller.lastTransaction.value;
+    final amt = tx != null && tx['amount'] is num
+        ? (tx['amount'] as num).toDouble()
+        : (double.tryParse(controller.amountController.text) ?? 0);
+    final ref = (tx?['reference'] ?? tx?['_id'] ?? '').toString();
+    final store = Get.find<MerchantHomeController>().storeName.value;
+    final buffer = StringBuffer('VIPs Gift Back Invoice');
+    if (store.isNotEmpty) buffer.write('\nFrom: $store');
+    if (ref.isNotEmpty) buffer.write('\nTrans ID: $ref');
+    if (controller.recipientName.value.isNotEmpty) {
+      buffer.write('\nCustomer: ${controller.recipientName.value}');
+    }
+    if (controller.phoneController.text.isNotEmpty) {
+      buffer.write('\nPhone: ${controller.phoneController.text}');
+    }
+    buffer.write('\nAmount: D ${amt.toStringAsFixed(3)}');
+    buffer.write('\nVIPs Gift: VPt ${amt.toStringAsFixed(0)}');
+    buffer.write('\nTotal: D ${amt.toStringAsFixed(3)}');
+    return buffer.toString();
   }
 
   Widget _buildInvoiceCard({required String title, required String amount}) {
@@ -148,13 +178,29 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
           ),
           SizedBox(height: 10.h),
           _buildDetailRow('Trans Type', 'Gift Back'),
-          _buildDetailRow('Trans ID', '10013'),
+          // Trans ID / Phone / Address were the literals '10013',
+          // '95910000' and 'House: 80, Road: 00, Test City' on every receipt.
+          Obx(() {
+            final tx = controller.lastTransaction.value;
+            final ref = (tx?['reference'] ?? tx?['_id'] ?? '').toString();
+            return _buildDetailRow('Trans ID', ref.isEmpty ? '—' : ref);
+          }),
           Obx(() => _buildDetailRow('Brand Name',
               Get.find<MerchantHomeController>().storeName.value.isNotEmpty
                   ? Get.find<MerchantHomeController>().storeName.value
                   : 'My Store')),
-          _buildDetailRow('Phone', '95910000'),
-          _buildDetailRow('Trans Address', 'House: 80, Road: 00, Test City'),
+          Obx(() {
+            final name = controller.recipientName.value;
+            return _buildDetailRow('Customer', name.isEmpty ? '—' : name);
+          }),
+          Obx(() {
+            final phone = controller.phoneController.text;
+            return _buildDetailRow('Customer Phone', phone.isEmpty ? '—' : phone);
+          }),
+          Obx(() {
+            final addr = Get.find<MerchantHomeController>().storeAddress.value;
+            return _buildDetailRow('Trans Address', addr.isEmpty ? '—' : addr);
+          }),
           SizedBox(height: 10.h),
           Container(
             padding: EdgeInsets.all(10.w),
@@ -218,66 +264,10 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
     );
   }
 
-  Widget _buildBottomActions({required bool isRequest}) {
-    if (isRequest) {
-      return SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 14.h),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: const Color(0xFFF97316).withValues(alpha: 0.6), style: BorderStyle.solid),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: Text('Cancel', style: TextStyle(fontSize: 14.sp, color: const Color(0xFFF97316))),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    flex: 2,
-                    child: Obx(() => ElevatedButton(
-                      onPressed: controller.isSending.value
-                          ? null
-                          : () async {
-                              await controller.onAcceptRequest();
-                              if (mounted) {
-                                setState(() => _step = _GiftBackStatusStep.success);
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF97316),
-                        disabledBackgroundColor: const Color(0xFFF97316).withValues(alpha: 0.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        elevation: 0,
-                      ),
-                      child: controller.isSending.value
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text('Accept', style: TextStyle(fontSize: 15.sp, color: Colors.white, fontWeight: FontWeight.w700)),
-                    )),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Text.rich(
-                TextSpan(
-                  text: 'Accept automatic in  ',
-                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
-                  children: [TextSpan(text: '10\'00', style: TextStyle(color: const Color(0xFFF97316), fontWeight: FontWeight.w700))],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+  /// The `isRequest` branch removed from here rendered a Cancel/Accept pair
+  /// (Accept re-issuing the gift back) plus an "Accept automatic in 10'00"
+  /// countdown that counted nothing — no timer, no auto-accept anywhere.
+  Widget _buildBottomActions() {
     return SafeArea(
       top: false,
       child: Padding(
@@ -289,35 +279,27 @@ class _GiftBackStatusViewState extends State<GiftBackStatusView> {
               children: [
                 IconButton(
                   onPressed: () {
-                    final amt = double.tryParse(controller.amountController.text) ?? 0;
-                    SharePlus.instance.share(ShareParams(
-                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
-                    ));
+                    SharePlus.instance.share(ShareParams(text: _invoiceText()));
                   },
                   icon: Icon(Icons.file_download_outlined, size: 18.sp, color: const Color(0xFFF97316)),
                 ),
                 IconButton(
                   onPressed: () {
-                    final amt = double.tryParse(controller.amountController.text) ?? 0;
-                    SharePlus.instance.share(ShareParams(
-                      text: 'VIPs Gift Back Invoice — Amount: D ${amt.toStringAsFixed(3)} | Total (incl. VAT): D ${(amt * 1.02).toStringAsFixed(3)}',
-                    ));
+                    SharePlus.instance.share(ShareParams(text: _invoiceText()));
                   },
                   icon: Icon(Icons.print_outlined, size: 18.sp),
                 ),
                 IconButton(
                   onPressed: () {
-                    final amt = double.tryParse(controller.amountController.text) ?? 0;
-                    SharePlus.instance.share(ShareParams(
-                      text: 'VIPs Gift Back Invoice\nAmount: D ${amt.toStringAsFixed(3)}\nVAT (2%): D ${(amt * 0.02).toStringAsFixed(3)}\nTotal: D ${(amt * 1.02).toStringAsFixed(3)}',
-                    ));
+                    SharePlus.instance.share(ShareParams(text: _invoiceText()));
                   },
                   icon: Icon(Icons.share_outlined, size: 18.sp),
                 ),
               ],
             ),
             SizedBox(height: 4.h),
-            Text('© 2025 VIPs App. All right reserved', style: TextStyle(fontSize: 10.sp, color: const Color(0xFF4B5563))),
+            Text('© ${DateTime.now().year} VIPs App. All rights reserved',
+                style: TextStyle(fontSize: 10.sp, color: const Color(0xFF4B5563))),
             SizedBox(height: 6.h),
             if (_step == _GiftBackStatusStep.invoice)
               TextButton(

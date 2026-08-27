@@ -8,7 +8,7 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ['Auto Promotion', 'Banner', 'Sponsored', 'Flash Sale'];
+    final categories = MerchantAdsController.adTypeOptions.keys.toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,7 +34,7 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Category Dropdown ───────────────────────
-                  _label('Category'),
+                  _label('Ad Type'),
                   SizedBox(height: 6.h),
                   Obx(() => DropdownButtonFormField<String>(
                     key: ValueKey(controller.selectedCategory.value),
@@ -144,16 +144,9 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
                   ])),
                   SizedBox(height: 24.h),
 
-                  // ── Review/Rating checkboxes ─────────────────
-                  _label('Show in Ad'),
-                  SizedBox(height: 8.h),
-                  Row(children: [
-                    Obx(() => _buildCheckbox('Review', controller.showReview.value,
-                        (v) => controller.showReview.value = v!)),
-                    SizedBox(width: 24.w),
-                    Obx(() => _buildCheckbox('Rating', controller.showRating.value,
-                        (v) => controller.showRating.value = v!)),
-                  ]),
+                  // The "Show in Ad — Review / Rating" checkboxes lived here.
+                  // MerchantAd has no such fields and submitAdForm never sent
+                  // them, so both were toggles that changed nothing.
                   SizedBox(height: 40.h),
                 ],
               ),
@@ -292,23 +285,4 @@ class NewAdvertisementView extends GetView<MerchantAdsController> {
     );
   }
 
-  Widget _buildCheckbox(String label, bool value, ValueChanged<bool?> onChanged) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 24.w,
-          height: 24.w,
-          child: Checkbox(
-            value: value,
-            onChanged: onChanged,
-            activeColor: const Color(0xFF10B981),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
-          ),
-        ),
-        SizedBox(width: 8.w),
-        Text(label, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF4B5563))),
-      ],
-    );
-  }
 }

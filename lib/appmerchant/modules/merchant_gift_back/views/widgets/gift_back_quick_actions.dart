@@ -68,27 +68,34 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                   color: const Color(0xFF6B7280),
                 ),
               ),
-              Icon(
-                Icons.settings_outlined,
-                size: 18.sp,
-                color: const Color(0xFF6B7280),
+              GestureDetector(
+                onTap: () {
+                  Get.back();
+                  Get.toNamed(MerchantRoutes.SETTINGS);
+                },
+                child: Icon(
+                  Icons.settings_outlined,
+                  size: 18.sp,
+                  color: const Color(0xFF6B7280),
+                ),
               ),
             ],
           ),
           SizedBox(height: 8.h),
 
           // Points display
+          // Real spendable balance (User.walletPoints via /merchant/profile).
+          // This used to read `vipsIn` (lifetime rewards issued to customers)
+          // and then split the digit string two from the right to fake a
+          // decimal part — so 1500 points was displayed as "15.00".
           Obx(() {
             final homeCtrl = Get.find<MerchantHomeController>();
-            final pts = homeCtrl.vipsIn.value.toInt();
-            final ptsStr = pts.toString();
-            final whole = ptsStr.length > 2 ? ptsStr.substring(0, ptsStr.length - 2) : ptsStr;
-            final frac = ptsStr.length > 2 ? ptsStr.substring(ptsStr.length - 2) : '00';
+            final pts = homeCtrl.availablePoints.value;
             return Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  whole,
+                  pts.toStringAsFixed(0),
                   style: TextStyle(
                     fontSize: 40.sp,
                     fontWeight: FontWeight.w900,
@@ -96,11 +103,11 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
+                  padding: EdgeInsets.only(bottom: 8.h, left: 6.w),
                   child: Text(
-                    frac,
+                    'PTS',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF6B7280),
                     ),
@@ -120,6 +127,9 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
             mainAxisSpacing: 12.h,
             childAspectRatio: 1.0,
             children: [
+              // 'Expense' opened Bill Inquiry — bills are money coming in,
+              // not an expense. Recording an expense is the Finance
+              // Add-Transaction screen, opened straight on its Expense tab.
               _buildActionItem(
                 icon: Icons.swap_horiz_rounded,
                 label: 'Expense',
@@ -127,7 +137,8 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                 iconColor: const Color(0xFF4CAF50),
                 onTap: () {
                   Get.back();
-                  Get.toNamed(MerchantRoutes.BILL_INQUIRY);
+                  Get.toNamed(MerchantRoutes.ADD_TRANSACTION,
+                      arguments: {'type': 'expense'});
                 },
               ),
               _buildActionItem(
@@ -141,6 +152,9 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                   Get.toNamed(MerchantRoutes.GIFT_BACK_FORM);
                 },
               ),
+              // 'Reward' opened the subscription pricing screen, which has
+              // nothing to do with rewarding a customer. Creating a coupon is
+              // the merchant's real reward-offer action.
               _buildActionItem(
                 icon: Icons.star_rounded,
                 label: 'Reward',
@@ -148,9 +162,12 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                 iconColor: const Color(0xFFE91E63),
                 onTap: () {
                   Get.back();
-                  Get.toNamed(MerchantRoutes.BUSINESS_PLAN);
+                  Get.toNamed(MerchantRoutes.CREATE_COUPON);
                 },
               ),
+              // 'Income' opened the invoice screen with no arguments, so it
+              // rendered that screen's "#INV-0000 / D 0.00" placeholders —
+              // a receipt for nothing. Recording income is Add Transaction.
               _buildActionItem(
                 icon: Icons.payment_rounded,
                 label: 'Income',
@@ -158,7 +175,8 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                 iconColor: const Color(0xFF2196F3),
                 onTap: () {
                   Get.back();
-                  Get.toNamed(MerchantRoutes.INVOICE_RECEIPT);
+                  Get.toNamed(MerchantRoutes.ADD_TRANSACTION,
+                      arguments: {'type': 'income'});
                 },
               ),
               _buildActionItem(
@@ -168,7 +186,7 @@ class GiftBackQuickActionsSheet extends StatelessWidget {
                 iconColor: const Color(0xFF9C27B0),
                 onTap: () {
                   Get.back();
-                  Get.toNamed(MerchantRoutes.HOME);
+                  Get.toNamed(MerchantRoutes.SWITCH_BUSINESS);
                 },
               ),
               _buildActionItem(

@@ -217,22 +217,10 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
     );
   }
 
-  List<String> _extractFeatures(Map plan) {
-    final features = plan['features'];
-    if (features is Map) {
-      return [
-        if ((features['maxProducts'] as int?) != null)
-          '${features['maxProducts']} Products',
-        if ((features['maxCashiers'] as int?) != null)
-          '${features['maxCashiers']} Cashiers',
-        if (features['analytics'] == true) 'Analytics',
-        if (features['adsEnabled'] == true) 'Advertisements',
-        if (features['prioritySupport'] == true) 'Priority Support',
-        if (features['apiAccess'] == true) 'API Access',
-      ];
-    }
-    return [];
-  }
+  /// `-1` on maxProducts/maxCashiers means unlimited on the backend; this
+  /// used to render it literally as "-1 Products" on the Enterprise card.
+  List<String> _extractFeatures(Map plan) =>
+      MerchantSubscriptionController.featureLabels(plan['features']);
 
   Widget _buildFeatureRow(String text) {
     return Padding(

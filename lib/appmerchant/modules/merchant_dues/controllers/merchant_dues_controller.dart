@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
+
+double _toDouble(dynamic v) =>
+    v is num ? v.toDouble() : (double.tryParse('${v ?? ''}') ?? 0);
 
 class DueItem {
   final String id;
@@ -27,11 +31,11 @@ class DueItem {
         id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
         partyName: json['partyName'] ?? '',
         phone: json['phone'] ?? '',
-        totalAmount: (json['totalAmount'] ?? 0).toDouble(),
-        paidAmount: (json['paidAmount'] ?? 0).toDouble(),
-        lastTransaction: json['lastTransaction'] != null
-            ? DateTime.parse(json['lastTransaction'])
-            : DateTime.now(),
+        totalAmount: _toDouble(json['totalAmount']),
+        paidAmount: _toDouble(json['paidAmount']),
+        // tryParse — a malformed date must not throw out of the list mapping.
+        lastTransaction:
+            DateTime.tryParse('${json['lastTransaction'] ?? ''}') ?? DateTime.now(),
         isCustomer: json['isCustomer'] ?? true,
       );
 }
@@ -57,10 +61,16 @@ class MerchantDuesController extends GetxController {
         final List<dynamic> list = rawData is List
             ? rawData
             : (rawData is Map ? (rawData['dues'] ?? rawData['data'] ?? []) : []);
-        dues.value = list.map((e) => DueItem.fromJson(e)).toList();
+        dues.value = list
+            .whereType<Map>()
+            .map((e) => DueItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
         _calculateTotals();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('loadDues failed: $e');
+      safeSnackbar('Error', 'Could not load your dues. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
@@ -84,39 +94,54 @@ class MerchantDuesController extends GetxController {
     final index = dues.indexWhere((e) => e.id == id);
     if (index == -1) return;
     final old = dues[index];
-    final newPaid = old.paidAmount + amount;
+    if (amount <= 0) {
+      safeSnackbar('Error', 'Enter an amount greater than 0',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    // Client-side mirror of the server's guard, so an over-collection is
+    // caught before the round-trip.
+    if (amount > old.remainingAmount + 0.0001) {
+      safeSnackbar('Too much',
+          'Only D ${old.remainingAmount.toStringAsFixed(3)} is still outstanding',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     try {
-      final res = await ApiService().put('/merchant/dues/$id/collect', {'paidAmount': newPaid});
-      if (res.success) {
-        dues[index] = DueItem(
-          id: old.id,
-          partyName: old.partyName,
-          phone: old.phone,
-          totalAmount: old.totalAmount,
-          paidAmount: newPaid,
-          lastTransaction: DateTime.now(),
-          isCustomer: old.isCustomer,
-        );
+      // Send the increment, not a locally-computed absolute total: two
+      // devices collecting at once would otherwise overwrite each other.
+      final res = await ApiService()
+          .put('/merchant/dues/$id/collect', {'payment': amount});
+      if (res.success && res.data is Map) {
+        dues[index] = DueItem.fromJson(Map<String, dynamic>.from(res.data as Map));
         _calculateTotals();
+        safeSnackbar('Collected', 'Payment recorded',
+            snackPosition: SnackPosition.BOTTOM);
       } else {
-        safeSnackbar('Error', 'Failed to collect payment', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Error', res.message.isNotEmpty ? res.message : 'Failed to collect payment',
+            snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {
-      safeSnackbar('Error', 'Failed to collect payment', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('collectPayment failed: $e');
+      safeSnackbar('Error', 'Could not record that payment. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   Future<void> addDue(Map<String, dynamic> body) async {
     try {
       final res = await ApiService().post('/merchant/dues', body);
-      if (res.success && res.data != null) {
-        dues.insert(0, DueItem.fromJson(res.data));
+      if (res.success && res.data is Map) {
+        dues.insert(0, DueItem.fromJson(Map<String, dynamic>.from(res.data as Map)));
         _calculateTotals();
       } else {
-        safeSnackbar('Error', 'Failed to add due', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Error', res.message.isNotEmpty ? res.message : 'Failed to add due',
+            snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {
-      safeSnackbar('Error', 'Failed to add due', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('addDue failed: $e');
+      safeSnackbar('Error', 'Could not save that due. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

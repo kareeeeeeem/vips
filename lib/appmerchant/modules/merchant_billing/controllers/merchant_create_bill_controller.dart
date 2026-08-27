@@ -72,27 +72,84 @@ class MerchantCreateBillController extends GetxController {
         'paidAmount': 0,
       });
 
-      final billNumber = response.success && response.data != null
-          ? (response.data as Map<String, dynamic>)['billNumber'] ?? 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}'
-          : 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      // A failed create used to fall through to a locally-invented
+      // `BILL-<timestamp>` and open the QR screen anyway — so the merchant
+      // showed the customer a code for a bill that does not exist on the
+      // server. Stop here instead and say what went wrong.
+      if (!response.success || response.data is! Map) {
+        safeSnackbar(
+          'Could not create the bill',
+          response.message.isNotEmpty
+              ? response.message
+              : 'Please check your connection and try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFFEF2F2),
+          colorText: const Color(0xFFEF4444),
+        );
+        return;
+      }
+
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final billNumber = (data['billNumber'] ?? '').toString();
+      if (billNumber.isEmpty) {
+        safeSnackbar(
+          'Could not create the bill',
+          'The server did not return a bill reference. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFFEF2F2),
+          colorText: const Color(0xFFEF4444),
+        );
+        return;
+      }
 
       Get.toNamed(
         MerchantRoutes.BILL_SCAN_ME,
         arguments: {
           'amount': parsedAmount,
           'orderId': billNumber,
+          // The bill's real id, so the QR screen can settle it once the
+          // customer has paid (PUT /merchant/billing/:id/pay).
+          'billId': (data['_id'] ?? '').toString(),
         },
       );
-    } catch (_) {
-      Get.toNamed(
-        MerchantRoutes.BILL_SCAN_ME,
-        arguments: {
-          'amount': parsedAmount,
-          'orderId': 'BILL-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        },
+    } catch (e) {
+      debugPrint('generateOrderQr failed: $e');
+      safeSnackbar(
+        'Could not create the bill',
+        'Please check your connection and try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFFEF2F2),
+        colorText: const Color(0xFFEF4444),
       );
     } finally {
       _isCreating.value = false;
+    }
+  }
+
+  /// Marks a pending bill paid once the customer has settled it.
+  /// PUT /merchant/billing/:id/pay — bills created for the QR flow stay
+  /// `pending` until this runs, so their total is not booked as revenue
+  /// before the money actually arrives.
+  Future<bool> markBillPaid(String billId, {double? paidAmount}) async {
+    if (billId.isEmpty) return false;
+    try {
+      final response = await ApiService().put('/merchant/billing/$billId/pay', {
+        if (paidAmount != null) 'paidAmount': paidAmount,
+      });
+      if (response.success) {
+        safeSnackbar('Payment recorded', 'The bill is now marked paid',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF10B981),
+            colorText: const Color(0xFFFFFFFF));
+        return true;
+      }
+      safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
+      return false;
+    } catch (e) {
+      debugPrint('markBillPaid failed: $e');
+      safeSnackbar('Error', 'Could not record that payment. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
     }
   }
 

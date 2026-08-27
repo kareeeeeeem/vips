@@ -14,36 +14,28 @@ class OrderStatusTabs extends GetView<MerchantOrderController> {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children:
-                controller.statusFilters.map((status) {
-                  if (status == 'all') {
-                    return _buildTab('All', 0, controller.selectedTab.value);
-                  }
-                  final index = controller.statusFilters.indexOf(status);
-                  return _buildTab(
+            children: List.generate(controller.statusFilters.length, (index) {
+              final status = controller.statusFilters[index];
+              return _buildTab(
+                MerchantOrderController.statusLabels[status] ??
                     status.toUpperCase(),
-                    index,
-                    controller.selectedTab.value,
-                  );
-                }).toList(),
+                index,
+                status,
+                controller.selectedTab.value,
+              );
+            }),
           ),
         );
       }),
     );
   }
 
-  Widget _buildTab(String label, int index, int selectedIndex) {
+  /// The status key now comes straight from `statusFilters` instead of being
+  /// looked back up from the display label through a hardcoded map — that map
+  /// only knew 7 of the enum's values, so any tab it didn't list fell through
+  /// to `'all'` and showed every order regardless of which tab was tapped.
+  Widget _buildTab(String label, int index, String statusKey, int selectedIndex) {
     final isSelected = selectedIndex == index;
-    final statusMap = {
-      'ALL': 'all',
-      'PENDING': 'pending',
-      'CONFIRMED': 'confirmed',
-      'PROCESSING': 'processing',
-      'READY': 'ready',
-      'DELIVERED': 'delivered',
-      'CANCELED': 'canceled',
-    };
-    final statusKey = statusMap[label] ?? 'all';
 
     return GestureDetector(
       onTap: () {

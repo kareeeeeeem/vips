@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/merchant_credit_controller.dart';
 
 class MerchantCreditFormView extends GetView<MerchantCreditController> {
@@ -72,27 +73,40 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
                                 color: const Color(0xFF065F46),
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
-                              child: Row(
-                                children: [
-                                  Text('D', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold)),
-                                  Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16.sp),
-                                ],
-                              ),
+                              // The arrow next to "D" implied a currency
+                              // picker; the app is TND-only and nothing was
+                              // wired to it.
+                              child: Text('D',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
                         SizedBox(height: 12.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              controller.points.value,
-                              style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text('VIP', style: TextStyle(fontSize: 18.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
+                        // A "<amount x 100> VIP" figure used to sit here.
+                        // Issuing credit awards no VIPs points at all — it
+                        // writes a dinar ledger entry. Replaced with the real
+                        // reason the amount can be rejected.
+                        Obx(() {
+                          final error = controller.amountError;
+                          if (error.isEmpty) {
+                            return controller.limitsLoaded.value
+                                ? Text(
+                                    'Limit: D ${controller.minAmount.value.toStringAsFixed(0)} - D ${controller.maxAmount.value.toStringAsFixed(0)}',
+                                    style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF)),
+                                  )
+                                : SizedBox(height: 18.h);
+                          }
+                          return Text(
+                            error,
+                            style: TextStyle(
+                                fontSize: 13.sp,
+                                color: const Color(0xFFDC2626),
+                                fontWeight: FontWeight.w600),
+                          );
+                        }),
                       ],
                     )),
                     SizedBox(height: 24.h),
@@ -100,32 +114,63 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
                     // Info Section
                     Column(
                       children: [
-                        _buildSmallInfo('Exchange Rate: D 1.000 = VIP 100'),
-                        _buildSmallInfo('Service Charge & Vat/Tax: 10 %'),
-                        _buildSmallInfo('Limit: D 25 - D 1000'),
+                        // "Exchange Rate: D 1.000 = VIP 100" and
+                        // "Service Charge & Vat/Tax: 10 %" were printed here;
+                        // neither exists on the credit endpoint. The limit
+                        // line is now the real server-enforced one.
+                        _buildSmallInfo('Service Charge & Vat/Tax: 0 %'),
+                        Obx(() => _buildSmallInfo(controller.limitsLoaded.value
+                            ? 'Limit: D ${controller.minAmount.value.toStringAsFixed(0)} - D ${controller.maxAmount.value.toStringAsFixed(0)}'
+                            : 'Limit: loading…')),
                       ],
                     ),
                     SizedBox(height: 32.h),
 
-                    // Payment Selector
+                    // Repayment due date. This slot used to hold a
+                    // "Payment: Bank" chip with a dropdown arrow that opened
+                    // nothing — issuing credit has no payment method at all
+                    // (only settling a credit does). The due date, on the
+                    // other hand, is a real field the endpoint accepts and is
+                    // what lets a credit ever become overdue.
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24.w),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Payment', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF065F46),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Row(
-                              children: [
-                                Text('Bank', style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.bold)),
-                                SizedBox(width: 8.w),
-                                Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16.sp),
-                              ],
+                          Text('Due date',
+                              style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF1F2937))),
+                          GestureDetector(
+                            onTap: () => controller.pickDueDate(context),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w, vertical: 8.h),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF065F46),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Obx(() {
+                                final d = controller.dueDate.value;
+                                return Row(
+                                  children: [
+                                    Text(
+                                      d == null
+                                          ? 'Optional'
+                                          : '${d.day.toString().padLeft(2, '0')}/'
+                                              '${d.month.toString().padLeft(2, '0')}/${d.year}',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Icon(Icons.calendar_today_outlined,
+                                        color: Colors.white, size: 14.sp),
+                                  ],
+                                );
+                              }),
                             ),
                           ),
                         ],
@@ -190,25 +235,25 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
           children: [
             const Text('Credit Help', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            const Text('• Minimum amount: D 25\n• Maximum amount: D 1000\n• Exchange rate: D 1 = VIP 100\n• Service charge & tax: 10%',
-                style: TextStyle(fontSize: 14, height: 1.6)),
+            // The limits were typed in as literals while the screen already
+            // loads the real server-enforced ones (GET /merchant/credits/limits)
+            // — if the backend caps change, the help text would quietly lie.
+            Obx(() => Text(
+                  '• Minimum amount: D ${controller.minAmount.value.toStringAsFixed(0)}\n'
+                  '• Maximum amount: D ${controller.maxAmount.value.toStringAsFixed(0)}\n'
+                  '• Credit is recorded in dinars; no VIPs points are issued\n'
+                  '• No service charge or tax is applied',
+                  style: const TextStyle(fontSize: 14, height: 1.6),
+                )),
             const SizedBox(height: 16),
             const Text('Need support?', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.phone, color: Color(0xFFF97316)),
-              title: const Text('Call Support'),
-              // TODO: placeholder pending the real support contact number before launch
-              subtitle: const Text('+216 XX XXX XXX'),
-              contentPadding: EdgeInsets.zero,
-              onTap: () => Get.back(),
-            ),
             ListTile(
               leading: const Icon(Icons.email_outlined, color: Color(0xFFF97316)),
               title: const Text('Email Support'),
               subtitle: const Text('support@vipsapp.com'),
               contentPadding: EdgeInsets.zero,
-              onTap: () => Get.back(),
+              onTap: () => _launchMailto('support@vipsapp.com', 'VIPs Merchant Credit Help'),
             ),
             const SizedBox(height: 8),
           ],
@@ -216,6 +261,13 @@ class MerchantCreditFormView extends GetView<MerchantCreditController> {
       ),
       backgroundColor: Colors.transparent,
     );
+  }
+
+  Future<void> _launchMailto(String email, String subject) async {
+    final uri = Uri.parse('mailto:$email?subject=$subject');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _buildBalanceCard(String title, String val) {

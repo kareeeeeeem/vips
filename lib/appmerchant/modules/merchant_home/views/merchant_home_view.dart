@@ -72,30 +72,54 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         actions: [
           // 1. أيقونة الإشعارات تأتي أولاً الآن
           IconButton(
-            icon: Stack(
-              children: [
-                const Icon(
-                  Icons.notifications_none_outlined,
-                  color: Color(0xFF111827),
-                ),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 8,
-                      minHeight: 8,
-                    ),
+            // Badge reflects the real unread count from
+            // GET /merchant/notifications — it used to be a red dot that was
+            // always painted, so the merchant saw "you have notifications"
+            // even with an empty inbox.
+            icon: Obx(() {
+              final unread = controller.unreadNotifications.value;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(
+                    Icons.notifications_none_outlined,
+                    color: Color(0xFF111827),
                   ),
-                ),
-              ],
-            ),
-            onPressed: () => Get.toNamed(MerchantRoutes.NOTIFICATIONS),
+                  if (unread > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 1.h,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16),
+                        child: Text(
+                          unread > 99 ? '99+' : '$unread',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
+            onPressed: () async {
+              await Get.toNamed(MerchantRoutes.NOTIFICATIONS);
+              // Reading the inbox changes the unread count.
+              await controller.refreshUnreadNotifications();
+            },
           ),
 
           // 2. زرار الدروير يأتي ثانياً (في أقصى اليمين)
@@ -183,8 +207,12 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Backend has no supplier purchase-order log; this figure is
+              // stock-on-hand x unit price, so it is labelled for what it
+              // actually is. It is also the one card the period filter does
+              // not apply to — a stock level is a balance, not a flow.
               _accountingItem(
-                'Purchase',
+                'Stock Value',
                 controller.totalPurchases.value,
                 const Color(0xFF8B5CF6),
               ),
@@ -223,10 +251,10 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                 Icons.arrow_upward_rounded,
               ),
               _vipAccountingItem(
-                'VIPs Recovery',
-                controller.vipsRecovery.value,
+                'VIPs Issued',
+                controller.vipsIssued.value,
                 const Color(0xFF3B82F6),
-                Icons.sync_rounded,
+                Icons.summarize_rounded,
               ),
             ],
           ),
@@ -328,32 +356,60 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
     );
   }
 
+  /// Period filter for the Performance card. This used to be a static
+  /// "Today" chip with a chevron and no tap handler at all — it looked like a
+  /// filter but the figures were always all-time.
   Widget _buildTimeSelector() {
-    return Container(
-      width: 100.w,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Today',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1F2937),
+    return PopupMenuButton<String>(
+      tooltip: 'Change period',
+      padding: EdgeInsets.zero,
+      onSelected: controller.changePeriod,
+      itemBuilder: (context) => MerchantHomeController.periods
+          .map(
+            (p) => PopupMenuItem<String>(
+              value: p,
+              child: Row(
+                children: [
+                  if (controller.selectedPeriod.value == p)
+                    Icon(Icons.check, size: 16.sp, color: const Color(0xFF10B981))
+                  else
+                    SizedBox(width: 16.sp),
+                  SizedBox(width: 8.w),
+                  Text(MerchantHomeController.periodLabels[p]!),
+                ],
+              ),
             ),
-          ),
-          Icon(
-            Icons.keyboard_arrow_down,
-            size: 16,
-            color: const Color(0xFF6B7280),
-          ),
-        ],
+          )
+          .toList(),
+      child: Container(
+        width: 100.w,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                controller.selectedPeriodLabel,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: const Color(0xFF6B7280),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -407,24 +463,13 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         'route': MerchantRoutes.DUE_LIST,
         'color': const Color(0xFFEF4444),
       },
-      {
-        'title': 'Purchase',
-        'icon': Icons.shopping_cart_outlined,
-        'route': MerchantRoutes.STOCK_LIST,
-        'color': const Color(0xFF6366F1),
-      },
-      {
-        'title': 'Purchase List',
-        'icon': Icons.history_edu_outlined,
-        'route': MerchantRoutes.STOCK_LIST,
-        'color': const Color(0xFFEC4899),
-      },
-      {
-        'title': 'Due Collection',
-        'icon': Icons.payments_outlined,
-        'route': MerchantRoutes.DUE_LIST,
-        'color': const Color(0xFF10B981),
-      },
+      // 'Purchase', 'Purchase List' and 'My Stock' all opened the very same
+      // Stock screen, and 'Due Collection' opened the very same Due List as
+      // 'Due List' — five tiles, two destinations. The backend has no
+      // supplier purchase-order ledger and no separate due-collection
+      // history (collecting happens inside the Due List itself), so the
+      // extra labels promised screens that do not exist. Kept one tile per
+      // real destination.
       {
         'title': 'My Stock',
         'icon': Icons.warehouse_outlined,
@@ -455,23 +500,23 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         'route': MerchantRoutes.STAFF_MANAGEMENT,
         'color': const Color(0xFF3B82F6),
       },
+      // 'Staff Ledger' and 'HRM' both opened the very same Staff Management
+      // screen as 'Staff' — three tiles, one destination. Staff has no ledger
+      // or payroll data behind it (models/Staff.js is name/role/status/salary
+      // only), so those two labels promised screens that do not exist.
+      // The whole Advertisements feature (create / pause / resume / boost /
+      // delete, all real endpoints) had no entry point anywhere in the app.
       {
-        'title': 'Staff Ledger',
-        'icon': Icons.menu_book_outlined,
-        'route': MerchantRoutes.STAFF_LEDGER,
-        'color': const Color(0xFF6B7280),
+        'title': 'Advertisements',
+        'icon': Icons.campaign_outlined,
+        'route': MerchantRoutes.ADVERTISEMENTS,
+        'color': const Color(0xFFEC4899),
       },
       {
         'title': 'Barcode',
         'icon': Icons.qr_code_scanner_outlined,
         'route': MerchantRoutes.BARCODE_GEN,
         'color': const Color(0xFF1F2937),
-      },
-      {
-        'title': 'HRM',
-        'icon': Icons.account_tree_outlined,
-        'route': MerchantRoutes.HRM,
-        'color': const Color(0xFF8B5CF6),
       },
       {
         'title': 'Asset Management',

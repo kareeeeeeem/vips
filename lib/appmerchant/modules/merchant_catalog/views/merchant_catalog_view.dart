@@ -152,23 +152,32 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
       if (controller.items.isEmpty) {
         return _buildEmptyState('No items yet', 'Tap + to add your first product', Icons.inventory_2_outlined);
       }
-      return ListView.builder(
-        padding: EdgeInsets.all(16.w),
-        itemCount: controller.items.length,
-        itemBuilder: (context, index) {
-          final item = controller.items[index];
-          final isActive = item['isActive'] as bool? ?? true;
-          final itemId = (item['_id'] ?? item['id'])?.toString() ?? '';
-          return _buildCatalogCard(
-            itemId: itemId,
-            title: item['name']?.toString() ?? '',
-            price: 'D ${(item['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
-            status: isActive ? 'Active' : 'Inactive',
-            stock: '${item['stock'] ?? 0} in stock',
-            imageUrl: item['image']?.toString() ?? '',
-            onEdit: () => Get.toNamed(MerchantRoutes.CREATE_ITEM, arguments: item),
-          );
-        },
+      return RefreshIndicator(
+        color: const Color(0xFF10B981),
+        onRefresh: controller.loadItems,
+        child: ListView.builder(
+          padding: EdgeInsets.all(16.w),
+          itemCount: controller.items.length,
+          itemBuilder: (context, index) {
+            final item = controller.items[index];
+            final isActive = item['isActive'] as bool? ?? true;
+            final itemId = (item['_id'] ?? item['id'])?.toString() ?? '';
+            return _buildCatalogCard(
+              itemId: itemId,
+              title: item['name']?.toString() ?? '',
+              price: 'D ${(item['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
+              status: isActive ? 'Active' : 'Inactive',
+              stock: '${item['stock'] ?? 0} in stock',
+              imageUrl: item['image']?.toString() ?? '',
+              onEdit: () => Get.toNamed(MerchantRoutes.CREATE_ITEM, arguments: item),
+              // DELETE /merchant/products/:id and the controller's
+              // deleteItem() both existed; no UI ever reached them, so a
+              // product could only be deactivated, never removed.
+              onDelete: () => _confirmDeleteItem(
+                  itemId, item['name']?.toString() ?? 'this item'),
+            );
+          },
+        ),
       );
     });
   }
@@ -193,10 +202,11 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
             final isActive = v['isActive'] as bool? ?? true;
             return _buildDiscountCard(
               code: v['code']?.toString() ?? '',
-              discount: '${v['discountPercentage'] ?? v['discount'] ?? 0}% OFF',
+              discount: MerchantCatalogController.discountLabel(v),
               expiry: v['expiryDate']?.toString().split('T').first ?? 'No expiry',
               isActive: isActive,
               isVoucher: true,
+              onToggle: (val) => controller.updateCouponStatus(id, val),
               onDelete: () => _confirmDelete(id, 'voucher'),
             );
           },
@@ -225,16 +235,31 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
             final isActive = c['isActive'] as bool? ?? true;
             return _buildDiscountCard(
               code: c['code']?.toString() ?? '',
-              discount: '${c['discountPercentage'] ?? c['discount'] ?? 0}% OFF',
+              discount: MerchantCatalogController.discountLabel(c),
               expiry: c['expiryDate']?.toString().split('T').first ?? 'No expiry',
               isActive: isActive,
               isVoucher: false,
+              onToggle: (val) => controller.updateCouponStatus(id, val),
               onDelete: () => _confirmDelete(id, 'coupon'),
             );
           },
         ),
       );
     });
+  }
+
+  void _confirmDeleteItem(String id, String name) {
+    Get.dialog(AlertDialog(
+      title: const Text('Delete item'),
+      content: Text('Delete "$name" from your catalog? This cannot be undone.'),
+      actions: [
+        TextButton(onPressed: Get.back, child: const Text('Cancel')),
+        TextButton(
+          onPressed: () { Get.back(); controller.deleteItem(id); },
+          child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+        ),
+      ],
+    ));
   }
 
   void _confirmDelete(String id, String type) {
@@ -257,6 +282,7 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
     required String expiry,
     required bool isActive,
     required bool isVoucher,
+    required ValueChanged<bool> onToggle,
     required VoidCallback onDelete,
   }) {
     return Container(
@@ -293,17 +319,16 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: isActive ? const Color(0xFFD1FAE5) : const Color(0xFFFEE2E2),
-              borderRadius: BorderRadius.circular(6.r),
+          // The Active/Off badge here was purely decorative — there was no
+          // way to deactivate a code short of deleting it outright.
+          Transform.scale(
+            scale: 0.7,
+            child: Switch(
+              value: isActive,
+              onChanged: onToggle,
+              activeThumbColor: const Color(0xFF10B981),
             ),
-            child: Text(isActive ? 'Active' : 'Off',
-                style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold,
-                    color: isActive ? const Color(0xFF059669) : const Color(0xFFDC2626))),
           ),
-          SizedBox(width: 8.w),
           IconButton(
             icon: Icon(Icons.delete_outline, color: const Color(0xFFEF4444), size: 20.sp),
             onPressed: onDelete,
@@ -338,6 +363,7 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
     required String stock,
     required String imageUrl,
     required VoidCallback onEdit,
+    required VoidCallback onDelete,
   }) {
     final bool isActive = status.toLowerCase() == 'active';
     return Container(
@@ -462,6 +488,19 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
                             ),
                             child: Icon(Icons.edit_outlined,
                                 size: 16.sp, color: const Color(0xFF4B5563)),
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        GestureDetector(
+                          onTap: onDelete,
+                          child: Container(
+                            padding: EdgeInsets.all(6.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Icon(Icons.delete_outline,
+                                size: 16.sp, color: const Color(0xFFEF4444)),
                           ),
                         ),
                       ],

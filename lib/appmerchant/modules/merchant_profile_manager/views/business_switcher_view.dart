@@ -33,18 +33,41 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select your business profile',
+              'Your business profile',
               style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
             ),
             SizedBox(height: 20.h),
             Expanded(
-              child: Obx(() => ListView.builder(
-                itemCount: controller.profiles.length,
-                itemBuilder: (context, index) {
-                  final profile = controller.profiles[index];
-                  return _buildProfileItem(context, profile);
-                },
-              )),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF10B981)),
+                  );
+                }
+                if (controller.profiles.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Could not load your business profile.',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  color: const Color(0xFF10B981),
+                  onRefresh: controller.loadProfiles,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: controller.profiles.length,
+                    itemBuilder: (context, index) {
+                      final profile = controller.profiles[index];
+                      return _buildProfileItem(context, profile);
+                    },
+                  ),
+                );
+              }),
             ),
             _buildAddNewButton(),
           ],
@@ -72,12 +95,41 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
           child: Text(profile.name[0], style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
         ),
         title: Text(profile.name, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
-        subtitle: Text(profile.type, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
-        trailing: profile.isActive 
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 2.h),
+            Text(profile.type, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280))),
+            SizedBox(height: 6.h),
+            // Real BusinessRegistration.status, so the merchant can see
+            // whether their partnership application is still pending.
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: _statusColor(profile.status).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                profile.statusLabel,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.bold,
+                  color: _statusColor(profile.status),
+                ),
+              ),
+            ),
+          ],
+        ),
+        trailing: profile.isActive
           ? const Icon(Icons.check_circle, color: Color(0xFF10B981))
           : const Icon(Icons.arrow_forward_ios, size: 16),
+        // The one business this account owns is always the active one, so
+        // there is nothing to switch to; open its store page instead of
+        // being an inert row.
         onTap: () {
-          if (!profile.isActive) {
+          if (profile.isActive) {
+            Get.toNamed(MerchantRoutes.STORE_PROFILE);
+          } else {
             _showPinPrompt(context, profile);
           }
         },
@@ -122,9 +174,22 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
                 ),
               ),
               onCompleted: (pin) async {
-                final success = await controller.verifyPin(profile, pin);
-                if (!success) {
-                  safeSnackbar('Error', 'Incorrect PIN', backgroundColor: Colors.red.withValues(alpha: 0.1));
+                // Real server-side check (POST /auth/pin/verify) — this used
+                // to compare against a SharedPreferences key nothing ever
+                // wrote, so any merchant entering 0000 passed.
+                final success = await controller.verifyPin(pin);
+                if (success) {
+                  Get.back();
+                  safeSnackbar('Verified', 'Switched to ${profile.name}',
+                      snackPosition: SnackPosition.BOTTOM);
+                } else {
+                  safeSnackbar(
+                    'Error',
+                    controller.hasPin.value
+                        ? 'Incorrect PIN'
+                        : 'No PIN is set for this account yet.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
                   pinController.clear();
                 }
               },
@@ -138,12 +203,19 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
     });
   }
 
+  Color _statusColor(String status) => switch (status) {
+        'approved' => const Color(0xFF059669),
+        'rejected' => const Color(0xFFDC2626),
+        'pending' || 'under_review' => const Color(0xFFD97706),
+        _ => const Color(0xFF6B7280),
+      };
+
   Widget _buildAddNewButton() {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.only(bottom: 20.h),
       child: OutlinedButton.icon(
-        onPressed: () => Get.toNamed(MerchantRoutes.BUSINESS_REGISTRATION),
+        onPressed: controller.addNewBusiness,
         icon: const Icon(Icons.add),
         label: const Text('Add New Business'),
         style: OutlinedButton.styleFrom(

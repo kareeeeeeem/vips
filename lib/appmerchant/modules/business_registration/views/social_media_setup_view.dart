@@ -110,12 +110,18 @@ class SocialMediaSetupView extends GetView<BusinessRegistrationController> {
                 color: const Color(0xFF9CA3AF),
               ),
             ),
-            Row(
-              children: [
-                Icon(Icons.edit_outlined, color: const Color(0xFFEF4444), size: 16.sp),
-                SizedBox(width: 8.w),
-                Icon(Icons.delete_outline, color: const Color(0xFFEF4444), size: 16.sp),
-              ],
+            // Each field's header carried a red edit + delete pair with no
+            // handler on either. The field below is a plain editable
+            // TextFormField, so "edit" meant nothing; clearing it is the only
+            // real action, and now it works.
+            GestureDetector(
+              onTap: ctrl.clear,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                child: Icon(Icons.delete_outline,
+                    color: const Color(0xFFEF4444), size: 16.sp),
+              ),
             ),
           ],
         ),

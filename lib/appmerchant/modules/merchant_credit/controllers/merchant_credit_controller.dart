@@ -23,6 +23,24 @@ class MerchantCreditController extends GetxController {
   final customerPhoneCtrl = TextEditingController();
   final selectedCustomerId = Rx<String?>(null);
 
+  /// When the customer has to repay. `dueDate` is a real field on
+  /// MerchantCredit and is what makes the 'overdue' status reachable at all —
+  /// the form had no way to set it, so every credit was open-ended and the
+  /// screen's "dormant/overdue" total could only ever read 0.
+  final dueDate = Rxn<DateTime>();
+
+  Future<void> pickDueDate(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: dueDate.value ?? now.add(const Duration(days: 30)),
+      firstDate: now,
+      lastDate: DateTime(now.year + 5),
+      helpText: 'Repayment due date',
+    );
+    if (picked != null) dueDate.value = picked;
+  }
+
   // Customer search (GET /merchant/customers?search=)
   final searchResults = <Map<String, dynamic>>[].obs;
   final isSearching = false.obs;
@@ -34,13 +52,57 @@ class MerchantCreditController extends GetxController {
   final dormantAmount = 0.0.obs;
   final approvedAmount = 0.0.obs;
 
-  final exchangeRate = 100.0;
-  final serviceChargeRate = 0.10;
+  // `exchangeRate = 100` and `serviceChargeRate = 0.10` used to live here.
+  // POST /merchant/credits awards no VIPs points at all (it writes a TND
+  // ledger row plus a pending `credit` Transaction) and charges no fee — so
+  // the "D 1 = VIP 100" figure and the 10% service charge added to the
+  // inquiry's Grand Total were both invented by the app.
+
+  /// Real per-transaction bounds from GET /merchant/credits/limits. The form
+  /// has always printed "Limit: D 25 - D 1000"; nothing enforced it and
+  /// nothing fetched it.
+  final minAmount = 0.0.obs;
+  final maxAmount = 0.0.obs;
+  final limitsLoaded = false.obs;
 
   @override
   void onInit() {
     super.onInit();
+    // A caller (the Customers list) can hand us the customer to bill.
+    final args = Get.arguments;
+    if (args is Map && (args['phone'] != null || args['fullName'] != null)) {
+      selectCustomer(Map<String, dynamic>.from(args));
+    }
     loadCredits();
+    loadLimits();
+  }
+
+  Future<void> loadLimits() async {
+    try {
+      final response = await _api.get('/merchant/credits/limits');
+      if (response.success && response.data is Map) {
+        final d = Map<String, dynamic>.from(response.data as Map);
+        minAmount.value = (d['minAmount'] is num) ? (d['minAmount'] as num).toDouble() : 0;
+        maxAmount.value = (d['maxAmount'] is num) ? (d['maxAmount'] as num).toDouble() : 0;
+        limitsLoaded.value = true;
+      }
+    } catch (e) {
+      debugPrint('loadCreditLimits error: $e');
+    }
+  }
+
+  /// Why the amount is not submittable, or empty when it is.
+  String get amountError {
+    final val = double.tryParse(amount.value) ?? 0;
+    if (val <= 0) return '';
+    if (!limitsLoaded.value) return '';
+    if (val < minAmount.value) {
+      return 'Minimum credit is D ${minAmount.value.toStringAsFixed(0)}';
+    }
+    if (val > maxAmount.value) {
+      return 'Maximum credit is D ${maxAmount.value.toStringAsFixed(0)}';
+    }
+    return '';
   }
 
   Future<void> loadCredits({String? status}) async {
@@ -88,15 +150,30 @@ class MerchantCreditController extends GetxController {
   void onDecimalPressed() {
     if (!amount.value.contains('.')) {
       amount.value += '.';
+      _calculatePoints();
     }
   }
 
   void _calculatePoints() {
-    double val = double.tryParse(amount.value) ?? 0.0;
-    points.value = (val * exchangeRate).toInt().toString();
+    // Kept only so the keypad still drives a reactive rebuild of the amount.
+    points.value = amount.value;
   }
 
   void onProceedToInquiry() {
+    final val = double.tryParse(amount.value) ?? 0;
+    if (val <= 0) {
+      safeSnackbar('Error', 'Please enter a valid amount',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    // Check the real bounds here rather than letting the merchant fill in
+    // the customer details and only then be rejected by the server.
+    final error = amountError;
+    if (error.isNotEmpty) {
+      safeSnackbar('Amount out of range', error,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     Get.toNamed(MerchantRoutes.MERCHANT_CREDIT_INQUIRY);
   }
 
@@ -166,6 +243,7 @@ class MerchantCreditController extends GetxController {
         if (selectedCustomerId.value != null) 'customerId': selectedCustomerId.value,
         'customerName': customerName,
         'customerPhone': customerPhone,
+        if (dueDate.value != null) 'dueDate': dueDate.value!.toIso8601String(),
       });
 
       if (response.success) {
@@ -180,18 +258,23 @@ class MerchantCreditController extends GetxController {
         customerNameCtrl.clear();
         customerPhoneCtrl.clear();
         selectedCustomerId.value = null;
+        dueDate.value = null;
         await loadCredits();
       } else {
         safeSnackbar('Error', response.message.isNotEmpty ? response.message : 'Failed to issue credit',
             snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Network error', snackPosition: SnackPosition.BOTTOM);
+      debugPrint('confirmCredit error: $e');
+      safeSnackbar('Error', 'Could not issue the credit. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
   }
 
+  // Both of these used to do nothing at all when the server said no — no
+  // message, no refresh — so a rejected settle/cancel read as a silent no-op.
   Future<void> settleCredit(String creditId, double paymentAmount, {String? method, String? note}) async {
     try {
       final response = await _api.put('/merchant/credits/$creditId/settle', {
@@ -202,9 +285,13 @@ class MerchantCreditController extends GetxController {
       if (response.success) {
         await loadCredits();
         safeSnackbar('Success', 'Payment recorded', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       debugPrint('settleCredit error: $e');
+      safeSnackbar('Error', 'Could not record that payment. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -213,9 +300,14 @@ class MerchantCreditController extends GetxController {
       final response = await _api.put('/merchant/credits/$creditId/cancel', {});
       if (response.success) {
         await loadCredits();
+        safeSnackbar('Cancelled', 'Credit cancelled', snackPosition: SnackPosition.BOTTOM);
+      } else {
+        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
       debugPrint('cancelCredit error: $e');
+      safeSnackbar('Error', 'Could not cancel that credit. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 

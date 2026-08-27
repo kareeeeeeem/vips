@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -27,7 +30,7 @@ class BusinessRegistrationController extends GetxController {
   final jobTitle    = 'Choose'.obs;
   final businessType = 'Choose'.obs;
   final category    = 'Choose'.obs;
-  final countryCode = '+02'.obs;
+  final countryCode = '+216'.obs; // Tunisia — the app's only market
 
   // Loading state
   final isLoading = false.obs;
@@ -55,6 +58,13 @@ class BusinessRegistrationController extends GetxController {
 
   // Document URLs (filled after upload)
   final documentUrls = <String>[].obs;
+  final documentNames = <String>[].obs;
+  final isUploadingDocument = false.obs;
+
+  /// Licence expiry date. The registration form drew a date box with
+  /// "Not set yet" and a calendar icon that was a plain Container — no picker,
+  /// no field, nothing ever set it.
+  final licenseExpiry = Rxn<DateTime>();
 
   @override
   void onClose() {
@@ -92,8 +102,119 @@ class BusinessRegistrationController extends GetxController {
     schedule.refresh();
   }
 
-  void addDocument(String url) {
-    if (url.isNotEmpty) documentUrls.add(url);
+  /// Opens two time pickers (open, then close) for one weekday and stores the
+  /// result. The registration form drew each day's hours as a bordered Text
+  /// box with no handler, so every merchant submitted the same default
+  /// 09:00–23:00 schedule no matter what their real hours were.
+  Future<void> pickDayHours(BuildContext context, String day) async {
+    final data = schedule[day];
+    if (data == null) return;
+
+    final open = await showTimePicker(
+      context: context,
+      initialTime: _parseTime(data['open'] as String?) ?? const TimeOfDay(hour: 9, minute: 0),
+      helpText: 'Opening time — $day',
+    );
+    if (open == null) return;
+    if (!context.mounted) return;
+
+    final close = await showTimePicker(
+      context: context,
+      initialTime: _parseTime(data['close'] as String?) ?? const TimeOfDay(hour: 23, minute: 0),
+      helpText: 'Closing time — $day',
+    );
+    if (close == null) return;
+
+    final updated = Map<String, dynamic>.from(data);
+    updated['open'] = _formatTime(open);
+    updated['close'] = _formatTime(close);
+    updated['enabled'] = true;
+    schedule[day] = updated;
+    schedule.refresh();
+  }
+
+  TimeOfDay? _parseTime(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
+  String _formatTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  void removeDocument(int index) {
+    if (index < 0 || index >= documentUrls.length) return;
+    documentUrls.removeAt(index);
+    if (index < documentNames.length) documentNames.removeAt(index);
+  }
+
+  /// Picks a licence/identity document and uploads it to the real
+  /// POST /api/upload endpoint. The "Select a file" row used to be a
+  /// decorative Container: there was no picker anywhere, so `documentUrls`
+  /// was always empty and the `documents` array the backend stores was
+  /// permanently empty for every merchant.
+  Future<void> pickLicenseDocument() async {
+    if (isUploadingDocument.value) return;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+      );
+      final picked = result?.files.single;
+      if (picked == null || picked.path == null) return;
+
+      isUploadingDocument.value = true;
+      final url = await _uploadFile(picked.path!, picked.name);
+      if (url != null) {
+        documentUrls.add(url);
+        documentNames.add(picked.name);
+        safeSnackbar('Uploaded', picked.name, snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      debugPrint('pickLicenseDocument error: $e');
+      safeSnackbar('Error', 'Could not upload the document. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isUploadingDocument.value = false;
+    }
+  }
+
+  Future<String?> _uploadFile(String filePath, String fileName) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final dioClient = dio.Dio(dio.BaseOptions(
+        baseUrl: ApiService.baseUrl,
+        headers: {if (token != null) 'Authorization': 'Bearer $token'},
+      ));
+      final formData = dio.FormData.fromMap({
+        'image': await dio.MultipartFile.fromFile(filePath, filename: fileName),
+      });
+      final res = await dioClient.post('/upload', data: formData);
+      if (res.data['success'] == true) {
+        return res.data['data']['url'] as String;
+      }
+      safeSnackbar('Error', 'Upload failed', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('_uploadFile error: $e');
+      safeSnackbar('Error', 'Could not upload the file', snackPosition: SnackPosition.BOTTOM);
+    }
+    return null;
+  }
+
+  Future<void> pickLicenseExpiry(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: licenseExpiry.value ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 20),
+    );
+    if (picked != null) licenseExpiry.value = picked;
   }
 
   Future<void> saveProfile() async {
@@ -154,10 +275,12 @@ class BusinessRegistrationController extends GetxController {
         'apartment':      apartmentCtrl.text.trim(),
         'locationName':   locationNameCtrl.text.trim(),
         'description':    descriptionCtrl.text.trim(),
-        'schedule':       schedule,
+        'schedule':       Map<String, dynamic>.from(schedule),
         'loyaltyType':    isPrivetLoyalty.value ? 'private' : 'everywhere',
-        'documents':      documentUrls,
+        'documents':      documentUrls.toList(),
         'tin':            tinCtrl.text.trim(),
+        if (licenseExpiry.value != null)
+          'licenseExpiry': licenseExpiry.value!.toIso8601String(),
         'facebook':       facebookCtrl.text.trim(),
         'instagram':      instagramCtrl.text.trim(),
         'website':        websiteCtrl.text.trim(),
@@ -169,7 +292,9 @@ class BusinessRegistrationController extends GetxController {
         safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to save profile', snackPosition: SnackPosition.BOTTOM);
+      debugPrint('saveProfile error: $e');
+      safeSnackbar('Error', 'Could not save your registration. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }

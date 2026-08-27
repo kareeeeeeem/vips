@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../controllers/merchant_catalog_controller.dart';
 import 'widgets/uploads_banner.dart';
 import 'widgets/tags_input.dart';
-import 'widgets/shipping_options.dart';
 import 'widgets/form_widgets.dart';
 
 class CreateCouponView extends GetView<MerchantCatalogController> {
@@ -44,38 +43,125 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
 
                     FormWidgets.buildTextField(
                       'Coupon Code',
-                      hint: 'Coupon Code',
-                      maxLines: 3,
+                      hint: 'e.g. SUMMER25',
                       controller: controller.couponCodeCtrl,
                     ),
                     SizedBox(height: 16.h),
 
-                    Text(
-                      'Availability',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF374151),
+                    // Coupon.type is a real enum on the backend
+                    // (percentage / fixed / shipping / voucher). It used to be
+                    // a decorative "Discount info: Percent" box, so every
+                    // coupon was created as a percentage regardless.
+                    Obx(
+                      () => FormWidgets.buildDropdown(
+                        'Discount type',
+                        MerchantCatalogController
+                            .couponTypeLabels[controller.couponType.value]!,
+                        items: MerchantCatalogController.couponTypes
+                            .map((t) =>
+                                MerchantCatalogController.couponTypeLabels[t]!)
+                            .toList(),
+                        onChanged: (label) {
+                          final code = MerchantCatalogController
+                              .couponTypeLabels.entries
+                              .firstWhere((e) => e.value == label)
+                              .key;
+                          controller.couponType.value = code;
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // The discount value had NO input at all — the controller
+                    // held a hardcoded 25, so every coupon in the system was
+                    // 25% off.
+                    Obx(() {
+                      if (controller.couponType.value == 'shipping') {
+                        return Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            'Free-shipping coupons waive the delivery fee, so they '
+                            'do not take a discount value.',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF059669),
+                            ),
+                          ),
+                        );
+                      }
+                      return FormWidgets.buildTextField(
+                        controller.couponType.value == 'fixed'
+                            ? 'Discount amount (D)'
+                            : 'Discount percentage (%)',
+                        hint: controller.couponType.value == 'fixed' ? '10' : '25',
+                        controller: controller.couponDiscountCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      );
+                    }),
+                    SizedBox(height: 16.h),
+
+                    // Real Coupon.expiryDate. The old "Start Date — End Date"
+                    // pair was two inert boxes; the backend has no start date
+                    // at all, only an expiry, so one real picker replaces them.
+                    Obx(
+                      () => FormWidgets.buildDatePicker(
+                        'Expires on',
+                        value: controller.couponEndDate.value,
+                        firstDate: DateTime.now(),
+                        onPicked: (d) => controller.couponEndDate.value = d,
                       ),
                     ),
                     SizedBox(height: 6.h),
+                    Text(
+                      'Leave empty to expire 30 days from today.',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        FormWidgets.buildDatePicker('Start Date', isHalf: true),
-                        SizedBox(width: 8.w),
-                        Container(
-                          width: 8.w,
-                          height: 1.h,
-                          color: const Color(0xFF9CA3AF),
+                        Expanded(
+                          child: FormWidgets.buildTextField(
+                            'Min order (D)',
+                            hint: 'None',
+                            controller: controller.couponMinOrderCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                          ),
                         ),
-                        SizedBox(width: 8.w),
-                        FormWidgets.buildDatePicker('End Date', isHalf: true),
+                        SizedBox(width: 16.w),
+                        Expanded(
+                          child: FormWidgets.buildTextField(
+                            'Max discount (D)',
+                            hint: 'No cap',
+                            controller: controller.couponMaxDiscountCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 16.h),
 
-                    FormWidgets.buildDropdown(
-                      'Custom Shape / Theme',
-                      'Select Theme',
+                    // Real Coupon.maxUsage — the old "Limit for same user"
+                    // box showed a fixed '0000' and set nothing.
+                    FormWidgets.buildTextField(
+                      'Total redemptions allowed',
+                      hint: 'Unlimited',
+                      controller: controller.couponMaxUsageCtrl,
+                      keyboardType: TextInputType.number,
                     ),
                     SizedBox(height: 16.h),
 
@@ -87,71 +173,11 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
                     ),
                     SizedBox(height: 16.h),
 
-                    Row(
-                      children: [
-                        FormWidgets.buildDropdown(
-                          'Select Customer',
-                          'All',
-                          isHalf: true,
-                        ),
-                        SizedBox(width: 16.w),
-                        FormWidgets.buildDropdown(
-                          'Limit for same user',
-                          '0000',
-                          isHalf: true,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.h),
-
-                    Row(
-                      children: [
-                        FormWidgets.buildDropdown(
-                          'Discount info',
-                          'Percent',
-                          isHalf: true,
-                        ),
-                        SizedBox(width: 16.w),
-                        FormWidgets.buildDropdown(
-                          'Max Discount',
-                          '0000',
-                          isHalf: true,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 24.h),
-
-                    _buildUploadBox('add photo', Icons.photo_outlined),
-                    SizedBox(height: 16.h),
-
-                    FormWidgets.buildTextField(
-                      'Products Contents',
-                      hint: 'Item Name',
-                      maxLines: 3,
-                    ),
-                    SizedBox(height: 16.h),
-                    FormWidgets.buildTextField('Item Price', maxLines: 3),
-                    SizedBox(height: 16.h),
-                    FormWidgets.buildDropdown('Category', 'Select'),
-                    SizedBox(height: 24.h),
-
-                    _buildUploadBox(
-                      'add thumbnail Photo',
-                      Icons.add_photo_alternate_outlined,
-                    ),
-                    SizedBox(height: 16.h),
                     FormWidgets.buildTextField(
                       'Description',
-                      hint: 'Automatic description',
+                      hint: 'Shown to customers with the coupon',
                       maxLines: 3,
-                    ),
-                    SizedBox(height: 24.h),
-
-                    ShippingOptions(
-                      isDelivery: controller.isDelivery,
-                      isTakeaway: controller.isTakeaway,
-                      isDineIn: controller.isDineIn,
-                      selectedTime: controller.deliveryTime,
+                      controller: controller.couponDescriptionCtrl,
                     ),
 
                     SizedBox(height: 32.h),
@@ -183,8 +209,11 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
               padding: EdgeInsets.all(24.w),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: controller.createCouponFromForm,
+                child: Obx(
+                  () => ElevatedButton(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : controller.createCouponFromForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -194,7 +223,7 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Publish Coupon',
+                    controller.isLoading.value ? 'Publishing…' : 'Publish Coupon',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16.sp,
@@ -202,40 +231,12 @@ class CreateCouponView extends GetView<MerchantCatalogController> {
                     ),
                   ),
                 ),
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildUploadBox(String label, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151)),
-        ),
-        SizedBox(height: 8.h),
-        Container(
-          width: 80.w,
-          height: 80.w,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(
-              color: const Color(0xFF10B981),
-              width: 1,
-              style: BorderStyle.solid,
-            ), // Should be dashed, keeping simple
-          ),
-          child: Center(
-            child: Icon(icon, color: const Color(0xFF10B981), size: 28.sp),
-          ),
-        ),
-      ],
     );
   }
 }

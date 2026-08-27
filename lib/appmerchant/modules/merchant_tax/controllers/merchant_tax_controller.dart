@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -18,7 +19,9 @@ class TaxRate {
   factory TaxRate.fromJson(Map<String, dynamic> json) => TaxRate(
         id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
         name: json['name'] ?? '',
-        rate: (json['rate'] ?? 0).toDouble(),
+        rate: json['rate'] is num
+            ? (json['rate'] as num).toDouble()
+            : (double.tryParse('${json['rate'] ?? ''}') ?? 0),
         isActive: json['isActive'] ?? true,
       );
 }
@@ -42,25 +45,46 @@ class MerchantTaxController extends GetxController {
         final List<dynamic> list = rawData is List
             ? rawData
             : (rawData is Map ? (rawData['taxRates'] ?? rawData['data'] ?? []) : []);
-        taxRates.value = list.map((e) => TaxRate.fromJson(e)).toList();
+        taxRates.value = list
+            .whereType<Map>()
+            .map((e) => TaxRate.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('loadTaxRates failed: $e');
+      safeSnackbar('Error', 'Could not load your tax rates. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> addTaxRate(String name, double rate) async {
+    if (name.trim().isEmpty) {
+      safeSnackbar('Error', 'Enter a name for the tax rate',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    // A tax rate outside 0-100% is never valid; nothing checked this before,
+    // so a negative or 500% rate could be saved and then applied to bills.
+    if (rate < 0 || rate > 100) {
+      safeSnackbar('Error', 'Rate must be between 0 and 100 %',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
     try {
-      final res = await ApiService().post('/merchant/tax-rates', {'name': name, 'rate': rate});
-      if (res.success && res.data != null) {
-        final data = res.data;
-        taxRates.add(TaxRate.fromJson(data));
+      final res = await ApiService()
+          .post('/merchant/tax-rates', {'name': name.trim(), 'rate': rate});
+      if (res.success && res.data is Map) {
+        taxRates.add(TaxRate.fromJson(Map<String, dynamic>.from(res.data as Map)));
       } else {
-        safeSnackbar('Error', 'Failed to add tax rate', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Error', res.message.isNotEmpty ? res.message : 'Failed to add tax rate',
+            snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {
-      safeSnackbar('Error', 'Failed to add tax rate', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('addTaxRate failed: $e');
+      safeSnackbar('Error', 'Could not add that tax rate. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -76,10 +100,13 @@ class MerchantTaxController extends GetxController {
           isActive: !old.isActive,
         );
       } else {
-        safeSnackbar('Error', 'Failed to update tax rate', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Error', res.message.isNotEmpty ? res.message : 'Failed to update tax rate',
+            snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {
-      safeSnackbar('Error', 'Failed to update tax rate', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('toggleTaxStatus failed: $e');
+      safeSnackbar('Error', 'Could not update that tax rate. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -89,10 +116,13 @@ class MerchantTaxController extends GetxController {
       if (res.success) {
         taxRates.removeWhere((e) => e.id == id);
       } else {
-        safeSnackbar('Error', 'Failed to delete tax rate', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Error', res.message.isNotEmpty ? res.message : 'Failed to delete tax rate',
+            snackPosition: SnackPosition.BOTTOM);
       }
-    } catch (_) {
-      safeSnackbar('Error', 'Failed to delete tax rate', snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      debugPrint('deleteTaxRate failed: $e');
+      safeSnackbar('Error', 'Could not delete that tax rate. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

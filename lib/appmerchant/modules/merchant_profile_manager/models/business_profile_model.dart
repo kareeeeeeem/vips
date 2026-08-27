@@ -3,15 +3,29 @@ class BusinessProfile {
   final String name;
   final String type; // e.g. 'Restaurant', 'Clothing Store'
   final String logoUrl;
-  final String pin; // Password/PIN for security
+
+  /// Partnership/registration state from BusinessRegistration.status —
+  /// 'pending' | 'under_review' | 'approved' | 'rejected', or '' when the
+  /// merchant has never submitted a registration.
+  final String status;
+
+  /// Whether this is the business the app is currently operating as.
   final bool isActive;
 
-  BusinessProfile({
+  const BusinessProfile({
     required this.id,
     required this.name,
     required this.type,
     required this.logoUrl,
-    required this.pin,
+    this.status = '',
     this.isActive = false,
   });
+
+  String get statusLabel => switch (status) {
+        'approved' => 'Approved',
+        'pending' => 'Pending review',
+        'under_review' => 'Under review',
+        'rejected' => 'Rejected',
+        _ => 'Not registered',
+      };
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 import '../controllers/merchant_dues_controller.dart';
 
 class DueListView extends GetView<MerchantDuesController> {
@@ -155,6 +156,46 @@ class DueListView extends GetView<MerchantDuesController> {
     );
   }
 
+  void _showCollectDialog(DueItem due) {
+    final amountCtrl = TextEditingController(
+        text: due.remainingAmount.toStringAsFixed(2));
+    Get.dialog(AlertDialog(
+      title: Text(due.isCustomer ? 'Collect payment' : 'Record payment'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${due.partyName} — D ${due.remainingAmount.toStringAsFixed(3)} outstanding',
+            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+          ),
+          SizedBox(height: 12.h),
+          TextField(
+            controller: amountCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Amount'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () {
+            final amount = double.tryParse(amountCtrl.text.trim());
+            if (amount == null) {
+              safeSnackbar('Error', 'Enter a valid amount',
+                  snackPosition: SnackPosition.BOTTOM);
+              return;
+            }
+            Get.back();
+            controller.collectPayment(due.id, amount);
+          },
+          child: const Text('Confirm'),
+        ),
+      ],
+    ));
+  }
+
   void _showAddDueDialog(BuildContext context) {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
@@ -278,14 +319,25 @@ class DueListView extends GetView<MerchantDuesController> {
                 ],
               ),
               ElevatedButton(
-                onPressed: () => controller.collectPayment(due.id, due.remainingAmount),
+                // This used to settle the whole remaining balance instantly
+                // with no confirmation and no way to record a part-payment —
+                // which is the normal case for a running tab.
+                onPressed: due.remainingAmount <= 0
+                    ? null
+                    : () => _showCollectDialog(due),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: due.isCustomer ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  disabledBackgroundColor: const Color(0xFFD1D5DB),
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                   elevation: 0,
                 ),
-                child: Text(due.isCustomer ? 'Collect' : 'Pay Now', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold)),
+                child: Text(
+                  due.remainingAmount <= 0
+                      ? 'Settled'
+                      : (due.isCustomer ? 'Collect' : 'Pay Now'),
+                  style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

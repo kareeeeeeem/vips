@@ -172,7 +172,11 @@ class MerchantCashiersView extends StatelessWidget {
           icon: const Icon(Icons.more_vert, color: Color(0xFF6B7280)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
           onSelected: (value) {
-            if (value == 'remove') {
+            if (value == 'edit') {
+              // PUT /merchant/cashiers/:id existed with no way to reach it —
+              // the menu only offered Remove.
+              controller.showEditCashierSheet(cashier);
+            } else if (value == 'remove') {
               Get.dialog(AlertDialog(
                 title: const Text('Remove Cashier'),
                 content: Text('Remove $name from staff?'),
@@ -187,6 +191,11 @@ class MerchantCashiersView extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
+            const PopupMenuItem(value: 'edit', child: Row(children: [
+              Icon(Icons.edit_outlined, size: 18, color: Color(0xFF4B5563)),
+              SizedBox(width: 8),
+              Text('Edit'),
+            ])),
             const PopupMenuItem(value: 'remove', child: Row(children: [
               Icon(Icons.delete_outline, color: Colors.red, size: 18),
               SizedBox(width: 8),

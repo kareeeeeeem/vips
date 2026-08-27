@@ -112,9 +112,20 @@ class StaffManagementView extends GetView<MerchantHRMController> {
                             SizedBox(height: 4.h),
                             Text('D ${staff.salary.toStringAsFixed(0)}', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
                             SizedBox(height: 4.h),
-                            GestureDetector(
-                              onTap: () => _confirmRemove(staff.id, staff.name),
-                              child: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFEF4444)),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _showStatusSheet(staff),
+                                  child: const Icon(Icons.edit_outlined,
+                                      size: 16, color: Color(0xFF4B5563)),
+                                ),
+                                SizedBox(width: 10.w),
+                                GestureDetector(
+                                  onTap: () => _confirmRemove(staff.id, staff.name),
+                                  child: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFEF4444)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -190,15 +201,30 @@ class StaffManagementView extends GetView<MerchantHRMController> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                   onPressed: () async {
-                    if (nameCtrl.text.trim().isEmpty) return;
-                    await controller.addStaff({
-                      'name': nameCtrl.text.trim(),
+                    // An empty name used to just `return` with no feedback,
+                    // and the sheet then closed with an "added successfully"
+                    // toast whether or not the request had actually worked.
+                    final name = nameCtrl.text.trim();
+                    if (name.isEmpty) {
+                      safeSnackbar('Error', 'Enter the staff member\'s name',
+                          snackPosition: SnackPosition.BOTTOM);
+                      return;
+                    }
+                    final salary = double.tryParse(salaryCtrl.text.trim()) ?? 0;
+                    if (salary < 0) {
+                      safeSnackbar('Error', 'Salary cannot be negative',
+                          snackPosition: SnackPosition.BOTTOM);
+                      return;
+                    }
+                    final ok = await controller.addStaff({
+                      'name': name,
                       'role': role.value,
-                      'salary': double.tryParse(salaryCtrl.text) ?? 0,
+                      'salary': salary,
                       'status': 'Active',
                     });
+                    if (!ok) return;
                     Get.back();
-                    safeSnackbar('Added', '${nameCtrl.text} added successfully',
+                    safeSnackbar('Added', '$name added successfully',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: const Color(0xFF3B82F6),
                         colorText: Colors.white);
@@ -216,6 +242,50 @@ class StaffManagementView extends GetView<MerchantHRMController> {
       nameCtrl.dispose();
       salaryCtrl.dispose();
     });
+  }
+
+  /// PUT /merchant/staff/:id existed with no UI, so a staff member's status
+  /// was fixed at whatever it was created with.
+  void _showStatusSheet(StaffMember staff) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(staff.name,
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4.h),
+            Text('Set status',
+                style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280))),
+            SizedBox(height: 12.h),
+            ...MerchantHRMController.statuses.map((status) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    staff.status == status
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: const Color(0xFF3B82F6),
+                  ),
+                  title: Text(status),
+                  onTap: () {
+                    Get.back();
+                    if (staff.status != status) {
+                      controller.setStaffStatus(staff.id, status);
+                    }
+                  },
+                )),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
   }
 
   void _confirmRemove(String id, String name) {

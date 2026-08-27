@@ -79,7 +79,7 @@ class MerchantNotificationsView extends GetView<MerchantNotificationsController>
 
   Widget _buildNotificationCard(NotificationItem notification) {
     return GestureDetector(
-      onTap: () => controller.markAsRead(notification.id),
+      onTap: () => controller.openNotification(notification),
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
@@ -174,12 +174,22 @@ class MerchantNotificationsView extends GetView<MerchantNotificationsController>
     }
   }
 
+  /// Covers MerchantNotification.type's full real enum — order / payment /
+  /// review / system / alert / gift_back / subscription. Only four of the
+  /// seven were handled, so review, gift_back and subscription notifications
+  /// all showed the generic blue "info" glyph.
   IconData _getIconData(String type) {
     switch (type) {
       case 'order':
         return Icons.shopping_bag_outlined;
       case 'payment':
         return Icons.account_balance_wallet_outlined;
+      case 'review':
+        return Icons.star_outline_rounded;
+      case 'gift_back':
+        return Icons.card_giftcard_outlined;
+      case 'subscription':
+        return Icons.workspace_premium_outlined;
       case 'alert':
         return Icons.error_outline;
       case 'system':
@@ -194,6 +204,12 @@ class MerchantNotificationsView extends GetView<MerchantNotificationsController>
         return const Color(0xFFF59E0B); // Amber
       case 'payment':
         return const Color(0xFF10B981); // Emerald
+      case 'review':
+        return const Color(0xFFFFB800); // Gold
+      case 'gift_back':
+        return const Color(0xFF8B5CF6); // Violet
+      case 'subscription':
+        return const Color(0xFF06B6D4); // Cyan
       case 'alert':
         return const Color(0xFFEF4444); // Red
       case 'system':

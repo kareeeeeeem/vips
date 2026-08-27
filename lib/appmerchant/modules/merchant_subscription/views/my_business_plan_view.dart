@@ -47,23 +47,140 @@ class MyBusinessPlanView extends GetView<MerchantSubscriptionController> {
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
               child: Column(
                 children: [
-                   Text(
-                    'Commission Base Plan',
-                    style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w600, color: const Color(0xFFF59E0B)),
-                  ),
-                  SizedBox(height: 4.h),
-                  Obx(() => Text(
-                    '${controller.currentCommission.value}%',
-                    style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w800, color: const Color(0xFFF59E0B)),
-                  )),
-                  SizedBox(height: 32.h),
-                  
-                  Text(
-                    'Partner will pay 0.3% commission to VIPsApp from each order You will get access of all the features and options in partner panel, app and interaction with user',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF), height: 1.5),
-                  ),
-                  SizedBox(height: 32.h),
+                  // The header used to read "Commission Base Plan / 0.3%"
+                  // from a hardcoded `currentCommission`, with a paragraph
+                  // asserting the partner pays 0.3% per order. There is no
+                  // commission concept anywhere in the subscription API.
+                  Obx(() {
+                    final plan = controller.currentPlan;
+                    final name = (plan['planName'] ?? '—').toString();
+                    final price = plan['price'] is num
+                        ? (plan['price'] as num).toDouble()
+                        : 0.0;
+                    final cycle = (plan['billingCycle'] ?? 'monthly').toString();
+                    return Column(
+                      children: [
+                        Text(
+                          'Current Plan',
+                          style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF9CA3AF)),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          name,
+                          style: TextStyle(
+                              fontSize: 28.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF59E0B)),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          price > 0
+                              ? 'D ${price.toStringAsFixed(2)} / $cycle'
+                              : 'Free',
+                          style: TextStyle(
+                              fontSize: 14.sp, color: const Color(0xFF6B7280)),
+                        ),
+                      ],
+                    );
+                  }),
+                  SizedBox(height: 20.h),
+
+                  // Real renewal state, straight off
+                  // GET /merchant/subscription/current.
+                  Obx(() {
+                    final plan = controller.currentPlan;
+                    if (plan.isEmpty) return const SizedBox.shrink();
+                    final endRaw = plan['endDate']?.toString();
+                    final end = endRaw == null ? null : DateTime.tryParse(endRaw);
+                    final autoRenew = plan['autoRenew'] == true;
+                    return Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                autoRenew ? Icons.autorenew : Icons.event_busy_outlined,
+                                size: 18.sp,
+                                color: autoRenew
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFFEF4444),
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Text(
+                                  end == null
+                                      ? (autoRenew ? 'Renews automatically' : 'No renewal date')
+                                      : autoRenew
+                                          ? 'Renews on ${end.day}/${end.month}/${end.year}'
+                                          : 'Ends on ${end.day}/${end.month}/${end.year}',
+                                  style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1F2937)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // POST /merchant/subscription/cancel existed on the
+                          // backend with nothing in the app calling it, so
+                          // auto-renewal could never be turned off.
+                          if (autoRenew) ...[
+                            SizedBox(height: 8.h),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton(
+                                onPressed: controller.isCancelling.value
+                                    ? null
+                                    : () => Get.dialog(AlertDialog(
+                                          title: const Text('Turn off auto-renewal?'),
+                                          content: const Text(
+                                              'Your plan stays active until the end of the current period.'),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () => Get.back(),
+                                                child: const Text('Keep it')),
+                                            TextButton(
+                                                onPressed: () {
+                                                  Get.back();
+                                                  controller.cancelAutoRenew();
+                                                },
+                                                child: const Text('Turn off')),
+                                          ],
+                                        )),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFEF4444)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.r)),
+                                ),
+                                child: controller.isCancelling.value
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2))
+                                    : Text('Cancel auto-renewal',
+                                        style: TextStyle(
+                                            fontSize: 13.sp,
+                                            color: const Color(0xFFEF4444),
+                                            fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                  SizedBox(height: 24.h),
 
                   // Current Plan Features card
                   Container(
@@ -73,16 +190,24 @@ class MyBusinessPlanView extends GetView<MerchantSubscriptionController> {
                       color: const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(16.r),
                     ),
-                    child: Column(
-                      children: [
-                        _buildFeatureRow('Inactive Gift Back', false),
-                        _buildFeatureRow('Max Monthly SMS (100)', true),
-                        _buildFeatureRow('Max Monthly Product (10)', true),
-                        _buildFeatureRow('POS', true),
-                        _buildFeatureRow('Mobile App', true),
-                        _buildFeatureRow('Credit limit relative to the number of customers Max (D 50)', true),
-                      ],
-                    ),
+                    child: Obx(() {
+                      // These six rows were hardcoded ("Max Monthly SMS
+                      // (100)", "POS", "Credit limit ... Max (D 50)", ...)
+                      // and matched no field the subscription API returns.
+                      // The real set is the plan's own `features` map.
+                      final labels = MerchantSubscriptionController
+                          .featureLabels(controller.currentPlan['features']);
+                      if (labels.isEmpty) {
+                        return Text(
+                          'No plan features to show yet.',
+                          style: TextStyle(fontSize: 13.sp, color: Colors.white),
+                        );
+                      }
+                      return Column(
+                        children:
+                            labels.map((f) => _buildFeatureRow(f, true)).toList(),
+                      );
+                    }),
                   ),
                   SizedBox(height: 24.h),
                   Container(

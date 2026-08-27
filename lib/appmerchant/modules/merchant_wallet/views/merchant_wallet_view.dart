@@ -44,14 +44,11 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade200),
-              ),
+            padding: EdgeInsets.only(right: 8.w),
+            child: IconButton(
+              tooltip: 'Refresh',
+              icon: Icon(Icons.refresh, size: 22.sp, color: const Color(0xFF111827)),
+              onPressed: controller.refreshAll,
             ),
           ),
         ],
@@ -63,8 +60,11 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
           );
         }
 
-        return SingleChildScrollView(
-          child: Column(
+        return RefreshIndicator(
+          onRefresh: controller.refreshAll,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 16.h),
@@ -74,7 +74,9 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               SizedBox(height: 24.h),
               _buildPayoutSection(),
               SizedBox(height: 24.h),
-              _buildAddCardButton(),
+              _buildPayoutAccountsSection(),
+              SizedBox(height: 24.h),
+              _buildPayoutRequestsSection(),
               SizedBox(height: 24.h),
               _buildFilterTabs(),
               SizedBox(height: 16.h),
@@ -82,6 +84,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
               SizedBox(height: 8.h),
               _buildTransactionList(),
             ],
+            ),
           ),
         );
       }),
@@ -126,13 +129,15 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                       height: 1.0,
                     ),
                   ),
-                  Text(
-                    ' 00',
-                    style: TextStyle(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1.5,
+                  Padding(
+                    padding: EdgeInsets.only(left: 6.w, top: 18.h),
+                    child: Text(
+                      'PTS',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -194,7 +199,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                 _buildPerformanceDivider(),
                 _buildPerformanceItem('Vips Out', controller.totalVipsOut.value, const Color(0xFFFF5252)),
                 _buildPerformanceDivider(),
-                _buildPerformanceItem('Recovery', controller.totalVipsRecovery.value, const Color(0xFF3B82F6)),
+                _buildPerformanceItem('Pending', controller.pendingPayout.value, const Color(0xFF3B82F6)),
               ],
             ),
           ),
@@ -309,52 +314,47 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
           ),
           SizedBox(width: 16.w),
           Expanded(
-            child: Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFF3AC264), // VIPs Green
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _buildVipCoin(16.sp, color: Colors.white),
-                      SizedBox(width: 4.w),
-                      Text(
-                        controller.dormantPoints.value.toInt().toString(),
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+            child: GestureDetector(
+              onTap: () => Get.toNamed(MerchantRoutes.GIFT_BACK_FORM),
+              child: Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3AC264), // VIPs Green
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _buildVipCoin(16.sp, color: Colors.white),
+                        SizedBox(width: 4.w),
+                        Text(
+                          controller.totalVipsOut.value.toInt().toString(),
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '00',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Dormant Points',
-                    style: TextStyle(fontSize: 12.sp, color: Colors.white70),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    'Recovery Now',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 24.h),
+                    Text(
+                      'Points Gifted',
+                      style: TextStyle(fontSize: 12.sp, color: Colors.white70),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Gift Back Now',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -406,9 +406,19 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
 
   void _showPayoutDialog() {
     final amountCtrl = TextEditingController();
-    final bankCtrl = TextEditingController();
-    final accountNameCtrl = TextEditingController();
-    final accountNumberCtrl = TextEditingController();
+    // Prefill from the saved default payout account — the merchant used to
+    // have to retype full bank details on every single request.
+    final accounts = controller.payoutAccounts;
+    final Map<String, dynamic>? preset = accounts.isEmpty
+        ? null
+        : accounts.firstWhere((a) => a['isDefault'] == true,
+            orElse: () => accounts.first);
+    final bankCtrl =
+        TextEditingController(text: (preset?['bankName'] ?? '').toString());
+    final accountNameCtrl =
+        TextEditingController(text: (preset?['accountName'] ?? '').toString());
+    final accountNumberCtrl =
+        TextEditingController(text: (preset?['accountNumber'] ?? '').toString());
 
     Get.dialog(
       Dialog(
@@ -481,32 +491,307 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
     );
   }
 
-  Widget _buildAddCardButton() {
-    return GestureDetector(
-      onTap: () {
-        // No payment processor SDK is integrated and storing raw card numbers
-        // would be a PCI-DSS violation, so this is an honest placeholder.
-        safeSnackbar('Add payment method', 'Coming soon', snackPosition: SnackPosition.BOTTOM);
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Row(
+  /// Payout requests and where each one stands. The list was already being
+  /// fetched (GET /merchant/wallet/payouts) but never rendered anywhere, so a
+  /// merchant could ask for their money and then had no way to see whether
+  /// the request was still pending, approved, paid or rejected.
+  Widget _buildPayoutRequestsSection() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: const BoxDecoration(
-                color: Color(0xFF2563EB), // Blue
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.add, color: Colors.white, size: 16.sp),
-            ),
-            SizedBox(width: 12.w),
-            Text(
-              'Add New Card',
-              style: TextStyle(fontSize: 16.sp, color: const Color(0xFF6B7280)),
-            ),
+            Text('Payout Requests',
+                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700)),
+            SizedBox(height: 12.h),
+            Obx(() {
+              final requests = controller.payouts;
+              if (requests.isEmpty) {
+                return Text(
+                  'No payout requests yet.',
+                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
+                );
+              }
+              return Column(
+                children: requests.map((p) {
+                  final status = (p['status'] ?? 'pending').toString();
+                  final amount = (p['amount'] as num?) ?? 0;
+                  final bank = (p['bankName'] ?? '').toString();
+                  final created = DateTime.tryParse(p['createdAt']?.toString() ?? '');
+                  final note = (p['note'] ?? '').toString();
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'D ${amount.toStringAsFixed(3)}',
+                                style: TextStyle(
+                                    fontSize: 14.sp, fontWeight: FontWeight.w700),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                [
+                                  if (bank.isNotEmpty) bank,
+                                  if (created != null)
+                                    '${created.day.toString().padLeft(2, '0')}/'
+                                        '${created.month.toString().padLeft(2, '0')}/'
+                                        '${created.year}',
+                                ].join(' · '),
+                                style: TextStyle(
+                                    fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                              ),
+                              if (status == 'rejected' && note.isNotEmpty) ...[
+                                SizedBox(height: 2.h),
+                                Text(
+                                  note,
+                                  style: TextStyle(
+                                      fontSize: 11.sp, color: const Color(0xFFEF4444)),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        _payoutStatusChip(status),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            }),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Covers Payout.status's full enum: pending | approved | rejected | paid.
+  Widget _payoutStatusChip(String status) {
+    final color = switch (status) {
+      'paid' => const Color(0xFF10B981),
+      'approved' => const Color(0xFF3B82F6),
+      'rejected' => const Color(0xFFEF4444),
+      _ => const Color(0xFFF59E0B),
+    };
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+            fontSize: 10.sp, fontWeight: FontWeight.w700, color: color),
+      ),
+    );
+  }
+
+  /// Saved bank destinations for payouts. This slot used to be a single
+  /// "Add New Card" row that only ever showed a "Coming soon" toast — card
+  /// storage needs a PCI-scoped vault that doesn't exist here. What the
+  /// payout flow actually needs is a saved *bank* destination, which is real
+  /// and is what this now manages
+  /// (GET/POST/DELETE /merchant/wallet/payout-accounts).
+  Widget _buildPayoutAccountsSection() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Payout Accounts',
+            style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827)),
+          ),
+          SizedBox(height: 12.h),
+          Obx(() {
+            if (controller.payoutAccounts.isEmpty) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: Text(
+                  'No saved account yet. Add one so payouts don\'t need the details retyped.',
+                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF)),
+                ),
+              );
+            }
+            return Column(
+              children: controller.payoutAccounts.map((account) {
+                final id = (account['_id'] ?? '').toString();
+                final number = (account['accountNumber'] ?? '').toString();
+                final masked = number.length > 4
+                    ? '•••• ${number.substring(number.length - 4)}'
+                    : number;
+                final isDefault = account['isDefault'] == true;
+                return Container(
+                  margin: EdgeInsets.only(bottom: 10.h),
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.account_balance_outlined,
+                          size: 20.sp, color: const Color(0xFF2563EB)),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    (account['accountName'] ?? '').toString(),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF1F2937)),
+                                  ),
+                                ),
+                                if (isDefault) ...[
+                                  SizedBox(width: 6.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6.w, vertical: 2.h),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD1FAE5),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: Text('Default',
+                                        style: TextStyle(
+                                            fontSize: 9.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF059669))),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              [
+                                (account['bankName'] ?? '').toString(),
+                                masked,
+                              ].where((e) => e.isNotEmpty).join('  •  '),
+                              style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: const Color(0xFF6B7280)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_outline,
+                            size: 20.sp, color: const Color(0xFFDC2626)),
+                        onPressed: id.isEmpty
+                            ? null
+                            : () => controller.deletePayoutAccount(id),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          }),
+          GestureDetector(
+            onTap: () => _showAddPayoutAccountDialog(),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2563EB),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.add, color: Colors.white, size: 16.sp),
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  'Add Payout Account',
+                  style: TextStyle(fontSize: 16.sp, color: const Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddPayoutAccountDialog() {
+    final bankCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final numberCtrl = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Add Payout Account'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: bankCtrl,
+                decoration: const InputDecoration(labelText: 'Bank name (optional)'),
+              ),
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Account holder name'),
+              ),
+              TextField(
+                controller: numberCtrl,
+                decoration: const InputDecoration(labelText: 'Account number / RIB'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          Obx(() => ElevatedButton(
+                onPressed: controller.isSavingAccount.value
+                    ? null
+                    : () async {
+                        if (nameCtrl.text.trim().isEmpty ||
+                            numberCtrl.text.trim().isEmpty) {
+                          safeSnackbar('Error',
+                              'Account holder name and number are required',
+                              snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        final ok = await controller.addPayoutAccount(
+                          bankName: bankCtrl.text.trim(),
+                          accountName: nameCtrl.text.trim(),
+                          accountNumber: numberCtrl.text.trim(),
+                        );
+                        if (ok) Get.back();
+                      },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3AC264)),
+                child: controller.isSavingAccount.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Save', style: TextStyle(color: Colors.white)),
+              )),
+        ],
       ),
     );
   }
@@ -517,17 +802,20 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(8.w),
-            margin: EdgeInsets.only(right: 12.w),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Icon(
-              Icons.tune,
-              color: const Color(0xFF3AC264),
-              size: 20.sp,
+          GestureDetector(
+            onTap: () => _pickDateRange(),
+            child: Container(
+              padding: EdgeInsets.all(8.w),
+              margin: EdgeInsets.only(right: 12.w),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(
+                Icons.tune,
+                color: const Color(0xFF3AC264),
+                size: 20.sp,
+              ),
             ),
           ),
           ...controller.tabs.map((tab) => _buildTabItem(tab)),
@@ -562,37 +850,75 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
     });
   }
 
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: Get.context!,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange:
+          controller.fromDate.value != null && controller.toDate.value != null
+              ? DateTimeRange(
+                  start: controller.fromDate.value!,
+                  end: controller.toDate.value!)
+              : null,
+    );
+    if (picked != null) {
+      await controller.setDateRange(picked.start, picked.end);
+    }
+  }
+
   Widget _buildDateAndResultRow() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14.sp,
-                  color: Colors.grey.shade600,
+          Obx(() {
+            final from = controller.fromDate.value;
+            final to = controller.toDate.value;
+            String fmt(DateTime d) =>
+                '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year % 100}';
+            final label = controller.hasDateFilter
+                ? 'From: ${from != null ? fmt(from) : '—'}   To: ${to != null ? fmt(to) : '—'}'
+                : 'All dates';
+            return GestureDetector(
+              onTap: () => _pickDateRange(),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
-                SizedBox(width: 8.w),
-                Text(
-                  'From: 11/26   To: 12/26',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey.shade800,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14.sp,
+                      color: Colors.grey.shade600,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade800,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (controller.hasDateFilter) ...[
+                      SizedBox(width: 6.w),
+                      GestureDetector(
+                        onTap: controller.clearDateRange,
+                        child: Icon(Icons.close,
+                            size: 14.sp, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }),
           Obx(() => Text(
             '${controller.filteredTransactions.length} Result Found',
             style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500),
@@ -645,10 +971,8 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
       String titlePrefix = '';
       if (item.type == TransactionType.reward) {
         titlePrefix = 'Reward ID: ';
-      } else if (item.type == TransactionType.credit) {
-        titlePrefix = 'Credit ID: ';
-      } else if (item.type == TransactionType.recovery) {
-        titlePrefix = 'Recovery ID: ';
+      } else if (item.type == TransactionType.other) {
+        titlePrefix = 'Trans ID: ';
       }
 
       return Container(

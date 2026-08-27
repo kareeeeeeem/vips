@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
+import '../../controllers/merchant_catalog_controller.dart';
 
+/// Shows how much of the current plan's product allowance is left.
+///
+/// This used to render the literal string '8/2' with a "Matches mock" comment
+/// — its own `remaining`/`total` parameters were never read, so every merchant
+/// on every plan saw the same made-up figure. It now reads the real
+/// `features.maxProducts` from GET /merchant/subscription/current against the
+/// merchant's real product count.
 class UploadsBanner extends StatelessWidget {
-  final int remaining;
-  final int total;
   final VoidCallback? onUpgrade;
 
-  const UploadsBanner({
-    super.key,
-    this.remaining = 8,
-    this.total = 2, // design says 8/2
-    this.onUpgrade,
-  });
+  const UploadsBanner({super.key, this.onUpgrade});
 
   @override
   Widget build(BuildContext context) {
@@ -27,19 +28,43 @@ class UploadsBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                'Remaining uploads:',
-                style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
-              ),
-              SizedBox(width: 4.w),
-              Text(
-                '8/2', // Matches mock
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937)),
-              ),
-            ],
+          Expanded(
+            child: Obx(() {
+              final c = Get.find<MerchantCatalogController>();
+              if (!c.hasPlanInfo.value) {
+                return Text(
+                  'Checking your plan…',
+                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+                );
+              }
+              final unlimited = c.maxProducts.value < 0;
+              return Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      unlimited ? 'Products:' : 'Remaining uploads:',
+                      style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  Text(
+                    unlimited
+                        ? 'Unlimited'
+                        : '${c.productsRemaining < 0 ? 0 : c.productsRemaining}/${c.maxProducts.value}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: (!unlimited && c.productsRemaining <= 0)
+                          ? const Color(0xFFDC2626)
+                          : const Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
+              );
+            }),
           ),
+          SizedBox(width: 8.w),
           GestureDetector(
             onTap: onUpgrade ?? () => Get.toNamed(MerchantRoutes.SUBSCRIPTION_PACKAGES),
             child: Container(

@@ -2,6 +2,7 @@
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/modules/merchant_home/bindings/merchant_home_binding.dart';
 import '../modules/merchant_auth/views/merchant_login_view.dart';
+import '../modules/merchant_auth/views/merchant_signup_view.dart';
 import '../modules/merchant_auth/views/merchant_verification_view.dart';
 import '../modules/merchant_home/views/merchant_home_view.dart';
 import '../modules/merchant_settings/views/merchant_settings_view.dart';
@@ -18,6 +19,7 @@ import '../modules/business_registration/views/social_media_setup_view.dart';
 import '../modules/business_registration/views/qr_receive_view.dart';
 
 import '../modules/merchant_ads/bindings/merchant_ads_binding.dart';
+import '../modules/merchant_ads/views/merchant_ads_view.dart';
 import '../modules/merchant_ads/views/new_advertisement_view.dart';
 
 import '../modules/merchant_billing/bindings/merchant_billing_binding.dart';
@@ -62,6 +64,7 @@ import '../modules/merchant_finance/bindings/merchant_finance_binding.dart';
 import '../modules/merchant_finance/views/finance_dashboard_view.dart';
 import '../modules/merchant_finance/views/add_transaction_view.dart';
 import '../modules/merchant_finance/views/accounts_view.dart';
+import '../modules/merchant_finance/views/all_transactions_view.dart';
 import '../modules/merchant_dues/bindings/merchant_dues_binding.dart';
 import '../modules/merchant_dues/views/due_list_view.dart';
 import '../modules/merchant_stock/bindings/merchant_stock_binding.dart';
@@ -122,6 +125,7 @@ class MerchantAppPages {
       page: () => const MerchantReviewsView(),
     ),
     GetPage(name: MerchantRoutes.LOGIN, page: () => const MerchantLoginView()),
+    GetPage(name: MerchantRoutes.SIGNUP, page: () => const MerchantSignupView()),
     GetPage(
       name: MerchantRoutes.VERIFICATION,
       page: () => const MerchantVerificationView(),
@@ -165,6 +169,11 @@ class MerchantAppPages {
       page: () => const SocialMediaSetupView(),
     ),
     GetPage(name: MerchantRoutes.QR_RECEIVE, page: () => const QrReceiveView()),
+    GetPage(
+      name: MerchantRoutes.ADVERTISEMENTS,
+      page: () => const MerchantAdsView(),
+      binding: MerchantAdsBinding(),
+    ),
     GetPage(
       name: MerchantRoutes.ADD_ADVERTISEMENT,
       page: () => const NewAdvertisementView(),
@@ -289,6 +298,11 @@ class MerchantAppPages {
     GetPage(
       name: MerchantRoutes.ACCOUNTS,
       page: () => const AccountsView(),
+      binding: MerchantFinanceBinding(),
+    ),
+    GetPage(
+      name: MerchantRoutes.ALL_TRANSACTIONS,
+      page: () => const AllTransactionsView(),
       binding: MerchantFinanceBinding(),
     ),
     GetPage(

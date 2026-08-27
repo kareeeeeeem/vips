@@ -33,23 +33,38 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const UploadsBanner(),
-                    
-                    FormWidgets.buildTextField('Voucher Code', hint: 'Voucher Code', controller: controller.voucherCodeCtrl),
+
+                    FormWidgets.buildTextField('Voucher Code', hint: 'e.g. VIP50', controller: controller.voucherCodeCtrl),
                     SizedBox(height: 16.h),
-                    
-                    Text('Availability', style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151))),
+
+                    // Real Coupon.expiryDate. The old "Start Date — End Date"
+                    // pair were two inert boxes and the backend stores no
+                    // start date, so one working picker replaces both.
+                    Obx(
+                      () => FormWidgets.buildDatePicker(
+                        'Expires on',
+                        value: controller.voucherEndDate.value,
+                        firstDate: DateTime.now(),
+                        onPicked: (d) => controller.voucherEndDate.value = d,
+                      ),
+                    ),
                     SizedBox(height: 6.h),
-                    Row(
-                      children: [
-                        FormWidgets.buildDatePicker('Start Date', isHalf: true),
-                        SizedBox(width: 8.w),
-                        Container(width: 8.w, height: 1.h, color: const Color(0xFF9CA3AF)), // dash
-                        SizedBox(width: 8.w),
-                        FormWidgets.buildDatePicker('End Date', isHalf: true),
-                      ],
+                    Text(
+                      'Leave empty to expire 30 days from today.',
+                      style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9CA3AF)),
                     ),
                     SizedBox(height: 16.h),
-                    
+
+                    // Real Coupon.maxUsage. The old "Select Customer / Limit
+                    // for same user" pair set nothing at all.
+                    FormWidgets.buildTextField(
+                      'Total redemptions allowed',
+                      hint: 'Unlimited',
+                      controller: controller.voucherMaxUsageCtrl,
+                      keyboardType: TextInputType.number,
+                    ),
+                    SizedBox(height: 16.h),
+
                     TagsInput(
                       tags: controller.tags,
                       controller: controller.tagController,
@@ -57,42 +72,52 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                       onRemove: controller.removeTag,
                     ),
                     SizedBox(height: 16.h),
-                    
-                    Row(
-                      children: [
-                        FormWidgets.buildDropdown('Select Customer', 'All', isHalf: true),
-                        SizedBox(width: 16.w),
-                        FormWidgets.buildDropdown('Limit for same user', '0000', isHalf: true),
-                      ],
+
+                    FormWidgets.buildTextField(
+                      'Description',
+                      hint: 'Shown to customers with the voucher',
+                      maxLines: 3,
+                      controller: controller.voucherDescriptionCtrl,
                     ),
                     SizedBox(height: 24.h),
-                    
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Voucher Price info', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                        Text('0000 %', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
+                        Text('Voucher discount', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
+                        Obx(() => Text('${controller.voucherPercent.value} %',
+                            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF10B981)))),
                       ],
                     ),
                     SizedBox(height: 12.h),
-                    
-                    // Grid for percentages
-                    Wrap(
-                      spacing: 12.w,
-                      runSpacing: 12.h,
-                      children: [
-                        _buildPercentageBox(25, true),
-                        _buildPercentageBox(50, false),
-                        _buildPercentageBox(75, false),
-                        _buildPercentageBox(100, false),
-                        _buildPercentageBox(200, false),
-                        _buildPercentageBox(300, false),
-                        _buildPercentageBox(400, false),
-                        _buildPercentageBox(500, false),
-                        _buildPercentageBox(0, false, isAdd: true),
-                      ],
+
+                    // None of these boxes had a tap handler and 25 was drawn
+                    // as permanently selected, so every voucher was published
+                    // at 25% no matter what the merchant tapped. The presets
+                    // are also capped at 100 now — the old grid offered 200 to
+                    // 500 "%", which a percentage discount cannot be.
+                    Obx(
+                      () => Wrap(
+                        spacing: 12.w,
+                        runSpacing: 12.h,
+                        children: [
+                          for (final preset
+                              in MerchantCatalogController.voucherPercentPresets)
+                            _buildPercentageBox(
+                              preset,
+                              controller.voucherPercent.value == preset,
+                              onTap: () => controller.voucherPercent.value = preset,
+                            ),
+                          _buildPercentageBox(
+                            0,
+                            false,
+                            isAdd: true,
+                            onTap: () => _promptCustomPercent(context),
+                          ),
+                        ],
+                      ),
                     ),
-                    
+
                     SizedBox(height: 32.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -115,15 +140,22 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
               padding: EdgeInsets.all(24.w),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: controller.createVoucherFromForm,
+                child: Obx(
+                  () => ElevatedButton(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : controller.createVoucherFromForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     elevation: 0,
                   ),
-                  child: Text('Publish Voucher', style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    controller.isLoading.value ? 'Publishing…' : 'Publish Voucher',
+                    style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700),
+                  ),
+                ),
                 ),
               ),
             ),
@@ -133,8 +165,48 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
     );
   }
 
-  Widget _buildPercentageBox(int value, bool isSelected, {bool isAdd = false}) {
-    return Container(
+  /// Prompts for a percentage the preset grid does not cover.
+  void _promptCustomPercent(BuildContext context) {
+    final input = TextEditingController(
+      text: controller.voucherPercent.value.toString(),
+    );
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Custom discount'),
+        content: TextField(
+          controller: input,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            suffixText: '%',
+            hintText: '1 - 100',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: Get.back, child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              final parsed = int.tryParse(input.text.trim());
+              if (parsed == null) return;
+              controller.setCustomVoucherPercent(parsed);
+              if (parsed > 0 && parsed <= 100) Get.back();
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    ).then((_) => input.dispose());
+  }
+
+  Widget _buildPercentageBox(
+    int value,
+    bool isSelected, {
+    bool isAdd = false,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: 60.w,
       height: 40.h,
       decoration: BoxDecoration(
@@ -160,6 +232,7 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                   Icon(Icons.percent, size: 12.sp, color: isSelected ? const Color(0xFF10B981) : const Color(0xFF6B7280)),
                 ],
               ),
+      ),
       ),
     );
   }

@@ -2,6 +2,7 @@
 abstract class MerchantRoutes {
   MerchantRoutes._();
   static const LOGIN = _MerchantPaths.LOGIN;
+  static const SIGNUP = _MerchantPaths.SIGNUP;
   static const VERIFICATION = _MerchantPaths.VERIFICATION;
   static const HOME = _MerchantPaths.HOME;
   static const ONBOARDING = _MerchantPaths.ONBOARDING;
@@ -11,6 +12,7 @@ abstract class MerchantRoutes {
   static const ADDRESS_DETAILS = _MerchantPaths.ADDRESS_DETAILS;
   static const SOCIAL_MEDIA_SETUP = _MerchantPaths.SOCIAL_MEDIA_SETUP;
   static const QR_RECEIVE = _MerchantPaths.QR_RECEIVE;
+  static const ADVERTISEMENTS = _MerchantPaths.ADVERTISEMENTS;
   static const ADD_ADVERTISEMENT = _MerchantPaths.ADD_ADVERTISEMENT;
   static const BILL_INQUIRY = _MerchantPaths.BILL_INQUIRY;
   static const BILL_PIN = _MerchantPaths.BILL_PIN;
@@ -47,6 +49,7 @@ abstract class MerchantRoutes {
   static const FINANCE_DASHBOARD = _MerchantPaths.FINANCE_DASHBOARD;
   static const ADD_TRANSACTION = _MerchantPaths.ADD_TRANSACTION;
   static const ACCOUNTS = _MerchantPaths.ACCOUNTS;
+  static const ALL_TRANSACTIONS = _MerchantPaths.ALL_TRANSACTIONS;
   static const DUE_LIST = _MerchantPaths.DUE_LIST;
   static const STOCK_LIST = _MerchantPaths.STOCK_LIST;
   static const TAX_RATES = _MerchantPaths.TAX_RATES;
@@ -62,6 +65,7 @@ abstract class MerchantRoutes {
 abstract class _MerchantPaths {
   _MerchantPaths._();
   static const LOGIN = '/merchant-login';
+  static const SIGNUP = '/merchant-signup';
   static const VERIFICATION = '/merchant-verification';
   static const HOME = '/merchant-home';
   static const ONBOARDING = '/merchant-onboarding';
@@ -71,6 +75,7 @@ abstract class _MerchantPaths {
   static const ADDRESS_DETAILS = '/address-details';
   static const SOCIAL_MEDIA_SETUP = '/social-media-setup';
   static const QR_RECEIVE = '/qr-receive';
+  static const ADVERTISEMENTS = '/advertisements';
   static const ADD_ADVERTISEMENT = '/add-advertisement';
   static const BILL_INQUIRY = '/bill-inquiry';
   static const BILL_PIN = '/bill-pin';
@@ -106,6 +111,7 @@ abstract class _MerchantPaths {
   static const FINANCE_DASHBOARD = '/finance-dashboard';
   static const ADD_TRANSACTION = '/add-transaction';
   static const ACCOUNTS = '/accounts';
+  static const ALL_TRANSACTIONS = '/all-transactions';
   static const DUE_LIST = '/due-list';
   static const STOCK_LIST = '/stock-list';
   static const TAX_RATES = '/tax-rates';

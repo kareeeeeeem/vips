@@ -45,7 +45,9 @@ class MerchantCreateBillView extends GetView<MerchantCreateBillController> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$',
+                        // The app prices everything in Tunisian dinars; this
+                        // was a dollar sign.
+                        'D',
                         style: TextStyle(color: const Color(0xFF10B981), fontSize: 32.sp, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(width: 8.w),
@@ -135,6 +137,9 @@ class MerchantCreateBillView extends GetView<MerchantCreateBillController> {
           controller.appendNumber(key);
         }
       },
+      // Clearing a mistyped amount digit by digit is the only thing the
+      // keypad offered; clearAmount() existed but nothing called it.
+      onLongPress: key == 'DEL' ? controller.clearAmount : null,
       borderRadius: BorderRadius.circular(40.r),
       child: Container(
         width: 75.w,

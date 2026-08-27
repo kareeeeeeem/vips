@@ -14,9 +14,18 @@ class MerchantAdsController extends GetxController {
   final stats = <String, dynamic>{}.obs;
 
   final isArabicSelected = false.obs;
-  final showReview = false.obs;
-  final showRating = false.obs;
-  final selectedCategory = 'Auto Promotion'.obs;
+  /// Maps what the merchant picks to MerchantAd.adType's real enum
+  /// (banner | sponsored | featured | popup). The form used to offer
+  /// "Auto Promotion" and "Flash Sale" and send them lower-cased with
+  /// underscores, so **every** ad creation failed with a 500 Mongoose
+  /// enum validation error.
+  static const adTypeOptions = <String, String>{
+    'Banner': 'banner',
+    'Sponsored': 'sponsored',
+    'Featured': 'featured',
+    'Popup': 'popup',
+  };
+  final selectedCategory = 'Banner'.obs;
 
   // Form controllers for new ad
   final titleController = TextEditingController();
@@ -203,7 +212,7 @@ class MerchantAdsController extends GetxController {
         budget: budget,
         startDate: startDate.value!.toIso8601String(),
         endDate: endDate.value!.toIso8601String(),
-        adType: selectedCategory.value.toLowerCase().replaceAll(' ', '_'),
+        adType: adTypeOptions[selectedCategory.value] ?? 'banner',
       );
       resetForm();
       Get.back();
@@ -241,8 +250,6 @@ class MerchantAdsController extends GetxController {
     endDate.value = null;
     uploadedImageUrl.value = '';
     isArabicSelected.value = false;
-    showReview.value = false;
-    showRating.value = false;
-    selectedCategory.value = 'Auto Promotion';
+    selectedCategory.value = 'Banner';
   }
 }

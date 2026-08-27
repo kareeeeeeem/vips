@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:vip/core/widgets/custom_network_image.dart';
 import '../controllers/merchant_store_profile_controller.dart';
-import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
   const MerchantStoreProfileView({super.key});
@@ -29,14 +27,18 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
             _buildStoreBanner(),
             SizedBox(height: 20.h),
             _buildStoreHeader(),
+            SizedBox(height: 12.h),
+            _buildDescription(),
             SizedBox(height: 16.h),
             _buildSocialLinks(),
             SizedBox(height: 24.h),
             _buildDiscountBanner(),
             SizedBox(height: 24.h),
             _buildContentTabs(),
-            SizedBox(height: 32.h),
-            _buildCreateCouponButton(),
+            SizedBox(height: 16.h),
+            _buildTabContent(),
+            SizedBox(height: 24.h),
+            _buildCreateButton(),
             SizedBox(height: 40.h),
           ],
         ),
@@ -64,10 +66,26 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
     );
   }
 
+  /// "Edit" / "Switch" / "Add New" were a segmented control that changed only
+  /// its own highlight colour — none of the three did anything. They now run
+  /// the action they name.
   Widget _topTabItem(String label, int index) {
     final bool isSelected = controller.selectedMainTab.value == index;
     return GestureDetector(
-      onTap: () => controller.changeMainTab(index),
+      onTap: () {
+        controller.changeMainTab(index);
+        switch (index) {
+          case 0:
+            _openEditSheet();
+            break;
+          case 1:
+            controller.goToSwitchBusiness();
+            break;
+          case 2:
+            controller.goToAddBusiness();
+            break;
+        }
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
         decoration: BoxDecoration(
@@ -243,30 +261,13 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
           Row(
             children: [
               _actionButton(
-                Icons.send_rounded,
-                onTap: () {
-                  final addr = controller.address.value;
-                  if (addr.isNotEmpty) {
-                    safeSnackbar(
-                      'Address',
-                      addr,
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
-                },
+                Icons.location_on_outlined,
+                onTap: controller.openStoreLocation,
               ),
               SizedBox(width: 12.w),
               _actionButton(
                 Icons.phone_enabled_rounded,
-                onTap: () async {
-                  final phone = controller.phone.value;
-                  if (phone.isNotEmpty) {
-                    final uri = Uri.parse('tel:$phone');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    }
-                  }
-                },
+                onTap: controller.callStore,
               ),
             ],
           ),
@@ -290,28 +291,56 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
     );
   }
 
+  Widget _buildDescription() {
+    return Obx(() {
+      final text = controller.description.value;
+      if (text.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7280), height: 1.5),
+        ),
+      );
+    });
+  }
+
+  /// These three icons were plain, tapless `Icon` widgets with no data source.
+  /// They now show only the channels the merchant actually has on file and
+  /// open them.
   Widget _buildSocialLinks() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.language_rounded,
-          color: const Color(0xFF111827),
-          size: 22.sp,
-        ),
-        SizedBox(width: 24.w),
-        Icon(
-          Icons.mail_outline_rounded,
-          color: const Color(0xFF111827),
-          size: 22.sp,
-        ),
-        SizedBox(width: 24.w),
-        Icon(
-          Icons.facebook_rounded,
-          color: const Color(0xFF111827),
-          size: 22.sp,
-        ),
-      ],
+    return Obx(() {
+      final links = <Widget>[
+        if (controller.website.value.trim().isNotEmpty)
+          _socialIcon(Icons.language_rounded, controller.openWebsite),
+        if (controller.email.value.trim().isNotEmpty)
+          _socialIcon(Icons.mail_outline_rounded, controller.openEmail),
+        if (controller.facebook.value.trim().isNotEmpty)
+          _socialIcon(Icons.facebook_rounded, controller.openFacebook),
+        if (controller.instagram.value.trim().isNotEmpty)
+          _socialIcon(Icons.camera_alt_outlined, controller.openInstagram),
+      ];
+      if (links.isEmpty) return const SizedBox.shrink();
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (int i = 0; i < links.length; i++) ...[
+            if (i > 0) SizedBox(width: 24.w),
+            links[i],
+          ],
+        ],
+      );
+    });
+  }
+
+  Widget _socialIcon(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20.r),
+      child: Padding(
+        padding: EdgeInsets.all(6.w),
+        child: Icon(icon, color: const Color(0xFF111827), size: 22.sp),
+      ),
     );
   }
 
@@ -326,9 +355,11 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
       child: Center(
         child: Obx(
           () => Text(
-            controller.storeName.value.isNotEmpty
-                ? 'Exclusive offers from ${controller.storeName.value} — shop now to earn VIPs points!'
-                : 'Exclusive offers available — shop now to earn VIPs points!',
+            // Reflects the store's real `discountPercentage` instead of
+            // promising "exclusive offers" that may not exist.
+            controller.discountPercentage.value > 0
+                ? '${controller.discountPercentage.value.toStringAsFixed(0)}% off across the store — customers earn VIPs points on every purchase.'
+                : 'Customers earn VIPs points on every purchase at this store.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -400,11 +431,192 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
     );
   }
 
-  Widget _buildCreateCouponButton() {
+  /// Renders whichever of the three real lists the selected tab names. Before,
+  /// the tabs rendered nothing at all — a merchant could publish coupons,
+  /// vouchers and items and never see any of them on their own store page.
+  Widget _buildTabContent() {
+    return Obx(() {
+      if (controller.isLoadingContent.value) {
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 32.h),
+          child: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF10B981)),
+          ),
+        );
+      }
+
+      final tab = controller.selectedContentTab.value;
+      final rows = switch (tab) {
+        1 => controller.vouchers,
+        2 => controller.items,
+        _ => controller.coupons,
+      };
+
+      if (rows.isEmpty) {
+        final what = switch (tab) {
+          1 => 'vouchers',
+          2 => 'items',
+          _ => 'coupons',
+        };
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 28.h),
+          child: Column(
+            children: [
+              Icon(Icons.inbox_outlined, size: 40.sp, color: const Color(0xFFD1D5DB)),
+              SizedBox(height: 8.h),
+              Text(
+                'No $what published yet',
+                style: TextStyle(fontSize: 13.sp, color: const Color(0xFF9CA3AF)),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Column(
+          children: [
+            for (final row in rows)
+              tab == 2 ? _itemRow(row) : _couponRow(row),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _couponRow(Map<String, dynamic> row) {
+    final code = (row['code'] ?? '').toString();
+    final discount = (row['discount'] ?? row['discountPercentage'] ?? 0);
+    final isActive = row['isActive'] == true;
+    final expiry = _formatDate(row['expiryDate']);
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(Icons.confirmation_number_outlined,
+                size: 20.sp, color: const Color(0xFF10B981)),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  code,
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  expiry.isEmpty ? '$discount% off' : '$discount% off · expires $expiry',
+                  style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          ),
+          _statusPill(isActive),
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(Map<String, dynamic> row) {
+    final name = (row['name'] ?? '').toString();
+    final price = (row['price'] ?? 0);
+    final isActive = row['isActive'] == true;
+    final image = (row['image'] ?? '').toString();
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10.r),
+            child: SizedBox(
+              width: 44.w,
+              height: 44.w,
+              child: image.isNotEmpty
+                  ? CustomNetworkImage(imageUrl: image, fit: BoxFit.cover)
+                  : Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: Icon(Icons.inventory_2_outlined,
+                          size: 20.sp, color: const Color(0xFF9CA3AF)),
+                    ),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'D ${(price as num).toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          ),
+          _statusPill(isActive),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusPill(bool isActive) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFD1FAE5) : const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Text(
+        isActive ? 'Active' : 'Inactive',
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.bold,
+          color: isActive ? const Color(0xFF059669) : const Color(0xFF9CA3AF),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(dynamic raw) {
+    if (raw == null) return '';
+    final parsed = DateTime.tryParse(raw.toString());
+    if (parsed == null) return '';
+    final d = parsed.toLocal();
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  Widget _buildCreateButton() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 40.w),
       child: GestureDetector(
-        onTap: controller.createCoupon,
+        onTap: controller.createForSelectedTab,
         child: Container(
           width: double.infinity,
           height: 54.h,
@@ -426,18 +638,167 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
                 painter: DashedRectPainter(color: const Color(0xFF10B981)),
               ),
               Center(
-                child: Text(
-                  "Create Coupon",
-                  style: TextStyle(
-                    color: const Color(0xFF10B981),
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
+                child: Obx(
+                  () => Text(
+                    controller.createButtonLabel,
+                    style: TextStyle(
+                      color: const Color(0xFF10B981),
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// The merchant app had no way at all to edit the store's own details —
+  /// MerchantProfileController.updateProfile() existed but no screen ever
+  /// called it. This sheet is the missing surface for PUT /merchant/profile.
+  void _openEditSheet() {
+    controller.prepareEditForm();
+    Get.bottomSheet(
+      isScrollControlled: true,
+      // Builder + MediaQuery so the sheet lifts with the keyboard as fields
+      // gain focus; a one-off Get.mediaQuery read would be captured at build
+      // time and leave the lower fields hidden behind the keyboard.
+      Builder(
+        builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 28.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Text(
+                  'Edit Store Profile',
+                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20.h),
+                _editField('Store name', controller.nameCtrl),
+                _editField('Category', controller.categoryCtrl),
+                _editField(
+                  'Phone',
+                  controller.phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                ),
+                _editField('Address', controller.addressCtrl),
+                _editField('Description', controller.descriptionCtrl, maxLines: 3),
+                SizedBox(height: 8.h),
+                Obx(
+                  () => SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: ElevatedButton(
+                      onPressed: controller.isSaving.value
+                          ? null
+                          : controller.saveStoreProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        disabledBackgroundColor: const Color(0xFF9CA3AF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                      ),
+                      child: controller.isSaving.value
+                          ? SizedBox(
+                              width: 20.w,
+                              height: 20.w,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+
+  Widget _editField(
+    String label,
+    TextEditingController ctrl, {
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 14.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF6B7280),
+            ),
+          ),
+          SizedBox(height: 6.h),
+          TextField(
+            controller: ctrl,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 12.h,
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFF10B981)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

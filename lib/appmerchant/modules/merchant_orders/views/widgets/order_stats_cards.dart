@@ -42,7 +42,7 @@ class OrderStatsCards extends GetView<MerchantOrderController> {
           Expanded(
             child: _buildStatCard(
               title: 'Revenue',
-              value: '\$${controller.totalRevenue.value.toStringAsFixed(2)}',
+              value: 'D ${controller.totalRevenue.value.toStringAsFixed(2)}',
               icon: Icons.attach_money,
               color: const Color(0xFFEF4444),
             ),

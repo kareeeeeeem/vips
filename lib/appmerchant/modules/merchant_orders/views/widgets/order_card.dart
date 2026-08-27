@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+
+import 'cancel_order_dialog.dart';
 import '../../controllers/merchant_order_controller.dart';
 import '../../domain/models/merchant_order_model.dart';
 import '../../../../routes/merchant_routes.dart';
@@ -175,7 +177,7 @@ class OrderCard extends GetView<MerchantOrderController> {
               ),
             ),
             Text(
-              '\$${orderTotal.toStringAsFixed(2)}',
+              'D ${orderTotal.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.bold,
@@ -268,25 +270,7 @@ class OrderCard extends GetView<MerchantOrderController> {
   }
 
   void _showCancelDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Cancel Order'),
-        content: const Text('Are you sure you want to cancel this order?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              controller.updateOrderStatus(order.id!, 'canceled', reason: 'Merchant canceled');
-            },
-            child: const Text('Yes', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+    showCancelOrderDialog(controller: controller, orderId: order.id!);
   }
 
   void _acceptOrder() {

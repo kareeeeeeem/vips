@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 import '../controllers/merchant_gift_back_controller.dart';
@@ -68,8 +67,13 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
       Get.find<MerchantGiftBackController>().applyScannedCustomer(
         userId: data['userId'].toString(),
         phone: data['phone']?.toString() ?? '',
+        fullName: data['fullName']?.toString(),
       );
-      Get.toNamed(MerchantRoutes.GIFT_BACK_FORM);
+      // This screen is only ever opened from the form (onScanQR), so return
+      // to it rather than pushing a second copy on top — the old
+      // `Get.toNamed` left a Form → Scan → Form stack, so Cancel on the form
+      // dropped the merchant back onto the camera.
+      Get.back();
     } else {
       setState(() => _screenState = _ScanScreenState.invalid);
       safeSnackbar('Not Found', response.message, snackPosition: SnackPosition.BOTTOM);

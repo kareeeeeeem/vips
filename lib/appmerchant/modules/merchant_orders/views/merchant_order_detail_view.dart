@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import 'widgets/cancel_order_dialog.dart';
+
 import '../controllers/merchant_order_controller.dart';
 import '../domain/models/merchant_order_model.dart';
 import '../domain/models/merchant_order_details_model.dart';
@@ -11,7 +13,10 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
 
   @override
   Widget build(BuildContext context) {
-    final int orderId = Get.arguments as int;
+    // Callers reach this screen from the order list (an int order number) and
+    // from notifications (whose payload can arrive as a string) — a bare
+    // `as int` cast crashed the screen on anything but an int.
+    final int orderId = _resolveOrderId(Get.arguments);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.getOrderDetails(orderId);
@@ -219,6 +224,31 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
               ),
             ),
           ],
+          if (order.cancellationReason != null &&
+              order.cancellationReason!.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.cancel_outlined, color: Color(0xFFEF4444), size: 16),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      'Cancelled — ${order.cancellationReason!}',
+                      style: TextStyle(fontSize: 12.sp, color: const Color(0xFF7F1D1D)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -293,7 +323,7 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
             ),
           ),
           Text(
-            '\$${((item.price ?? 0) * (item.quantity ?? 1)).toStringAsFixed(2)}',
+            'D ${((item.price ?? 0) * (item.quantity ?? 1)).toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.bold,
@@ -402,7 +432,7 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
       );
     }
 
-    final nextStatus = _getNextStatus(status);
+    final nextStatus = _getNextStatus(status, order.orderType);
     if (nextStatus == null) return const SizedBox.shrink();
 
     return Column(
@@ -456,7 +486,15 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
     );
   }
 
-  String? _getNextStatus(String? current) {
+  /// Next step in the real `Order.status` chain. `ready` used to jump
+  /// straight to `delivered`, and `handover` / `picked_up` had no case at
+  /// all — an order sitting in either of those states rendered no action
+  /// button whatsoever, so the merchant could never move it forward.
+  ///
+  /// Only delivery orders go through the courier hand-off steps; takeaway
+  /// and dine-in go from ready straight to delivered.
+  String? _getNextStatus(String? current, String? orderType) {
+    final isDelivery = (orderType ?? 'delivery').toLowerCase() == 'delivery';
     switch (current) {
       case 'pending':
         return 'confirmed';
@@ -465,6 +503,10 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
       case 'processing':
         return 'ready';
       case 'ready':
+        return isDelivery ? 'handover' : 'delivered';
+      case 'handover':
+        return 'picked_up';
+      case 'picked_up':
         return 'delivered';
       default:
         return null;
@@ -479,6 +521,10 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
         return 'Start Processing';
       case 'ready':
         return 'Mark as Ready';
+      case 'handover':
+        return 'Hand Over to Courier';
+      case 'picked_up':
+        return 'Mark as Picked Up';
       case 'delivered':
         return 'Mark as Delivered';
       default:
@@ -494,6 +540,10 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
         return Icons.autorenew;
       case 'ready':
         return Icons.fastfood_outlined;
+      case 'handover':
+        return Icons.outbox_outlined;
+      case 'picked_up':
+        return Icons.local_shipping_outlined;
       case 'delivered':
         return Icons.delivery_dining;
       default:
@@ -502,32 +552,21 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
   }
 
   void _showCancelDialog(MerchantOrder order) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        title: const Text('Cancel Order'),
-        content: const Text('Are you sure you want to cancel this order?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              final success = await controller.updateOrderStatus(
-                order.id!,
-                'canceled',
-                reason: 'Merchant canceled',
-              );
-              if (success) Get.back();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+    showCancelOrderDialog(
+      controller: controller,
+      orderId: order.id!,
+      onCancelled: () => Get.back(),
     );
+  }
+
+  static int _resolveOrderId(dynamic args) {
+    if (args is int) return args;
+    if (args is Map) {
+      final v = args['orderNumber'] ?? args['id'];
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+    return int.tryParse(args?.toString() ?? '') ?? 0;
   }
 
   Widget _card({required String title, required IconData icon, required Widget child}) {
@@ -596,7 +635,7 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
             ),
           ),
           Text(
-            '${isDiscount ? '-' : ''}\$${amount.abs().toStringAsFixed(2)}',
+            '${isDiscount ? '-' : ''}D ${amount.abs().toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: isTotal ? 14.sp : 13.sp,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
@@ -625,7 +664,7 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
-            onPressed: () => controller.getOrderDetails(Get.arguments as int),
+            onPressed: () => controller.getOrderDetails(_resolveOrderId(Get.arguments)),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
             child: const Text('Retry', style: TextStyle(color: Colors.white)),
           ),

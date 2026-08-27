@@ -53,20 +53,32 @@ class FinanceDashboardView extends GetView<MerchantFinanceController> {
                         style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
                       ),
                       TextButton(
-                        onPressed: () => Get.toNamed(MerchantRoutes.ACCOUNTS),
+                        onPressed: () => Get.toNamed(MerchantRoutes.ALL_TRANSACTIONS),
                         child: Text('View All', style: TextStyle(color: const Color(0xFF10B981), fontSize: 13.sp, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
                   SizedBox(height: 12.h),
                   Expanded(
-                    child: Obx(() => ListView.builder(
-                      itemCount: controller.transactions.length,
-                      itemBuilder: (context, index) {
-                        final tx = controller.transactions[index];
-                        return _buildTransactionItem(tx);
-                      },
-                    )),
+                    child: Obx(() {
+                      if (controller.isLoading.value &&
+                          controller.transactions.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return RefreshIndicator(
+                        onRefresh: controller.loadFinanceData,
+                        child: controller.transactions.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: controller.transactions.length,
+                                itemBuilder: (context, index) {
+                                  final tx = controller.transactions[index];
+                                  return _buildTransactionItem(tx);
+                                },
+                              ),
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -78,6 +90,35 @@ class FinanceDashboardView extends GetView<MerchantFinanceController> {
         onPressed: () => Get.toNamed(MerchantRoutes.ADD_TRANSACTION),
         backgroundColor: const Color(0xFF10B981),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: constraints.maxHeight,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.receipt_long_outlined,
+                  size: 48.sp, color: const Color(0xFFD1D5DB)),
+              SizedBox(height: 12.h),
+              Text('No transactions yet',
+                  style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF4B5563))),
+              SizedBox(height: 4.h),
+              Text('Tap + to record your first income or expense',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 12.sp, color: const Color(0xFF9CA3AF))),
+            ],
+          ),
+        ),
       ),
     );
   }
