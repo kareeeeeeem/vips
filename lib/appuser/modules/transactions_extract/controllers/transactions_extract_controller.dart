@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../design_system/atoms/app_colors.dart';
 import 'package:vip/core/services/api_service.dart';
 import '../views/transactions_extract_view.dart';
+import '../views/widgets/filter.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class TransactionsExtractController extends GetxController {
@@ -44,8 +45,14 @@ class TransactionsExtractController extends GetxController {
             data.map((t) {
               return Transaction(
                 id: t['reference'] ?? t['_id'].toString(),
+                // Real enum (models/Transaction.js): credit/debit/gift_back/
+                // reward/expense/income/transfer. Only checking for
+                // 'expense' meant a 'debit' transaction — e.g. the sender's
+                // side of a gift transfer (routes/user.js's /transfer) —
+                // was shown as an incoming "+" Reward instead of an
+                // outgoing "-" Extract, which also inflated Net Balance.
                 type:
-                    t['type'] == 'expense'
+                    (t['type'] == 'expense' || t['type'] == 'debit')
                         ? TransactionType.extract
                         : TransactionType.reward,
                 amount: ((t['amount'] ?? 0) as num).toDouble(),
@@ -58,9 +65,18 @@ class TransactionsExtractController extends GetxController {
                     t['createdAt'] != null
                         ? DateTime.parse(t['createdAt'])
                         : DateTime.now(),
+                // Real enum (models/Transaction.js): pending/completed/
+                // failed/cancelled. TransactionStatus.failed already
+                // existed in this enum but was never reachable — a real
+                // failed or cancelled transaction silently displayed as
+                // "PENDING" (implying still-processing) instead of
+                // "FAILED", both in the detail sheet and the shared
+                // receipt text.
                 status:
                     t['status'] == 'completed'
                         ? TransactionStatus.completed
+                    : (t['status'] == 'failed' || t['status'] == 'cancelled')
+                        ? TransactionStatus.failed
                         : TransactionStatus.pending,
               );
             }).toList();
@@ -311,6 +327,24 @@ class TransactionsExtractController extends GetxController {
           'Status: ${transaction.status.name}\n'
           'Ref: #${transaction.id}',
       subject: 'VIPs Transaction #${transaction.id}',
+    ));
+  }
+
+  // Télécharger le reçu d'une transaction individuelle
+  void downloadReceipt(Transaction transaction) {
+    final sign = transaction.type == TransactionType.reward ? '+' : '-';
+    final dateStr = '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}';
+    final buffer = StringBuffer();
+    buffer.writeln('VIPs Transaction Receipt');
+    buffer.writeln('─' * 40);
+    buffer.writeln('${transaction.title}');
+    buffer.writeln('Amount: $sign${transaction.amount.toStringAsFixed(3)} TND');
+    buffer.writeln('Date:   $dateStr  ${transaction.time}');
+    buffer.writeln('Status: ${transaction.status.name}');
+    buffer.writeln('Ref:    #${transaction.id}');
+    SharePlus.instance.share(ShareParams(
+      text: buffer.toString(),
+      subject: 'VIPs Receipt — #${transaction.id}',
     ));
   }
 

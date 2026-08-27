@@ -109,9 +109,10 @@ class SpinWheelController extends GetxController
       // navigating away and back reset it indefinitely). Real daily count
       // now lives in /rewards/limits alongside the other reward limits.
       final res = await ApiService().get('/rewards/limits');
-      if (res.success && res.data != null) {
-        final spins = res.data['spinWheel']?['remainingSpins'];
-        if (spins != null) remainingSpins.value = (spins as num).toInt();
+      if (res.success && res.data is Map) {
+        final spinWheel = (res.data as Map)['spinWheel'];
+        final spins = spinWheel is Map ? spinWheel['remainingSpins'] : null;
+        if (spins is num) remainingSpins.value = spins.toInt();
       }
     } catch (_) {}
   }
@@ -126,10 +127,15 @@ class SpinWheelController extends GetxController
 
     try {
       final response = await ApiService().post('/rewards/spin-wheel', {});
-      if (response.success && response.data != null) {
-        final serverRemaining = response.data['remainingSpins'];
-        remainingSpins.value = serverRemaining != null ? (serverRemaining as num).toInt() : remainingSpins.value - 1;
-        final amountWon = response.data['amount'];
+      // The screen may have been popped while this awaited — the animation
+      // controller is disposed in onClose(), so calling .forward() on it
+      // below would throw "used after being disposed".
+      if (isClosed) return;
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        final serverRemaining = data['remainingSpins'];
+        remainingSpins.value = serverRemaining is num ? serverRemaining.toInt() : remainingSpins.value - 1;
+        final amountWon = data['amount'];
 
         // Find the index of the prize we won
         int winningIndex = prizes.indexWhere((p) => p.value == amountWon);

@@ -81,7 +81,10 @@ class ReportController extends GetxController
 
         // Handle array response (current backend returns array of all reports)
         if (data is List) {
-          final allReportsList = data.map((e) => Report.fromJson(e)).toList();
+          final allReportsList = data
+              .whereType<Map>()
+              .map((e) => Report.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
           // "All" means every report, not just the ones that aren't
           // coupon/package — a user with only coupon/package activity was
           // previously seeing an empty All tab despite having real reports.
@@ -89,21 +92,34 @@ class ReportController extends GetxController
           _couponReports.value = allReportsList.where((r) => r.type == ReportType.coupon).toList();
           _packageReports.value = allReportsList.where((r) => r.type == ReportType.package).toList();
         } else if (data is Map) {
-          if (data['all'] != null) {
-            _allReports.value = (data['all'] as List).map((e) => Report.fromJson(e)).toList();
+          final all = data['all'];
+          if (all is List) {
+            _allReports.value = all
+                .whereType<Map>()
+                .map((e) => Report.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
           }
-          if (data['coupon'] != null) {
-            _couponReports.value = (data['coupon'] as List).map((e) => Report.fromJson(e)).toList();
+          final coupon = data['coupon'];
+          if (coupon is List) {
+            _couponReports.value = coupon
+                .whereType<Map>()
+                .map((e) => Report.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
           }
-          if (data['package'] != null) {
-            _packageReports.value = (data['package'] as List).map((e) => Report.fromJson(e)).toList();
+          final package = data['package'];
+          if (package is List) {
+            _packageReports.value = package
+                .whereType<Map>()
+                .map((e) => Report.fromJson(Map<String, dynamic>.from(e)))
+                .toList();
           }
         }
       }
     } catch (e) {
+      debugPrint('Load reports error: $e');
       safeSnackbar(
         'Error',
-        'Failed to load reports: $e',
+        'Could not load reports. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -133,9 +149,10 @@ class ReportController extends GetxController
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      debugPrint('Filter reports error: $e');
       safeSnackbar(
         'Error',
-        'Failed to filter reports: $e',
+        'Could not filter reports. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -308,19 +325,29 @@ class Report {
     if (json['type'] == 'coupon') typeEnum = ReportType.coupon;
     if (json['type'] == 'package') typeEnum = ReportType.package;
 
+    // Real Transaction.status enum is pending/completed/failed/cancelled —
+    // 'cancelled' fell through to the 'pending' default, misleadingly
+    // implying a cancelled transaction was still processing.
     ReportStatus statusEnum = ReportStatus.pending;
     if (json['status'] == 'completed') statusEnum = ReportStatus.completed;
-    if (json['status'] == 'failed') statusEnum = ReportStatus.failed;
+    if (json['status'] == 'failed' || json['status'] == 'cancelled') {
+      statusEnum = ReportStatus.failed;
+    }
+
+    final amount = json['amount'];
+    final itemCount = json['itemCount'];
 
     return Report(
-      id: json['id'] ?? json['_id'] ?? '',
-      title: json['title'] ?? '',
+      id: (json['id'] ?? json['_id'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
       type: typeEnum,
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
-      amount: (json['amount'] ?? 0.0).toDouble(),
+      date: json['date'] != null
+          ? (DateTime.tryParse(json['date'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      amount: amount is num ? amount.toDouble() : 0.0,
       status: statusEnum,
-      description: json['description'] ?? '',
-      itemCount: json['itemCount'],
+      description: (json['description'] ?? '').toString(),
+      itemCount: itemCount is num ? itemCount.toInt() : null,
     );
   }
 }

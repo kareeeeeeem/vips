@@ -182,9 +182,16 @@ class CouponView extends GetView<CouponController> {
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Text(
-                          coupon.type == CouponType.percentage
-                              ? '-${coupon.discount.toInt()}%'
-                              : '-${coupon.discount.toInt()} TND',
+                          coupon.type == CouponType.shipping
+                              // A shipping coupon's `discount` is a percentage
+                              // of the delivery fee (e.g. 100 = fully free),
+                              // not a TND amount — showing it as "-100 TND"
+                              // told users this was a much bigger cash
+                              // discount than it actually is.
+                              ? 'FREE SHIP'
+                              : coupon.type == CouponType.percentage
+                                  ? '-${coupon.discount.toInt()}%'
+                                  : '-${coupon.discount.toInt()} TND',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 24.sp,

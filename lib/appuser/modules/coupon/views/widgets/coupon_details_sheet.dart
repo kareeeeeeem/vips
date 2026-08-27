@@ -140,9 +140,11 @@ class CouponDetailsSheet extends StatelessWidget {
                                 ),
                                 SizedBox(height: 4.h),
                                 Text(
-                                  coupon.type == CouponType.percentage
-                                      ? '${coupon.discount.toInt()}% OFF'
-                                      : '${coupon.discount.toInt()} TND OFF',
+                                  coupon.type == CouponType.shipping
+                                      ? 'FREE SHIPPING'
+                                      : coupon.type == CouponType.percentage
+                                          ? '${coupon.discount.toInt()}% OFF'
+                                          : '${coupon.discount.toInt()} TND OFF',
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 20.sp,
@@ -323,16 +325,20 @@ class CouponDetailsSheet extends StatelessWidget {
                       children: [
                         _buildDetailRow(
                           'Type',
-                          coupon.type == CouponType.percentage
-                              ? 'Percentage'
-                              : 'Fixed Amount',
+                          coupon.type == CouponType.shipping
+                              ? 'Free Shipping'
+                              : coupon.type == CouponType.percentage
+                                  ? 'Percentage'
+                                  : 'Fixed Amount',
                         ),
                         SizedBox(height: 12.h),
                         _buildDetailRow(
                           'Value',
-                          coupon.type == CouponType.percentage
-                              ? '${coupon.discount.toInt()}%'
-                              : '${coupon.discount.toInt()} TND',
+                          coupon.type == CouponType.shipping
+                              ? '${coupon.discount.toInt()}% off delivery fee'
+                              : coupon.type == CouponType.percentage
+                                  ? '${coupon.discount.toInt()}%'
+                                  : '${coupon.discount.toInt()} TND',
                         ),
                       ],
                     ),

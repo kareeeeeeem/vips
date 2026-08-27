@@ -101,7 +101,13 @@ class ResetPasswordController extends GetxController {
         // If backend returns a new token, save it
         if (response.data != null && response.data['token'] != null) {
           await ApiService().setToken(response.data['token']);
-          Get.offAllNamed('/main-app');
+          // Mirrors LoginController/SignupController's hasPin check — an
+          // account that reset its password before ever completing PIN
+          // setup (e.g. abandoned right after signup) would otherwise land
+          // in the app with no way to pass any PIN-gated screen.
+          final userData = response.data['user'];
+          final hasPin = userData is Map && userData['hasPin'] == true;
+          Get.offAllNamed(hasPin ? '/main-app' : '/createpin');
         } else {
           // Otherwise just go to login
           Get.offAllNamed('/login');
@@ -124,9 +130,10 @@ class ResetPasswordController extends GetxController {
         );
       }
     } catch (e) {
+      debugPrint('Reset password error: $e');
       safeSnackbar(
         'Error',
-        e.toString(),
+        'Could not reset your password. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,

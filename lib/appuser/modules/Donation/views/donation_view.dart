@@ -69,9 +69,15 @@ class DonationView extends GetView<DonationController> {
         ),
         SizedBox(height: 12.h),
         Obx(() {
+          // organizations can be replaced by a shorter real list from
+          // /services/organizations after a placeholder index was already
+          // selected — bounds-check before indexing (would throw
+          // RangeError on rebuild otherwise).
           final selectedIndex = controller.selectedOrganizationIndex.value;
           final selectedOrg =
-              selectedIndex != null
+              selectedIndex != null &&
+                      selectedIndex >= 0 &&
+                      selectedIndex < controller.organizations.length
                   ? controller.organizations[selectedIndex]
                   : null;
 
@@ -216,6 +222,13 @@ class DonationView extends GetView<DonationController> {
                 itemCount: controller.organizations.length,
                 itemBuilder: (context, index) {
                   return Obx(() {
+                    // organizations (read via .length above and indexed
+                    // below) can shrink while this sheet is still open —
+                    // bail out of this item instead of indexing past the
+                    // new bounds.
+                    if (index >= controller.organizations.length) {
+                      return const SizedBox.shrink();
+                    }
                     final isSelected =
                         controller.selectedOrganizationIndex.value == index;
 

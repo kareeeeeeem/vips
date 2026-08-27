@@ -213,13 +213,8 @@ class OnboardingController extends GetxController {
     }
   }
 
-  // Méthode pour vérifier si les conditions sont acceptées
-  bool areConditionsAccepted() {
-    final conditionsPage = pages.lastWhere(
-      (page) => page.type == OnboardingPageType.conditions,
-    );
-    return conditionsPage.isConditionsChecked ?? false;
-  }
+  // areConditionsAccepted() duplicated the inline check nextPage() already does.
+
 }
 
 // Binding pour l'injection de dépendance

@@ -17,7 +17,7 @@ class GiftVoucher {
 
   factory GiftVoucher.fromJson(Map<String, dynamic> json) {
     return GiftVoucher(
-      id: json['id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       logoUrl: json['logoUrl'] ?? '',
       minAmount: json['minAmount'] ?? 0,

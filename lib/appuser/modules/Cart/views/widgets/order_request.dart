@@ -1262,7 +1262,7 @@ class OrderRequestView extends GetView<OrderRequestController> {
 
   Widget _buildCopyright() {
     return Text(
-      '© 2025 VIPs App. All right reserved',
+      '© ${DateTime.now().year} VIPs App. All rights reserved',
       style: TextStyle(
         fontSize: 12.sp,
         color: const Color(0xFF9CA3AF),

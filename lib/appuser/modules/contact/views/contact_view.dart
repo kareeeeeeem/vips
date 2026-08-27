@@ -64,6 +64,10 @@ class ContactView extends GetView<ContactController> {
           icon: Icon(Icons.filter_list, color: Colors.black),
           onPressed: controller.showFilterSheet,
         ),
+        IconButton(
+          icon: Icon(Icons.person_add_alt_1, color: Colors.black),
+          onPressed: controller.showAddContactSheet,
+        ),
       ],
     );
   }
@@ -146,7 +150,9 @@ class ContactView extends GetView<ContactController> {
   }
 
   Widget _buildContactItem(Map<String, dynamic> contact) {
-    return Container(
+    return GestureDetector(
+      onTap: () => controller.showContactOptions(contact),
+      child: Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -189,8 +195,17 @@ class ContactView extends GetView<ContactController> {
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () => controller.toggleFavorite(contact),
+            child: Icon(
+              contact['isFavorite'] == true ? Icons.star : Icons.star_border,
+              color: contact['isFavorite'] == true ? Colors.amber : Colors.grey.shade400,
+            ),
+          ),
+          SizedBox(width: 4.w),
           Icon(Icons.chevron_right, color: Colors.grey.shade400),
         ],
+      ),
       ),
     );
   }

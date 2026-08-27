@@ -619,7 +619,14 @@ class ReportView extends GetView<ReportController> {
   void _applyQuickFilter(int days) {
     Get.back();
     final now = DateTime.now();
-    final start = now.subtract(Duration(days: days));
+    // days == 0 ("Today") used to compute start = now.subtract(0) = now,
+    // making start and end the same instant down to the millisecond — the
+    // backend's $gte/$lte range then matched nothing, so "Today" silently
+    // returned zero reports every time. Anchor it to local midnight instead.
+    final start =
+        days == 0
+            ? DateTime(now.year, now.month, now.day)
+            : now.subtract(Duration(days: days));
     controller.filterByDateRange(DateTimeRange(start: start, end: now));
   }
 

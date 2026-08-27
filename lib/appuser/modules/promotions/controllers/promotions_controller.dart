@@ -86,6 +86,10 @@ class PromotionsController extends GetxController
           code: (p['code'] ?? '').toString(),
           title: p['title'] ?? '',
           brandName: p['subtitle'] ?? '',
+          // Promotion.imageUrl (backend) was never mapped, so every real
+          // promotion with an image fell back to the generic offer icon
+          // everywhere brandLogo is used (ticket card, detail ticket).
+          brandLogo: (p['imageUrl'] as String?)?.isNotEmpty == true ? p['imageUrl'] : null,
           validUntil: p['expiresAt'] != null
               ? DateTime.parse(p['expiresAt']).toString().substring(0, 10)
               : '',
@@ -113,13 +117,17 @@ class PromotionsController extends GetxController
     try {
       final response = await ApiService().post('/rewards/validate-qr', {'code': code});
       if (response.success) {
+        // This screen only verifies the code is real/active — it has no
+        // link to Checkout's own coupon field (no shared storage between
+        // them), so nothing here actually discounts a future order. Saying
+        // "Applied" implied it would, with no real effect behind it.
         safeSnackbar(
-          'Promo Code Applied',
-          response.message,
+          'Code Verified',
+          'Valid! Enter "$code" at checkout to apply this discount.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
           colorText: Colors.white,
-          duration: const Duration(seconds: 2),
+          duration: const Duration(seconds: 3),
           margin: EdgeInsets.all(16.w),
           borderRadius: 12.r,
         );
@@ -398,11 +406,12 @@ class PromotionsController extends GetxController
     isLoading.value = false;
 
     if (applied > 0) {
+      final codes = selected.take(applied).map((p) => p.code).join(', ');
       safeSnackbar(
-        'Applied',
+        'Verified',
         applied == selected.length
-            ? '$applied promotion${applied > 1 ? 's' : ''} applied!'
-            : '$applied of ${selected.length} promotions applied. ${lastError ?? ''}',
+            ? 'Valid! Enter $codes at checkout to apply ${applied > 1 ? 'these discounts' : 'this discount'}.'
+            : '$applied of ${selected.length} codes verified. ${lastError ?? ''}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFF22C55E).withValues(alpha: 0.9),
         colorText: Colors.white,

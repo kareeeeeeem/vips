@@ -47,6 +47,7 @@ class PayBillsController extends GetxController {
       'id': 'donation',
       'title': 'Donation',
       'image': 'https://cdn-icons-png.flaticon.com/512/2917/2917242.png',
+      'type': 'donation',
       'route': '/donation',
     },
   ];
@@ -71,6 +72,7 @@ class PayBillsController extends GetxController {
                       'id': b['_id'],
                       'title': b['name'],
                       'image': b['logo'] ?? '',
+                      'type': b['type'] ?? '',
                       'route': 'dynamic-bill', // generic route
                     },
                   )
@@ -89,8 +91,8 @@ class PayBillsController extends GetxController {
   }
 
   void navigateToCategory(Map<String, dynamic> category) {
-    final id = (category['id'] ?? '').toString().toLowerCase();
-    if (id == 'donation') {
+    final type = (category['type'] ?? '').toString().toLowerCase();
+    if (type == 'donation') {
       Get.toNamed('/donation');
       return;
     }

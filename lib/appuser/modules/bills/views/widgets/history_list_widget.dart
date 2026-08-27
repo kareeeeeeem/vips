@@ -367,16 +367,30 @@ class HistoryListWidget extends GetView<BillsController> {
     );
   }
 
+  // order.type is bills_controller.dart's _formatStatusLabel() output
+  // ("Picked Up", "Refund Requested", etc.), not the raw enum — this used to
+  // only recognize 5 of the real 11 Order.status values (models/Order.js),
+  // so confirmed/processing/ready/handover/picked_up/refund_requested all
+  // fell through to flat grey regardless of where the order actually was.
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'delivered':
         return const Color(0xFF22C55E);
       case 'cancelled':
       case 'canceled':
-      case 'refunded':
         return const Color(0xFFEF4444);
       case 'pending':
         return const Color(0xFF3B82F6);
+      case 'confirmed':
+      case 'processing':
+        return const Color(0xFF2196F3);
+      case 'ready':
+      case 'handover':
+      case 'picked up':
+        return const Color(0xFF009688);
+      case 'refund requested':
+      case 'refunded':
+        return const Color(0xFF9C27B0);
       default:
         return const Color(0xFF4A4A4A);
     }

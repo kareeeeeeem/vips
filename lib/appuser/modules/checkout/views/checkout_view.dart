@@ -635,6 +635,14 @@ class CheckoutView extends GetView<CheckoutController> {
               -controller.discount.value,
               isDiscount: true,
             ),
+            if (controller.walletDiscountAmount.value > 0) ...[
+              SizedBox(height: 12.h),
+              _buildSummaryRow(
+                'Wallet Points (${controller.walletPointsRedeemed.value} pts)',
+                -controller.walletDiscountAmount.value,
+                isDiscount: true,
+              ),
+            ],
             Divider(height: 24.h, color: const Color(0xFFE5E7EB)),
             _buildSummaryRow(
               'Grand Total',

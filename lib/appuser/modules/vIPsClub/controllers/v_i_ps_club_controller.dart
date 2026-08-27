@@ -31,9 +31,6 @@ class VIPsClubController extends GetxController {
   var hasCheckedInToday = false.obs;
   var canClaimReward = true.obs;
 
-  // History
-  var transactionHistory = <Map<String, dynamic>>[].obs;
-
   @override
   void onInit() {
     super.onInit();
@@ -41,46 +38,36 @@ class VIPsClubController extends GetxController {
     loadReferralCode();
   }
 
+  // Safe int coercion for fields coming back from the API — a shape
+  // mismatch (wrong type, unexpected null) falls back to 0 instead of
+  // throwing a TypeError from a bare `as num`.
+  int _asInt(dynamic v) => v is num ? v.toInt() : 0;
+
   Future<void> fetchClubData() async {
     try {
       final response = await ApiService().get('/user/vips-club');
-      if (response.success && response.data != null) {
-        final data = response.data;
-        convertibleDiamonds.value =
-            ((data['points'] ?? data['convertibleDiamonds'] ?? 0) as num).toInt();
-        pendingDiamonds.value =
-            ((data['pendingDiamonds'] ?? data['pending'] ?? 0) as num).toInt();
-        suspendedDiamonds.value =
-            ((data['suspendedDiamonds'] ?? data['suspended'] ?? 0) as num).toInt();
-        superBonus.value = ((data['superBonus'] ?? data['bonus'] ?? 0) as num).toInt();
-        referrals.value =
-            ((data['referrals'] ?? data['referralCount'] ?? 0) as num).toInt();
-        currentRank.value = ((data['rank'] ?? data['currentRank'] ?? 0) as num).toInt();
-        todayCoins.value = ((data['todayCoins'] ?? data['dailyCoins'] ?? 0) as num).toInt();
-        hasCheckedInToday.value = data['checkedInToday'] ?? false;
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        convertibleDiamonds.value = _asInt(data['points'] ?? data['convertibleDiamonds']);
+        pendingDiamonds.value = _asInt(data['pendingDiamonds'] ?? data['pending']);
+        suspendedDiamonds.value = _asInt(data['suspendedDiamonds'] ?? data['suspended']);
+        superBonus.value = _asInt(data['superBonus'] ?? data['bonus']);
+        referrals.value = _asInt(data['referrals'] ?? data['referralCount']);
+        currentRank.value = _asInt(data['rank'] ?? data['currentRank']);
+        todayCoins.value = _asInt(data['todayCoins'] ?? data['dailyCoins']);
+        hasCheckedInToday.value = data['checkedInToday'] == true;
         canClaimReward.value = !hasCheckedInToday.value;
-        checkInStreak.value = ((data['checkInStreak'] ?? 0) as num).toInt();
+        checkInStreak.value = _asInt(data['checkInStreak']);
 
-        final List<dynamic> days = data['checkInDays'] ?? [];
-        if (days.isNotEmpty) {
-          checkInDays.value = days.map((d) => Map<String, dynamic>.from(d)).toList();
-          currentProgress.value = '${checkInStreak.value}/7';
-        }
-      }
-
-      final walletResponse = await ApiService().get('/user/wallet');
-      if (walletResponse.success && walletResponse.data != null) {
-        final List<dynamic> txList = walletResponse.data['recentTransactions'] ?? [];
-        if (txList.isNotEmpty) {
-          transactionHistory.value = txList.map((tx) => {
-            'amount': tx['amount'],
-            'type': tx['type'],
-            'description': tx['description'] ?? 'Transaction',
-            'date': tx['createdAt'] != null
-                ? DateTime.parse(tx['createdAt']).toString()
-                : DateTime.now().toString(),
-            'isDebit': tx['type'] == 'debit',
-          }).toList();
+        final days = data['checkInDays'];
+        if (days is List && days.isNotEmpty) {
+          checkInDays.value = days
+              .whereType<Map>()
+              .map((d) => Map<String, dynamic>.from(d))
+              .toList();
+          if (checkInDays.isNotEmpty) {
+            currentProgress.value = '${checkInStreak.value}/7';
+          }
         }
       }
     } catch (_) {
@@ -91,10 +78,13 @@ class VIPsClubController extends GetxController {
     if (hasCheckedInToday.value || !canClaimReward.value) return;
     try {
       final response = await ApiService().post('/user/vips-club/checkin', {});
-      if (response.success && response.data != null) {
-        final earned = response.data['pointsEarned'] ?? 0;
-        convertibleDiamonds.value = response.data['newPoints'] ?? convertibleDiamonds.value;
-        checkInStreak.value = response.data['streak'] ?? checkInStreak.value;
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        final earned = _asInt(data['pointsEarned']);
+        final newPoints = data['newPoints'];
+        if (newPoints is num) convertibleDiamonds.value = newPoints.toInt();
+        final streak = data['streak'];
+        if (streak is num) checkInStreak.value = streak.toInt();
         hasCheckedInToday.value = true;
         canClaimReward.value = false;
         _rebuildCheckInDays();
@@ -187,29 +177,21 @@ class VIPsClubController extends GetxController {
     );
   }
 
-  void updateBannerIndex(int index) {
-    currentBannerIndex.value = index;
-  }
 
-  void navigateToHistory() {
-    Get.toNamed('/vips-club-history');
-  }
 
-  void navigateToSpinWheel() {
-    Get.toNamed('/spin-wheel');
-  }
 
   final RxString referralCode = ''.obs;
 
   Future<void> loadReferralCode() async {
     try {
       final res = await ApiService().get('/user/referral');
-      if (res.success && res.data != null) {
-        referralCode.value = (res.data['referralCode'] ?? res.data['code'] ?? '').toString();
+      if (res.success && res.data is Map) {
+        final data = res.data as Map;
+        referralCode.value = (data['referralCode'] ?? data['code'] ?? '').toString();
         // /user/vips-club never returns a referral count, so the "Referrals"
         // stat would otherwise always show 0 — pull it from here instead.
-        final joined = res.data['totalJoined'] ?? res.data['totalInvited'];
-        if (joined != null) referrals.value = (joined as num).toInt();
+        final joined = data['totalJoined'] ?? data['totalInvited'];
+        if (joined is num) referrals.value = joined.toInt();
       }
     } catch (_) {}
   }
@@ -262,15 +244,8 @@ class VIPsClubController extends GetxController {
                           final response = await ApiService().post('/user/vips-club/convert', {
                             'points': convertibleDiamonds.value,
                           });
-                          if (response.success && response.data != null) {
-                            convertibleDiamonds.value = response.data['newPoints'] ?? 0;
-                            transactionHistory.insert(0, {
-                              'amount': -(response.data['walletAmount'] ?? 0),
-                              'type': 'diamant',
-                              'description': 'Diamonds converted to VIPs Wallet',
-                              'date': DateTime.now().toString(),
-                              'isDebit': true,
-                            });
+                          if (response.success && response.data is Map) {
+                            convertibleDiamonds.value = _asInt((response.data as Map)['newPoints']);
                             safeSnackbar('Success', 'Diamonds converted!', backgroundColor: Colors.green, colorText: Colors.white);
                           } else {
                             safeSnackbar('Error', response.message, backgroundColor: Colors.red, colorText: Colors.white);

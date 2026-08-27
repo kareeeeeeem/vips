@@ -119,7 +119,6 @@ class CartController extends GetxController
   var isLoading = false.obs;
   var selectedItems = <String>{}.obs;
   var isSelectionMode = false.obs;
-  var couponCode = ''.obs;
   var deliveryOption = 'standard'.obs;
   var deliveryNote = ''.obs;
 
@@ -148,9 +147,12 @@ class CartController extends GetxController
   double get subtotal =>
       cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
   double get deliveryFee => _calculateDeliveryFee();
-  double get discount => _calculateDiscount();
+  // Coupons are applied on the Checkout screen (CheckoutController's own
+  // promo-code flow, backed by /rewards/validate-qr), not here — nothing in
+  // Cart's UI ever calls a coupon-apply method, so this always stays 0.
+  double get discount => 0.0;
   double get vipsDiscount => 0.0;
-  double get couponDiscount => _calculateDiscount();
+  double get couponDiscount => 0.0;
   double get serviceCharge => 0.0;
   double get vatTax => subtotal * 0.07;
   double get tipAmount =>
@@ -177,6 +179,14 @@ class CartController extends GetxController
 
   void applyWalletPoints() {
     walletPointsToRedeem.value = maxRedeemablePoints;
+    update();
+  }
+
+  /// Applies exactly [points], clamped to what the balance and this order's
+  /// total actually allow.
+  void applyWalletPointsAmount(int points) {
+    final capped = points.clamp(0, maxRedeemablePoints);
+    walletPointsToRedeem.value = capped;
     update();
   }
 
@@ -261,20 +271,6 @@ class CartController extends GetxController
     } catch (_) {}
   }
 
-  Future<void> syncCartToServer() async {
-    try {
-      for (var item in cartItems) {
-        await ApiService().post('/cart/add', {
-          'itemId': item.id,
-          'itemType': 'product',
-          'name': item.name,
-          'price': item.price,
-          'quantity': item.quantity,
-          'merchantId': item.merchantId,
-        });
-      }
-    } catch (_) {}
-  }
 
   // ==================== TIP MANAGEMENT ====================
 
@@ -511,9 +507,6 @@ class CartController extends GetxController
     Get.toNamed('/all-merchants');
   }
 
-  void updateNote(String note) {
-    deliveryNote.value = note;
-  }
 
   Future<void> clearCartLocally() async {
     cartItems.clear();
@@ -711,212 +704,17 @@ class CartController extends GetxController
     );
   }
 
-  void clearCart() {
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 20.w),
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60.w,
-                height: 60.h,
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                  size: 30.sp,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                'Clear Basket',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F2937),
-                  fontFamily: 'SF Pro Display',
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                'Are you sure you want to remove all items from your basket?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6B7280),
-                  fontFamily: 'SF Pro Text',
-                  height: 1.4,
-                ),
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => Get.back(),
-                      child: Container(
-                        height: 48.h,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF6B7280),
-                              fontFamily: 'SF Pro Display',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        cartItems.clear();
-                        selectedItems.clear();
-                        isSelectionMode.value = false;
-                        deliveryNote.value = '';
-                        Get.back();
-                        try {
-                          await ApiService().post('/cart/clear', {});
-                        } catch (_) {
-                          safeSnackbar('Error', 'Could not clear cart. Refreshing...', snackPosition: SnackPosition.BOTTOM);
-                          await _loadCartItems();
-                        }
-                      },
-                      child: Container(
-                        height: 48.h,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Clear Basket',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontFamily: 'SF Pro Display',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: true,
-    );
-  }
 
-  void toggleSelectionMode() {
-    isSelectionMode.value = !isSelectionMode.value;
-    if (!isSelectionMode.value) {
-      selectedItems.clear();
-    }
-  }
+  // A whole multi-select feature lived here — toggleSelectionMode,
+  // toggleItemSelection, selectAllItems, deleteSelectedItems — with no UI
+  // anywhere to enter selection mode. Alongside it: updateItemQuantity
+  // (the cart uses increaseQuantity/decreaseQuantity), setDeliveryOption
+  // (the cart uses setOrderType) and four unused read helpers.
 
-  void toggleItemSelection(String itemId) {
-    if (selectedItems.contains(itemId)) {
-      selectedItems.remove(itemId);
-    } else {
-      selectedItems.add(itemId);
-    }
-  }
 
-  void selectAllItems() {
-    if (selectedItems.length == cartItems.length) {
-      selectedItems.clear();
-    } else {
-      selectedItems.assignAll(cartItems.map((item) => item.id));
-    }
-  }
 
-  void deleteSelectedItems() {
-    if (selectedItems.isEmpty) return;
 
-    Get.dialog(
-      AlertDialog(
-        title: Text('Delete Items'),
-        content: Text('Delete ${selectedItems.length} selected item(s)?'),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              final toDelete = List<String>.from(selectedItems);
-              cartItems.removeWhere((item) => selectedItems.contains(item.id));
-              selectedItems.clear();
-              isSelectionMode.value = false;
-              Get.back();
-              bool anyFailed = false;
-              for (final id in toDelete) {
-                try {
-                  await ApiService().delete('/cart/remove/$id');
-                } catch (_) {
-                  anyFailed = true;
-                }
-              }
-              if (anyFailed) {
-                safeSnackbar('Error', 'Some items could not be removed. Refreshing cart...', snackPosition: SnackPosition.BOTTOM);
-                await _loadCartItems();
-              }
-            },
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void setDeliveryOption(String option) {
-    deliveryOption.value = option;
-  }
-
-  void removeCoupon() {
-    couponCode.value = '';
-    appliedCouponDiscount.value = 0.0;
-  }
-
-  final RxDouble appliedCouponDiscount = 0.0.obs;
-  final RxBool isCouponLoading = false.obs;
 
   double _calculateDeliveryFee() {
     if (selectedOrderType.value == 0) {
@@ -926,39 +724,6 @@ class CartController extends GetxController
   }
 
   final RxDouble _deliveryFeeRate = 6.0.obs;
-
-  double _calculateDiscount() {
-    return appliedCouponDiscount.value;
-  }
-
-  Future<void> validateAndApplyCoupon(String code) async {
-    if (code.isEmpty) return;
-    isCouponLoading.value = true;
-    try {
-      final res = await ApiService().post('/rewards/validate-qr', {'code': code});
-      if (res.success && res.data != null && res.data['type'] == 'coupon') {
-        final coupon = res.data['coupon'];
-        final pct = ((coupon['discountPercentage'] ?? 0) as num).toDouble();
-        appliedCouponDiscount.value = subtotal * (pct / 100);
-        couponCode.value = code;
-        safeSnackbar('Coupon Applied', '${pct.toInt()}% discount applied!',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFF10B981),
-            colorText: Colors.white);
-      } else {
-        safeSnackbar('Invalid Coupon', res.message.isNotEmpty ? res.message : 'Coupon not found',
-            snackPosition: SnackPosition.BOTTOM);
-      }
-    } catch (_) {
-      safeSnackbar('Error', 'Could not validate coupon', snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      isCouponLoading.value = false;
-    }
-  }
-
-  void applyCoupon(String code) {
-    validateAndApplyCoupon(code);
-  }
 
   void goBack() {
     Get.back();
@@ -985,6 +750,21 @@ class CartController extends GetxController
         // launch the actual payment session instead of silently marking the
         // order paid with no charge collected.
         'paymentMethod': selectedPaymentMethod.value,
+        // Without these, applying wallet points here (payment_method_
+        // bottomsheet.dart's "Apply Wallet Points" dialog) showed a real
+        // confirmation toast but the redemption never reached Checkout or
+        // /order/create — CheckoutController had no concept of it at all,
+        // so the points were silently never actually deducted.
+        'walletPointsRedeemed': walletPointsToRedeem.value,
+        'walletDiscountAmount': walletDiscount,
+        // Without this, the address picked here via "Deliver to" (My
+        // Locations) was silently dropped — CheckoutController's own
+        // deliveryAddress starts empty, so unless the user happened to
+        // re-enter an address a second time on the Checkout screen,
+        // placeOrder() sent a real delivery order with an empty
+        // deliveryAddress.
+        if (selectedOrderType.value == 0 && deliveryAddress.value.isNotEmpty)
+          'deliveryAddress': deliveryAddress.value,
       },
     );
   }
@@ -1026,41 +806,10 @@ class CartController extends GetxController
     return true;
   }
 
-  int getItemCountByType(CartItemType type) {
-    return cartItems
-        .where((item) => item.type == type)
-        .fold(0, (sum, item) => sum + item.quantity);
-  }
 
-  double getTotalByType(CartItemType type) {
-    return cartItems
-        .where((item) => item.type == type)
-        .fold(0.0, (sum, item) => sum + item.totalPrice);
-  }
 
-  bool containsItem(String itemId) {
-    return cartItems.any((item) => item.id == itemId);
-  }
 
-  int getItemQuantity(String itemId) {
-    try {
-      return cartItems.firstWhere((item) => item.id == itemId).quantity;
-    } catch (e) {
-      return 0;
-    }
-  }
 
-  void updateItemQuantity(String itemId, int newQuantity) {
-    final index = cartItems.indexWhere((item) => item.id == itemId);
-    if (index != -1) {
-      if (newQuantity <= 0) {
-        cartItems.removeAt(index);
-      } else {
-        cartItems[index].quantity = newQuantity;
-      }
-      cartItems.refresh();
-    }
-  }
 
   List<CartItem> get favoriteItems {
     return cartItems.where((item) => item.isFavorite).toList();

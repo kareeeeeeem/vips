@@ -204,8 +204,9 @@ class CreditController extends GetxController {
       Get.back(); // close confirm sheet
       _showAwaitingPaymentDialog(topupId, gateway, vipsAmount);
     } catch (e) {
+      debugPrint('VIPS credit purchase error: $e');
       Get.back();
-      safeSnackbar('Error', 'Purchase failed: $e', backgroundColor: Colors.red, colorText: Colors.white);
+      safeSnackbar('Error', 'Purchase failed. Please try again.', backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isProcessing.value = false;
     }
@@ -214,6 +215,13 @@ class CreditController extends GetxController {
   void _showAwaitingPaymentDialog(String topupId, String gateway, int vipsAmount) {
     final isChecking = false.obs;
     Timer? pollTimer;
+    // In-flight status checks (network fetch already started) can resolve
+    // after the user taps Cancel, closing this dialog. Without this flag,
+    // that late resolution calls Get.back() again and pops whatever screen
+    // is now on top instead of a no-op — a real "tap Cancel, land somewhere
+    // unexpected" bug, not just theoretical (any check in flight when
+    // Cancel is tapped hits this).
+    var dialogOpen = true;
 
     Future<void> checkStatus({bool manual = false}) async {
       if (isChecking.value) return;
@@ -227,8 +235,10 @@ class CreditController extends GetxController {
           final statusResponse = await ApiService().get('/payment/paymee/topup-status/$topupId');
           if (statusResponse.data is Map) status = statusResponse.data['status']?.toString();
         }
+        if (!dialogOpen) return;
         if (status == 'paid') {
           pollTimer?.cancel();
+          dialogOpen = false;
           Get.back();
           walletPoints.value += vipsAmount;
           walletBalance.value += vipsAmount * vipsToTndRate;
@@ -236,6 +246,15 @@ class CreditController extends GetxController {
           selectedGateway.value = '';
           safeSnackbar('Success', '$vipsAmount VIPS added to your wallet!',
               backgroundColor: Colors.green, colorText: Colors.white);
+        } else if (status == 'failed') {
+          // WalletTopup.status enum is pending/paid/failed (models/WalletTopup.js) —
+          // this used to fall through to "hasn't completed yet, try again",
+          // which is wrong for a payment that's already been declined.
+          pollTimer?.cancel();
+          dialogOpen = false;
+          Get.back();
+          safeSnackbar('Payment Failed', 'The payment was declined. No VIPS were added — you can try again.',
+              backgroundColor: Colors.red, colorText: Colors.white);
         } else if (manual) {
           safeSnackbar('Not Confirmed Yet', "Payment hasn't completed yet. Finish it in the browser, then try again.",
               snackPosition: SnackPosition.BOTTOM);
@@ -270,6 +289,7 @@ class CreditController extends GetxController {
                   children: [
                     TextButton(
                       onPressed: () {
+                        dialogOpen = false;
                         pollTimer?.cancel();
                         Get.back();
                       },

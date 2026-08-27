@@ -14,10 +14,10 @@ import 'package:vip/appuser/modules/home/views/widgets/build_gift_voucher.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_hero_banner.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_hot_deals.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_promotional_carousel.dart';
+import 'package:vip/appuser/modules/home/views/widgets/build_sponsored_ads.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_quick_navigation.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_restorant.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_section_header.dart';
-import 'package:vip/appuser/modules/home/views/widgets/build_store_alerts_section.dart';
 import 'package:vip/appuser/modules/home/views/widgets/build_trending_merchants.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
 
@@ -69,6 +69,7 @@ class HomeView extends StatelessWidget {
                                 BuildQuickNavigation(),
                                 BuildFilterCategories(),
                                 BuildPromotionalCarousel(),
+                                BuildSponsoredAds(),
 
                                 SizedBox(height: 5),
                                 // 2. Navigation rapide
@@ -116,8 +117,6 @@ class HomeView extends StatelessWidget {
                                 ),
                                 SizedBox(height: 16.h),
                                 BuildDiscoverPlacesCard(),
-                                SizedBox(height: 16.h),
-                                BuildStoreAlertsSection(),
                                 SizedBox(height: 16.h),
                                 GiftVoucherView(),
                               ],

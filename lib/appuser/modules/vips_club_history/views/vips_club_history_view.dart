@@ -151,7 +151,13 @@ class VipsClubHistoryView extends GetView<VipsClubHistoryController> {
   }
 
   Widget _buildTransactionItem(DiamantTransaction transaction) {
-    final isCredit = transaction.type == 'credit';
+    // Real Transaction.type enum (models/Transaction.js) includes 'reward'
+    // (spin wheel, check-in, order cashback — see utils/points.js and
+    // routes/rewards.js's spin-wheel handler), which always ADDS points,
+    // same direction as 'credit'. Only checking for 'credit' meant every
+    // reward — the most common way diamonds are actually earned — rendered
+    // as a red "Debit" with a down arrow, backwards from what happened.
+    final isCredit = transaction.type == 'credit' || transaction.type == 'reward';
     final color = isCredit ? Colors.green : Colors.red;
 
     return Container(

@@ -27,6 +27,54 @@ class VerificationController extends GetxController {
       isLogin2FA = true;
     }
     startResendTimer();
+
+    // Login's 2FA code is sent by /auth/login itself, forgot-password's code
+    // is sent by ForgotPasswordController right before navigating here, and
+    // POST /auth/register (routes/auth.js) now sends the initial post-signup
+    // code itself with correct "verify your VIPs account" wording — calling
+    // _sendCode() here too used to double-send, with the second one going
+    // out via /auth/forgot-password, which is worded "reset your VIPs
+    // password" and confused brand-new users. Resend (below) still needs
+    // /auth/forgot-password since there's no dedicated resend-verification
+    // endpoint, but the initial silent send on this screen is gone.
+  }
+
+  Future<void> _sendCode({bool silently = false}) async {
+    try {
+      final response = await ApiService().post(
+        '/auth/forgot-password',
+        {'email': email.value},
+      );
+      if (!silently) {
+        if (response.success) {
+          safeSnackbar(
+            'Code Sent',
+            'Code sent to ${email.value}',
+            backgroundColor: Colors.green.withValues(alpha: 0.1),
+            colorText: Colors.green,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        } else {
+          safeSnackbar(
+            'Error',
+            response.message,
+            backgroundColor: Colors.red.withValues(alpha: 0.1),
+            colorText: Colors.red,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+      }
+    } catch (e) {
+      if (!silently) {
+        safeSnackbar(
+          'Error',
+          'Failed to resend code. Please try again.',
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
+          colorText: Colors.red,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    }
   }
 
   void startResendTimer() {
@@ -91,39 +139,7 @@ class VerificationController extends GetxController {
 
   Future<void> resendCode() async {
     if (resendTimer.value > 0) return;
-
-    try {
-      final response = await ApiService().post(
-        '/auth/forgot-password',
-        {'email': email.value},
-      );
-      if (response.success) {
-        safeSnackbar(
-          'Code Sent',
-          'Code sent to ${email.value}',
-          backgroundColor: Colors.green.withValues(alpha: 0.1),
-          colorText: Colors.green,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } else {
-        safeSnackbar(
-          'Error',
-          response.message,
-          backgroundColor: Colors.red.withValues(alpha: 0.1),
-          colorText: Colors.red,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-    } catch (e) {
-      safeSnackbar(
-        'Error',
-        'Failed to resend code. Please try again.',
-        backgroundColor: Colors.red.withValues(alpha: 0.1),
-        colorText: Colors.red,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
-
+    await _sendCode();
     startResendTimer();
   }
 

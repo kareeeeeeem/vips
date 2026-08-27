@@ -402,15 +402,15 @@ class SettingsController extends GetxController {
   void navigateToAbout() {
     Get.dialog(AlertDialog(
       title: const Text('About VIPs'),
-      content: const Column(
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('VIPs App — Premium Loyalty Platform'),
-          SizedBox(height: 8),
-          Text('Version: 1.0.0'),
-          SizedBox(height: 4),
-          Text('© 2026 VIPs. All rights reserved.'),
+          const Text('VIPs App — Premium Loyalty Platform'),
+          const SizedBox(height: 8),
+          const Text('Version: 1.0.0'),
+          const SizedBox(height: 4),
+          Text('© ${DateTime.now().year} VIPs. All rights reserved.'),
         ],
       ),
       actions: [
@@ -420,12 +420,11 @@ class SettingsController extends GetxController {
   }
 
   void navigateToHelp() {
-    _launchUrl('mailto:support@vips.com?subject=VIPs Help');
+    _launchUrl('mailto:support@vipsapp.com?subject=VIPs Help');
   }
 
-  void navigateToContactSupport() {
-    _launchUrl('mailto:support@vips.com?subject=VIPs Support Request');
-  }
+  // navigateToContactSupport() duplicated the Help tile's support sheet.
+
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);

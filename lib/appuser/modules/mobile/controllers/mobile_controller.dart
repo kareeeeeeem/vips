@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vip/core/services/api_service.dart';
 
 import '../views/widgets/bill_inquiry_mob.dart';
+import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MobilesController extends GetxController {
@@ -10,7 +10,6 @@ class MobilesController extends GetxController {
   final RxInt selectedCreditOption = 0.obs;
   final RxInt creditQuantity = 1.obs;
   final RxBool isLoading = false.obs;
-  final phoneController = TextEditingController();
 
   final List<Map<String, dynamic>> operators = [
     {
@@ -73,9 +72,25 @@ class MobilesController extends GetxController {
     }
   }
 
-  void proceed() {
+  // Real telecom-provider integration isn't live yet (no Orange/Ooredoo/
+  // Tunisie Telecom API), so the backend refuses /services/mobile-recharge —
+  // checked up front here instead of letting the user pick an operator,
+  // enter a phone number, and clear a PIN prompt just to hit a dead end.
+  Future<void> proceed() async {
     if (selectedOperatorIndex.value == null) {
       safeSnackbar('Error', 'Please select an operator', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final status = await ApiService().get('/services/status');
+    final configured = status.success &&
+        status.data is Map &&
+        (status.data['mobileRecharge']?['configured'] == true);
+    if (!configured) {
+      safeSnackbar(
+        'Coming Soon',
+        'Mobile recharge isn\'t available yet — real provider integration is still pending.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
     final operator = operators[selectedOperatorIndex.value!]['name'] as String;
@@ -87,55 +102,7 @@ class MobilesController extends GetxController {
       arguments: {
         'operator': operator,
         'amount': amount,
-        'phoneNumber': phoneController.text.trim(),
       },
     );
-  }
-
-  Future<void> recharge({required String phoneNumber}) async {
-    if (selectedOperatorIndex.value == null) {
-      safeSnackbar('Error', 'Please select an operator', snackPosition: SnackPosition.BOTTOM);
-      return;
-    }
-    if (phoneNumber.isEmpty) {
-      safeSnackbar('Error', 'Please enter a phone number', snackPosition: SnackPosition.BOTTOM);
-      return;
-    }
-
-    final operatorIndex = selectedOperatorIndex.value ?? 0;
-    final operator = operators[operatorIndex]['name'] as String;
-    final amount = (creditOptions[selectedCreditOption.value]['value'] as int).toDouble();
-
-    isLoading.value = true;
-    try {
-      final response = await ApiService().post('/services/mobile-recharge', {
-        'operator': operator,
-        'amount': amount,
-        'phoneNumber': phoneNumber,
-      });
-
-      if (response.success) {
-        safeSnackbar(
-          'Success',
-          response.data['message'] ?? 'Recharge successful!',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF22C55E),
-          colorText: Colors.white,
-        );
-        Get.back();
-      } else {
-        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
-      }
-    } catch (e) {
-      safeSnackbar('Error', 'Failed to process recharge', snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  @override
-  void onClose() {
-    phoneController.dispose();
-    super.onClose();
   }
 }

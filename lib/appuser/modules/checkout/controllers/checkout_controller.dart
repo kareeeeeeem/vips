@@ -47,16 +47,23 @@ class CheckoutController extends GetxController {
   // doesn't award points, so this is never displayed as "earned").
   var vipPoints = 0.obs;
 
+  // Set by CartController.proceedToCheckout() when points were applied in
+  // the Cart's "Apply Wallet Points" dialog — carried through so the
+  // discount actually reaches the order total and /order/create, instead
+  // of being silently dropped after the confirmation toast in Cart.
+  var walletPointsRedeemed = 0.obs;
+  var walletDiscountAmount = 0.0.obs;
+
   // Computed
   double get grandTotal {
-    double total = subtotal.value + deliveryFee.value - discount.value;
+    double total = subtotal.value + deliveryFee.value - discount.value - walletDiscountAmount.value;
     // Add tip if selected
     if (selectedTip.value > 0) {
       total += selectedTip.value;
     } else if (customTip.value > 0) {
       total += customTip.value;
     }
-    return total;
+    return total.clamp(0.0, double.infinity);
   }
 
   // Which online gateways the backend actually has real credentials for
@@ -127,6 +134,25 @@ class CheckoutController extends GetxController {
         discount.value = _parseDouble(args['discount']);
       }
 
+      if (args.containsKey('walletPointsRedeemed')) {
+        walletPointsRedeemed.value = (args['walletPointsRedeemed'] as num?)?.toInt() ?? 0;
+      }
+      if (args.containsKey('walletDiscountAmount')) {
+        walletDiscountAmount.value = _parseDouble(args['walletDiscountAmount']);
+      }
+
+      // Carries the address selected in Cart's "Deliver to" picker
+      // (My Locations) through to here — this used to be dropped entirely,
+      // silently sending a real delivery order with an empty address unless
+      // the user happened to re-enter it a second time on this screen.
+      if (args.containsKey('deliveryAddress')) {
+        final addr = args['deliveryAddress']?.toString() ?? '';
+        if (addr.isNotEmpty) {
+          deliveryAddress.value = addr;
+          deliveryType.value = 'Deliver to -> $addr';
+        }
+      }
+
       if (args.containsKey('deliveryOption')) {
         final option = args['deliveryOption'];
         if (option == 'delivery') {
@@ -155,17 +181,17 @@ class CheckoutController extends GetxController {
           case 'paypal':
             paymentMethod.value = 'PayPal';
             break;
-          case 'credit card':
-            paymentMethod.value = 'Credit Card';
-            break;
-          case 'apple pay':
-            paymentMethod.value = 'Apple Pay';
-            break;
+          // 'Credit Card' and 'Apple Pay' branches lived here. The payment
+          // sheet offers only Cash / Paymee / PayPal, and neither string is in
+          // Order.paymentMethod's enum (wallet|cash|card|online|paymee|paypal)
+          // — placeOrder lower-cases this value straight into the request, so
+          // anything else would have been rejected by the server. The default
+          // now falls back to Cash rather than forwarding an unknown value.
           default:
-            paymentMethod.value =
-                method.isNotEmpty
-                    ? method.capitalizeFirst ?? method
-                    : paymentMethod.value;
+            if (method.isNotEmpty) {
+              debugPrint('Unknown paymentMethod argument "$method" — using Cash');
+            }
+            paymentMethod.value = 'Cash';
             break;
         }
       }
@@ -716,6 +742,28 @@ class CheckoutController extends GetxController {
         // (validate-qr only checks the code is real/active), so it has
         // to be checked here before treating the discount as applied.
         final promo = res.data['promotion'];
+        final promoType = promo['type']?.toString() ?? 'discount';
+        // Promotion.type also includes 'points' (a points-earning multiplier,
+        // e.g. seeded "DOUBLE2X") and 'cashback' (e.g. seeded "CASH10" — meant
+        // to be credited back to the wallet after the order, not deducted
+        // from it up front). Neither has a backend mechanism to actually
+        // award anything (order/create doesn't credit points or cashback at
+        // all), so treating them as an instant subtotal discount — which the
+        // code used to do for every type except 'shipping' — invents a
+        // discount the order was never meant to give and, for 'cashback',
+        // actively undercharges a real order. Block both here instead of
+        // fabricating a discount; only 'shipping' and 'discount' promos are
+        // real, working checkout discounts.
+        if (promoType == 'points' || promoType == 'cashback') {
+          safeSnackbar(
+            'Not a Checkout Discount',
+            promoType == 'points'
+                ? 'This promo boosts points earned on qualifying orders — it doesn\'t reduce your total.'
+                : 'This is a cashback promo — any reward is credited to your wallet after the order, not deducted here.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
         final minOrder = ((promo['minOrderValue'] ?? 0) as num).toDouble();
         if (subtotal.value < minOrder) {
           safeSnackbar(
@@ -729,7 +777,7 @@ class CheckoutController extends GetxController {
         // A "shipping" promo discounts the delivery fee, not the item
         // subtotal — applying its percentage to the subtotal instead
         // would hand out a much larger discount than the promotion means.
-        final isShipping = promo['type'] == 'shipping';
+        final isShipping = promoType == 'shipping';
         if (isShipping) {
           discount.value = deliveryFee.value * (pct / 100);
         } else {
@@ -923,6 +971,7 @@ class CheckoutController extends GetxController {
         'orderType': _orderTypeString(selectedOrderType.value),
         if (couponCode.value.isNotEmpty) 'couponCode': couponCode.value,
         if (discount.value > 0) 'couponDiscountAmount': discount.value,
+        if (walletPointsRedeemed.value > 0) 'walletPointsRedeemed': walletPointsRedeemed.value,
       });
 
       Get.back(); // Close loading dialog
@@ -952,10 +1001,11 @@ class CheckoutController extends GetxController {
         );
       }
     } catch (e) {
+      debugPrint('Place order error: $e');
       Get.back(); // Close loading dialog
       safeSnackbar(
         'Error',
-        'Failed to place order: $e',
+        'Could not place your order. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -1000,13 +1050,20 @@ class CheckoutController extends GetxController {
 
       _showAwaitingPaymentDialog(orderId, gateway);
     } catch (e) {
-      safeSnackbar('Error', 'Failed to start payment: $e', snackPosition: SnackPosition.BOTTOM);
+      debugPrint('Start payment error: $e');
+      safeSnackbar('Error', 'Could not start payment. Please try again.', snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   void _showAwaitingPaymentDialog(String orderId, String gateway) {
     final isChecking = false.obs;
     Timer? pollTimer;
+    // Cancelling the timer doesn't stop a status request already in
+    // flight — without this flag, a response landing after the user tapped
+    // Cancel (or the dialog closed for any other reason) could still call
+    // Get.back()/show the success dialog on top of whatever screen the user
+    // has since navigated to.
+    var dialogOpen = true;
 
     Future<void> checkStatus({bool manual = false}) async {
       if (isChecking.value) return;
@@ -1027,10 +1084,28 @@ class CheckoutController extends GetxController {
             paymentStatus = statusResponse.data['paymentStatus']?.toString();
           }
         }
+        if (!dialogOpen) return;
         if (paymentStatus == 'paid') {
           pollTimer?.cancel();
+          dialogOpen = false;
           Get.back(); // close awaiting dialog
           _showOrderSuccessDialog(orderId: orderId);
+        } else if (paymentStatus == 'failed') {
+          // Order.paymentStatus enum includes 'failed' (routes/payment.js
+          // sets it when the gateway declines) — this used to fall through
+          // to the generic "hasn't completed yet, finish it in the browser"
+          // message, which is actively wrong for a payment that already
+          // failed and can't be resumed from the same browser session.
+          pollTimer?.cancel();
+          dialogOpen = false;
+          Get.back(); // close awaiting dialog
+          safeSnackbar(
+            'Payment Failed',
+            'The payment was declined. Your order is saved — you can retry payment from Order History.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFFF44336),
+            colorText: Colors.white,
+          );
         } else if (manual) {
           safeSnackbar(
             'Not Confirmed Yet',
@@ -1077,6 +1152,7 @@ class CheckoutController extends GetxController {
                   children: [
                     TextButton(
                       onPressed: () {
+                        dialogOpen = false;
                         pollTimer?.cancel();
                         Get.back();
                       },

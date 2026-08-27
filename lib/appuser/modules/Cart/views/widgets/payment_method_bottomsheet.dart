@@ -387,7 +387,11 @@ class PaymentMethodController extends GetxController {
     selectedPaymentMethod.value = method;
   }
 
+  final _pointsCtrl = TextEditingController();
+
   void applyWalletPoints() {
+    final cart = Get.isRegistered<CartController>() ? Get.find<CartController>() : null;
+    _pointsCtrl.text = (cart?.maxRedeemablePoints ?? 0).toString();
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -422,16 +426,40 @@ class PaymentMethodController extends GetxController {
                 ),
               ),
               SizedBox(height: 12.h),
-              Text(
-                'You have VPT $walletPoints available.\nHow much would you like to use?',
+              Builder(builder: (_) {
+                final cart = Get.isRegistered<CartController>()
+                    ? Get.find<CartController>()
+                    : null;
+                final maxPoints = cart?.maxRedeemablePoints ?? 0;
+                return Text(
+                  'You have VPT $walletPoints available'
+                  '${maxPoints < walletPoints ? ' — up to $maxPoints can be used on this order' : ''}.'
+                  '\nHow much would you like to use?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: const Color(0xFF6B7280),
+                    fontFamily: 'SF Pro Text',
+                  ),
+                );
+              }),
+              SizedBox(height: 16.h),
+              // The dialog asked how much to use and then applied the maximum
+              // regardless — there was no amount field, and once applied there
+              // was no way to take the redemption back off (removeWalletPoints()
+              // existed but nothing ever called it).
+              TextField(
+                controller: _pointsCtrl,
+                keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: const Color(0xFF6B7280),
-                  fontFamily: 'SF Pro Text',
+                decoration: InputDecoration(
+                  labelText: 'Points to use',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 16.h),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -439,7 +467,12 @@ class PaymentMethodController extends GetxController {
                     Get.back();
                     try {
                       final cart = Get.find<CartController>();
-                      cart.applyWalletPoints();
+                      final typed = int.tryParse(_pointsCtrl.text.trim());
+                      if (typed != null && typed > 0) {
+                        cart.applyWalletPointsAmount(typed);
+                      } else {
+                        cart.applyWalletPoints();
+                      }
                       if (cart.walletPointsToRedeem.value > 0) {
                         safeSnackbar(
                           'Wallet Points Applied',
@@ -467,7 +500,7 @@ class PaymentMethodController extends GetxController {
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                   ),
                   child: Text(
-                    'Apply All',
+                    'Apply',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
@@ -477,6 +510,33 @@ class PaymentMethodController extends GetxController {
                   ),
                 ),
               ),
+              Builder(builder: (_) {
+                final cart = Get.isRegistered<CartController>()
+                    ? Get.find<CartController>()
+                    : null;
+                if (cart == null || cart.walletPointsToRedeem.value <= 0) {
+                  return const SizedBox.shrink();
+                }
+                return TextButton(
+                  onPressed: () {
+                    Get.back();
+                    cart.removeWalletPoints();
+                    safeSnackbar(
+                      'Wallet Points Removed',
+                      'Your points are no longer applied to this order',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                  child: Text(
+                    'Remove applied points',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: const Color(0xFFEF4444),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              }),
             ],
           ),
         ),

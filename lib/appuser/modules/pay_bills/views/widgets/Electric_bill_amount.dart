@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
@@ -24,8 +23,6 @@ class ElectricBillAmountController extends GetxController {
 
   final double serviceFee = 0.500;
 
-  String _userPin = '0000';
-
   @override
   void onInit() {
     super.onInit();
@@ -43,9 +40,6 @@ class ElectricBillAmountController extends GetxController {
     if (amountDue.isNotEmpty) {
       amountController.text = amountDue;
     }
-    SharedPreferences.getInstance().then((prefs) {
-      _userPin = prefs.getString('user_pin') ?? '0000';
-    });
   }
 
   void proceed() {
@@ -62,8 +56,9 @@ class ElectricBillAmountController extends GetxController {
       () => PinValidator(
         pinLength: 4,
         primaryColor: Colors.orange,
-        validatePin: (pin) {
-          return pin == _userPin;
+        validatePin: (pin) async {
+          final response = await ApiService().post('/auth/pin/verify', {'pin': pin});
+          return response.success;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -118,10 +113,11 @@ class ElectricBillAmountController extends GetxController {
               );
             }
           } catch (e) {
+            debugPrint('Pay bill error: $e');
             Get.back(); // close loading dialog
             safeSnackbar(
               'Error',
-              'Failed to pay bill: $e',
+              'Could not pay this bill. Please try again.',
               snackPosition: SnackPosition.BOTTOM,
             );
           } finally {

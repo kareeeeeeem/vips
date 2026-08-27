@@ -2,102 +2,79 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 
-class BuildPromotionalCarousel extends StatefulWidget {
+// Real top-discount deals from HomeController.hotDeals (same source
+// BuildBundle uses) — this used to show 4 hardcoded stock-photo cards
+// (Fashion/Make Up/Perfume/Beauty) with fabricated discount claims and no
+// connection to any real deal, one of which also leaked a third-party
+// Flutter template vendor's name ("Active eCommerce") into the badge text.
+class BuildPromotionalCarousel extends GetView<HomeController> {
   const BuildPromotionalCarousel({super.key});
 
   @override
-  State<BuildPromotionalCarousel> createState() =>
-      _BuildPromotionalCarouselState();
+  Widget build(BuildContext context) {
+    return _PromoCarouselBody(controller: controller);
+  }
 }
 
-class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
-  int _currentPage = 0;
-  final CarouselSliderController _carouselController =
-      CarouselSliderController();
+class _PromoCarouselBody extends StatefulWidget {
+  const _PromoCarouselBody({required this.controller});
+  final HomeController controller;
 
-  final List<PromoCard> promos = [
-    PromoCard(
-      title: 'FASHION',
-      subtitle: 'Exclusive Collection',
-      badge: 'BUY NOW',
-      image:
-          'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80',
-      overlayColor: Color(0xFFFF6B9D).withValues(alpha: 0.65),
-    ),
-    PromoCard(
-      title: 'MAKE UP',
-      subtitle: '5% TOTAL',
-      badge: 'by Active eCommerce',
-      image:
-          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80',
-      overlayColor: Colors.white.withValues(alpha: 0.75),
-      titleColor: Color(0xFF87CEEB),
-      subtitleColor: Color(0xFFFF6B9D),
-      badgeColor: Color(0xFF666666),
-    ),
-    PromoCard(
-      title: 'PERFUME',
-      subtitle: 'Picked collection',
-      badge: 'Active eCommerce',
-      image:
-          'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80',
-      overlayColor: Color(0xFF87CEEB).withValues(alpha: 0.65),
-      titleColor: Color(0xFFFF6B9D),
-    ),
-    PromoCard(
-      title: 'BEAUTY',
-      subtitle: 'Up to 30% off',
-      badge: 'SHOP NOW',
-      image:
-          'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',
-      overlayColor: Color(0xFFFFB6C1).withValues(alpha: 0.65),
-    ),
+  @override
+  State<_PromoCarouselBody> createState() => _PromoCarouselBodyState();
+}
+
+class _PromoCarouselBodyState extends State<_PromoCarouselBody> {
+  int _currentPage = 0;
+  final CarouselSliderController _carouselController = CarouselSliderController();
+
+  static const _overlayColors = [
+    Color(0xFFFF6B9D),
+    Color(0xFF87CEEB),
+    Color(0xFFFFB6C1),
+    Color(0xFF6B9AC4),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final deals = widget.controller.getBestDiscountDeals();
+    if (deals.isEmpty) return const SizedBox.shrink();
+
     return Container(
       margin: EdgeInsets.symmetric(vertical: 16.w),
-      padding: EdgeInsets.only(left: 0.w),
       child: Stack(
         children: [
           CarouselSlider.builder(
             carouselController: _carouselController,
-            itemCount: promos.length,
+            itemCount: deals.length,
             options: CarouselOptions(
               height: 200.h,
               viewportFraction: 0.65,
               enlargeCenterPage: false,
               enlargeFactor: 0.25,
-              autoPlay: true,
+              autoPlay: deals.length > 1,
               autoPlayInterval: Duration(seconds: 3),
               autoPlayAnimationDuration: Duration(milliseconds: 800),
               autoPlayCurve: Curves.easeInOut,
               pauseAutoPlayOnTouch: true,
-              onPageChanged: (index, reason) {
-                setState(() {
-                  _currentPage = index;
-                });
-              },
+              onPageChanged: (index, reason) => setState(() => _currentPage = index),
             ),
             itemBuilder: (context, index, realIndex) {
               return GestureDetector(
-                onTap: () => Get.toNamed(Routes.HOT_DEALS),
-                child: _buildPromoCard(promos[index]),
+                onTap: () => widget.controller.navigateToHotDeal(deals[index]),
+                child: _buildDealCard(deals[index], index),
               );
             },
           ),
-
-          // Indicateurs de page
           Positioned(
             bottom: 20,
             left: Get.width / 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                promos.length,
+                deals.length,
                 (index) => GestureDetector(
                   onTap: () => _carouselController.animateToPage(index),
                   child: AnimatedContainer(
@@ -106,10 +83,7 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
                     width: _currentPage == index ? 24.w : 8.w,
                     height: 8.h,
                     decoration: BoxDecoration(
-                      color:
-                          _currentPage == index
-                              ? Color(0xFF667eea)
-                              : Color(0xFFE0E0E0),
+                      color: _currentPage == index ? Color(0xFF667eea) : Color(0xFFE0E0E0),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
@@ -122,18 +96,19 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
     );
   }
 
-  Widget _buildPromoCard(PromoCard promo) {
+  Widget _buildDealCard(Map<String, dynamic> deal, int index) {
+    final title = (deal['title'] ?? '').toString();
+    final discount = (deal['discount'] as num?) ?? 0;
+    final image = (deal['image'] ?? '').toString();
+    final overlayColor = _overlayColors[index % _overlayColors.length].withValues(alpha: 0.55);
+
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 5.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: Offset(0, 5),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: Offset(0, 5)),
         ],
       ),
       child: ClipRRect(
@@ -141,27 +116,23 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Image de fond
-            Image.network(promo.image, fit: BoxFit.cover),
-
-            // Overlay coloré
-            Container(decoration: BoxDecoration(color: promo.overlayColor)),
-
-            // Pattern décoratif
+            image.isNotEmpty
+                ? Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300),
+                  )
+                : Container(color: Colors.grey.shade300),
+            Container(decoration: BoxDecoration(color: overlayColor)),
             Positioned(
               right: -50.w,
               top: -50.h,
               child: Container(
                 width: 200.w,
                 height: 200.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.1)),
               ),
             ),
-
-            // Contenu texte
             Padding(
               padding: EdgeInsets.all(24.w),
               child: Column(
@@ -169,48 +140,32 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    promo.title,
-                    maxLines: 1,
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 33.sp,
+                      fontSize: 22.sp,
                       fontWeight: FontWeight.w800,
-                      color: promo.titleColor ?? Colors.white,
-                      height: 1.0,
-                      letterSpacing: 2.5,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    promo.subtitle,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          promo.subtitleColor ?? Colors.white.withValues(alpha: 0.95),
+                      color: Colors.white,
+                      height: 1.1,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  Spacer(),
-                  if (promo.badge != null)
+                  const Spacer(),
+                  if (discount > 0)
                     Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 7.h,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(6.r),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                       ),
                       child: Text(
-                        promo.badge!,
+                        '${discount.toInt()}% OFF',
                         style: TextStyle(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w700,
-                          color: promo.badgeColor ?? Colors.white,
+                          color: Colors.white,
                           letterSpacing: 1,
                         ),
                       ),
@@ -223,26 +178,4 @@ class _BuildPromotionalCarouselState extends State<BuildPromotionalCarousel> {
       ),
     );
   }
-}
-
-class PromoCard {
-  final String title;
-  final String subtitle;
-  final String? badge;
-  final String image;
-  final Color overlayColor;
-  final Color? titleColor;
-  final Color? subtitleColor;
-  final Color? badgeColor;
-
-  PromoCard({
-    required this.title,
-    required this.subtitle,
-    this.badge,
-    required this.image,
-    required this.overlayColor,
-    this.titleColor,
-    this.subtitleColor,
-    this.badgeColor,
-  });
 }

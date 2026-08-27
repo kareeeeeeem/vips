@@ -126,19 +126,47 @@ class VIPsClubView extends GetView<VIPsClubController> {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: () => Get.toNamed(Routes.VIPS_CLUB_HISTORY),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              ),
-              child: Text(
-                'Details',
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Real POST /user/vips-club/convert (diamonds -> wallet
+                // balance) already existed in the controller with a full
+                // confirm dialog, but nothing on this screen ever called
+                // it — the only way to reach it used to be a "Switch"
+                // shortcut elsewhere that just showed "Coming Soon".
+                TextButton(
+                  onPressed: controller.convertDiamonds,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Convert',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
+                TextButton(
+                  onPressed: () => Get.toNamed(Routes.VIPS_CLUB_HISTORY),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Details',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -247,12 +275,17 @@ class VIPsClubView extends GetView<VIPsClubController> {
           Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              var day = controller.checkInDays[index];
+              // Defensive against a malformed/short API response — the
+              // real backend always sends exactly 7 entries, but indexing
+              // blindly into a list built from network data would throw
+              // RangeError if it ever didn't.
+              final days = controller.checkInDays;
+              final day = index < days.length ? days[index] : const <String, dynamic>{};
               return _buildCheckInDay(
                 index + 1,
-                day['checked'],
-                day['isToday'] ?? false,
-                day['reward'],
+                day['checked'] == true,
+                day['isToday'] == true,
+                day['reward'] is num ? (day['reward'] as num).toInt() : 0,
               );
             }),
           )),

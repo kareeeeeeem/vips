@@ -87,6 +87,7 @@ class SearchController extends GetxController {
           combined.add({...product, 'type': 'product'});
         }
         combinedResults.value = combined;
+        _rebuildCategories();
       }
     } catch (_) {}
     isLoading.value = false;
@@ -146,10 +147,43 @@ class SearchController extends GetxController {
   final priceMin = 0.0.obs;
   final priceMax = 1000.0.obs;
 
-  final _categories = ['All', 'Food', 'Shopping', 'Entertainment', 'Services', 'Outings'];
+  // 'Services' was removed — routes/content.js's /search matches category
+  // case-insensitively against Deal.category, Product.category, and
+  // User.storeCategory, and no real data anywhere uses that value (real
+  // values: food/shopping/entertainment/electronics/digital/fashion/
+  // grocery + the special-cased 'outings'), so it was a guaranteed-empty
+  // filter with no real category to remap it to.
+  // Was a fixed list of five. The real category values across the three
+  // collections /content/search matches on are wider than that — deals carry
+  // electronics and wellness, products carry Course/E-book/Guide/Photo/Ticket
+  // — so those results could never be filtered at all. The chips are now
+  // rebuilt from the categories actually present in the results, which also
+  // makes a chip that matches nothing structurally impossible.
+  final _categories = <String>['All', 'Outings'].obs;
   final _sortOptions = ['Relevance', 'Price: Low to High', 'Price: High to Low', 'Newest', 'Rating'];
 
   List<String> get categories => _categories;
+
+  /// Keeps the chip row in step with what the current results actually
+  /// contain, preserving 'All' and the special-cased 'Outings' bucket.
+  void _rebuildCategories() {
+    final found = <String>{};
+    for (final item in [...dealResults, ...productResults]) {
+      final c = item['category']?.toString().trim();
+      if (c != null && c.isNotEmpty) found.add(_titleCase(c));
+    }
+    for (final m in merchantResults) {
+      final c = (m['storeCategory'] ?? m['category'])?.toString().trim();
+      if (c != null && c.isNotEmpty) found.add(_titleCase(c));
+    }
+    final next = <String>['All', ...found.toList()..sort()];
+    if (outingResults.isNotEmpty) next.add('Outings');
+    if (!next.contains(selectedCategory.value)) selectedCategory.value = 'All';
+    _categories.assignAll(next);
+  }
+
+  String _titleCase(String v) =>
+      v.isEmpty ? v : v[0].toUpperCase() + v.substring(1);
   List<String> get sortOptions => _sortOptions;
 
   void openFilter() {

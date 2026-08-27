@@ -148,15 +148,20 @@ class ProfileController extends GetxController {
         vipProgress.value = (pts / vipThreshold).clamp(0.0, 1.0).toDouble();
       }
 
+      // /user/notifications always returns `data` as a bare array (its
+      // sibling `unreadCount` field lives outside `data` and is dropped by
+      // ApiService, which only ever surfaces the `data` key) — reading
+      // `response.data as Map` here always failed silently, so this badge
+      // was permanently stuck at 0 regardless of real unread notifications.
       final notifResponse = await ApiService().get(
         '/user/notifications',
-        queryParams: {'unread': 'true', 'limit': '1'},
+        queryParams: {'unread': 'true'},
       );
-      if (notifResponse.success && notifResponse.data is Map) {
-        final notifData = notifResponse.data as Map;
-        unreadNotificationsCount.value =
-            ((notifData['unreadCount'] ?? notifData['count'] ?? 0) as num)
-                .toInt();
+      if (notifResponse.success && notifResponse.data is List) {
+        unreadNotificationsCount.value = (notifResponse.data as List)
+            .whereType<Map>()
+            .where((n) => n['isRead'] != true)
+            .length;
       }
 
       await _loadOrdersFromApi();
@@ -194,11 +199,11 @@ class ProfileController extends GetxController {
                             ).toString().substring(0, 10)
                             : '',
                     'time': '',
-                    'status': _capitalize(_normalizeStatus(o['status'] ?? 'pending')),
+                    'status': _formatStatusLabel(_normalizeStatus(o['status'] ?? 'pending')),
                     // Backend field is `orderType` (e.g. "delivery"/"pickup"),
                     // not `deliveryType` — that key never existed in the API
                     // response, so this badge always showed "Delivery".
-                    'type': _capitalize(o['orderType'] ?? 'delivery'),
+                    'type': _formatTypeLabel(o['orderType'] ?? 'delivery'),
                     'statusColor': _statusColor(_normalizeStatus(o['status'])),
                   },
                 )
@@ -209,6 +214,54 @@ class ProfileController extends GetxController {
 
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  // models/Order.js's real status enum is pending/confirmed/processing/ready/
+  // handover/picked_up/delivered/cancelled/refund_requested/refunded — plain
+  // _capitalize() only uppercases the first letter, so multi-word statuses
+  // like "refund_requested" rendered as the literal "Refund_requested" and,
+  // worse, profile_view.dart's status-color switch was never updated past a
+  // handful of statuses from a different domain (reserved/completed/in
+  // store), so any of these real statuses fell through to plain grey.
+  String _formatStatusLabel(String raw) {
+    switch (raw) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'processing':
+        return 'Processing';
+      case 'ready':
+        return 'Ready';
+      case 'handover':
+        return 'Handover';
+      case 'picked_up':
+        return 'Picked Up';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+      case 'canceled':
+        return 'Cancelled';
+      case 'refund_requested':
+        return 'Refund Requested';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return raw.isEmpty ? 'Pending' : _capitalize(raw);
+    }
+  }
+
+  String _formatTypeLabel(String raw) {
+    switch (raw) {
+      case 'delivery':
+        return 'Delivery';
+      case 'takeaway':
+        return 'Takeaway';
+      case 'dine_in':
+        return 'Dine In';
+      default:
+        return raw.isEmpty ? 'Delivery' : _capitalize(raw);
+    }
+  }
 
   // Merchants cancel orders with status 'canceled' (see
   // appmerchant/.../order_card.dart), while the user-initiated cancel
@@ -319,12 +372,11 @@ class ProfileController extends GetxController {
       // Filtre par statut
       bool matchesStatus = true;
       if (selectedOrderFilter.value == 'Active') {
-        matchesStatus =
-            order['status'] != 'Delivered' && order['status'] != 'Cancelled';
+        matchesStatus = !_doneOrRefundedStatuses.contains(order['status']);
       } else if (selectedOrderFilter.value == 'Done') {
         matchesStatus = order['status'] == 'Delivered';
       } else if (selectedOrderFilter.value == 'Refunded') {
-        matchesStatus = order['status'] == 'Refunded';
+        matchesStatus = _refundedStatuses.contains(order['status']);
       }
 
       // Filtre par type
@@ -349,12 +401,12 @@ class ProfileController extends GetxController {
     }).toList();
   }
 
+  static const _refundedStatuses = {'Refunded', 'Refund Requested'};
+  static const _doneOrRefundedStatuses = {'Delivered', 'Cancelled', 'Refunded', 'Refund Requested'};
+
   int get activeOrdersCount {
     return ordersList
-        .where(
-          (order) =>
-              order['status'] != 'Delivered' && order['status'] != 'Cancelled',
-        )
+        .where((order) => !_doneOrRefundedStatuses.contains(order['status']))
         .length;
   }
 
@@ -363,7 +415,7 @@ class ProfileController extends GetxController {
   }
 
   int get refundedOrdersCount {
-    return ordersList.where((order) => order['status'] == 'Refunded').length;
+    return ordersList.where((order) => _refundedStatuses.contains(order['status'])).length;
   }
 
   void changeOrderFilter(String filter) {
@@ -384,7 +436,8 @@ class ProfileController extends GetxController {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(20),
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -413,7 +466,30 @@ class ProfileController extends GetxController {
                   Get.back();
                 },
               ),
+            const Divider(height: 24),
+            // filteredOrders already filters on selectedTypeFilter, but nothing
+            // in the app could ever change it — the whole dimension was stuck
+            // on 'All'. Order.orderType's real enum is delivery/takeaway/dine_in.
+            const Text(
+              'Order Type',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            for (final type in ['All', 'Delivery', 'Takeaway', 'Dine In'])
+              ListTile(
+                title: Text(type),
+                trailing: Obx(
+                  () => selectedTypeFilter.value == type
+                      ? const Icon(Icons.check, color: Colors.blue)
+                      : const SizedBox.shrink(),
+                ),
+                onTap: () {
+                  changeTypeFilter(type);
+                  Get.back();
+                },
+              ),
           ],
+        ),
         ),
       ),
     );

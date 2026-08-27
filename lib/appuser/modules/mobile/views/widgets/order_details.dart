@@ -45,8 +45,9 @@ class OrderDetailsController extends GetxController {
     phone = args['phone']?.toString() ?? billNumber;
     deliveryAddress = args['deliveryAddress']?.toString() ?? '—';
 
-    if (args['items'] != null) {
+    if (args['items'] is List) {
       items = (args['items'] as List)
+          .whereType<Map>()
           .map((i) => OrderItem(
                 quantity: (i['quantity'] as num?)?.toInt() ?? 1,
                 name: i['name']?.toString() ?? '',
@@ -644,7 +645,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
       child: Column(
         children: [
           Text(
-            '© 2025 VIPs App. All right reserved',
+            '© ${DateTime.now().year} VIPs App. All rights reserved',
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w400,

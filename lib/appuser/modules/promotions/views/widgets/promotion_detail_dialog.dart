@@ -36,13 +36,21 @@ class PromotionDetailController extends GetxController {
 
   // ==================== GETTERS ====================
 
+  // Real promotions with no percentage/amount (e.g. the seeded "DOUBLE
+  // POINTS" promo, whose backend `discount` is 0) used to fall back to a
+  // fabricated "25% off" badge regardless of what the promotion actually
+  // is. hasDiscount() lets the badge hide itself instead of lying.
+  bool hasDiscount() =>
+      promotion.value.discountPercentage != null ||
+      promotion.value.discountAmount != null;
+
   String getDiscountText() {
     if (promotion.value.discountPercentage != null) {
       return '${promotion.value.discountPercentage!.toInt()}';
     } else if (promotion.value.discountAmount != null) {
       return '${promotion.value.discountAmount!.toInt()}';
     }
-    return '25'; // Default
+    return '';
   }
 
   String getMainTitle() {
@@ -393,7 +401,11 @@ class PromotionDetailPage extends GetView<PromotionDetailController> {
         //  _buildBrandLogo(),
         Spacer(),
         // Badge de réduction
-        _buildDiscountBadge(),
+        Obx(
+          () => controller.hasDiscount()
+              ? _buildDiscountBadge()
+              : const SizedBox.shrink(),
+        ),
       ],
     );
   }

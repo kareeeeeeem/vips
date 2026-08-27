@@ -21,7 +21,8 @@ class ContactController extends GetxController {
         contacts.value = List<Map<String, dynamic>>.from(response.data);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to load contacts: $e');
+      debugPrint('Load contacts error: $e');
+      safeSnackbar('Error', 'Could not load your contacts. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -30,7 +31,102 @@ class ContactController extends GetxController {
     Get.toNamed('/search');
   }
 
+  Future<void> deleteContact(Map<String, dynamic> contact) async {
+    final id = contact['_id']?.toString();
+    if (id == null || id.isEmpty) return;
+    final removed = contacts.firstWhere((c) => c['_id'] == id, orElse: () => {});
+    contacts.removeWhere((c) => c['_id'] == id);
+    try {
+      final response = await ApiService().delete('/user/contacts/$id');
+      if (!response.success) {
+        if (removed.isNotEmpty) contacts.add(removed);
+        safeSnackbar('Error', 'Could not delete contact.');
+      }
+    } catch (_) {
+      if (removed.isNotEmpty) contacts.add(removed);
+      safeSnackbar('Error', 'Could not delete contact.');
+    }
+  }
+
+  void showContactOptions(Map<String, dynamic> contact) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(contact['name'] ?? 'Contact',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text(contact['phone'] ?? '', style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  deleteContact(contact);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Delete Contact',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  // GET /user/contacts ignores every query param and always returns the
+  // full list sorted by name (routes/user.js). 'recent' is applied
+  // client-side below using the real `createdAt` timestamp; a 'frequent'
+  // option was removed rather than kept as a chip that changes nothing —
+  // there's no interaction-count field anywhere to back it.
   final RxString filterType = 'all'.obs;
+
+  Future<void> toggleFavorite(Map<String, dynamic> contact) async {
+    final id = contact['_id']?.toString();
+    if (id == null || id.isEmpty) return;
+    final index = contacts.indexWhere((c) => c['_id'] == id);
+    if (index == -1) return;
+    final current = contacts[index]['isFavorite'] == true;
+    contacts[index] = {...contacts[index], 'isFavorite': !current};
+    contacts.refresh();
+    try {
+      final response = await ApiService().patch('/user/contacts/$id/favorite', {});
+      if (!response.success) {
+        contacts[index] = {...contacts[index], 'isFavorite': current};
+        contacts.refresh();
+        safeSnackbar('Error', 'Could not update favorite.');
+      }
+    } catch (_) {
+      contacts[index] = {...contacts[index], 'isFavorite': current};
+      contacts.refresh();
+      safeSnackbar('Error', 'Could not update favorite.');
+    }
+  }
+
+  void applyFilter(String filter) {
+    filterType.value = filter;
+    if (filter == 'recent') {
+      final sorted = contacts.toList()
+        ..sort((a, b) => (b['createdAt'] ?? '').toString().compareTo((a['createdAt'] ?? '').toString()));
+      contacts.assignAll(sorted);
+    } else {
+      loadContacts();
+    }
+  }
 
   final RxString newContactName = ''.obs;
   final RxString newContactPhone = ''.obs;
@@ -132,7 +228,7 @@ class ContactController extends GetxController {
             const SizedBox(height: 16),
             Obx(() => Wrap(
               spacing: 8,
-              children: ['all', 'recent', 'frequent'].map((f) {
+              children: ['all', 'recent'].map((f) {
                 final selected = filterType.value == f;
                 return ChoiceChip(
                   label: Text(f[0].toUpperCase() + f.substring(1)),
@@ -141,9 +237,8 @@ class ContactController extends GetxController {
                   labelStyle: TextStyle(
                       color: selected ? Colors.white : Colors.black87),
                   onSelected: (_) {
-                    filterType.value = f;
                     Get.back();
-                    loadContacts();
+                    applyFilter(f);
                   },
                 );
               }).toList(),

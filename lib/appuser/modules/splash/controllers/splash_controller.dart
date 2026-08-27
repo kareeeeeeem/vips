@@ -29,8 +29,29 @@ class SplashController extends GetxController {
       debugPrint('[SPLASH] isLoggedIn = $isLoggedIn');
 
       if (isLoggedIn) {
-        debugPrint('[SPLASH] → navigating to MAIN_APP');
-        Get.offAllNamed(Routes.MAIN_APP);
+        // A token alone doesn't mean PIN setup was ever finished — signup/
+        // social-login/reset-password all issue a token before the Create
+        // PIN step, so an interrupted flow (app closed right after signup)
+        // would otherwise land here with a token but pin == null server
+        // side. Every PIN-gated screen (Wallet, bill payment, mobile
+        // recharge) calls /auth/pin/verify, which always rejects a null
+        // PIN — so without this check that account hits an unrecoverable
+        // dead end (repeated "Incorrect PIN" down to a lockout) with no
+        // indication the real problem is that no PIN was ever set.
+        try {
+          final me = await ApiService().get('/auth/me');
+          final user = me.success && me.data is Map ? me.data['user'] : null;
+          final hasPin = user is Map && user['hasPin'] == true;
+          debugPrint('[SPLASH] isLoggedIn, hasPin=$hasPin → navigating to ${hasPin ? 'MAIN_APP' : 'CREATEPIN'}');
+          Get.offAllNamed(hasPin ? Routes.MAIN_APP : Routes.CREATEPIN);
+        } catch (e) {
+          // Network hiccup, not necessarily a real auth problem (a truly
+          // invalid/expired token is already caught app-wide by
+          // ApiService's 401 interceptor on the next real request) — don't
+          // strand a real user in onboarding over a flaky connection.
+          debugPrint('[SPLASH] /auth/me check failed ($e), falling back to MAIN_APP');
+          Get.offAllNamed(Routes.MAIN_APP);
+        }
       } else {
         debugPrint('[SPLASH] → navigating to ONBOARDING');
         Get.offAllNamed(Routes.ONBOARDING);

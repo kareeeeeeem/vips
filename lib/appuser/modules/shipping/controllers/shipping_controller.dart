@@ -16,28 +16,54 @@ class ShippingController extends GetxController {
     loadTrips();
   }
 
+  // Live-backend-confirmed: /order/trips has no "no filter" mode — omitting
+  // status (or passing 'All') matches nothing, only the exact literal
+  // labels below ('Pending'/'Cancelled' confirmed working) return data.
+  // So "All" is built here by merging every known bucket instead of
+  // relying on the backend to do it.
+  static const _statusBuckets = ['Pending', 'Active', 'Completed', 'Cancelled'];
+
   Future<void> loadTrips({String? status}) async {
     try {
       isLoading.value = true;
-      final response = await ApiService().get(
-        '/order/trips',
-        queryParams:
-            (status != null && status != 'All') ? {'status': status} : null,
-      );
-      if (response.success && response.data != null) {
-        final List<dynamic> data = response.data;
-        trips.value =
-            data
-                .map(
-                  (e) => {
-                    ...e as Map<String, dynamic>,
-                    'icon': Icons.directions_car,
-                  },
-                )
-                .toList();
+      if (status == null || status == 'All') {
+        final responses = await Future.wait(
+          _statusBuckets.map(
+            (s) => ApiService().get('/order/trips', queryParams: {'status': s}),
+          ),
+        );
+        final merged = <String, Map<String, dynamic>>{};
+        for (final res in responses) {
+          if (res.success && res.data is List) {
+            for (final e in (res.data as List)) {
+              final map = {...e as Map<String, dynamic>, 'icon': Icons.directions_car};
+              final id = map['id']?.toString();
+              if (id != null) merged[id] = map;
+            }
+          }
+        }
+        trips.value = merged.values.toList();
+      } else {
+        final response = await ApiService().get(
+          '/order/trips',
+          queryParams: {'status': status},
+        );
+        if (response.success && response.data != null) {
+          final List<dynamic> data = response.data;
+          trips.value =
+              data
+                  .map(
+                    (e) => {
+                      ...e as Map<String, dynamic>,
+                      'icon': Icons.directions_car,
+                    },
+                  )
+                  .toList();
+        }
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to load trips: $e');
+      debugPrint('Load trips error: $e');
+      safeSnackbar('Error', 'Could not load trips. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -147,7 +173,8 @@ class ShippingController extends GetxController {
       if (removedTrip != null && removedIndex != -1) {
         trips.insert(removedIndex, removedTrip);
       }
-      safeSnackbar('Error', 'Failed to delete trip: $e');
+      debugPrint('Delete trip error: $e');
+      safeSnackbar('Error', 'Could not delete trip. Please try again.');
     }
   }
 
@@ -177,7 +204,8 @@ class ShippingController extends GetxController {
     } catch (e) {
       trips[index] = {...trips[index], 'isMarked': !newMarked};
       trips.refresh();
-      safeSnackbar('Error', 'Failed to update trip: $e');
+      debugPrint('Update trip error: $e');
+      safeSnackbar('Error', 'Could not update trip. Please try again.');
     }
   }
 

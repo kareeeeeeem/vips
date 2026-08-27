@@ -186,11 +186,8 @@ class ProfileView extends GetView<ProfileController> {
 
   Widget _buildUserHeader() {
     return Obx(() {
-      final currentRole = controller.selectedRole.value;
-      final isBusiness =
-          currentRole == 'Business' ||
-          currentRole == 'Vendor' ||
-          currentRole == 'Agent';
+      // selectedRole is permanently 'Customer' in the consumer app, so the
+      // Business/Vendor/Agent avatar branch could never be reached.
       final primaryColor = controller.primaryColor;
 
       return Padding(
@@ -208,7 +205,7 @@ class ProfileView extends GetView<ProfileController> {
                     radius: 40.r,
                     backgroundColor: primaryColor.withValues(alpha: 0.1),
                     child: Icon(
-                      isBusiness ? Icons.business : Icons.person,
+                      Icons.person,
                       size: 38.sp,
                       color: primaryColor,
                     ),
@@ -526,6 +523,15 @@ class ProfileView extends GetView<ProfileController> {
     return Obx(() {
       final primaryColor = controller.primaryColor;
       final services = controller.servicesList.toList();
+      // Badges here used to be hardcoded by position (index 0 = active
+      // orders, index 3 = unread notifications) from an older version of
+      // this list. Neither "Mob credit" (now index 0) nor "Promotions"
+      // (now index 3) has anything to do with orders or notifications —
+      // showing those counts on unrelated icons was actively misleading,
+      // not just visually stale. Orders/notifications already have their
+      // own real badges elsewhere on this screen; this row has no service
+      // that a count genuinely belongs on, so no badges here at all.
+      final badges = List.generate(services.length, (_) => 0);
 
       return SizedBox(
         height: 90.h,
@@ -536,8 +542,7 @@ class ProfileView extends GetView<ProfileController> {
           itemCount: services.length,
           itemBuilder: (context, index) {
             final service = services[index];
-            final badge = index == 0 ? controller.activeOrdersCount
-                : (index == 3 ? controller.unreadNotificationsCount.value : 0);
+            final badge = badges[index];
 
             return Padding(
               padding: EdgeInsets.only(right: 16.w),
@@ -894,9 +899,13 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildEmptyState() {
-    return Obx(() {
-      final primaryColor = controller.primaryColor;
-      return Container(
+    // controller.primaryColor is a plain, non-reactive getter (always
+    // Colors.orange — see its declaration) — wrapping this in Obx read zero
+    // real observables, which is exactly GetX's "improper use of Obx"
+    // condition (thrown on every load once _buildEmptyState() is actually
+    // reached, e.g. an empty order-filter tab).
+    final primaryColor = controller.primaryColor;
+    return Container(
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
         padding: EdgeInsets.all(40.w),
         decoration: BoxDecoration(
@@ -969,7 +978,6 @@ class ProfileView extends GetView<ProfileController> {
           ],
         ),
       );
-    });
   }
   // Safe date-part helpers — handle both "2024-01-15" and "10 Mar" formats
   String _dateDay(String date) {
@@ -1001,16 +1009,36 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildOrderItem(Map<String, dynamic> order) {
+    // Real order-status enum (models/Order.js): pending/confirmed/processing/
+    // ready/handover/picked_up/delivered/cancelled/refund_requested/refunded.
+    // This switch used to only cover reserved/completed/pending/cancelled/
+    // in store — leftover from an unrelated domain — so every real status
+    // except pending/cancelled (and the order-type badge entirely) silently
+    // fell through to plain grey regardless of the order's real state.
     Color getStatusColor(String status) {
       switch (status.toLowerCase()) {
         case 'reserved':
           return const Color(0xFF9C27B0); // Violet
         case 'completed':
+        case 'delivered':
           return const Color(0xFF4CAF50); // Vert
         case 'pending':
           return const Color(0xFFFF9800); // Orange
+        case 'confirmed':
+        case 'processing':
+        case 'delivery':
+        case 'takeaway':
+        case 'dine in':
+          return const Color(0xFF2196F3); // Bleu
+        case 'ready':
+        case 'handover':
+        case 'picked up':
+          return const Color(0xFF009688); // Teal
         case 'cancelled':
           return const Color(0xFFF44336); // Rouge
+        case 'refund requested':
+        case 'refunded':
+          return const Color(0xFF9C27B0); // Violet
         case 'in store':
           return const Color(0xFFFF9800); // Orange
         default:
@@ -1023,11 +1051,25 @@ class ProfileView extends GetView<ProfileController> {
         case 'reserved':
           return const Color(0xFFF3E5F5); // Violet clair
         case 'completed':
+        case 'delivered':
           return const Color(0xFFE8F5E9); // Vert clair
         case 'pending':
           return const Color(0xFFFFF3E0); // Orange clair
+        case 'confirmed':
+        case 'processing':
+        case 'delivery':
+        case 'takeaway':
+        case 'dine in':
+          return const Color(0xFFE3F2FD); // Bleu clair
+        case 'ready':
+        case 'handover':
+        case 'picked up':
+          return const Color(0xFFE0F2F1); // Teal clair
         case 'cancelled':
           return const Color(0xFFFFEBEE); // Rouge clair
+        case 'refund requested':
+        case 'refunded':
+          return const Color(0xFFF3E5F5); // Violet clair
         case 'in store':
           return const Color(0xFFFFF3E0); // Orange clair
         default:

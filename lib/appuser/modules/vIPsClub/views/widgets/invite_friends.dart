@@ -24,14 +24,19 @@ class InviteFriendsController extends GetxController {
     isLoading.value = true;
     try {
       final res = await ApiService().get('/user/referral');
-      if (res.success && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        referralCode.value = data['referralCode'] ?? '';
-        totalInvited.value = (data['totalInvited'] ?? 0).toInt();
-        totalJoined.value = (data['totalJoined'] ?? 0).toInt();
-        totalEarned.value = (data['totalEarned'] ?? 0).toInt();
-        final List<dynamic> friends = data['friends'] ?? [];
-        invitedFriends.value = friends.map((f) => Map<String, dynamic>.from(f)).toList();
+      if (res.success && res.data is Map) {
+        final data = res.data as Map;
+        referralCode.value = (data['referralCode'] ?? '').toString();
+        final totalInvitedRaw = data['totalInvited'];
+        totalInvited.value = totalInvitedRaw is num ? totalInvitedRaw.toInt() : 0;
+        final totalJoinedRaw = data['totalJoined'];
+        totalJoined.value = totalJoinedRaw is num ? totalJoinedRaw.toInt() : 0;
+        final totalEarnedRaw = data['totalEarned'];
+        totalEarned.value = totalEarnedRaw is num ? totalEarnedRaw.toInt() : 0;
+        final friends = data['friends'];
+        invitedFriends.value = friends is List
+            ? friends.whereType<Map>().map((f) => Map<String, dynamic>.from(f)).toList()
+            : [];
       }
     } catch (_) {
     } finally {
@@ -581,10 +586,13 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
           ),
           Container(width: 1, height: 40.h, color: Color(0xFFE8E8E8)),
           Expanded(
+            // GET /user/referral's totalEarned is already the full diamond
+            // count (totalJoined * 25000, e.g. 25000 for one joined friend),
+            // not thousands — the 'K' suffix made a real 25,000 read as a
+            // fake-looking "25000K".
             child: _buildStatItem(
               label: 'Earned',
               value: controller.totalEarned,
-              suffix: 'K',
             ),
           ),
         ],
@@ -657,8 +665,8 @@ class InviteFriendsView extends GetView<InviteFriendsController> {
   }
 
   Widget _buildFriendItem(Map<String, dynamic> friend) {
-    bool isJoined = friend['joined'] ?? false;
-    final String friendName = (friend['name'] as String?)?.trim() ?? '';
+    bool isJoined = friend['joined'] == true;
+    final String friendName = friend['name']?.toString().trim() ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),

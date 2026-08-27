@@ -70,9 +70,10 @@ class ForgotPasswordController extends GetxController {
         );
       }
     } catch (e) {
+      debugPrint('Forgot password error: $e');
       safeSnackbar(
         'Error',
-        e.toString(),
+        'Could not send the reset code. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,

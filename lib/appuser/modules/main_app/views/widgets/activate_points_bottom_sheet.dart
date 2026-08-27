@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/modules/main_app/views/widgets/reward_page.dart';
-import 'package:vip/core/utils/safe_snackbar.dart';
+import 'package:vip/appuser/modules/vIPsClub/views/v_i_ps_club_view.dart';
 
 import '../../../QR_scanner/views/q_r_scanner_view.dart';
 import 'gift_back_page.dart';
@@ -197,16 +197,14 @@ class WalletPointsBottomSheet {
                               subtitle: 'Expense',
                               icon: Icons.arrow_upward_rounded,
                               color: actionColors['switch']!,
-                              // No screen or backend endpoint exists for
-                              // converting/spending points yet — needs a
-                              // product decision on what "Switch" should do
-                              // before it can link anywhere real.
+                              // "Switch" = converting diamonds to wallet
+                              // balance, a real feature (POST /user/vips-club
+                              // /convert) that lives on the VIPs Club screen's
+                              // own Convert button — this used to dead-end in
+                              // a "Coming Soon" toast instead of reaching it.
                               onTap: () {
-                                safeSnackbar(
-                                  'Coming Soon',
-                                  'This feature will be available in a future update',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                );
+                                Get.back();
+                                Get.to(() => VIPsClubView());
                               },
                             ),
                           ),

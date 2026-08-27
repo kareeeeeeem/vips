@@ -191,12 +191,17 @@ class EditProfileView extends GetView<EditProfileController> {
 
           SizedBox(height: 16.h),
 
+          // PUT /auth/update-profile doesn't accept an `email` field at all
+          // (see the route's destructured body) — this field used to look
+          // editable and save with a real "Success" toast, but any change
+          // was silently dropped and the old email came back on next load.
           _buildTextField(
             controller: controller.emailController,
             label: 'Email',
             hint: 'your@email.com',
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
+            enabled: false,
           ),
 
           SizedBox(height: 16.h),
@@ -268,6 +273,7 @@ class EditProfileView extends GetView<EditProfileController> {
     required String hint,
     required IconData icon,
     TextInputType? keyboardType,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,12 +290,13 @@ class EditProfileView extends GetView<EditProfileController> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          enabled: enabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade400),
             prefixIcon: Icon(icon, color: Colors.grey.shade600),
             filled: true,
-            fillColor: Colors.grey.shade50,
+            fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(color: Colors.grey.shade300),

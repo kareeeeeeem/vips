@@ -96,7 +96,7 @@ class BuildBundle extends GetView<HomeController> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              "Check out Waffarha's new bundles more savings, extra discounts on top! more offers,",
+              "Check out our new bundles for more savings — extra discounts on top!",
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),

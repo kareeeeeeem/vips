@@ -90,19 +90,7 @@ class GiftView extends GetView<GiftController> {
                 SizedBox(height: 20.h),
                 _buildAmountSection(),
                 SizedBox(height: 10.h),
-                Obx(
-                  () =>
-                      !controller.isExpressSelected.value
-                          ? _buildPhoneIdSection()
-                          : SizedBox.shrink(),
-                ),
-                Obx(
-                  () =>
-                      !controller.isExpressSelected.value
-                          ? SizedBox(height: 30.h)
-                          : SizedBox.shrink(),
-                ),
-                _buildExpressOption(),
+                _buildPhoneIdSection(),
                 SizedBox(height: 30.h),
                 _buildHowItWorksSection(),
                 SizedBox(height: 16.h),
@@ -269,58 +257,6 @@ class GiftView extends GetView<GiftController> {
         ),
       ],
     );
-  }
-
-  Widget _buildExpressOption() {
-    return Obx(() {
-      return GestureDetector(
-        onTap: controller.toggleExpress,
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 24.w,
-                height: 24.h,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color:
-                        controller.isExpressSelected.value
-                            ? AppColors.AppPrimaryColor
-                            : Colors.grey.shade400,
-                    width: 2,
-                  ),
-                  color:
-                      controller.isExpressSelected.value
-                          ? AppColors.AppPrimaryColor
-                          : Colors.transparent,
-                ),
-                child:
-                    controller.isExpressSelected.value
-                        ? Icon(Icons.check, color: Colors.white, size: 14.sp)
-                        : null,
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                'Express',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              Spacer(),
-              Icon(Icons.flash_on, color: Colors.grey.shade600, size: 20.sp),
-            ],
-          ),
-        ),
-      );
-    });
   }
 
   Widget _buildHowItWorksSection() {

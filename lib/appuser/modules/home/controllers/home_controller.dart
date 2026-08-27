@@ -72,6 +72,62 @@ class HomeController extends GetxController {
     refreshFavorites();
     refreshCart();
     refreshNotificationCount();
+    refreshSponsoredAds();
+  }
+
+  // ── Sponsored ads ───────────────────────────────────────────
+  // Merchants pay real money to boost ad campaigns
+  // (POST /merchant/ads/:id/boost debits their wallet balance), but nothing
+  // in either app ever showed those campaigns to a customer — impressions and
+  // clicks could only ever be 0. These are the real, live campaigns.
+  final sponsoredAds = <Map<String, dynamic>>[].obs;
+  final _trackedAdImpressions = <String>{};
+
+  Future<void> refreshSponsoredAds() async {
+    try {
+      final response = await ApiService().get('/content/ads', queryParams: {'limit': '6'});
+      if (response.success && response.data is List) {
+        sponsoredAds.value = (response.data as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching sponsored ads: $e');
+    }
+  }
+
+  /// Counts one view per ad per session — the carousel rebuilds constantly and
+  /// re-firing on every rebuild would inflate the merchant's numbers.
+  void trackAdImpression(String adId) {
+    if (adId.isEmpty || !_trackedAdImpressions.add(adId)) return;
+    ApiService().post('/content/ads/$adId/impression', {}).catchError(
+      (e) {
+        debugPrint('Ad impression failed: $e');
+        return ApiResponse(success: false, statusCode: 0, message: '');
+      },
+    );
+  }
+
+  Future<void> openSponsoredAd(Map<String, dynamic> ad) async {
+    final id = (ad['_id'] ?? '').toString();
+    if (id.isNotEmpty) {
+      try {
+        await ApiService().post('/content/ads/$id/click', {});
+      } catch (e) {
+        debugPrint('Ad click failed: $e');
+      }
+    }
+    final merchantId = (ad['merchantId'] ?? '').toString();
+    if (merchantId.isEmpty) return;
+    navigateToMerchant({
+      '_id': merchantId,
+      'id': merchantId,
+      'name': ad['storeName'] ?? '',
+      'storeName': ad['storeName'] ?? '',
+      'logo': ad['storeLogo'] ?? '',
+      'image': ad['storeLogo'] ?? '',
+    });
   }
 
   // Fetch unread notification count for the bell badge
@@ -187,15 +243,8 @@ class HomeController extends GetxController {
     Get.toNamed(Routes.ALL_MERCHANTS);
   }
 
-  void onFavoriteToggle(int index) {}
+  // onFavoriteToggle(int) was an empty method body.
 
-  void onStoreAlertsBrowse() {
-    Get.toNamed(Routes.ALL_MERCHANTS);
-  }
-
-  void onStoreAlertsEnable() {
-    Get.toNamed(Routes.NOTIFICATIONS);
-  }
 
   void onPickAgain() {
     Get.toNamed(Routes.ALL_MERCHANTS);
@@ -325,18 +374,23 @@ class HomeController extends GetxController {
   }
 
   // Méthode pour partager un deal
+  /// Share texts were hardcoded French in an app that ships English, Arabic
+  /// and French translations — and none of the three share methods was
+  /// reachable from any screen despite doing real work.
   void shareDeal(Map<String, dynamic> deal) {
-    // Logic pour partager
-    // Vous pouvez utiliser le package share_plus
-    final String shareText = '''
-Découvrez cette offre incroyable !
-${deal['title']}
-${deal['description']}
-Prix: ${deal['currentPrice']} TN
-Réduction: ${deal['discount']}%
-''';
+    final title = (deal['title'] ?? deal['name'] ?? '').toString();
+    final description = (deal['description'] ?? deal['subtitle'] ?? '').toString();
+    final price = deal['currentPrice'] ?? deal['price'];
+    final discount = deal['discount'];
 
-    SharePlus.instance.share(ShareParams(text: shareText));
+    final lines = <String>[
+      if (title.isNotEmpty) title,
+      if (description.isNotEmpty) description,
+      if (price != null) 'D $price',
+      if (discount != null && discount != 0) '-$discount%',
+      'Shared from VIPs',
+    ];
+    SharePlus.instance.share(ShareParams(text: lines.join('\n')));
   }
 
   List<Map<String, dynamic>> outings = [];
@@ -349,7 +403,12 @@ Réduction: ${deal['discount']}%
   }
 
   void navigateToOuting(Map<String, dynamic> outing) {
-    Get.toNamed(Routes.DEAL_DETAILS, arguments: outing);
+    // DealDetailsView branches its price/discount/redeem UI on
+    // deal['type'] == 'outing' — outings have no currentPrice/discount
+    // and no /content/deals/:id/redeem backing (that endpoint 404s for
+    // a non-Deal id), so without this tag it rendered a broken "Redeem
+    // Deal" button that always failed.
+    Get.toNamed(Routes.DEAL_DETAILS, arguments: {...outing, 'type': 'outing'});
   }
 
   // Méthode pour filtrer les outings par type
@@ -414,22 +473,20 @@ Réduction: ${deal['discount']}%
         .toList();
   }
 
-  // Méthode pour ajouter aux favoris
-  void toggleOutingFavorite(Map<String, dynamic> outing) {
-    outing['isFavorite'] = !(outing['isFavorite'] ?? false);
-    update();
-  }
 
   // Méthode pour partager un outing
   void shareOuting(Map<String, dynamic> outing) {
-    final String shareText = '''
-Découvrez cette sortie incroyable !
-${outing['title']}
-${outing['subtitle']}
-Localisation: ${outing['location']}
-Catégorie: ${outing['category']}
-''';
-    SharePlus.instance.share(ShareParams(text: shareText));
+    final title = (outing['title'] ?? outing['name'] ?? '').toString();
+    final subtitle = (outing['subtitle'] ?? '').toString();
+    final location = (outing['location'] ?? '').toString();
+
+    final lines = <String>[
+      if (title.isNotEmpty) title,
+      if (subtitle.isNotEmpty) subtitle,
+      if (location.isNotEmpty) location,
+      'Shared from VIPs',
+    ];
+    SharePlus.instance.share(ShareParams(text: lines.join('\n')));
   }
 
   // Méthode pour obtenir les recommendations
@@ -504,7 +561,7 @@ Catégorie: ${outing['category']}
         cart = List<Map<String, dynamic>>.from(response.data ?? []);
         int count = 0;
         for (var it in cart) {
-          count += (it['quantity'] ?? 0) as int;
+          count += (it['quantity'] as num? ?? 0).toInt();
         }
         cartItemCount.value = count;
       }
@@ -529,7 +586,7 @@ Catégorie: ${outing['category']}
         cart = List<Map<String, dynamic>>.from(response.data ?? []);
         int count = 0;
         for (var it in cart) {
-          count += (it['quantity'] ?? 0) as int;
+          count += (it['quantity'] as num? ?? 0).toInt();
         }
         cartItemCount.value = count;
       } else if (!ApiService().isLoggedIn) {
@@ -577,9 +634,6 @@ Catégorie: ${outing['category']}
     Get.toNamed(Routes.MERCHANT_DETAILS, arguments: merchant);
   }
 
-  void navigateToAllMerchants() {
-    Get.toNamed(Routes.ALL_MERCHANTS);
-  }
 
   // Méthode pour filtrer les merchants par catégorie
   List<Map<String, dynamic>> getMerchantsByCategory(String category) {
@@ -619,11 +673,6 @@ Catégorie: ${outing['category']}
     }).toList();
   }
 
-  // Méthode pour ajouter aux favoris
-  void toggleMerchantFavorite(Map<String, dynamic> merchant) {
-    merchant['isFavorite'] = !(merchant['isFavorite'] ?? false);
-    update();
-  }
 
   // Méthode pour obtenir les merchants favoris
   List<Map<String, dynamic>> getFavoriteMerchants() {
@@ -648,13 +697,17 @@ Catégorie: ${outing['category']}
 
   // Méthode pour partager un merchant
   void shareMerchant(Map<String, dynamic> merchant) {
-    final String shareText = '''
-Découvrez ${merchant['name']} !
-Catégorie: ${merchant['category']}
-Réduction jusqu'à ${merchant['discountPercentage']}%
-''';
+    final name = (merchant['name'] ?? merchant['storeName'] ?? '').toString();
+    final category = (merchant['category'] ?? merchant['storeCategory'] ?? '').toString();
+    final discount = merchant['discountPercentage'];
 
-    SharePlus.instance.share(ShareParams(text: shareText));
+    final lines = <String>[
+      if (name.isNotEmpty) name,
+      if (category.isNotEmpty) category,
+      if (discount != null && discount != 0) 'Up to $discount% off',
+      'Shared from VIPs',
+    ];
+    SharePlus.instance.share(ShareParams(text: lines.join('\n')));
   }
 
   List<Map<String, dynamic>> billServices = [
@@ -732,14 +785,7 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // ... vos méthodes existantes ...
 
-  // Nouvelles méthodes pour Bill Services
-  void navigateToBillService(Map<String, dynamic> service) {
-    Get.toNamed(Routes.PAY_BILLS, arguments: service);
-  }
 
-  void navigateToAllBillServices() {
-    Get.toNamed(Routes.PAY_BILLS);
-  }
 
   // Méthode pour filtrer les services par type
   List<Map<String, dynamic>> getBillServicesByType(String type) {
@@ -800,11 +846,12 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     return categories;
   }
 
-  // Méthode pour ajouter aux favoris
-  void toggleBillServiceFavorite(Map<String, dynamic> service) {
-    service['isFavorite'] = !(service['isFavorite'] ?? false);
-    update();
-  }
+  // toggleBillServiceFavorite / toggleBillTypeFavorite /
+  // toggleMerchantFavorite / toggleOutingFavorite lived here. Each only
+  // flipped an 'isFavorite' key on an in-memory map — no /favorites/toggle
+  // call — so anything favourited through them was lost on the next load.
+  // None was reachable from any screen; the real toggle is toggleFavorite().
+
 
   // Méthode pour obtenir les services favoris
   List<Map<String, dynamic>> getFavoriteBillServices() {
@@ -828,22 +875,12 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     }
   }
 
-  // Méthode pour payer une facture
-  void payBill(Map<String, dynamic> service, double amount) {
-    Get.toNamed(Routes.PAY_BILLS, arguments: {'service': service, 'amount': amount});
-  }
 
-  void viewBillHistory(Map<String, dynamic> service) {
-    Get.toNamed(Routes.BILLS, arguments: service);
-  }
 
-  // Méthode pour configurer des rappels de factures
-  void setBillReminder(Map<String, dynamic> service, DateTime dueDate) {
-    // Logic pour configurer les notifications
-    // Utilisation de packages comme flutter_local_notifications
-    service['reminderDate'] = dueDate.toIso8601String();
-    update();
-  }
+  // setBillReminder() wrote a date onto an in-memory map and carried a
+  // comment saying real notifications 'could use flutter_local_notifications' —
+  // no scheduling existed and nothing called it.
+
 
   // Méthode pour obtenir les factures en retard
   List<Map<String, dynamic>> getOverdueBills() {
@@ -858,14 +895,6 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     }).toList();
   }
 
-  // Calculates the sum of all active bill service amounts for the current user
-  double getMonthlyBillsTotal() {
-    if (billServices.isEmpty) return 0.0;
-    return billServices.fold(0.0, (sum, s) {
-      final amount = (s['amount'] ?? s['price'] ?? s['cost'] ?? 0);
-      return sum + (amount is num ? amount.toDouble() : 0.0);
-    });
-  }
 
   List<Map<String, dynamic>> billTypes = [
     {
@@ -972,14 +1001,7 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
 
   // ... vos méthodes existantes ...
 
-  // Nouvelles méthodes pour Bill Types
-  void navigateToBillType(Map<String, dynamic> billType) {
-    Get.toNamed(Routes.PAY_BILLS);
-  }
 
-  void navigateToAllBillTypes() {
-    Get.toNamed(Routes.PAY_BILLS);
-  }
 
   void navigateToPayBills() {
     Get.toNamed(Routes.PAY_BILLS);
@@ -1041,11 +1063,6 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     return categories;
   }
 
-  // Méthode pour ajouter aux favoris
-  void toggleBillTypeFavorite(Map<String, dynamic> billType) {
-    billType['isFavorite'] = !(billType['isFavorite'] ?? false);
-    update();
-  }
 
   // Méthode pour obtenir les types favoris
   List<Map<String, dynamic>> getFavoriteBillTypes() {
@@ -1159,19 +1176,5 @@ Réduction jusqu'à ${merchant['discountPercentage']}%
     }
   }
 
-  // Filtrer les vouchers par nom
-  List<GiftVoucher> searchVouchers(String query) {
-    if (query.isEmpty) return giftVouchers;
-    return giftVouchers
-        .where(
-          (voucher) => voucher.name.toLowerCase().contains(query.toLowerCase()),
-        )
-        .toList();
-  }
 
-  // Réinitialiser la sélection
-  void resetSelection() {
-    selectedVoucher.value = null;
-    selectedAmount.value = 0;
-  }
 }

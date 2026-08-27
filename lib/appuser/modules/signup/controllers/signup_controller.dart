@@ -172,7 +172,7 @@ class SignupController extends GetxController
       debugPrint('[SIGNUP] createAccount() threw: $e');
       Get.defaultDialog(
         title: 'Error',
-        middleText: e.toString(),
+        middleText: 'Could not create your account. Please check your connection and try again.',
         textConfirm: 'OK',
         confirmTextColor: Colors.white,
         buttonColor: Colors.redAccent,
@@ -198,7 +198,7 @@ class SignupController extends GetxController
       debugPrint('[SIGNUP] signUpWithGoogle() finished');
     } catch (e) {
       debugPrint('[SIGNUP] signUpWithGoogle() threw: $e');
-      _handleSignUpError(e.toString());
+      _handleSignUpError('Could not sign up with Google. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -219,7 +219,7 @@ class SignupController extends GetxController
       debugPrint('[SIGNUP] signUpWithFacebook() finished');
     } catch (e) {
       debugPrint('[SIGNUP] signUpWithFacebook() threw: $e');
-      _handleSignUpError(e.toString());
+      _handleSignUpError('Could not sign up with Facebook. Please try again.');
     } finally {
       isLoading.value = false;
     }

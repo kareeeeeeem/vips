@@ -100,7 +100,6 @@ class Images {
   static const String orderUnselect = 'assets/image/order_unselect.png';
   static const String orderSelect = 'assets/image/order_select.png';
   static const String menu = 'assets/image/menu.png';
-  static const String menuUnselect = 'assets/image/menu_unselect.png';
   static const String walletUnSelect = 'assets/image/wallet_unselect.png';
   static const String walletSelect = 'assets/image/wallet_select.png';
   static const String taxiHome = 'assets/image/taxi_home.png';

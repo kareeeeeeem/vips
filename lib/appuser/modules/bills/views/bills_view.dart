@@ -96,8 +96,10 @@ class BillsView extends GetView<BillsController> {
                       child: Column(
                         children: [
                           const SizedBox(height: 5),
-                          _buildCarousel(),
-                          const SizedBox(height: 14),
+                          if (controller.promoBanners.isNotEmpty) ...[
+                            _buildCarousel(),
+                            const SizedBox(height: 14),
+                          ],
                           _buildServicesGrid(),
                         ],
                       ),
@@ -154,14 +156,19 @@ class BillsView extends GetView<BillsController> {
                   const SizedBox(width: 12),
 
                   // Categories - SCROLL HORIZONTAL (mainAxisAlignment retiré)
+                  // Built from the real product categories once they load,
+                  // so Obx is needed for the list to appear after fetch.
                   Expanded(
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: controller.categories.length,
-                      itemBuilder: (context, index) {
-                        return _buildCategoryItem(controller.categories[index]);
-                      },
-                    ),
+                    child: Obx(() {
+                      final cats = controller.categories.toList();
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: cats.length,
+                        itemBuilder: (context, index) {
+                          return _buildCategoryItem(cats[index]);
+                        },
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -595,7 +602,11 @@ class BillsView extends GetView<BillsController> {
     );
   }
 
+  // Real active promotions from GET /content/promotions — this used to be
+  // 3 hardcoded stock photos labeled "Special Offer 1/2/3" with no real
+  // offer behind them and no tap action when pressed at all.
   Widget _buildCarousel() {
+    final banners = controller.promoBanners;
     return Column(
       children: [
         Container(
@@ -615,63 +626,70 @@ class BillsView extends GetView<BillsController> {
             child: PageView.builder(
               controller: controller.pageController,
               onPageChanged: controller.onPageChanged,
-              itemCount: controller.carouselImages.length,
+              itemCount: banners.length,
               itemBuilder: (context, index) {
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(
-                      controller.carouselImages[index],
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+                final promo = banners[index];
+                final title = (promo['title'] ?? '').toString();
+                final subtitle = (promo['subtitle'] ?? '').toString();
+                final discount = (promo['discount'] as num?) ?? 0;
+                final imageUrl = (promo['imageUrl'] ?? '').toString();
+                return GestureDetector(
+                  onTap: () => Get.toNamed('/promotions'),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[300]),
+                            )
+                          : Container(color: Colors.grey[300]),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.blue.withValues(alpha: 0.7),
+                              Colors.purple.withValues(alpha: 0.7),
+                            ],
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.error, size: 50),
-                        );
-                      },
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.withValues(alpha: 0.7),
-                            Colors.purple.withValues(alpha: 0.7),
-                          ],
                         ),
                       ),
-                    ),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Special Offer ${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                title.isNotEmpty ? title : (discount > 0 ? '${discount.toInt()}% OFF' : 'Special Offer'),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (subtitle.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  subtitle,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Get amazing deals on your bills',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -688,7 +706,7 @@ class BillsView extends GetView<BillsController> {
       () => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
-          controller.carouselImages.length,
+          controller.promoBanners.length,
           (index) => AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             margin: const EdgeInsets.symmetric(horizontal: 4),

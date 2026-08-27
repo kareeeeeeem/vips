@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/core/services/api_service.dart';
 
+// Real active promotions from GET /content/promotions (same endpoint
+// PromotionsController already uses) — this used to show 3 hardcoded stock
+// photos with fabricated "Winter Collection / 50% off" style claims that
+// had nothing to do with any real promotion the backend actually has.
 class BuildHeroBanner extends StatefulWidget {
   const BuildHeroBanner({super.key});
 
@@ -16,49 +21,38 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
   late PageController _pageController;
   int _currentPage = 0;
   Timer? _timer;
-
-  final List<HeroBannerItem> banners = [
-    HeroBannerItem(
-      badge: 'NEW ARRIVAL',
-      title: 'Winter\nCollection',
-      subtitle: 'Up to 50% off',
-      buttonText: 'Explore',
-      image:
-          'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80',
-    ),
-    HeroBannerItem(
-      badge: 'HOT DEAL',
-      title: 'Summer\nSale',
-      subtitle: 'Up to 70% off',
-      buttonText: 'Shop Now',
-      image:
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80',
-    ),
-    HeroBannerItem(
-      badge: 'TRENDING',
-      title: 'Spring\nFashion',
-      subtitle: 'New Arrivals',
-      buttonText: 'Discover',
-      image:
-          'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80',
-    ),
-  ];
+  bool _loading = true;
+  List<Map<String, dynamic>> _promotions = [];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 1.1);
-    _startAutoScroll();
+    _loadPromotions();
+  }
+
+  Future<void> _loadPromotions() async {
+    try {
+      final response = await ApiService().get('/content/promotions');
+      if (response.success && response.data is List) {
+        final raw = (response.data as List).whereType<Map>();
+        if (mounted) {
+          setState(() {
+            _promotions = raw.map((p) => Map<String, dynamic>.from(p)).take(5).toList();
+            _loading = false;
+          });
+        }
+        if (_promotions.length > 1) _startAutoScroll();
+        return;
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
   }
 
   void _startAutoScroll() {
     _timer = Timer.periodic(Duration(seconds: 4), (timer) {
-      if (_currentPage < banners.length - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
-
+      if (!mounted || _promotions.isEmpty) return;
+      _currentPage = (_currentPage + 1) % _promotions.length;
       _pageController.animateToPage(
         _currentPage,
         duration: Duration(milliseconds: 600),
@@ -76,68 +70,72 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          height: 180.h,
-          margin: EdgeInsets.symmetric(vertical: 8.h),
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
+    // No fabricated placeholder when there's nothing real to show — an
+    // empty section is honest, a fake one isn't.
+    if (_loading || _promotions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      height: 180.h,
+      margin: EdgeInsets.symmetric(vertical: 8.h),
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemCount: _promotions.length,
+        itemBuilder: (context, index) {
+          return AnimatedBuilder(
+            animation: _pageController,
+            builder: (context, child) {
+              double value = 1.0;
+              if (_pageController.position.haveDimensions) {
+                value = _pageController.page! - index;
+                double angle = value * 0.3;
+                return Transform(
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateY(angle),
+                  alignment: Alignment.center,
+                  child: Transform.scale(
+                    scale: (1 - (value.abs() * 0.3)).clamp(0.7, 1.0),
+                    child: Opacity(
+                      opacity: (1 - (value.abs() * 0.5)).clamp(0.5, 1.0),
+                      child: child,
+                    ),
+                  ),
+                );
+              }
+              return child!;
             },
-            itemCount: banners.length,
-            itemBuilder: (context, index) {
-              return AnimatedBuilder(
-                animation: _pageController,
-                builder: (context, child) {
-                  double value = 1.0;
-                  if (_pageController.position.haveDimensions) {
-                    value = _pageController.page! - index;
-                    // Effet 3D avec rotation
-                    double angle = value * 0.3;
-                    return Transform(
-                      transform:
-                          Matrix4.identity()
-                            ..setEntry(3, 2, 0.001) // perspective
-                            ..rotateY(angle),
-                      alignment: Alignment.center,
-                      child: Transform.scale(
-                        scale: (1 - (value.abs() * 0.3)).clamp(0.7, 1.0),
-                        child: Opacity(
-                          opacity: (1 - (value.abs() * 0.5)).clamp(0.5, 1.0),
-                          child: child,
-                        ),
-                      ),
-                    );
-                  }
-                  return child!;
-                },
-                child: _buildBannerCard(banners[index]),
-              );
-            },
-          ),
-        ),
-      ],
+            child: _buildBannerCard(_promotions[index]),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildBannerCard(HeroBannerItem banner) {
+  Widget _buildBannerCard(Map<String, dynamic> promo) {
+    final title = (promo['title'] ?? '').toString();
+    final subtitle = (promo['subtitle'] ?? '').toString();
+    final discount = (promo['discount'] as num?) ?? 0;
+    final imageUrl = (promo['imageUrl'] ?? '').toString();
+    final badge = discount > 0 ? '${discount.toInt()}% OFF' : 'PROMO';
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 10.w),
       child: Stack(
         children: [
-          // Image de fond
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(0.r),
+              borderRadius: BorderRadius.circular(16.r),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(banner.image, fit: BoxFit.cover),
-                  // Overlay gradient
+                  imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: const Color(0xFF1a1a1a)),
+                        )
+                      : Container(color: const Color(0xFF1a1a1a)),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -154,32 +152,24 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
               ),
             ),
           ),
-
-          // Contenu
           Positioned(
             left: 24.w,
             top: 0,
             bottom: 0,
+            right: 24.w,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Badge
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 4.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4.r),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 0.5,
-                    ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.5),
                   ),
                   child: Text(
-                    banner.badge,
+                    badge,
                     style: TextStyle(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w500,
@@ -189,41 +179,37 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                   ),
                 ),
                 SizedBox(height: 12.h),
-                // Titre
                 Text(
-                  banner.title,
+                  title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 28.sp,
+                    fontSize: 24.sp,
                     fontWeight: FontWeight.w300,
                     color: Colors.white,
                     height: 1.2,
                     letterSpacing: -0.5,
                   ),
                 ),
-                SizedBox(height: 6.h),
-                // Sous-titre
-                Text(
-                  banner.subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                // Bouton
-                GestureDetector(
-                  onTap: () => Get.toNamed(Routes.HOT_DEALS),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 8.h,
+                if (subtitle.isNotEmpty) ...[
+                  SizedBox(height: 6.h),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      letterSpacing: 0.2,
                     ),
+                  ),
+                ],
+                SizedBox(height: 16.h),
+                GestureDetector(
+                  onTap: () => Get.toNamed(Routes.PROMOTIONS),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6.r),
@@ -232,7 +218,7 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          banner.buttonText,
+                          'View Offer',
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
@@ -241,11 +227,7 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
                           ),
                         ),
                         SizedBox(width: 6.w),
-                        Icon(
-                          Icons.arrow_forward,
-                          size: 14.sp,
-                          color: Color(0xFF1a1a1a),
-                        ),
+                        Icon(Icons.arrow_forward, size: 14.sp, color: Color(0xFF1a1a1a)),
                       ],
                     ),
                   ),
@@ -257,20 +239,4 @@ class _BuildHeroBannerState extends State<BuildHeroBanner> {
       ),
     );
   }
-}
-
-class HeroBannerItem {
-  final String badge;
-  final String title;
-  final String subtitle;
-  final String buttonText;
-  final String image;
-
-  HeroBannerItem({
-    required this.badge,
-    required this.title,
-    required this.subtitle,
-    required this.buttonText,
-    required this.image,
-  });
 }

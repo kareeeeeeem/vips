@@ -134,6 +134,32 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
             ),
           ),
           SizedBox(width: 12.w),
+          // downloadExtract() builds the whole period's extract and shares it —
+          // fully implemented, and no control on this screen (whose entire
+          // purpose is extracting transactions) ever called it.
+          GestureDetector(
+            onTap: controller.downloadExtract,
+            child: Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.ios_share_rounded,
+                size: 20.sp,
+                color: AppColors.AppPrimaryColor,
+              ),
+            ),
+          ),
+          SizedBox(width: 12.w),
           GestureDetector(
             onTap: controller.openFilterSheet,
             child: Container(
@@ -461,97 +487,6 @@ class TransactionsExtractView extends GetView<TransactionsExtractController> {
   }
 }
 
-// Filter Bottom Sheet
-class FilterBottomSheet extends StatelessWidget {
-  static const _filters = ['All Transactions', 'Rewards Only', 'Extracts Only', 'Pending'];
-  static const _filterValues = ['All', 'reward', 'extract', 'pending'];
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<TransactionsExtractController>();
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      padding: EdgeInsets.all(24.w),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48.w,
-            height: 4.h,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-          SizedBox(height: 24.h),
-          Text(
-            'Filter Transactions',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 24.h),
-          Obx(() => Column(
-            children: List.generate(_filters.length, (i) {
-              final selected = controller.selectedFilter.value == _filterValues[i];
-              return _buildFilterOption(_filters[i], selected, () {
-                controller.selectedFilter.value = _filterValues[i];
-                Get.back();
-                controller.loadTransactions();
-              });
-            }),
-          )),
-          SizedBox(height: 16.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterOption(String title, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color:
-              selected
-                  ? AppColors.AppPrimaryColor.withValues(alpha: 0.1)
-                  : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade200,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-              color: selected ? AppColors.AppPrimaryColor : Colors.grey.shade400,
-              size: 24.sp,
-            ),
-            SizedBox(width: 12.w),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.AppPrimaryColor : Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // Transaction Actions Sheet
 class TransactionActionsSheet extends StatelessWidget {
   final Transaction transaction;
@@ -590,7 +525,7 @@ class TransactionActionsSheet extends StatelessWidget {
           }),
           _buildActionButton('Download Receipt', Icons.download_rounded, () {
             Navigator.of(context).pop();
-            controller.downloadExtract();
+            controller.downloadReceipt(transaction);
           }),
           SizedBox(height: 8.h),
         ],

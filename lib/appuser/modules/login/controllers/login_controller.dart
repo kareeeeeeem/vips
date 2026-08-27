@@ -29,10 +29,9 @@ class LoginController extends GetxController {
       emailController.text.isNotEmpty == true &&
       passwordController.text.isNotEmpty;
 
-  // Toggle Methods
-  void toggleRememberMe() {
-    _rememberMe.toggle();
-  }
+  // toggleRememberMe() had no checkbox behind it and _rememberMe was read
+  // nowhere — there is no remember-me behaviour in the app.
+
 
   void togglePasswordVisibility() {
     _isPasswordVisible.toggle();
@@ -78,7 +77,7 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       debugPrint('[LOGIN] emailLogin() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not sign in. Please check your connection and try again.');
     } finally {
       isLoading.value = false;
     }
@@ -100,7 +99,7 @@ class LoginController extends GetxController {
       debugPrint('[LOGIN] googleLogin() finished');
     } catch (e) {
       debugPrint('[LOGIN] googleLogin() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not sign in with Google. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -122,7 +121,7 @@ class LoginController extends GetxController {
       debugPrint('[LOGIN] facebookLogin() finished');
     } catch (e) {
       debugPrint('[LOGIN] facebookLogin() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not sign in with Facebook. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -140,7 +139,7 @@ class LoginController extends GetxController {
       debugPrint('[LOGIN] appleLogin() finished');
     } catch (e) {
       debugPrint('[LOGIN] appleLogin() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not sign in with Apple. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -184,7 +183,7 @@ class LoginController extends GetxController {
       _handleLoginError(_authService.mapFirebaseError(e));
     } catch (e) {
       debugPrint('[LOGIN] sendPhoneOtp() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not send the verification code. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -213,7 +212,7 @@ class LoginController extends GetxController {
       _handleLoginError(_authService.mapFirebaseError(e));
     } catch (e) {
       debugPrint('[LOGIN] verifyPhoneOtp() threw: $e');
-      _handleLoginError(e.toString());
+      _handleLoginError('Could not verify this code. Please try again.');
     } finally {
       isLoading.value = false;
     }

@@ -5,7 +5,12 @@ import 'package:vip/core/utils/safe_snackbar.dart';
 
 import '../../../design_system/atoms/app_colors.dart';
 
-enum NotificationType { promotion, account, payment, partnership }
+// Real backend enum (models/UserNotification.js): order/payment/promotion/
+// account/reward/system. This used to only have promotion/account/payment/
+// partnership — 'partnership' is never sent by the backend at all, and
+// real 'order'/'reward'/'system' notifications all silently fell through
+// to the generic 'account' icon/color/tap-action below.
+enum NotificationType { order, promotion, account, payment, reward, system }
 
 class NotificationItem {
   final String id;
@@ -40,12 +45,16 @@ class NotificationItem {
 
   static NotificationType _notificationTypeFromString(String type) {
     switch (type.toLowerCase()) {
+      case 'order':
+        return NotificationType.order;
       case 'promotion':
         return NotificationType.promotion;
       case 'payment':
         return NotificationType.payment;
-      case 'partnership':
-        return NotificationType.partnership;
+      case 'reward':
+        return NotificationType.reward;
+      case 'system':
+        return NotificationType.system;
       case 'account':
       default:
         return NotificationType.account;
@@ -479,45 +488,60 @@ class NotificationsController extends GetxController
   // Helper methods
   IconData getTypeIcon(NotificationType type) {
     switch (type) {
+      case NotificationType.order:
+        return Icons.receipt_long_rounded;
       case NotificationType.promotion:
         return Icons.local_offer_rounded;
       case NotificationType.account:
         return Icons.person_rounded;
       case NotificationType.payment:
         return Icons.payment_rounded;
-      case NotificationType.partnership:
-        return Icons.handshake_rounded;
+      case NotificationType.reward:
+        return Icons.emoji_events_rounded;
+      case NotificationType.system:
+        return Icons.info_rounded;
     }
   }
 
   Color getTypeColor(NotificationType type) {
     switch (type) {
+      case NotificationType.order:
+        return const Color(0xFF3B82F6);
       case NotificationType.promotion:
         return const Color(0xFFEF4444);
       case NotificationType.account:
         return AppColors.AppPrimaryColor;
       case NotificationType.payment:
         return const Color(0xFF10B981);
-      case NotificationType.partnership:
-        return const Color(0xFF8B5CF6);
+      case NotificationType.reward:
+        return const Color(0xFFF59E0B);
+      case NotificationType.system:
+        return const Color(0xFF6B7280);
     }
   }
 
   String getTypeLabel(NotificationType type) {
     switch (type) {
+      case NotificationType.order:
+        return 'Order';
       case NotificationType.promotion:
         return 'Promotion';
       case NotificationType.account:
         return 'Account';
       case NotificationType.payment:
         return 'Payment';
-      case NotificationType.partnership:
-        return 'Partnership';
+      case NotificationType.reward:
+        return 'Reward';
+      case NotificationType.system:
+        return 'System';
     }
   }
 
   void handleNotificationAction(NotificationItem notification) {
     switch (notification.type) {
+      case NotificationType.order:
+        Get.toNamed('/profile');
+        break;
       case NotificationType.promotion:
         Get.toNamed('/hot-deals');
         break;
@@ -527,8 +551,11 @@ class NotificationsController extends GetxController
       case NotificationType.payment:
         Get.toNamed('/profile');
         break;
-      case NotificationType.partnership:
-        Get.toNamed('/all-merchants');
+      case NotificationType.reward:
+        Get.toNamed('/v-i-ps-club');
+        break;
+      case NotificationType.system:
+        // Informational only — no natural destination, just dismiss.
         break;
     }
   }

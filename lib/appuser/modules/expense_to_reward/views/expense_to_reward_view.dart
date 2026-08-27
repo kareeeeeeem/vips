@@ -146,10 +146,15 @@ class ExpenseToRewardView extends GetView<ExpenseToRewardController> {
           child: Row(
             children: [
               Text(
-                '\$',
+                // TND is the only currency this app supports anywhere
+                // (see bills_view.dart / product_detail_page.dart) — this
+                // showed '$' regardless, on a screen whose amount is
+                // posted straight to POST /rewards/expense-to-reward as a
+                // real TND value.
+                'TND',
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                  fontSize: 32.sp,
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.AppPrimaryColor,
                 ),

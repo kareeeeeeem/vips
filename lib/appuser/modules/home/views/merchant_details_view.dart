@@ -22,6 +22,13 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
   List<Map<String, dynamic>> products = [];
   final Set<String> favoriteIds = {};
 
+  bool isFollowing = false;
+  int followerCount = 0;
+  bool followLoading = false;
+  List<Map<String, dynamic>> reviews = [];
+  double avgRating = 0;
+  int reviewCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +36,65 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
     merchant = Get.arguments as Map<String, dynamic>?;
     _loadProducts();
     _loadFavoriteIds();
+    _loadFollowStatus();
+    _loadReviews();
+  }
+
+  String? get _merchantId => (merchant?['_id'] ?? merchant?['id'])?.toString();
+
+  Future<void> _loadFollowStatus() async {
+    final id = _merchantId;
+    if (id == null || id.isEmpty) return;
+    try {
+      final response = await ApiService().get('/content/merchants/$id/follow-status');
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        if (mounted) {
+          setState(() {
+            isFollowing = data['following'] == true;
+            followerCount = (data['followerCount'] as num?)?.toInt() ?? 0;
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFollow() async {
+    final id = _merchantId;
+    if (id == null || id.isEmpty || followLoading) return;
+    setState(() => followLoading = true);
+    try {
+      final response = await ApiService().post('/content/merchants/$id/follow', {});
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        setState(() {
+          isFollowing = data['following'] == true;
+          followerCount = (data['followerCount'] as num?)?.toInt() ?? followerCount;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => followLoading = false);
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    final id = _merchantId;
+    if (id == null || id.isEmpty) return;
+    try {
+      final response = await ApiService().get('/content/merchants/$id/reviews');
+      if (response.success && response.data is Map) {
+        final data = response.data as Map;
+        if (mounted) {
+          setState(() {
+            reviews = (data['reviews'] as List? ?? [])
+                .map((r) => Map<String, dynamic>.from(r as Map))
+                .toList();
+            avgRating = (data['avgRating'] as num?)?.toDouble() ?? 0;
+            reviewCount = (data['reviewCount'] as num?)?.toInt() ?? 0;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadFavoriteIds() async {
@@ -93,9 +159,10 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
   @override
   Widget build(BuildContext context) {
     final brandColorValue = merchant?['brandColor'];
-    final brandColor = brandColorValue is String && brandColorValue.startsWith('0x')
-        ? Color(int.parse(brandColorValue))
-        : const Color(0xFF3B82F6);
+    final parsedBrandColor = brandColorValue is String && brandColorValue.startsWith('0x')
+        ? int.tryParse(brandColorValue)
+        : null;
+    final brandColor = parsedBrandColor != null ? Color(parsedBrandColor) : const Color(0xFF3B82F6);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -107,6 +174,19 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
                   backgroundColor: brandColor,
                   pinned: true,
                   expandedHeight: 180.h,
+                  actions: [
+                    // shareMerchant() was real (share_plus) and unreachable.
+                    IconButton(
+                      icon: const Icon(Icons.share_rounded),
+                      tooltip: 'Share',
+                      onPressed: () {
+                        final home = Get.isRegistered<HomeController>()
+                            ? Get.find<HomeController>()
+                            : Get.put(HomeController());
+                        home.shareMerchant(merchant!);
+                      },
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
                       merchant!['storeName']?.toString() ?? '',
@@ -123,6 +203,49 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          height: 34.h,
+                          child: OutlinedButton.icon(
+                            onPressed: followLoading ? null : _toggleFollow,
+                            icon: Icon(
+                              isFollowing ? Icons.check : Icons.add,
+                              size: 16.sp,
+                              color: isFollowing ? Colors.grey.shade700 : brandColor,
+                            ),
+                            label: Text(
+                              isFollowing ? 'following'.tr : 'follow'.tr,
+                              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isFollowing ? Colors.grey.shade700 : brandColor,
+                              side: BorderSide(color: isFollowing ? Colors.grey.shade400 : brandColor),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          '$followerCount ${'followers'.tr}',
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                        ),
+                        SizedBox(width: 12.w),
+                        if (reviewCount > 0) ...[
+                          Icon(Icons.star, size: 14.sp, color: Colors.amber),
+                          SizedBox(width: 2.w),
+                          Text(
+                            '$avgRating ($reviewCount)',
+                            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
                     child: Row(
                       children: [
                         if ((merchant!['storeCategory']?.toString() ?? '').isNotEmpty)
@@ -219,6 +342,69 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
                       ),
                     ),
                   ),
+                if (reviews.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                      child: Text(
+                        '${'reviews'.tr} ($reviewCount)',
+                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final review = reviews[index];
+                          final rating = (review['rating'] as num?)?.toInt() ?? 0;
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 10.h),
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      review['reviewerName']?.toString() ?? 'VIPs Customer',
+                                      style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+                                    ),
+                                    const Spacer(),
+                                    Row(
+                                      children: List.generate(
+                                        5,
+                                        (i) => Icon(
+                                          i < rating ? Icons.star : Icons.star_border,
+                                          size: 14.sp,
+                                          color: Colors.amber,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if ((review['review']?.toString() ?? '').isNotEmpty) ...[
+                                  SizedBox(height: 6.h),
+                                  Text(
+                                    review['review'].toString(),
+                                    style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade700),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                        childCount: reviews.length,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
     );

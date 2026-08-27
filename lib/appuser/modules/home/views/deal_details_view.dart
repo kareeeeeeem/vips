@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/widgets/custom_network_image.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
@@ -38,7 +39,8 @@ class _DealDetailsViewState extends State<DealDetailsView> {
             colorText: Colors.white);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to redeem deal: $e',
+      debugPrint('Redeem deal error: $e');
+      safeSnackbar('Error', 'Could not redeem this deal. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -79,7 +81,8 @@ class _DealDetailsViewState extends State<DealDetailsView> {
             colorText: Colors.white);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to add to cart: $e',
+      debugPrint('Add to cart error: $e');
+      safeSnackbar('Error', 'Could not add this item to your cart. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -103,6 +106,25 @@ class _DealDetailsViewState extends State<DealDetailsView> {
       appBar: AppBar(
         title: Text(title.isNotEmpty ? title : 'deal_details'.tr),
         backgroundColor: const Color(0xFFFF6B35),
+        actions: [
+          // HomeController's shareDeal/shareOuting do real work (share_plus)
+          // but nothing in the app ever called them.
+          if (deal != null)
+            IconButton(
+              icon: const Icon(Icons.share_rounded),
+              tooltip: 'Share',
+              onPressed: () {
+                final home = Get.isRegistered<HomeController>()
+                    ? Get.find<HomeController>()
+                    : Get.put(HomeController());
+                if (isOuting) {
+                  home.shareOuting(deal);
+                } else {
+                  home.shareDeal(deal);
+                }
+              },
+            ),
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.w),
@@ -128,7 +150,10 @@ class _DealDetailsViewState extends State<DealDetailsView> {
                     ),
                     SizedBox(height: 8.h),
                     Text(
-                      deal['description']?.toString() ?? '',
+                      // Outing (models/Outing.js) has no `description` field at
+                      // all — only `subtitle` — so an outing tapped from search
+                      // rendered a permanently blank description without this.
+                      (deal['description'] ?? deal['subtitle'])?.toString() ?? '',
                       style: TextStyle(fontSize: 14.sp, color: Colors.grey[700]),
                     ),
                     if (isOuting && deal['location'] != null) ...[

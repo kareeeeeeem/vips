@@ -45,7 +45,8 @@ class EditProfileController extends GetxController {
         nameController.text = user['fullName'] ?? '';
         emailController.text = user['email'] ?? '';
         phoneController.text = user['phone'] ?? '';
-        profileImageUrl.value = user['profileImage'];
+        final storedImage = user['profileImage']?.toString();
+        profileImageUrl.value = storedImage?.replaceFirst('http://', 'https://');
 
         // These were previously left at their defaults on load — saving
         // the form without touching them would silently overwrite the
@@ -105,7 +106,12 @@ class EditProfileController extends GetxController {
       final body = res.data;
 
       if (body['success'] == true) {
-        final url = body['data']['url'] as String;
+        // The backend returns the upload URL as http:// even though the API
+        // itself is served over https:// on the same host — iOS blocks
+        // cleartext image loads by default (no ATS exception is configured),
+        // so the picture would silently fail to display after every upload.
+        final rawUrl = body['data']['url'] as String;
+        final url = rawUrl.replaceFirst('http://', 'https://');
         profileImageUrl.value = url;
         await ApiService().put('/auth/update-profile', {'profileImage': url});
       } else {
@@ -116,9 +122,10 @@ class EditProfileController extends GetxController {
         );
       }
     } catch (e) {
+      debugPrint('Upload image error: $e');
       safeSnackbar(
         'Upload Error',
-        'Failed to upload image: $e',
+        'Could not upload your image. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -163,11 +170,12 @@ class EditProfileController extends GetxController {
           );
         }
       } catch (e) {
+        debugPrint('Update profile error: $e');
         if (Get.isDialogOpen == true) Get.back();
         await Future.delayed(const Duration(milliseconds: 100));
         safeSnackbar(
           'Error',
-          'Failed to update profile: $e',
+          'Could not update your profile. Please try again.',
           snackPosition: SnackPosition.BOTTOM,
         );
       }

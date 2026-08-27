@@ -119,11 +119,17 @@ class WalletPointsController extends GetxController {
           final createdAt = DateTime.tryParse(tx['createdAt']?.toString() ?? '') ?? DateTime.now();
           final type = (tx['type'] as String?) ?? 'credit';
           final amount = (tx['amount'] as num?)?.toDouble() ?? 0;
-          final isDebit = type == 'expense' || type == 'redeem' || type == 'transfer';
+          // Real Transaction.type enum: credit/debit/gift_back/reward/
+          // expense/income/transfer — matches the same outgoing-vs-incoming
+          // split already fixed in transactions_extract_controller.dart
+          // and vips_club_history_view.dart (only expense/debit are
+          // outgoing; 'redeem' isn't a real backend value at all).
+          final isDebit = type == 'expense' || type == 'debit';
           final merchant = (tx['merchantId'] as Map<String, dynamic>?);
           final location = merchant?['storeName'] ?? merchant?['fullName'] ?? 'VIPs';
           return {
             'type': type,
+            'isCredit': !isDebit,
             'category': _categoryForType(type),
             'status': (tx['status'] as String?) == 'completed' ? 'done' : (tx['status'] ?? 'pending'),
             'title': (tx['description'] as String?) ?? _titleForType(type),
@@ -156,7 +162,7 @@ class WalletPointsController extends GetxController {
       case 'income':
         return 'upgrade';
       case 'expense':
-      case 'redeem':
+      case 'debit':
         return 'redeem';
       case 'transfer':
         return 'on_upgrade';
@@ -173,7 +179,7 @@ class WalletPointsController extends GetxController {
       case 'reward':    return 'Reward earned';
       case 'income':    return 'Income';
       case 'expense':   return 'Expense';
-      case 'redeem':    return 'Redeemed';
+      case 'debit':     return 'Debit';
       case 'transfer':  return 'Transfer';
       case 'gift_back': return 'Gift Back';
       default:          return 'Transaction';
@@ -880,7 +886,7 @@ class WalletPointsView extends StatelessWidget {
   // ==================== TRANSACTION ITEM ====================
   Widget _buildTransactionItem(Map<String, dynamic> transaction, int index) {
     final isExpanded = controller.expandedTransactions[index];
-    final isCredit = transaction['type'] == 'credit';
+    final isCredit = transaction['isCredit'] == true;
 
     return GestureDetector(
       onTap: () => controller.toggleTransaction(index),

@@ -45,9 +45,14 @@ class _FavoritesViewState extends State<FavoritesView> {
         // Only Deal and Product favorites are ever created elsewhere in the
         // app (see home_view/build_hot_deals/merchant_details_view); any
         // other/unrecognized itemType is skipped rather than mis-rendered.
+        // Also requires a real `item` object — a favorite whose Deal/Product
+        // was since deleted from the catalog comes back with `item: null`
+        // from GET /favorites/details, which used to crash this whole grid
+        // (`favorite['item'] as Map` with no null/type guard) instead of
+        // just hiding that one stale entry.
         final favorites = controller.favoriteItems.where((f) {
           final type = (f['itemType']?.toString().toLowerCase() ?? '');
-          return type == 'deal' || type == 'product';
+          return (type == 'deal' || type == 'product') && f['item'] is Map;
         }).toList();
         if (favorites.isEmpty) {
           return _buildEmptyState();

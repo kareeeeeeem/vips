@@ -42,7 +42,11 @@ const Map<String, String> arSA = {
   'stay_healthy': 'حافظ على صحتك',
   'hot_deals': 'العروض الساخنة',
   'view_all': 'عرض الكل',
-  'egp': 'جنيه',
+  // Every other currency label in the app is TND ("TN" in en/fr — see
+  // deal_details_view.dart, reward_page.dart, gift_back_page.dart). This
+  // key (used on Hot Deals / Ending Soon price tags) was still the
+  // Egyptian Pound label in Arabic while en/fr already say 'TN'.
+  'egp': 'د.ت',
   'off': 'خصم',
   'rating': 'التقييم',
   'add_to_favorites': 'إضافة للمفضلة',
@@ -118,6 +122,10 @@ const Map<String, String> arSA = {
   'no_hot_deals_found': 'لا توجد عروض ساخنة',
   'no_merchants_found': 'لا يوجد تجار',
   'no_merchant_data': 'لا توجد بيانات عن التاجر',
+  'follow': 'متابعة',
+  'following': 'تتم المتابعة',
+  'followers': 'متابع',
+  'reviews': 'التقييمات',
   'merchant_details': 'تفاصيل التاجر',
   'merchant_details_description': 'تصفح معلومات وعروض هذا التاجر.',
   'no_deal_data': 'لا توجد بيانات عن العرض',

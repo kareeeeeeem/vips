@@ -9,21 +9,13 @@ class GiftController extends GetxController {
   final TextEditingController userIdController = TextEditingController();
 
   final RxBool isUserIdEnabled = true.obs;
-  final RxBool isExpressSelected = false.obs;
   final RxBool isLoading = false.obs;
   final TextEditingController amountController = TextEditingController(text: '');
   final RxDouble giftAmount = 0.0.obs;
 
-  void toggleUserIdInput() {
-    isUserIdEnabled.value = !isUserIdEnabled.value;
-    if (!isUserIdEnabled.value) {
-      userIdController.clear();
-    }
-  }
+  // toggleUserIdInput() was never called and isUserIdEnabled is always true,
+  // so the recipient field is simply always enabled.
 
-  void toggleExpress() {
-    isExpressSelected.value = !isExpressSelected.value;
-  }
 
   // The scanner (QRScannerController) always validates via
   // POST /rewards/validate-qr first and returns that response's `data`
@@ -98,7 +90,8 @@ class GiftController extends GetxController {
         safeSnackbar('Error', response.message);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to send gift: $e');
+      debugPrint('Send gift error: $e');
+      safeSnackbar('Error', 'Could not send gift. Please try again.');
     } finally {
       isLoading.value = false;
     }

@@ -42,7 +42,7 @@ class BuildRestorant extends GetView<HomeController> {
                     ),
                     SizedBox(width: 12.w),
                     Text(
-                      'hot Restaurent'.tr,
+                      'Hot Restaurants',
                       style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.bold,

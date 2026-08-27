@@ -8,13 +8,17 @@ class DonationController extends GetxController {
   final TextEditingController amountController = TextEditingController();
   final RxBool isLoading = false.obs;
 
+  // Seed list shown for the moment before /services/organizations answers.
+  // Each entry used to carry a 'logo' path under assets/images/donation*.png —
+  // six files that do not exist in the bundle, and which nothing ever
+  // rendered (the screen shows organisation names only).
   final RxList<Map<String, String>> organizations = <Map<String, String>>[
-    {'name': 'Red Cross', 'logo': 'assets/images/donation1.png'},
-    {'name': 'UNICEF', 'logo': 'assets/images/donation2.png'},
-    {'name': 'WHO', 'logo': 'assets/images/donation3.png'},
-    {'name': 'Save Children', 'logo': 'assets/images/donation4.png'},
-    {'name': 'Water Aid', 'logo': 'assets/images/donation5.png'},
-    {'name': 'WWF', 'logo': 'assets/images/donation6.png'},
+    {'name': 'Red Cross'},
+    {'name': 'UNICEF'},
+    {'name': 'WHO'},
+    {'name': 'Save Children'},
+    {'name': 'Water Aid'},
+    {'name': 'WWF'},
   ].obs;
 
   @override
@@ -46,7 +50,12 @@ class DonationController extends GetxController {
   }
 
   Future<void> proceed() async {
-    if (selectedOrganizationIndex.value == null) {
+    // organizations can be replaced by a shorter real list from
+    // /services/organizations after the user already tapped one of the
+    // initial placeholder entries — re-validate the index is still in
+    // bounds rather than indexing straight in (would throw RangeError).
+    final index = selectedOrganizationIndex.value;
+    if (index == null || index < 0 || index >= organizations.length) {
       safeSnackbar('Error', 'Please select an organization', snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -56,7 +65,7 @@ class DonationController extends GetxController {
       return;
     }
 
-    final org = organizations[selectedOrganizationIndex.value!]['name']!;
+    final org = organizations[index]['name'] ?? '';
     isLoading.value = true;
     try {
       final response = await ApiService().post('/services/donate', {

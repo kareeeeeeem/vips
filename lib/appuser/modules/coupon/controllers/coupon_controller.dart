@@ -38,10 +38,16 @@ class CouponController extends GetxController {
                 id: (c['_id'] ?? c['id'] ?? '').toString(),
                 code: (c['code'] ?? '').toString(),
                 discount: discount,
+                // Real backend enum (models/Coupon.js) also has 'voucher',
+                // which is defined but never actually assigned by any route
+                // (seeded voucher tiers only ever use percentage/fixed/
+                // shipping) — percentage remains the correct fallback for it.
                 type:
                     c['type'] == 'fixed'
                         ? CouponType.fixed
-                        : CouponType.percentage,
+                        : c['type'] == 'shipping'
+                            ? CouponType.shipping
+                            : CouponType.percentage,
                 status:
                     isExpired
                         ? CouponStatus.expired
@@ -50,8 +56,14 @@ class CouponController extends GetxController {
                             : CouponStatus.inactive),
                 expiryDate: expiry,
                 usageCount:
-                    ((c['usageCount'] ?? c['usageLimit'] ?? 0) as num).toInt(),
-                maxUsage: ((c['maxUsage'] ?? c['limit'] ?? 100) as num).toInt(),
+                    ((c['usageCount'] ?? c['usedCount'] ?? 0) as num).toInt(),
+                // Live API always returns maxUsage: null and puts the real
+                // cap in maxUses instead — falling back to a fabricated 100
+                // showed a wrong "Max Usage"/"Remaining"/progress-bar value
+                // for every coupon (e.g. VIPS10's real cap is 500, not 100).
+                maxUsage:
+                    ((c['maxUsage'] ?? c['maxUses'] ?? c['limit'] ?? 100) as num)
+                        .toInt(),
                 minOrderAmount:
                     ((c['minOrderAmount'] ?? 0) as num).toDouble(),
               );
@@ -116,6 +128,6 @@ class Coupon {
   int get daysLeft => expiryDate.difference(DateTime.now()).inDays;
 }
 
-enum CouponType { percentage, fixed }
+enum CouponType { percentage, fixed, shipping }
 
 enum CouponStatus { active, inactive, expired }

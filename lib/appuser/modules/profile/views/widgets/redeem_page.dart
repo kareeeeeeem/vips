@@ -139,7 +139,8 @@ class RedeemController extends GetxController {
         safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM);
       }
     } catch (e) {
-      safeSnackbar('Error', 'Failed to redeem voucher: $e', snackPosition: SnackPosition.BOTTOM);
+      debugPrint('Redeem voucher error: $e');
+      safeSnackbar('Error', 'Could not redeem this voucher. Please try again.', snackPosition: SnackPosition.BOTTOM);
     } finally {
       isRedeeming.value = false;
     }

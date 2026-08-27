@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../../design_system/atoms/app_colors.dart';
@@ -15,8 +14,6 @@ class BillInquiryController extends GetxController {
   final RxBool isProcessing = false.obs;
   final RxBool isLoading = false.obs;
   final TextEditingController phoneNumberController = TextEditingController();
-
-  String _userPin = '0000';
 
   // Real bill data — operator/amount come from the mobile top-up screen,
   // fees come from the /services/bills catalog (same endpoint pay_bills_controller uses).
@@ -35,9 +32,6 @@ class BillInquiryController extends GetxController {
     // Mirrors the backend's 10% reward rate used in /rewards/expense-to-reward.
     vpToAwards.value = billAmount * 0.1;
 
-    SharedPreferences.getInstance().then((prefs) {
-      _userPin = prefs.getString('user_pin') ?? '0000';
-    });
     _loadFees();
   }
 
@@ -81,8 +75,9 @@ class BillInquiryController extends GetxController {
         pinLength: 4,
         primaryColor:
             Colors.orange, // Utilisez la couleur primaire de votre app
-        validatePin: (pin) {
-          return pin == _userPin;
+        validatePin: (pin) async {
+          final response = await ApiService().post('/auth/pin/verify', {'pin': pin});
+          return response.success;
         },
         validateBiometrics: () async {
           final LocalAuthentication localAuth = LocalAuthentication();
@@ -138,8 +133,9 @@ class BillInquiryController extends GetxController {
                   snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
             }
           } catch (e) {
+            debugPrint('Mobile recharge error: $e');
             Get.back(); // close loading dialog
-            safeSnackbar('Error', 'Failed to complete recharge: $e', snackPosition: SnackPosition.BOTTOM);
+            safeSnackbar('Error', 'Could not complete recharge. Please try again.', snackPosition: SnackPosition.BOTTOM);
           } finally {
             isProcessing.value = false;
           }

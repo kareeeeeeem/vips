@@ -94,7 +94,9 @@ class PackagesController extends GetxController {
         packages.value = (packagesRes.data as List).map((p) {
           final id = p['id']?.toString() ?? 'basic';
           final style = _tierStyle[id] ?? _tierStyle['basic']!;
-          final benefitTitles = (p['benefits'] as List?)?.cast<String>() ?? [];
+          final benefitTitles = p['benefits'] is List
+              ? (p['benefits'] as List).map((b) => b.toString()).toList()
+              : <String>[];
           return Package(
             id: id,
             tier: PackageTier.values.firstWhere((t) => t.name == id, orElse: () => PackageTier.basic),
@@ -143,21 +145,22 @@ class PackagesController extends GetxController {
 
   void changeTab(int index) {
     // Update selected package based on tab
+    // firstWhere with no orElse throws StateError if packages hasn't
+    // loaded yet (or the backend ever returns fewer than 3 tiers) — that
+    // turned tapping a tier tab into a hard crash. firstWhereOrNull leaves
+    // the current selection untouched instead of throwing.
     switch (index) {
       case 0:
-        selectedPackage.value = packages.firstWhere(
-          (pkg) => pkg.tier == PackageTier.silver,
-        );
+        final pkg = packages.firstWhereOrNull((pkg) => pkg.tier == PackageTier.silver);
+        if (pkg != null) selectedPackage.value = pkg;
         break;
       case 1:
-        selectedPackage.value = packages.firstWhere(
-          (pkg) => pkg.tier == PackageTier.gold,
-        );
+        final pkg = packages.firstWhereOrNull((pkg) => pkg.tier == PackageTier.gold);
+        if (pkg != null) selectedPackage.value = pkg;
         break;
       case 2:
-        selectedPackage.value = packages.firstWhere(
-          (pkg) => pkg.tier == PackageTier.platinum,
-        );
+        final pkg = packages.firstWhereOrNull((pkg) => pkg.tier == PackageTier.platinum);
+        if (pkg != null) selectedPackage.value = pkg;
         break;
     }
   }

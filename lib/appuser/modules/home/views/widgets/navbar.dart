@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../profile/controllers/profile_controller.dart';
 
 // Version avec FAB Scan au centre - HAUTEUR RÉDUITE
 class CustomBottomNavigationBar extends StatelessWidget {
@@ -19,10 +18,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
   });
 
   // Couleurs selon le rôle
-  static const Color vendorGreen = Color(0xFFFFC107);
-  static const Color vendorGreenLight = Color(0xFFFFC107);
-  static const Color adminBlue = Color(0xFF2196F3);
-  static const Color adminBlueLight = Color(0xFF2196F3);
   static const Color defaultOrange = Color(0xFFFF6B35);
   static const Color defaultOrangeDark = Color(0xFFE55100);
 
@@ -30,55 +25,21 @@ class CustomBottomNavigationBar extends StatelessWidget {
     onTap(index);
   }
 
-  Color _getPrimaryColor() {
-    try {
-      final profileController = Get.find<ProfileController>();
-      switch (profileController.selectedRole.value) {
-        case 'Vendor':
-          return vendorGreen;
-        case 'Admin':
-          return adminBlue;
-        default:
-          return defaultOrange;
-      }
-    } catch (e) {
-      return defaultOrange;
-    }
-  }
+  // ProfileController.selectedRole is permanently 'Customer' — the consumer
+  // app has no role switcher and the multi-role screens were removed in an
+  // earlier pass — so the Vendor/Admin branches here could never render. The
+  // nav also used them to relabel Home->Brand and Offers->Order, which would
+  // have been plain wrong in a customer app.
+  Color _getPrimaryColor() => defaultOrange;
 
-  List<Color> _getGradientColors() {
-    try {
-      final profileController = Get.find<ProfileController>();
-      switch (profileController.selectedRole.value) {
-        case 'Vendor':
-          return [vendorGreen, vendorGreenLight];
-        case 'Admin':
-          return [adminBlue, adminBlueLight];
-        default:
-          return [defaultOrange, defaultOrangeDark];
-      }
-    } catch (e) {
-      return [defaultOrange, defaultOrangeDark];
-    }
-  }
+  List<Color> _getGradientColors() => [defaultOrange, defaultOrangeDark];
 
-  String _getRole() {
-    try {
-      final profileController = Get.find<ProfileController>();
-      return profileController.selectedRole.value;
-    } catch (e) {
-      return 'Customer';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final primaryColor = _getPrimaryColor();
       final gradientColors = _getGradientColors();
-      final role = _getRole();
-      final isVendor = role == 'Vendor';
-
       return Stack(
         clipBehavior: Clip.none,
         children: [
@@ -106,8 +67,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                       // Premier onglet : Home ou Brand
                       _buildNavItem(
                         screenWidth: screenWidth,
-                        icon: isVendor ? Icons.store : CupertinoIcons.home,
-                        label: isVendor ? 'Brand' : 'Home',
+                        icon: CupertinoIcons.home,
+                        label: 'Home',
                         index: 0,
                         primaryColor: primaryColor,
                       ),
@@ -115,8 +76,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
                       // Deuxième onglet : Offers ou Order
                       _buildNavItem(
                         screenWidth: screenWidth,
-                        icon: isVendor ? Icons.receipt_long : CupertinoIcons.gift,
-                        label: isVendor ? 'Order' : 'Offers',
+                        icon: CupertinoIcons.gift,
+                        label: 'Offers',
                         index: 1,
                         primaryColor: primaryColor,
                       ),
@@ -177,12 +138,16 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(28.r),
                   onTap: onScanTap,
+                  // Opens the Wallet/Quick-Actions sheet (Reward, Gift Back,
+                  // Switch, Scan QR) — not a direct camera launch, so a
+                  // scanner icon here misled users into expecting the camera
+                  // to open immediately.
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.qr_code_scanner,
+                        Icons.account_balance_wallet_rounded,
                         color: Colors.white,
                         size: 24.sp,
                       ),

@@ -19,22 +19,25 @@ class VipsClubHistoryController extends GetxController {
     isLoading.value = true;
     try {
       final walletRes = await ApiService().get('/user/wallet');
-      if (walletRes.success && walletRes.data != null) {
-        convertibleDiamants.value = (walletRes.data['points'] as num?)?.toInt() ?? 0;
+      if (walletRes.success && walletRes.data is Map) {
+        final points = (walletRes.data as Map)['points'];
+        convertibleDiamants.value = points is num ? points.toInt() : 0;
       }
 
       final txRes = await ApiService().get('/user/transactions');
-      if (txRes.success && txRes.data != null) {
-        final List<dynamic> txList = txRes.data['transactions'] ?? [];
-        transactions.value = txList.map((tx) {
+      if (txRes.success && txRes.data is Map) {
+        final txListRaw = (txRes.data as Map)['transactions'];
+        final txList = txListRaw is List ? txListRaw : const [];
+        transactions.value = txList.whereType<Map>().map((tx) {
+          final amount = tx['amount'];
           return DiamantTransaction(
-            amount: (tx['amount'] as num?)?.toInt() ?? 0,
-            type: tx['type'] ?? 'credit',
-            description: tx['description'],
+            amount: amount is num ? amount.toInt() : 0,
+            type: tx['type']?.toString() ?? 'credit',
+            description: tx['description']?.toString(),
             date: tx['createdAt'] != null
-                ? DateTime.parse(tx['createdAt'])
+                ? (DateTime.tryParse(tx['createdAt'].toString()) ?? DateTime.now())
                 : DateTime.now(),
-            orderNumber: tx['reference'],
+            orderNumber: tx['reference']?.toString(),
           );
         }).toList();
       }
@@ -56,7 +59,7 @@ class VipsClubHistoryController extends GetxController {
       final response = await ApiService().post('/user/vips-club/convert', {'points': points});
       Get.back();
       if (response.success) {
-        final earned = response.data['walletAmount'];
+        final earned = response.data is Map ? (response.data as Map)['walletAmount'] : null;
         safeSnackbar('Converted!', '$points points → $earned TND added to wallet', snackPosition: SnackPosition.BOTTOM);
         await loadHistory();
       } else {

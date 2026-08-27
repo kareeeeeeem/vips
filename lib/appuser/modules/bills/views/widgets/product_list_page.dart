@@ -7,7 +7,9 @@ import 'package:vip/core/utils/safe_snackbar.dart';
 import '../../controllers/bills_controller.dart';
 import 'product_detail_page.dart';
 
-class ProductListPage extends StatelessWidget {
+enum _ProductSort { defaultOrder, topRate, recent }
+
+class ProductListPage extends StatefulWidget {
   final String? category;
   final String title;
   // Optional explicit curated list (Best Selling / Trending / Feature) —
@@ -20,6 +22,13 @@ class ProductListPage extends StatelessWidget {
     this.title = 'Best Selling Theme',
     this.products,
   });
+
+  @override
+  State<ProductListPage> createState() => _ProductListPageState();
+}
+
+class _ProductListPageState extends State<ProductListPage> {
+  _ProductSort _sort = _ProductSort.defaultOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +44,7 @@ class ProductListPage extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          title,
+          widget.title,
           style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -46,7 +55,11 @@ class ProductListPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Filter Tabs - AVEC ICÔNE DE GRILLE
+          // Sort chips — Top Rate sorts by real avgRating, Recent sorts by
+          // real createdAt. This used to also have non-tappable grid/list
+          // view icons (only a grid layout was ever built, so the list icon
+          // did nothing) and a "Hot Deals" chip (products have no discount
+          // field, so there was nothing real to filter by) — removed both.
           Container(
             color: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8),
@@ -54,18 +67,13 @@ class ProductListPage extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  // GRID ICON BUTTON (sélectionné en orange)
-                  _buildGridIconButton(true),
+                  _buildFilterChip('Top Rate', _sort == _ProductSort.topRate, () {
+                    setState(() => _sort = _sort == _ProductSort.topRate ? _ProductSort.defaultOrder : _ProductSort.topRate);
+                  }),
                   const SizedBox(width: 8),
-                  // Liste icon button
-                  _buildListIconButton(false),
-                  const SizedBox(width: 16),
-                  // Filtres textuels
-                  _buildFilterChip('Hot Deals', false),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Top Rate', false),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Recent', false),
+                  _buildFilterChip('Recent', _sort == _ProductSort.recent, () {
+                    setState(() => _sort = _sort == _ProductSort.recent ? _ProductSort.defaultOrder : _ProductSort.recent);
+                  }),
                 ],
               ),
             ),
@@ -82,12 +90,18 @@ class ProductListPage extends StatelessWidget {
                 );
               }
 
-              final items = products ??
-                  (category != null
+              var items = widget.products ??
+                  (widget.category != null
                       ? controller.allProducts
-                          .where((p) => p.category == category)
+                          .where((p) => p.category == widget.category)
                           .toList()
                       : controller.allProducts);
+
+              if (_sort == _ProductSort.topRate) {
+                items = [...items]..sort((a, b) => b.avgRating.compareTo(a.avgRating));
+              } else if (_sort == _ProductSort.recent) {
+                items = [...items]..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+              }
 
               if (items.isEmpty) {
                 return Center(
@@ -118,64 +132,25 @@ class ProductListPage extends StatelessWidget {
     );
   }
 
-  // NOUVEAU: Bouton Grid Icon
-  Widget _buildGridIconButton(bool isSelected) {
-    return Container(
-      width: 48,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFF6B35) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected ? const Color(0xFFFF6B35) : Colors.grey[300]!,
-          width: 1.5,
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0066FF) : Colors.grey[300]!,
+          ),
         ),
-      ),
-      child: Icon(
-        Icons.grid_view,
-        color: isSelected ? Colors.white : Colors.grey[600],
-        size: 20,
-      ),
-    );
-  }
-
-  // NOUVEAU: Bouton List Icon
-  Widget _buildListIconButton(bool isSelected) {
-    return Container(
-      width: 48,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFF6B35) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected ? const Color(0xFFFF6B35) : Colors.grey[300]!,
-          width: 1.5,
-        ),
-      ),
-      child: Icon(
-        Icons.format_list_bulleted,
-        color: isSelected ? Colors.white : Colors.grey[600],
-        size: 20,
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF0066FF) : Colors.grey[300]!,
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey[600],
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[600],
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
         ),
       ),
     );

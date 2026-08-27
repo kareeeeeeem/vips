@@ -50,6 +50,22 @@ class ElectricBillController extends GetxController {
 
     isLoading.value = true;
     try {
+      // Real utility-provider integration isn't live yet (no STEG/SONEDE/
+      // Ooredoo API) — checked up front so the honest "not available yet"
+      // message shows immediately instead of only after a failed lookup.
+      final status = await ApiService().get('/services/status');
+      final configured = status.success &&
+          status.data is Map &&
+          (status.data['utilityBills']?['configured'] == true);
+      if (!configured) {
+        safeSnackbar(
+          'Coming Soon',
+          'This service isn\'t available yet — real provider integration is still pending.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
       final response = await ApiService().post('/services/bill-inquiry', {
         'billServiceId': billServiceId,
         'subscriberNumber': subscriberNumberController.text.trim(),
@@ -81,9 +97,10 @@ class ElectricBillController extends GetxController {
         );
       }
     } catch (e) {
+      debugPrint('Bill inquiry error: $e');
       safeSnackbar(
         'Error',
-        'Failed to look up bill: $e',
+        'Could not look up this bill. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {

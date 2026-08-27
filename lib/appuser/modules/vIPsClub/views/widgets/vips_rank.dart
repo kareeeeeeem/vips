@@ -20,12 +20,15 @@ class VIPsRankController extends GetxController {
     isLoading.value = true;
     try {
       final res = await ApiService().get('/user/leaderboard', queryParams: {'limit': '20'});
-      if (res.success && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final List<dynamic> board = data['leaderboard'] ?? [];
-        currentUserRank.value = (data['currentUserRank'] ?? 0).toInt();
-        currentUserScore.value = (data['currentUserScore'] ?? 0).toDouble();
-        final all = board.map((e) => Map<String, dynamic>.from(e)).toList();
+      if (res.success && res.data is Map) {
+        final data = res.data as Map;
+        final boardRaw = data['leaderboard'];
+        final board = boardRaw is List ? boardRaw : const [];
+        final rank = data['currentUserRank'];
+        currentUserRank.value = rank is num ? rank.toInt() : 0;
+        final score = data['currentUserScore'];
+        currentUserScore.value = score is num ? score.toDouble() : 0.0;
+        final all = board.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
         topUsers.value = all.take(3).toList();
         rankedUsers.value = all.skip(3).toList();
       }
@@ -106,11 +109,11 @@ class VIPsRankView extends GetView<VIPsRankController> {
         children: [
           Expanded(
             child: _buildPodiumPosition(
-              rank: second['rank'] ?? 2,
-              username: second['username'] ?? '-',
-              score: '${(second['score'] ?? 0).toInt()}',
-              diamonds: '${(second['score'] ?? 0).toInt()}',
-              avatarUrl: second['avatar'] ?? 'https://i.pravatar.cc/150?img=2',
+              rank: _rankOf(second, 2),
+              username: second['username']?.toString() ?? '-',
+              score: '${_scoreOf(second)}',
+              diamonds: '${_scoreOf(second)}',
+              avatarUrl: second['avatar']?.toString() ?? 'https://i.pravatar.cc/150?img=2',
               height: 160.h,
               medalColor: const Color(0xFFC0C0C0),
             ),
@@ -118,11 +121,11 @@ class VIPsRankView extends GetView<VIPsRankController> {
           SizedBox(width: 12.w),
           Expanded(
             child: _buildPodiumPosition(
-              rank: first['rank'] ?? 1,
-              username: first['username'] ?? '-',
-              score: '${(first['score'] ?? 0).toInt()}',
-              diamonds: '${(first['score'] ?? 0).toInt()}',
-              avatarUrl: first['avatar'] ?? 'https://i.pravatar.cc/150?img=1',
+              rank: _rankOf(first, 1),
+              username: first['username']?.toString() ?? '-',
+              score: '${_scoreOf(first)}',
+              diamonds: '${_scoreOf(first)}',
+              avatarUrl: first['avatar']?.toString() ?? 'https://i.pravatar.cc/150?img=1',
               height: 200.h,
               medalColor: const Color(0xFFFFD700),
               isWinner: true,
@@ -131,11 +134,11 @@ class VIPsRankView extends GetView<VIPsRankController> {
           SizedBox(width: 12.w),
           Expanded(
             child: _buildPodiumPosition(
-              rank: third['rank'] ?? 3,
-              username: third['username'] ?? '-',
-              score: '${(third['score'] ?? 0).toInt()}',
-              diamonds: '${(third['score'] ?? 0).toInt()}',
-              avatarUrl: third['avatar'] ?? 'https://i.pravatar.cc/150?img=3',
+              rank: _rankOf(third, 3),
+              username: third['username']?.toString() ?? '-',
+              score: '${_scoreOf(third)}',
+              diamonds: '${_scoreOf(third)}',
+              avatarUrl: third['avatar']?.toString() ?? 'https://i.pravatar.cc/150?img=3',
               height: 140.h,
               medalColor: const Color(0xFFCD7F32),
             ),
@@ -143,6 +146,18 @@ class VIPsRankView extends GetView<VIPsRankController> {
         ],
       ),
     );
+  }
+
+  // Safe coercion for podium fields coming from the API — a shape mismatch
+  // falls back to a sane default instead of throwing.
+  int _rankOf(Map<String, dynamic> u, int fallback) {
+    final v = u['rank'];
+    return v is num ? v.toInt() : fallback;
+  }
+
+  int _scoreOf(Map<String, dynamic> u) {
+    final v = u['score'];
+    return v is num ? v.toInt() : 0;
   }
 
   Widget _buildPodiumPosition({
@@ -411,11 +426,13 @@ class VIPsRankView extends GetView<VIPsRankController> {
         itemCount: users.length,
         itemBuilder: (context, index) {
           final u = users[index];
+          final rankRaw = u['rank'];
+          final scoreRaw = u['score'];
           return _buildRankItem(
-            rank: (u['rank'] ?? index + 4) as int,
-            username: u['username'] ?? '-',
-            score: '${(u['score'] ?? 0).toInt()}',
-            avatarUrl: u['avatar'] ?? 'https://i.pravatar.cc/150?img=${index + 4}',
+            rank: rankRaw is num ? rankRaw.toInt() : index + 4,
+            username: u['username']?.toString() ?? '-',
+            score: '${scoreRaw is num ? scoreRaw.toInt() : 0}',
+            avatarUrl: u['avatar']?.toString() ?? 'https://i.pravatar.cc/150?img=${index + 4}',
           );
         },
       );

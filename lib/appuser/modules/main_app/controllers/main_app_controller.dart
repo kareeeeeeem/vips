@@ -49,7 +49,6 @@ class MainAppController extends GetxController {
     currentIndex.value = index;
   }
 
-  void toggleAmountVisibility() {
-    isAmountVisible.value = !isAmountVisible.value;
-  }
+  // toggleAmountVisibility()/isAmountVisible had no eye control and no reader.
+
 }

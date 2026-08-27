@@ -15,36 +15,53 @@ class BillsController extends GetxController {
   // Gestion des dates
   final Rx<DateTime> fromDate = DateTime.now().subtract(Duration(days: 30)).obs;
   final Rx<DateTime> toDate = DateTime.now().obs;
-  // Images du carrousel
-  final List<String> carouselImages = [
-    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop',
-    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=200&fit=crop',
-    'https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=400&h=200&fit=crop',
-  ];
+  // Real active promotions from GET /content/promotions (same endpoint the
+  // Home tab's hero banner uses) — this used to be 3 hardcoded stock photos
+  // labeled "Special Offer 1/2/3, get amazing deals on your bills" with no
+  // real offer behind them and no tap action at all.
+  final RxList<Map<String, dynamic>> promoBanners = <Map<String, dynamic>>[].obs;
 
-  // Matches the real categories present in GET /content/products —
-  // verified live rather than assumed, so a chip is only shown for a
-  // category that actually has products behind it.
-  final List<CategoryItem> categories = [
-    CategoryItem(
-      icon: Icons.photo_library,
-      title: 'Photo',
-      color: Color(0xFFFF6B35),
-    ),
-    CategoryItem(icon: Icons.school, title: 'Course', color: Color(0xFFFF6B35)),
-    CategoryItem(
-      icon: Icons.local_activity,
-      title: 'Ticket',
-      color: Color(0xFFFF6B35),
-    ),
-    CategoryItem(
-      icon: Icons.menu_book,
-      title: 'E-book',
-      color: Color(0xFFFF6B35),
-    ),
-    CategoryItem(icon: Icons.book, title: 'Guide', color: Color(0xFFFF6B35)),
-    CategoryItem(icon: Icons.fastfood, title: 'Food', color: Color(0xFFFF6B35)),
-  ];
+  Future<void> fetchPromoBanners() async {
+    try {
+      final response = await ApiService().get('/content/promotions');
+      if (response.success && response.data is List) {
+        promoBanners.assignAll((response.data as List).whereType<Map>().map((p) => Map<String, dynamic>.from(p)).take(5));
+        _startAutoSlide();
+      }
+    } catch (_) {}
+  }
+
+  // Derived from the categories actually present in GET /content/products
+  // (see _rebuildCategories), never hardcoded — a hardcoded list drifts the
+  // moment the catalog changes, which is exactly what happened before: a
+  // 'Food' chip was shown while no product had that category, so tapping it
+  // opened a guaranteed-empty screen. Building the list from real data makes
+  // an empty chip structurally impossible.
+  static const Map<String, IconData> _categoryIcons = {
+    'Photo': Icons.photo_library,
+    'Course': Icons.school,
+    'Ticket': Icons.local_activity,
+    'E-book': Icons.menu_book,
+    'Guide': Icons.book,
+    'Food': Icons.fastfood,
+  };
+
+  final RxList<CategoryItem> categories = <CategoryItem>[].obs;
+
+  void _rebuildCategories(List<ProductItem> products) {
+    final seen = <String>[];
+    for (final p in products) {
+      final c = p.category.trim();
+      if (c.isNotEmpty && !seen.contains(c)) seen.add(c);
+    }
+    categories.assignAll(
+      seen.map((c) => CategoryItem(
+            icon: _categoryIcons[c] ?? Icons.category,
+            title: c,
+            color: const Color(0xFFFF6B35),
+          )),
+    );
+  }
 
   // Dynamic Product Lists
   final RxList<ProductItem> bestSellingProducts = <ProductItem>[].obs;
@@ -146,7 +163,7 @@ class BillsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _startAutoSlide();
+    fetchPromoBanners();
     fetchProducts();
     fetchOrderHistory();
   }
@@ -168,7 +185,11 @@ class BillsController extends GetxController {
               .map((i) => (i['item_name'] ?? '').toString())
               .where((n) => n.isNotEmpty)
               .join(', ');
-          final createdAt = o['createdAt'] != null ? DateTime.parse(o['createdAt']) : null;
+          // tryParse, not parse: one malformed createdAt on any single order
+          // used to throw inside this .map(), which the outer try/catch
+          // would swallow — silently blanking the *entire* order history
+          // list instead of just that one order's date.
+          final createdAt = o['createdAt'] != null ? DateTime.tryParse(o['createdAt'].toString()) : null;
           final merchant = o['merchantId'];
           final storeName = merchant is Map
               ? (merchant['storeName'] ?? merchant['fullName'] ?? 'VIPs Store').toString()
@@ -177,7 +198,7 @@ class BillsController extends GetxController {
           return OrderItem(
             id: (o['_id'] ?? '').toString(),
             orderId: (o['orderNumber']?.toString() ?? (o['_id'] ?? '').toString()),
-            type: status.isNotEmpty ? status[0].toUpperCase() + status.substring(1) : 'Pending',
+            type: _formatStatusLabel(status),
             day: createdAt != null ? createdAt.day.toString() : '--',
             month: createdAt != null ? _monthName(createdAt.month) : '--',
             cardType: itemNames.isNotEmpty ? itemNames : 'Order',
@@ -192,6 +213,38 @@ class BillsController extends GetxController {
         expandedOrders.value = List.generate(orders.length, (_) => false);
       }
     } catch (_) {}
+  }
+
+  // models/Order.js's real status enum is pending/confirmed/processing/ready/
+  // handover/picked_up/delivered/cancelled/refund_requested/refunded — a
+  // plain first-letter capitalize left the underscore visible for every
+  // multi-word status ("Refund_requested", "Picked_up").
+  String _formatStatusLabel(String raw) {
+    switch (raw) {
+      case 'pending':
+        return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'processing':
+        return 'Processing';
+      case 'ready':
+        return 'Ready';
+      case 'handover':
+        return 'Handover';
+      case 'picked_up':
+        return 'Picked Up';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+      case 'canceled':
+        return 'Cancelled';
+      case 'refund_requested':
+        return 'Refund Requested';
+      case 'refunded':
+        return 'Refunded';
+      default:
+        return raw.isEmpty ? 'Pending' : raw[0].toUpperCase() + raw.substring(1);
+    }
   }
 
   String _monthName(int month) {
@@ -221,10 +274,12 @@ class BillsController extends GetxController {
             reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
             sellCount: (json['salesCount'] as num?)?.toInt() ?? 0,
             merchantName: merchant is Map ? (merchant['storeName'] ?? merchant['fullName'])?.toString() : null,
+            createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
           );
         }).toList();
 
         allProducts.assignAll(products);
+        _rebuildCategories(products);
 
         // "Best Selling" / "Trending" reflect real category splits, not a
         // real sales ranking — GET /content/products doesn't support
@@ -244,6 +299,7 @@ class BillsController extends GetxController {
       }
     } catch (_) {
       allProducts.clear();
+      categories.clear();
       bestSellingProducts.clear();
       trendingProducts.clear();
       featureProducts.clear();
@@ -254,14 +310,15 @@ class BillsController extends GetxController {
   }
 
   void _startAutoSlide() {
+    if (promoBanners.length <= 1) return;
     Future.delayed(const Duration(seconds: 3), () {
       _autoSlide();
     });
   }
 
   void _autoSlide() {
-    if (pageController.hasClients) {
-      currentIndex.value = (currentIndex.value + 1) % carouselImages.length;
+    if (pageController.hasClients && promoBanners.isNotEmpty) {
+      currentIndex.value = (currentIndex.value + 1) % promoBanners.length;
       pageController.animateToPage(
         currentIndex.value,
         duration: const Duration(milliseconds: 500),
@@ -273,24 +330,10 @@ class BillsController extends GetxController {
     }
   }
 
-  final RxString selectedRole = 'Customer'.obs;
-
-  Color get primaryColor {
-    switch (selectedRole.value) {
-      case 'Vendor':
-        return Color(0xFFFFC107);
-
-      case 'Agent':
-        return Color(0xFF2196F3);
-
-      case 'Business':
-        return Colors.blue;
-      case 'Customer':
-        return Colors.orange;
-      default:
-        return Colors.blue;
-    }
-  }
+  // selectedRole never changed from 'Customer' (the consumer app has no role
+  // switcher), so the Vendor/Agent/Business branches of this colour switch
+  // could never be reached — it always resolved to orange.
+  Color get primaryColor => Colors.orange;
 
   String formatDate(DateTime date) {
     return '${date.month}/${date.day}';
@@ -362,14 +405,9 @@ class BillsController extends GetxController {
     Get.to(() => ProductListPage(title: categoryName, category: categoryName));
   }
 
-  void onProductTap(ProductItem product) {
-    // /deal-details expects a Map shaped like a Deal/Outing, not a raw
-    // ProductItem — every other tap in this module (bills_view.dart,
-    // product_list_page.dart) already opens the real ProductDetailPage
-    // directly; this now matches them instead of routing somewhere that
-    // can't render a ProductItem at all.
-    Get.to(() => ProductDetailPage(product: product));
-  }
+  // onProductTap() duplicated what bills_view/product_list_page already do
+  // directly (open ProductDetailPage); nothing called it.
+
 
   void onFilterChanged(String filter) {
     selectedFilter.value = filter;
@@ -409,12 +447,14 @@ class ProductItem {
   final int reviewCount;
   final int sellCount;
   final String? merchantName;
+  final DateTime? createdAt;
 
   ProductItem({
     required this.id,
     required this.title,
     required this.category,
     required this.price,
+    this.createdAt,
     required this.imageUrl,
     this.description = '',
     this.avgRating = 0,
