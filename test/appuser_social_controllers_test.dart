@@ -27,6 +27,8 @@ import 'package:vip/appuser/modules/settings/controllers/settings_controller.dar
 import 'package:vip/appuser/modules/vIPsClub/controllers/v_i_ps_club_controller.dart';
 import 'package:vip/appuser/modules/notifications/controllers/notifications_controller.dart';
 
+// VIPsClubController.updateBannerIndex was removed — there is no banner carousel.
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -255,11 +257,13 @@ void main() {
       expect(c.recentSearches.first, equals('Museum'));
     });
 
-    test('categories and sortOptions expose the expected static lists', () {
-      expect(
-        c.categories,
-        equals(['All', 'Food', 'Shopping', 'Entertainment', 'Services', 'Outings']),
-      );
+    test('categories start at All/Outings and sortOptions are the fixed list', () {
+      // The category chips are no longer a fixed five — they are rebuilt from
+      // the categories actually present in the search results, so real values
+      // like electronics/wellness (deals) and Course/E-book/Guide/Photo/Ticket
+      // (products) are reachable instead of being unfilterable. Before any
+      // search has run, only the two constant buckets exist.
+      expect(c.categories, equals(['All', 'Outings']));
       expect(
         c.sortOptions,
         equals([
@@ -389,7 +393,6 @@ void main() {
       expect(c.currentRank.value, equals(0));
       expect(c.checkInStreak.value, equals(0));
       expect(c.referralCode.value, isEmpty);
-      expect(c.transactionHistory, isEmpty);
       expect(c.hasCheckedInToday.value, isFalse);
       expect(c.canClaimReward.value, isTrue);
     });
@@ -402,10 +405,6 @@ void main() {
       expect(today['reward'], equals(250));
     });
 
-    test('updateBannerIndex sets the current index', () {
-      c.updateBannerIndex(2);
-      expect(c.currentBannerIndex.value, equals(2));
-    });
 
     test('claimDailyReward is a no-op once already checked in today', () {
       c.hasCheckedInToday.value = true;
@@ -424,7 +423,6 @@ void main() {
       c.convertibleDiamonds.value = 50;
       c.convertDiamonds();
       expect(c.convertibleDiamonds.value, equals(50));
-      expect(c.transactionHistory, isEmpty);
     });
   });
 
@@ -510,16 +508,19 @@ void main() {
     });
 
     test('getTypeLabel maps every notification type', () {
+      expect(c.getTypeLabel(NotificationType.order), equals('Order'));
       expect(c.getTypeLabel(NotificationType.promotion), equals('Promotion'));
       expect(c.getTypeLabel(NotificationType.account), equals('Account'));
       expect(c.getTypeLabel(NotificationType.payment), equals('Payment'));
-      expect(
-        c.getTypeLabel(NotificationType.partnership),
-        equals('Partnership'),
-      );
+      expect(c.getTypeLabel(NotificationType.reward), equals('Reward'));
+      expect(c.getTypeLabel(NotificationType.system), equals('System'));
     });
 
     test('getTypeIcon maps every notification type', () {
+      expect(
+        c.getTypeIcon(NotificationType.order),
+        equals(Icons.receipt_long_rounded),
+      );
       expect(
         c.getTypeIcon(NotificationType.promotion),
         equals(Icons.local_offer_rounded),
@@ -533,12 +534,20 @@ void main() {
         equals(Icons.payment_rounded),
       );
       expect(
-        c.getTypeIcon(NotificationType.partnership),
-        equals(Icons.handshake_rounded),
+        c.getTypeIcon(NotificationType.reward),
+        equals(Icons.emoji_events_rounded),
+      );
+      expect(
+        c.getTypeIcon(NotificationType.system),
+        equals(Icons.info_rounded),
       );
     });
 
     test('getTypeColor maps every notification type', () {
+      expect(
+        c.getTypeColor(NotificationType.order),
+        equals(const Color(0xFF3B82F6)),
+      );
       expect(
         c.getTypeColor(NotificationType.promotion),
         equals(const Color(0xFFEF4444)),
@@ -548,8 +557,12 @@ void main() {
         equals(const Color(0xFF10B981)),
       );
       expect(
-        c.getTypeColor(NotificationType.partnership),
-        equals(const Color(0xFF8B5CF6)),
+        c.getTypeColor(NotificationType.reward),
+        equals(const Color(0xFFF59E0B)),
+      );
+      expect(
+        c.getTypeColor(NotificationType.system),
+        equals(const Color(0xFF6B7280)),
       );
     });
 
@@ -587,10 +600,9 @@ void main() {
       expect(n.type, equals(NotificationType.account));
     });
 
-    test('NotificationItem.fromJson maps partnership case-insensitively',
-        () {
-      final n = NotificationItem.fromJson({'type': 'PARTNERSHIP'});
-      expect(n.type, equals(NotificationType.partnership));
+    test('NotificationItem.fromJson maps type case-insensitively', () {
+      final n = NotificationItem.fromJson({'type': 'ORDER'});
+      expect(n.type, equals(NotificationType.order));
     });
   });
 }

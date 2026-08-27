@@ -104,7 +104,7 @@ void main() {
       expect(c.totalDueCollect.value, equals(0.0));
       expect(c.vipsIn.value, equals(0.0));
       expect(c.vipsOut.value, equals(0.0));
-      expect(c.vipsRecovery.value, equals(0.0));
+      expect(c.vipsIssued.value, equals(0.0));
     });
 
     test('initial profile fields are empty and isLoading is true', () {
@@ -375,7 +375,7 @@ void main() {
         tx(TransactionType.vipsIn),
         tx(TransactionType.reward),
         tx(TransactionType.vipsOut),
-        tx(TransactionType.recovery),
+        tx(TransactionType.other),
       ];
       c.selectTab('Vips In');
       expect(c.filteredTransactions.length, equals(2));
@@ -396,18 +396,21 @@ void main() {
       expect(c.filteredTransactions.single.type, equals(TransactionType.vipsOut));
     });
 
-    test('filteredTransactions on "Recovery" only includes recovery', () {
+    // The 'Recovery' tab was removed along with TransactionType.recovery:
+    // it filtered on "anything that isn't income/gift_back/reward" under a
+    // "VIPs Recovery" label with no matching backend concept.
+    test('an unknown tab falls through to everything', () {
       c.transactions.value = [
-        tx(TransactionType.recovery),
+        tx(TransactionType.other),
         tx(TransactionType.vipsIn),
       ];
-      c.selectTab('Recovery');
-      expect(c.filteredTransactions.single.type, equals(TransactionType.recovery));
+      c.selectTab('Nonexistent');
+      expect(c.filteredTransactions.length, equals(2));
     });
 
     test('filteredTransactions defaults ("Activity") returns everything', () {
       c.transactions.value = [
-        tx(TransactionType.recovery),
+        tx(TransactionType.other),
         tx(TransactionType.vipsIn),
         tx(TransactionType.vipsOut),
       ];
@@ -443,10 +446,12 @@ void main() {
       expect(c.amount.value, equals('50'));
     });
 
-    test('onNumberPressed recalculates points using the exchange rate', () {
-      c.onNumberPressed('5'); // amount = 5
-      // points = (5 * 100).toInt() = 500
-      expect(c.points.value, equals('500'));
+    // `points` used to hold amount x 100 under a "VIP" label, but issuing
+    // credit awards no VIPs points at all — POST /merchant/credits writes a
+    // dinar ledger row. It now just mirrors the amount.
+    test('points mirrors the entered amount, not a fabricated x100 rate', () {
+      c.onNumberPressed('5');
+      expect(c.points.value, equals('5'));
     });
 
     test('onDecimalPressed adds a dot only once', () {
@@ -469,15 +474,32 @@ void main() {
       c.onNumberPressed('9');
       c.onDeletePressed();
       expect(c.amount.value, equals('0.000'));
-      // _calculatePoints() re-runs on the reset value: 0.000 * 100 -> '0'
-      // (not the '000' seen only in the field's un-computed initial state).
-      expect(c.points.value, equals('0'));
+      expect(c.points.value, equals('0.000'));
     });
 
-    test('exchangeRate and serviceChargeRate constants are as configured',
-        () {
-      expect(c.exchangeRate, equals(100.0));
-      expect(c.serviceChargeRate, equals(0.10));
+    // The removed `exchangeRate` (100) and `serviceChargeRate` (0.10) had no
+    // backing on the endpoint: no points are minted and no fee is charged.
+    // What is real, and now enforced server-side, is the per-transaction
+    // range the form has always advertised.
+    test('amountError stays empty until real limits have loaded', () {
+      c.onNumberPressed('5');
+      expect(c.limitsLoaded.value, isFalse);
+      expect(c.amountError, isEmpty);
+    });
+
+    test('amountError reports the real min/max once limits are known', () {
+      c.minAmount.value = 25;
+      c.maxAmount.value = 1000;
+      c.limitsLoaded.value = true;
+
+      c.amount.value = '10';
+      expect(c.amountError, contains('Minimum'));
+
+      c.amount.value = '5000';
+      expect(c.amountError, contains('Maximum'));
+
+      c.amount.value = '200';
+      expect(c.amountError, isEmpty);
     });
   });
 
@@ -536,12 +558,27 @@ void main() {
       expect(c.isPublished.value, isTrue);
     });
 
-    test('default shipping / item type selections', () {
-      expect(c.isDelivery.value, isTrue);
-      expect(c.isTakeaway.value, isTrue);
-      expect(c.isDineIn.value, isFalse);
+    // The delivery/takeaway/dine-in defaults that used to be asserted here
+    // backed a ShippingOptions block that nothing ever sent to the backend —
+    // fulfilment is a per-order choice (Order.orderType), not a per-product
+    // one — so both the state and the widget were removed.
+    test('default item type selections', () {
       expect(c.selectedItemType.value, equals('Product'));
       expect(c.selectedTaxMethod.value, equals('Exclusive'));
+    });
+
+    test('buildItemPayload carries the fields the old form silently dropped', () {
+      c.selectedItemType.value = 'Service';
+      c.itemAlertQtyCtrl.text = '7';
+      c.selectedCategory.value = 'Food';
+
+      final payload = c.buildItemPayload(name: 'Latte', price: 6.0, promo: 4.5);
+
+      expect(payload['productType'], equals('Service'));
+      expect(payload['alertQty'], equals(7));
+      expect(payload['discountPrice'], equals(4.5));
+      expect(payload['category'], equals('Food'));
+      expect(payload['price'], equals(6.0));
     });
   });
 
@@ -555,19 +592,49 @@ void main() {
       c = MerchantSubscriptionController();
     });
 
-    test('initial package selection defaults', () {
-      expect(c.selectedPackageName.value, equals('Basic'));
-      expect(c.selectedPackagePrice.value, equals(99.00));
-      expect(c.selectedPackageDuration.value, equals(120));
-      expect(c.paymentMethod.value, equals('COD'));
-      expect(c.currentCommission.value, equals(0.3));
+    // The old defaults asserted here ('Basic' / 99.00 / 120 days / 'COD' /
+    // 0.3% commission) were placeholders unrelated to any real plan: the
+    // catalogue starts at Free/0, there is no commission concept, and the
+    // subscribe endpoint always charges walletBalance rather than a method.
+    test('starts on the free plan with a monthly cycle', () {
+      expect(c.selectedPackageName.value, equals('free'));
+      expect(c.selectedPackagePrice.value, equals(0.0));
+      expect(c.billingCycle.value, equals('monthly'));
     });
 
-    test('selectPackage updates name, price and duration together', () {
-      c.selectPackage('Pro', 199.0, 365);
-      expect(c.selectedPackageName.value, equals('Pro'));
-      expect(c.selectedPackagePrice.value, equals(199.0));
-      expect(c.selectedPackageDuration.value, equals(365));
+    test('selectPackage updates name and price together', () {
+      c.selectPackage('pro', 29.99);
+      expect(c.selectedPackageName.value, equals('pro'));
+      expect(c.selectedPackagePrice.value, equals(29.99));
+    });
+
+    test('priceFor charges 10x monthly on a yearly cycle (two months free)', () {
+      c.billingCycle.value = 'monthly';
+      expect(c.priceFor(29.99), equals(29.99));
+      expect(c.monthsForCycle, equals(1));
+      c.billingCycle.value = 'yearly';
+      expect(c.priceFor(29.99), closeTo(299.9, 0.001));
+      expect(c.monthsForCycle, equals(12));
+    });
+
+    test('featureLabels renders -1 as Unlimited, not "-1 Products"', () {
+      final labels = MerchantSubscriptionController.featureLabels({
+        'maxProducts': -1,
+        'maxCashiers': 10,
+        'analytics': true,
+        'adsEnabled': false,
+        'apiAccess': true,
+      });
+      expect(labels, contains('Unlimited Products'));
+      expect(labels, contains('10 Cashiers'));
+      expect(labels, contains('Analytics'));
+      expect(labels, contains('API Access'));
+      expect(labels, isNot(contains('Advertisements')));
+    });
+
+    test('featureLabels tolerates a missing/!Map features payload', () {
+      expect(MerchantSubscriptionController.featureLabels(null), isEmpty);
+      expect(MerchantSubscriptionController.featureLabels('nope'), isEmpty);
     });
   });
 
@@ -653,9 +720,42 @@ void main() {
     test('CustomerModel.fromJson falls back name to "Unknown"', () {
       final customer = CustomerModel.fromJson({});
       expect(customer.name, equals('Unknown'));
-      expect(customer.lastVisit, equals('Unknown'));
+      // lastVisit is the date of the customer's latest transaction with this
+      // merchant, not their signup date — "no visits yet" when there is none.
+      expect(customer.lastVisit, equals('No visits yet'));
       expect(customer.totalVisits, equals(0));
       expect(customer.pointsEarned, equals(0));
+      expect(customer.pointsSpent, equals(0));
+    });
+
+    test('CustomerModel stats are merchant-scoped, not the global wallet', () {
+      final customer = CustomerModel.fromJson({
+        'fullName': 'Jane Doe',
+        // What this merchant actually gave/took:
+        'totalVisits': 3,
+        'pointsEarned': 1020,
+        'pointsSpent': 40,
+        // The customer's platform-wide balance, which used to be shown as
+        // "Earned" as though this merchant had granted all of it:
+        'walletPoints': 52320,
+      });
+      expect(customer.totalVisits, equals(3));
+      expect(customer.pointsEarned, equals(1020));
+      expect(customer.pointsSpent, equals(40));
+    });
+
+    test('CustomerModel.fromJson survives a malformed lastVisit', () {
+      final customer = CustomerModel.fromJson({'lastVisit': 'not-a-date'});
+      expect(customer.lastVisit, equals('No visits yet'));
+    });
+
+    test('CustomerModel prefers the real profile image over the avatar', () {
+      final customer = CustomerModel.fromJson({
+        'fullName': 'Jane Doe',
+        'profileImage': 'http://cdn.example.com/jane.png',
+      });
+      // Rewritten to https so iOS ATS does not silently drop it.
+      expect(customer.imageUrl, equals('https://cdn.example.com/jane.png'));
     });
 
     test('CustomerModel.fromJson prefers fullName over name', () {

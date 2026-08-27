@@ -276,7 +276,10 @@ void main() {
   });
 
   group('statusFilters', () {
-    test('exposes the fixed set of status filter labels', () {
+    // The list must stay in step with Order.status's enum in
+    // models/Order.js — handover / picked_up / refund_requested / refunded
+    // were missing, so orders in those states had no tab at all.
+    test('covers every status the backend enum can produce', () {
       expect(
         c.statusFilters,
         equals([
@@ -285,10 +288,21 @@ void main() {
           'confirmed',
           'processing',
           'ready',
+          'handover',
+          'picked_up',
           'delivered',
           'canceled',
+          'refund_requested',
+          'refunded',
         ]),
       );
+    });
+
+    test('every filter has a human label', () {
+      for (final status in c.statusFilters) {
+        expect(MerchantOrderController.statusLabels[status], isNotNull,
+            reason: 'missing label for "$status"');
+      }
     });
   });
 }

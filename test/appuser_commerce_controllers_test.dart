@@ -29,6 +29,9 @@ import 'package:vip/appuser/modules/mobile/controllers/mobile_controller.dart';
 import 'package:vip/appuser/modules/packages/controllers/packages_controller.dart';
 import 'package:vip/appuser/modules/pay_bills/controllers/pay_bills_controller.dart';
 
+// GiftController.toggleUserIdInput was removed — nothing called it and the
+// recipient field is always enabled.
+
 Package _pkg({
   required String id,
   required PackageTier tier,
@@ -202,26 +205,7 @@ void main() {
       expect(gift.isUserIdEnabled.value, isTrue);
     });
 
-    test('toggleUserIdInput disables input and clears the user id text', () {
-      gift.userIdController.text = '12345';
-      gift.toggleUserIdInput();
-      expect(gift.isUserIdEnabled.value, isFalse);
-      expect(gift.userIdController.text, isEmpty);
-    });
 
-    test('toggleUserIdInput re-enables input', () {
-      gift.toggleUserIdInput(); // -> disabled
-      gift.toggleUserIdInput(); // -> re-enabled
-      expect(gift.isUserIdEnabled.value, isTrue);
-    });
-
-    test('toggleExpress flips the express flag', () {
-      expect(gift.isExpressSelected.value, isFalse);
-      gift.toggleExpress();
-      expect(gift.isExpressSelected.value, isTrue);
-      gift.toggleExpress();
-      expect(gift.isExpressSelected.value, isFalse);
-    });
 
     test('proceed() with an empty recipient id returns early', () {
       gift.userIdController.text = '';
@@ -340,21 +324,12 @@ void main() {
       bills = BillsController();
     });
 
-    test('primaryColor depends on selectedRole', () {
-      expect(bills.selectedRole.value, equals('Customer'));
+    // The Vendor/Agent/Business colour branches were removed with
+    // BillsController.selectedRole: the consumer app has no role switcher, the
+    // flag never left 'Customer', and the multi-role screens were deleted in an
+    // earlier pass — so only the orange branch could ever render.
+    test('primaryColor is the customer orange', () {
       expect(bills.primaryColor, equals(Colors.orange));
-
-      bills.selectedRole.value = 'Vendor';
-      expect(bills.primaryColor, equals(const Color(0xFFFFC107)));
-
-      bills.selectedRole.value = 'Agent';
-      expect(bills.primaryColor, equals(const Color(0xFF2196F3)));
-
-      bills.selectedRole.value = 'Business';
-      expect(bills.primaryColor, equals(Colors.blue));
-
-      bills.selectedRole.value = 'SomethingElse';
-      expect(bills.primaryColor, equals(Colors.blue));
     });
 
     test('formatDate renders as month/day', () {

@@ -49,9 +49,7 @@ void main() {
       c.endDate.value = DateTime.now();
       c.uploadedImageUrl.value = 'http://x';
       c.isArabicSelected.value = true;
-      c.showReview.value = true;
-      c.showRating.value = true;
-      c.selectedCategory.value = 'Flash Sale';
+      c.selectedCategory.value = 'Sponsored';
 
       c.resetForm();
 
@@ -62,9 +60,18 @@ void main() {
       expect(c.endDate.value, isNull);
       expect(c.uploadedImageUrl.value, isEmpty);
       expect(c.isArabicSelected.value, isFalse);
-      expect(c.showReview.value, isFalse);
-      expect(c.showRating.value, isFalse);
-      expect(c.selectedCategory.value, equals('Auto Promotion'));
+      expect(c.selectedCategory.value, equals('Banner'));
+    });
+
+    test('every ad type option maps to a real MerchantAd.adType enum value', () {
+      // The form used to offer 'Auto Promotion' / 'Flash Sale' and send them
+      // lower-cased with underscores, which the backend enum
+      // (banner|sponsored|featured|popup) rejected — every ad creation 500'd.
+      const backendEnum = {'banner', 'sponsored', 'featured', 'popup'};
+      for (final value in MerchantAdsController.adTypeOptions.values) {
+        expect(backendEnum, contains(value));
+      }
+      expect(MerchantAdsController.adTypeOptions, contains('Banner'));
     });
 
     test('submitAdForm is a no-op when the title is empty', () async {
@@ -298,24 +305,32 @@ void main() {
       c = MerchantProfileController();
     });
 
-    test('verifyPin returns false for a non-matching PIN', () async {
-      final profile = BusinessProfile(
-        id: 'p1',
-        name: 'Store',
-        type: 'Business',
-        logoUrl: '',
-        pin: '0000',
-        isActive: true,
-      );
-      final result = await c.verifyPin(profile, '9999');
+    // The PIN is verified server-side now (POST /auth/pin/verify). With no
+    // backend reachable in a unit test the call fails, which must read as
+    // "not verified" rather than as a pass — the old implementation compared
+    // against a SharedPreferences value that was never written, so '0000'
+    // always unlocked.
+    test('verifyPin returns false when the server does not confirm', () async {
+      final result = await c.verifyPin('9999');
       expect(result, isFalse);
       expect(c.isVerifying.value, isFalse);
     });
 
-    test('changePin persists the new PIN to SharedPreferences', () async {
-      await c.changePin('4321');
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('merchant_pin'), equals('4321'));
+    test('a business profile carries its real registration status', () {
+      const profile = BusinessProfile(
+        id: 'p1',
+        name: 'Store',
+        type: 'Business',
+        logoUrl: '',
+        status: 'pending',
+        isActive: true,
+      );
+      expect(profile.statusLabel, equals('Pending review'));
+      expect(
+        const BusinessProfile(id: 'p2', name: 'S', type: 'B', logoUrl: '')
+            .statusLabel,
+        equals('Not registered'),
+      );
     });
   });
 

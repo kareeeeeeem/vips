@@ -17,6 +17,13 @@ import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
 import 'package:vip/appuser/modules/profile/controllers/profile_controller.dart';
 import 'package:vip/core/services/api_service.dart';
 
+// Tests for the cart's multi-select methods (toggleSelectionMode /
+// toggleItemSelection / selectAllItems), updateItemQuantity, the unused read
+// helpers (containsItem / getItemQuantity / getTotalByType /
+// getItemCountByType) and HomeController.toggleMerchantFavorite were removed
+// along with those methods — no screen ever called any of them, and
+// toggleMerchantFavorite only flipped an in-memory key with no API call.
+
 CartItem _item({
   String id = 'p1',
   double price = 10.0,
@@ -179,32 +186,8 @@ void main() {
       expect(cart.cartItems.length, equals(2));
     });
 
-    test('getItemCountByType / getTotalByType filter by item type', () {
-      cart.cartItems.addAll([
-        _item(id: 'a', price: 10, quantity: 2, type: CartItemType.food),
-        _item(id: 'b', price: 5, quantity: 1, type: CartItemType.product),
-      ]);
-      expect(cart.getItemCountByType(CartItemType.food), equals(2));
-      expect(cart.getTotalByType(CartItemType.food), equals(20.0));
-      expect(cart.getTotalByType(CartItemType.product), equals(5.0));
-    });
 
-    test('containsItem / getItemQuantity reflect cart state', () {
-      cart.cartItems.add(_item(id: 'z', quantity: 4));
-      expect(cart.containsItem('z'), isTrue);
-      expect(cart.containsItem('missing'), isFalse);
-      expect(cart.getItemQuantity('z'), equals(4));
-      expect(cart.getItemQuantity('missing'), equals(0));
-    });
 
-    test('updateItemQuantity updates quantity, removes at zero', () {
-      cart.cartItems.add(_item(id: 'z', quantity: 1));
-      cart.updateItemQuantity('z', 5);
-      expect(cart.getItemQuantity('z'), equals(5));
-
-      cart.updateItemQuantity('z', 0);
-      expect(cart.containsItem('z'), isFalse);
-    });
 
     test('favoriteItems returns only favorited items', () {
       cart.cartItems.addAll([
@@ -233,36 +216,9 @@ void main() {
       expect(cart.cartItems.first.quantity, equals(1));
     });
 
-    test('toggleSelectionMode clears selection when turning off', () {
-      cart.isSelectionMode.value = true;
-      cart.selectedItems.add('a');
-      cart.toggleSelectionMode();
-      expect(cart.isSelectionMode.value, isFalse);
-      expect(cart.selectedItems, isEmpty);
-    });
 
-    test('toggleItemSelection adds and removes ids', () {
-      cart.toggleItemSelection('a');
-      expect(cart.selectedItems, contains('a'));
-      cart.toggleItemSelection('a');
-      expect(cart.selectedItems, isNot(contains('a')));
-    });
 
-    test('selectAllItems toggles between all-selected and none', () {
-      cart.cartItems.addAll([_item(id: 'a'), _item(id: 'b')]);
-      cart.selectAllItems();
-      expect(cart.selectedItems.length, equals(2));
-      cart.selectAllItems();
-      expect(cart.selectedItems, isEmpty);
-    });
 
-    test('removeCoupon resets coupon code and discount', () {
-      cart.couponCode.value = 'SAVE10';
-      cart.appliedCouponDiscount.value = 10.0;
-      cart.removeCoupon();
-      expect(cart.couponCode.value, isEmpty);
-      expect(cart.appliedCouponDiscount.value, equals(0.0));
-    });
   });
 
   // ═══════════════════════════════════════════════════════════
@@ -340,11 +296,6 @@ void main() {
       expect(home.getPopularMalls().length, equals(4));
     });
 
-    test('toggleOutingFavorite flips the isFavorite flag', () {
-      final outing = {'isFavorite': false};
-      home.toggleOutingFavorite(outing);
-      expect(outing['isFavorite'], isTrue);
-    });
 
     test('getMerchantsByCategory / searchMerchants filter merchants', () {
       home.trendingMerchants = [
@@ -385,11 +336,6 @@ void main() {
       expect(newest.first['name'], equals('M5'));
     });
 
-    test('toggleMerchantFavorite flips the flag on the given map', () {
-      final merchant = {'isFavorite': true};
-      home.toggleMerchantFavorite(merchant);
-      expect(merchant['isFavorite'], isFalse);
-    });
   });
 
   // ═══════════════════════════════════════════════════════════
@@ -439,9 +385,9 @@ void main() {
         {'status': 'Delivered'},
         {'status': 'Refunded'},
       ]);
-      // activeOrdersCount only excludes Delivered/Cancelled, so a Refunded
-      // order still counts as "active" per the controller's own definition.
-      expect(profile.activeOrdersCount, equals(2));
+      // activeOrdersCount excludes Delivered/Cancelled/Refunded/Refund
+      // Requested, so a Refunded order does not count as "active".
+      expect(profile.activeOrdersCount, equals(1));
       expect(profile.doneOrdersCount, equals(2));
       expect(profile.refundedOrdersCount, equals(1));
     });

@@ -313,20 +313,29 @@ void main() {
   // ═══════════════════════════════════════════════════════════
   group('Order Controller Logic Tests', () {
     test('6.1  Status filter list contains expected statuses', () {
-      // Mirrors MerchantOrderController.statusFilters
+      // Mirrors MerchantOrderController.statusFilters, which now covers
+      // Order.status's full enum (handover / picked_up / refund_requested /
+      // refunded used to be missing).
       const filters = [
         'all',
         'pending',
         'confirmed',
         'processing',
         'ready',
+        'handover',
+        'picked_up',
         'delivered',
         'canceled',
+        'refund_requested',
+        'refunded',
       ];
       expect(filters.contains('all'), isTrue);
       expect(filters.contains('pending'), isTrue);
       expect(filters.contains('delivered'), isTrue);
-      expect(filters.length, equals(7));
+      expect(filters.contains('handover'), isTrue);
+      expect(filters.contains('picked_up'), isTrue);
+      expect(filters.contains('refunded'), isTrue);
+      expect(filters.length, equals(11));
     });
 
     test('6.2  Order status color mapping — delivered is green', () {

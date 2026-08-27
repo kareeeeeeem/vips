@@ -241,7 +241,17 @@ void main() async {
       billServiceId = bills.first['_id'].toString();
     });
 
-    test('POST /services/bill-inquiry → returns dueDate + amountDue', () async {
+    // Bill inquiry used to answer with a Math.random() "amount due", which then
+    // fed the real pay-bill flow. With no utility-provider account behind it
+    // (UTILITY_BILLS_API_KEY unset) the endpoint now refuses honestly instead
+    // of inventing a number — this asserts that contract, and will assert the
+    // real lookup once a provider is wired up and the key is set.
+    test('POST /services/bill-inquiry → honest 503 until a provider is configured',
+        () async {
+      final status = await _get('/services/status', token: _token);
+      final utilityConfigured =
+          status['data']?['utilityBills']?['configured'] == true;
+
       final r = await _post(
         '/services/bill-inquiry',
         {
@@ -251,10 +261,15 @@ void main() async {
         },
         token: _token,
       );
-      expect(r['success'], isTrue, reason: r.toString());
-      expect(r['data']?['dueDate'], isNotNull);
-      expect(r['data']?['amountDue'], isNotNull);
-      expect(r['data']?['status'], equals('Unpaid'));
+
+      if (utilityConfigured) {
+        expect(r['success'], isTrue, reason: r.toString());
+        expect(r['data']?['dueDate'], isNotNull);
+        expect(r['data']?['amountDue'], isNotNull);
+      } else {
+        expect(r['success'], isFalse, reason: r.toString());
+        expect(r['message'].toString().toLowerCase(), contains('available'));
+      }
     });
 
     test('POST /services/bill-inquiry missing subscriberNumber → 400', () async {

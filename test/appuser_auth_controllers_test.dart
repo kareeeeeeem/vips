@@ -28,6 +28,10 @@ import 'package:vip/appuser/modules/login/controllers/login_controller.dart';
 import 'package:vip/appuser/modules/edit_profile/controllers/edit_profile_controller.dart';
 import 'package:vip/appuser/modules/main_app/controllers/main_app_controller.dart';
 
+// Tests for LoginController.toggleRememberMe and
+// MainAppController.toggleAmountVisibility were removed with those methods:
+// neither flag was read anywhere in the app and no control toggled them.
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -285,12 +289,6 @@ void main() {
       expect(controller.isPasswordVisible, isFalse);
     });
 
-    test('toggleRememberMe flips rememberMe', () {
-      controller.toggleRememberMe();
-      expect(controller.rememberMe, isTrue);
-      controller.toggleRememberMe();
-      expect(controller.rememberMe, isFalse);
-    });
 
     test('togglePasswordVisibility flips isPasswordVisible', () {
       controller.togglePasswordVisibility();
@@ -376,12 +374,6 @@ void main() {
       expect(controller.currentIndex.value, equals(2));
     });
 
-    test('toggleAmountVisibility flips isAmountVisible', () {
-      controller.toggleAmountVisibility();
-      expect(controller.isAmountVisible.value, isTrue);
-      controller.toggleAmountVisibility();
-      expect(controller.isAmountVisible.value, isFalse);
-    });
 
     test('userPoints falls back to 0.0 when no ProfileController is registered',
         () {
