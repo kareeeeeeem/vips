@@ -19,6 +19,7 @@ class AdminDrawer extends StatelessWidget {
     AdminNavEntry(AdminRoutes.MERCHANTS, 'Merchants', Icons.storefront_outlined),
     AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_outlined),
     AdminNavEntry(AdminRoutes.INVENTORY, 'Inventory', Icons.inventory_2_outlined),
+    AdminNavEntry(AdminRoutes.POS, 'Point of Sale', Icons.point_of_sale_outlined),
     AdminNavEntry(AdminRoutes.REPORTS, 'Reports', Icons.insert_chart_outlined),
     AdminNavEntry(AdminRoutes.SETTINGS, 'Settings', Icons.settings_outlined),
   ];

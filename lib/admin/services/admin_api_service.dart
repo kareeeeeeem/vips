@@ -194,6 +194,105 @@ class AdminApiService {
             'reason': reason,
           }));
 
+  // ── Point of sale ─────────────────────────────────────────
+  Future<ApiResponse> posSession() => _api.get('/admin/pos/session');
+
+  Future<ApiResponse> posStartSession(String merchantId, num openingFloat) =>
+      _api.post('/admin/pos/session/start',
+          {'merchantId': merchantId, 'openingFloat': openingFloat});
+
+  Future<ApiResponse> posEndSession(num closingCount) =>
+      _api.post('/admin/pos/session/end', {'closingCount': closingCount});
+
+  Future<ApiResponse> posSessions({int limit = 20, String? status}) =>
+      _api.get('/admin/pos/sessions',
+          queryParams: _clean({'limit': limit, 'status': status}));
+
+  Future<ApiResponse> posCart() => _api.get('/admin/pos/cart');
+
+  Future<ApiResponse> posAddToCart(String productId, int quantity) =>
+      _api.post('/admin/pos/cart/add', {'productId': productId, 'quantity': quantity});
+
+  /// A quantity of 0 removes the line — the natural thing on a till keypad.
+  Future<ApiResponse> posUpdateCartLine(String itemId, int quantity) =>
+      _api.put('/admin/pos/cart/update', {'itemId': itemId, 'quantity': quantity});
+
+  Future<ApiResponse> posRemoveCartLine(String itemId) =>
+      _api.delete('/admin/pos/cart/remove/$itemId');
+
+  Future<ApiResponse> posClearCart() => _api.delete('/admin/pos/cart/clear');
+
+  Future<ApiResponse> posApplyDiscount(num amount, String type) =>
+      _api.post('/admin/pos/cart/discount', {'amount': amount, 'type': type});
+
+  Future<ApiResponse> posAttachCustomer({
+    String? customerId,
+    String? name,
+    String? phone,
+  }) =>
+      _api.post('/admin/pos/cart/customer', _clean({
+            'customerId': customerId,
+            'name': name,
+            'phone': phone,
+          }));
+
+  Future<ApiResponse> posCreateInvoice({
+    required String paymentMethod,
+    required num amountPaid,
+    String note = '',
+  }) =>
+      _api.post('/admin/pos/invoice/create', {
+        'paymentMethod': paymentMethod,
+        'amountPaid': amountPaid,
+        'note': note,
+      });
+
+  Future<ApiResponse> posInvoice(String id) => _api.get('/admin/pos/invoice/$id');
+
+  Future<ApiResponse> posInvoices({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? status,
+    String? merchantId,
+    String? from,
+    String? to,
+  }) =>
+      _api.get('/admin/pos/invoices', queryParams: _clean({
+            'page': page,
+            'limit': limit,
+            'search': search,
+            'status': status,
+            'merchantId': merchantId,
+            'from': from,
+            'to': to,
+          }));
+
+  Future<ApiResponse> posRefundInvoice(String invoiceId, String reason) =>
+      _api.post('/admin/pos/invoice/refund',
+          {'invoiceId': invoiceId, 'reason': reason});
+
+  Future<ApiResponse> posCustomers({String? search, int limit = 20}) =>
+      _api.get('/admin/pos/customers',
+          queryParams: _clean({'search': search, 'limit': limit}));
+
+  Future<ApiResponse> posCreateCustomer({
+    required String fullName,
+    required String phone,
+    String? email,
+  }) =>
+      _api.post('/admin/pos/customers', _clean({
+            'fullName': fullName,
+            'phone': phone,
+            'email': email,
+          }));
+
+  /// The till sells the merchant's catalogue, so the product list comes from
+  /// the public content route scoped to that merchant.
+  Future<ApiResponse> merchantProducts(String merchantId, {String? search}) =>
+      _api.get('/content/products',
+          queryParams: _clean({'merchantId': merchantId, 'search': search, 'limit': 100}));
+
   // ── Reports ───────────────────────────────────────────────
   Future<ApiResponse> salesReport({String? from, String? to}) =>
       _api.get('/admin/reports/sales', queryParams: _clean({'from': from, 'to': to}));

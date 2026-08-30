@@ -20,6 +20,10 @@ abstract class AdminRoutes {
   static const INVENTORY_MOVEMENTS  = _AdminPaths.INVENTORY_MOVEMENTS;
   static const INVENTORY_TRANSFERS  = _AdminPaths.INVENTORY_TRANSFERS;
   static const INVENTORY_ALERTS     = _AdminPaths.INVENTORY_ALERTS;
+  static const POS              = _AdminPaths.POS;
+  static const POS_CHECKOUT     = _AdminPaths.POS_CHECKOUT;
+  static const POS_INVOICE      = _AdminPaths.POS_INVOICE;
+  static const POS_INVOICES     = _AdminPaths.POS_INVOICES;
   static const REPORTS          = _AdminPaths.REPORTS;
   static const SETTINGS         = _AdminPaths.SETTINGS;
 
@@ -46,6 +50,10 @@ abstract class _AdminPaths {
   static const INVENTORY_MOVEMENTS  = '/inventory/movements';
   static const INVENTORY_TRANSFERS  = '/inventory/transfers';
   static const INVENTORY_ALERTS     = '/inventory/alerts';
+  static const POS              = '/pos';
+  static const POS_CHECKOUT     = '/pos/checkout';
+  static const POS_INVOICE      = '/pos/invoice';
+  static const POS_INVOICES     = '/pos/invoices';
   static const REPORTS          = '/reports';
   static const SETTINGS         = '/settings';
 }

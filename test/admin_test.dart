@@ -15,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:vip/admin/core/theme/admin_theme.dart';
+import 'package:vip/admin/core/routes/admin_pages.dart';
 import 'package:vip/admin/core/routes/admin_routes.dart';
 import 'package:vip/admin/core/widgets/admin_bottom_nav.dart';
 import 'package:vip/admin/core/widgets/admin_drawer.dart';
@@ -210,15 +211,42 @@ void main() {
   // Navigation wiring
   // ═══════════════════════════════════════════════════════════
   group('Navigation', () {
-    test('every drawer destination is a declared route', () {
-      const declared = [
-        AdminRoutes.DASHBOARD, AdminRoutes.USERS, AdminRoutes.MERCHANTS,
-        AdminRoutes.ORDERS, AdminRoutes.INVENTORY, AdminRoutes.REPORTS,
-        AdminRoutes.SETTINGS,
-      ];
+    test('every drawer destination has a registered page', () {
+      // Checked against the real route table rather than a list repeated
+      // here: a hand-maintained copy goes stale the moment a section is
+      // added, and then the test fails for the wrong reason.
+      final registered = AdminPages.routes.map((r) => r.name).toSet();
       for (final entry in AdminDrawer.entries) {
-        expect(declared, contains(entry.route),
-            reason: '${entry.label} points at an undeclared route');
+        expect(registered, contains(entry.route),
+            reason: '${entry.label} points at a route with no GetPage');
+      }
+    });
+
+    test('every registered page is reachable from the drawer or another screen', () {
+      // Detail, checkout and sibling-tab routes are opened from a parent
+      // screen rather than the drawer, so they are listed here explicitly.
+      // Anything not in either set would be a page nothing can navigate to.
+      const openedFromAnotherScreen = {
+        AdminRoutes.SPLASH,
+        AdminRoutes.LOGIN,
+        AdminRoutes.USER_DETAILS,
+        AdminRoutes.MERCHANT_DETAILS,
+        AdminRoutes.ORDER_DETAILS,
+        AdminRoutes.INVENTORY_MOVEMENTS,
+        AdminRoutes.INVENTORY_TRANSFERS,
+        AdminRoutes.INVENTORY_ALERTS,
+        AdminRoutes.POS_CHECKOUT,
+        AdminRoutes.POS_INVOICE,
+        AdminRoutes.POS_INVOICES,
+      };
+      final drawerRoutes = AdminDrawer.entries.map((e) => e.route).toSet();
+      for (final page in AdminPages.routes) {
+        expect(
+          drawerRoutes.contains(page.name) ||
+              openedFromAnotherScreen.contains(page.name),
+          isTrue,
+          reason: '${page.name} is registered but nothing navigates to it',
+        );
       }
     });
 

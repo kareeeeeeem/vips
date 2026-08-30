@@ -17,6 +17,11 @@ import '../../modules/merchants/views/merchants_list_view.dart';
 import '../../modules/orders/bindings/orders_binding.dart';
 import '../../modules/orders/views/order_details_view.dart';
 import '../../modules/orders/views/orders_list_view.dart';
+import '../../modules/pos/bindings/pos_binding.dart';
+import '../../modules/pos/views/pos_checkout_view.dart';
+import '../../modules/pos/views/pos_home_view.dart';
+import '../../modules/pos/views/pos_invoice_view.dart';
+import '../../modules/pos/views/pos_invoices_view.dart';
 import '../../modules/reports/bindings/reports_binding.dart';
 import '../../modules/reports/views/reports_view.dart';
 import '../../modules/settings/bindings/admin_settings_binding.dart';
@@ -109,6 +114,27 @@ class AdminPages {
       name: AdminRoutes.INVENTORY_ALERTS,
       page: () => const LowStockAlertsView(),
       binding: AdminLowStockBinding(),
+    ),
+    // The till. Checkout shares the PosController with the till screen, so
+    // it reads the same server-owned cart rather than a copy.
+    GetPage(
+      name: AdminRoutes.POS,
+      page: () => const PosHomeView(),
+      binding: PosBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.POS_CHECKOUT,
+      page: () => const PosCheckoutView(),
+      binding: PosBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.POS_INVOICE,
+      page: () => const PosInvoiceView(),
+    ),
+    GetPage(
+      name: AdminRoutes.POS_INVOICES,
+      page: () => const PosInvoicesView(),
+      binding: PosInvoicesBinding(),
     ),
     GetPage(
       name: AdminRoutes.REPORTS,
