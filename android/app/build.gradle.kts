@@ -50,6 +50,12 @@ android {
             dimension = "app"
             applicationId = "com.vips.merchant"
         }
+        // Admin console. Unlike the other two it never calls Firebase, so it
+        // needs no google-services.json of its own — see lib/main_admin.dart.
+        create("admin") {
+            dimension = "app"
+            applicationId = "com.vips.admin"
+        }
     }
 
     signingConfigs {
@@ -76,4 +82,18 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// The admin console (lib/main_admin.dart) signs in with email + password
+// against /api/admin/login and never touches Firebase, so it has no Firebase
+// app registered and no google-services.json. The Google Services plugin is
+// applied for the whole module, so its per-variant task would fail the admin
+// build looking for that file. Disabling the task for admin variants only
+// leaves consumer and merchant — the two flavors that really do use Firebase
+// Auth — completely untouched.
+tasks.matching {
+    it.name.startsWith("process") && it.name.contains("Admin") &&
+        it.name.endsWith("GoogleServices")
+}.configureEach {
+    enabled = false
 }

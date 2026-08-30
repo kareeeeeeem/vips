@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
-# الفلافور: consumer (appuser, default) أو merchant (appmerchant)
+# الفلافور: consumer (appuser, default) أو merchant (appmerchant) أو admin (لوحة التحكم)
 FLAVOR="${1:-consumer}"
 case "$FLAVOR" in
   consumer) TARGET="lib/main.dart" ;;
   merchant) TARGET="lib/main_merchant.dart" ;;
-  *) echo "Usage: ./run.sh [consumer|merchant]"; exit 1 ;;
+  admin)    TARGET="lib/admin/main_admin.dart" ;;
+  *) echo "Usage: ./run.sh [consumer|merchant|admin]"; exit 1 ;;
 esac
 
 # 1. تنظيف كاش فلاتر القديم
@@ -18,8 +19,14 @@ echo "📦 Getting pub packages..."
 flutter pub get
 
 # 3. الدخول لمجلد iOS لإعادة بناء الكاكوبودز من الصفر
-echo "🍎 Rebuilding iOS Pods..."
-(cd ios && rm -rf Pods Podfile.lock .symlinks && pod install)
+# لوحة التحكم (admin) ليس لها scheme على iOS — تعمل على أندرويد والويب فقط،
+# فلا داعي لمسح وإعادة بناء الـ Pods من أجلها.
+if [ "$FLAVOR" != "admin" ]; then
+  echo "🍎 Rebuilding iOS Pods..."
+  (cd ios && rm -rf Pods Podfile.lock .symlinks && pod install)
+else
+  echo "⏭  Skipping iOS Pods (admin console has no iOS scheme)."
+fi
 
 # 4. تشغيل التطبيق بالفلافور المطلوب
 echo "🚀 Running $FLAVOR app ($TARGET)..."
