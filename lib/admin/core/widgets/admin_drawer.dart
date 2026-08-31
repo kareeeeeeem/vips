@@ -60,6 +60,8 @@ class AdminDrawer extends StatelessWidget {
             Icons.swap_vert_rounded, permission: 'inventory.read'),
         AdminNavEntry(AdminRoutes.INVENTORY_TRANSFERS, 'Transfers',
             Icons.compare_arrows_rounded, permission: 'inventory.transfer'),
+        AdminNavEntry(AdminRoutes.INVENTORY_ADJUSTMENTS, 'Adjustments',
+            Icons.tune_rounded, permission: 'inventory.read'),
         AdminNavEntry(AdminRoutes.INVENTORY_ALERTS, 'Low stock',
             Icons.warning_amber_rounded, permission: 'inventory.read'),
       ],
@@ -132,6 +134,8 @@ class AdminDrawer extends StatelessWidget {
       children: [
         AdminNavEntry(AdminRoutes.SETTINGS, 'Administrators',
             Icons.admin_panel_settings_outlined, permission: 'settings.read'),
+        AdminNavEntry(AdminRoutes.SETTINGS_STAFF_PERMISSIONS, 'Staff permissions',
+            Icons.key_outlined, permission: 'staff.read'),
         AdminNavEntry(AdminRoutes.SETTINGS_SYSTEM, 'System',
             Icons.dns_outlined, permission: 'settings.read'),
       ],

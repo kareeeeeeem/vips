@@ -18,8 +18,12 @@ class InventoryMovementsView extends GetView<InventoryMovementsController> {
   @override
   Widget build(BuildContext context) {
     return AdminScaffold(
-      title: 'Stock Movements',
-      route: AdminRoutes.INVENTORY,
+      // Adjustments is this ledger with the type filter already applied, not
+      // a second screen — one list, so the two can never disagree.
+      title: controller.adjustmentsOnly.value ? 'Adjustments' : 'Stock Movements',
+      route: controller.adjustmentsOnly.value
+          ? AdminRoutes.INVENTORY_ADJUSTMENTS
+          : AdminRoutes.INVENTORY_MOVEMENTS,
       onRefresh: () => controller.load(),
       actions: [
         IconButton(

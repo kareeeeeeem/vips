@@ -26,6 +26,7 @@ abstract class AdminRoutes {
   static const INVENTORY_MOVEMENTS  = _AdminPaths.INVENTORY_MOVEMENTS;
   static const INVENTORY_TRANSFERS  = _AdminPaths.INVENTORY_TRANSFERS;
   static const INVENTORY_ALERTS     = _AdminPaths.INVENTORY_ALERTS;
+  static const INVENTORY_ADJUSTMENTS = _AdminPaths.INVENTORY_ADJUSTMENTS;
   static const POS              = _AdminPaths.POS;
   static const POS_CHECKOUT     = _AdminPaths.POS_CHECKOUT;
   static const POS_INVOICE      = _AdminPaths.POS_INVOICE;
@@ -51,6 +52,7 @@ abstract class AdminRoutes {
   static const AUDIT            = _AdminPaths.AUDIT;
   static const SETTINGS         = _AdminPaths.SETTINGS;
   static const SETTINGS_SYSTEM  = _AdminPaths.SETTINGS_SYSTEM;
+  static const SETTINGS_STAFF_PERMISSIONS = _AdminPaths.SETTINGS_STAFF_PERMISSIONS;
 
   // ── Builders for the parameterised detail routes ──────────
   // The registered names carry a `:id` segment, so navigation must go through
@@ -89,6 +91,7 @@ abstract class _AdminPaths {
   static const INVENTORY_MOVEMENTS  = '/inventory/movements';
   static const INVENTORY_TRANSFERS  = '/inventory/transfers';
   static const INVENTORY_ALERTS     = '/inventory/alerts';
+  static const INVENTORY_ADJUSTMENTS = '/inventory/adjustments';
   static const POS              = '/pos';
   static const POS_CHECKOUT     = '/pos/checkout';
   static const POS_INVOICE      = '/pos/invoice';
@@ -109,4 +112,5 @@ abstract class _AdminPaths {
   static const AUDIT            = '/audit';
   static const SETTINGS         = '/settings';
   static const SETTINGS_SYSTEM  = '/settings/system';
+  static const SETTINGS_STAFF_PERMISSIONS = '/settings/staff-permissions';
 }

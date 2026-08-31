@@ -339,6 +339,41 @@ void main() {
           lessThan(names.indexOf(AdminRoutes.REPORT_DETAIL)));
     });
 
+    test('Stock and Inventory are one section, not two', () {
+      // They read the same collection. Two sidebar sections pointing at one
+      // set of data is eight entries for four screens, which makes the
+      // console harder to use rather than more complete.
+      final labels = AdminDrawer.allEntries.map((e) => e.label).toList();
+      expect(labels.where((l) => l == 'Inventory').length, 1);
+      expect(labels, isNot(contains('Stock')));
+
+      // Adjustments is the one view that section was missing: the ledger
+      // filtered to corrections somebody made, as opposed to movements that
+      // followed from a sale.
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
+      expect(drawerRoutes, contains(AdminRoutes.INVENTORY_ADJUSTMENTS));
+    });
+
+    test('the settings section has its three pages', () {
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
+      for (final route in [
+        AdminRoutes.SETTINGS,
+        AdminRoutes.SETTINGS_STAFF_PERMISSIONS,
+        AdminRoutes.SETTINGS_SYSTEM,
+      ]) {
+        expect(drawerRoutes, contains(route));
+        expect(_isRegistered(route), isTrue, reason: '$route has no page');
+      }
+    });
+
+    test('staff permissions is gated on staff.read, not settings.read', () {
+      // It lists what each operator holds, which is a fact about the staff
+      // roster — so it follows the staff permission, not the settings one.
+      final entry = AdminDrawer.allEntries
+          .firstWhere((e) => e.route == AdminRoutes.SETTINGS_STAFF_PERMISSIONS);
+      expect(entry.permission, 'staff.read');
+    });
+
     test('a screen behind a tab strip is also reachable from the drawer', () {
       // These were reachable only from inside their parent screen, so an
       // operator had to already know the tabs existed to find them.

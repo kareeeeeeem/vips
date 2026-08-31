@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../core/admin_list_controller.dart';
+import '../../../core/routes/admin_routes.dart';
 import '../../../services/admin_api_service.dart';
 
 /// The stock ledger — every recorded change to a Stock line, from the merchant
@@ -29,8 +30,20 @@ class InventoryMovementsController extends AdminListController {
   /// `byType` from the response, used for the tab badges.
   final RxMap<String, int> typeCounts = <String, int>{}.obs;
 
+  /// True when opened as the Adjustments entry rather than the full ledger.
+  ///
+  /// An adjustment is somebody correcting a stock figure to an absolute
+  /// number — the movements that are a decision rather than a consequence of
+  /// a sale or a transfer. Same list behind one filter, so the two cannot
+  /// drift apart the way two screens would.
+  final RxBool adjustmentsOnly = false.obs;
+
   @override
   void onInit() {
+    if (Get.currentRoute == AdminRoutes.INVENTORY_ADJUSTMENTS) {
+      adjustmentsOnly.value = true;
+      typeFilter.value = 'adjustment';
+    }
     // Opening the ledger from a single stock line or merchant scopes it.
     final args = Get.arguments;
     if (args is Map) {

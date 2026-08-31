@@ -45,6 +45,7 @@ import '../../modules/staff/views/staff_add_edit_view.dart';
 import '../../modules/staff/views/staff_details_view.dart';
 import '../../modules/staff/views/staff_list_view.dart';
 import '../../modules/settings/views/admin_settings_view.dart';
+import '../../modules/settings/views/staff_permissions_view.dart';
 import '../../modules/settings/views/system_settings_view.dart';
 import '../../modules/users/bindings/users_binding.dart';
 import '../../modules/users/views/user_details_view.dart';
@@ -172,6 +173,13 @@ class AdminPages {
       page: () => const LowStockAlertsView(),
       binding: AdminLowStockBinding(),
     ),
+    // The ledger filtered to adjustments — a correction somebody made to a
+    // stock figure, as opposed to a movement that followed from a sale.
+    GetPage(
+      name: AdminRoutes.INVENTORY_ADJUSTMENTS,
+      page: () => const InventoryMovementsView(),
+      binding: AdminInventoryMovementsBinding(),
+    ),
     // The till. Checkout shares the PosController with the till screen, so
     // it reads the same server-owned cart rather than a copy.
     GetPage(
@@ -275,6 +283,14 @@ class AdminPages {
       name: AdminRoutes.SETTINGS_SYSTEM,
       page: () => const SystemSettingsView(),
       binding: AdminSettingsBinding(),
+    ),
+    // Per-operator effective permissions. A different question from the Roles
+    // screen: not "what does this role grant" but "what does this person
+    // hold, and how much of it is beyond their role".
+    GetPage(
+      name: AdminRoutes.SETTINGS_STAFF_PERMISSIONS,
+      page: () => const StaffPermissionsView(),
+      binding: StaffBinding(),
     ),
   ];
 }
