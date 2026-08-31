@@ -45,6 +45,10 @@ import '../modules/mobile/views/mobile_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
+import '../modules/orders/controllers/order_tracking_controller.dart';
+import '../modules/orders/controllers/orders_controller.dart';
+import '../modules/orders/views/my_orders_view.dart';
+import '../modules/orders/views/order_tracking_view.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/packages/bindings/packages_binding.dart';
 import '../modules/packages/views/packages_view.dart';
@@ -91,6 +95,22 @@ class AppPages {
   static const INITIAL = Routes.SPLASH;
 
   static final routes = [
+    GetPage(
+      name: _Paths.MY_ORDERS,
+      page: () => const MyOrdersView(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => OrdersController())),
+    ),
+    // The order id arrives as an argument, so the controller is built
+    // here rather than in a binding class that cannot see it.
+    GetPage(
+      name: _Paths.ORDER_TRACKING,
+      page: () => const OrderTrackingView(),
+      binding: BindingsBuilder(() {
+        final args = Get.arguments;
+        final id = args is Map ? '${args['orderId'] ?? ''}' : '';
+        Get.lazyPut(() => OrderTrackingController(id));
+      }),
+    ),
     GetPage(
       name: _Paths.HOME,
       page: () => HomeView(fromOffer: true),

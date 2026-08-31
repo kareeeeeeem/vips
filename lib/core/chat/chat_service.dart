@@ -109,6 +109,7 @@ class ChatService {
   final _incoming = StreamController<ChatMessage>.broadcast();
   final _read = StreamController<String>.broadcast();
   final _presence = StreamController<MapEntry<String, bool>>.broadcast();
+  final _orderUpdates = StreamController<Map<String, dynamic>>.broadcast();
 
   /// Messages arriving from anyone. A screen filters to its own conversation.
   Stream<ChatMessage> get onMessage => _incoming.stream;
@@ -117,6 +118,11 @@ class ChatService {
   Stream<String> get onRead => _read.stream;
 
   Stream<MapEntry<String, bool>> get onPresence => _presence.stream;
+
+  /// Order status, location and estimate changes, pushed to the customer who
+  /// placed the order. Carried on this connection rather than a second socket
+  /// — the app already holds this one open.
+  Stream<Map<String, dynamic>> get onOrderUpdate => _orderUpdates.stream;
 
   bool get connected => _socket?.connected == true;
 
@@ -175,6 +181,14 @@ class ChatService {
         _presence.add(MapEntry('${data['userId']}', data['online'] == true));
       }
     });
+
+    for (final event in ['order-status', 'order-location', 'order-eta']) {
+      socket.on(event, (data) {
+        if (data is Map) {
+          _orderUpdates.add({...Map<String, dynamic>.from(data), 'event': event});
+        }
+      });
+    }
 
     _socket = socket;
   }

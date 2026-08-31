@@ -25,6 +25,8 @@ abstract class Routes {
   static const CONTACT = _Paths.CONTACT;
   static const DONATION = _Paths.DONATION;
   static const SHIPPING = _Paths.SHIPPING;
+  static const MY_ORDERS = _Paths.MY_ORDERS;
+  static const ORDER_TRACKING = _Paths.ORDER_TRACKING;
   static const MOBILE = _Paths.MOBILE;
   static const PAY_BILLS = _Paths.PAY_BILLS;
   static const HOT_DEALS = _Paths.HOT_DEALS;
@@ -73,6 +75,8 @@ abstract class _Paths {
   static const CONTACT = '/contact';
   static const DONATION = '/donation';
   static const SHIPPING = '/shipping';
+  static const MY_ORDERS = '/my-orders';
+  static const ORDER_TRACKING = '/order-tracking';
   static const MOBILE = '/mobile';
   static const PAY_BILLS = '/pay-bills';
   static const HOT_DEALS = '/hot-deals';
