@@ -422,6 +422,11 @@ class AdminApiService {
             'groupBy': groupBy,
           }));
 
+  // ── Analytics ─────────────────────────────────────────────
+  /// Visitors and the conversion rate they give a denominator to.
+  Future<ApiResponse> analyticsOverview({int days = 30}) =>
+      _api.get('/admin/analytics/overview', queryParams: {'days': days});
+
   // ── Audit log ─────────────────────────────────────────────
   /// What operators have done in the console. `outcome` filters to
   /// 'success' or 'denied' — a refused attempt is the line this exists for.

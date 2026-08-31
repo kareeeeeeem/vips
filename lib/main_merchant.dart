@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'appuser/core/translations/app_translations.dart';
 import 'appmerchant/routes/merchant_pages.dart';
 import 'appmerchant/routes/merchant_routes.dart';
+import 'core/services/analytics_service.dart';
 import 'core/services/api_service.dart';
 
 void main() {
@@ -24,6 +25,9 @@ void main() {
 
     // Load saved auth token so all API calls include the Authorization header
     await ApiService().init();
+    // Anonymous screen counting, same service the other apps use, tagged so
+    // the console can tell the three apart.
+    await AnalyticsService().init(app: 'merchant');
     // Route unauthenticated users to the merchant login screen
     ApiService.unauthorizedRoute = MerchantRoutes.LOGIN;
 
@@ -48,6 +52,7 @@ class MerchantApp extends StatelessWidget {
           title: "VIPs Merchant",
           initialRoute: MerchantAppPages.INITIAL,
           getPages: MerchantAppPages.routes,
+          navigatorObservers: [AnalyticsRouteObserver()],
           translations: AppTranslations(),
           locale: Get.deviceLocale,
           fallbackLocale: const Locale('en', 'US'),

@@ -39,6 +39,8 @@ import 'package:vip/admin/modules/dashboards/models/dashboard_models.dart';
 import 'package:vip/admin/modules/dashboards/views/dashboard_shell.dart';
 import 'package:vip/admin/modules/products/controllers/products_controller.dart';
 import 'package:vip/admin/core/widgets/admin_nav_entry.dart';
+import 'package:vip/admin/modules/analytics/controllers/analytics_controller.dart';
+import 'package:vip/core/services/analytics_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -1265,6 +1267,86 @@ void main() {
       });
       // Nothing blocks it: a super admin, not themselves, not the last one.
       expect(reason, isNull);
+    });
+  });
+
+  group('AnalyticsService screen normalisation', () {
+    test('a record id in a route is replaced, not sent', () {
+      // The whole promise of this collection is that it holds no browsing
+      // history. A route that still carries an id would break that.
+      expect(AnalyticsService.normaliseScreen('/product/6a86187d95bbf4ce88e3144c'),
+          '/product/:id');
+      expect(AnalyticsService.normaliseScreen('/order/1788190475677'), '/order/:id');
+      expect(
+        AnalyticsService.normaliseScreen(
+            '/x/3f2504e0-4f89-11d3-9a0c-0305e82c3301'),
+        '/x/:id',
+      );
+    });
+
+    test('an already parameterised route is left alone', () {
+      expect(AnalyticsService.normaliseScreen('/product/:id'), '/product/:id');
+      expect(AnalyticsService.normaliseScreen('/home'), '/home');
+    });
+
+    test('a query string is dropped', () {
+      // Query strings carry search terms, which are content, not navigation.
+      expect(AnalyticsService.normaliseScreen('/search?q=secret'), '/search');
+    });
+
+    test('short numbers survive — they are page numbers, not ids', () {
+      expect(AnalyticsService.normaliseScreen('/list/2'), '/list/2');
+    });
+  });
+
+  group('AnalyticsController', () {
+    late AnalyticsController c;
+
+    setUp(() => c = AnalyticsController());
+
+    test('an unmeasurable conversion rate is withheld, not shown as zero', () {
+      // While tracking is younger than the window, orders are counted against
+      // only part of the visits they came from and the ratio can exceed 100%.
+      c.data.value = {
+        'tracking': true,
+        'conversion': {
+          'rate': null,
+          'measurable': false,
+          'reason': 'Tracking started inside this window.',
+          'orders': 76,
+        },
+      };
+      expect(c.conversionMeasurable, isFalse);
+      expect(c.conversionReason, isNotEmpty);
+
+      c.data.value = {
+        'tracking': true,
+        'conversion': {'rate': 2.4, 'measurable': true, 'orders': 12},
+      };
+      expect(c.conversionMeasurable, isTrue);
+      expect(c.conversionRate, 2.4);
+    });
+
+    test('"nothing tracked" is distinguishable from "zero visitors"', () {
+      c.data.value = {'tracking': false};
+      expect(c.isTracking, isFalse);
+      c.data.value = {'tracking': true, 'visitors': {'inWindow': 0}};
+      expect(c.isTracking, isTrue);
+      expect(c.visitorsInWindow, 0);
+    });
+
+    test('views per session does not divide by zero', () {
+      c.data.value = {'visitors': {'screenViews': 10, 'inWindow': 0}};
+      expect(c.viewsPerSession, 0);
+      c.data.value = {'visitors': {'screenViews': 10, 'inWindow': 4}};
+      expect(c.viewsPerSession, 2.5);
+    });
+
+    test('the three apps are named, not shown as codes', () {
+      expect(adminLabelForApp('consumer'), 'Customer app');
+      expect(adminLabelForApp('merchant'), 'Merchant app');
+      expect(adminLabelForApp('admin'), 'Admin console');
+      expect(adminLabelForApp('nonsense'), 'Unknown');
     });
   });
 

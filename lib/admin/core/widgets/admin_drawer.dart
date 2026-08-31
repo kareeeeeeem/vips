@@ -90,6 +90,8 @@ class AdminDrawer extends StatelessWidget {
             Icons.shield_outlined, permission: 'staff.read'),
       ],
     ),
+    AdminNavEntry(AdminRoutes.ANALYTICS, 'Analytics', Icons.query_stats_outlined,
+        permission: 'analytics.read'),
     AdminNavEntry(AdminRoutes.AUDIT, 'Audit log', Icons.fact_check_outlined,
         permission: 'settings.read'),
     AdminNavEntry(AdminRoutes.SETTINGS, 'Settings', Icons.settings_outlined,

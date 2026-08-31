@@ -11,6 +11,7 @@ import 'core/theme/admin_theme.dart';
 import 'core/widgets/admin_top_bar.dart';
 import 'modules/auth/controllers/admin_auth_controller.dart';
 import 'package:vip/appuser/core/translations/app_translations.dart';
+import 'package:vip/core/services/analytics_service.dart';
 import 'package:vip/core/services/api_service.dart';
 
 /// Entry point for the VIPs admin console.
@@ -45,6 +46,9 @@ void main() {
     // Load any persisted token so a returning admin lands on the dashboard
     // rather than the login screen.
     await ApiService().init();
+    // Anonymous screen counting, same service the other apps use, tagged so
+    // the console can tell the three apart.
+    await AnalyticsService().init(app: 'admin');
 
     // A 401 anywhere in the console must return to the admin login, not the
     // consumer app's '/login' (which does not exist in this route table).
@@ -86,6 +90,7 @@ class AdminApp extends StatelessWidget {
               title: 'VIPs Admin',
               initialRoute: AdminPages.INITIAL,
               getPages: AdminPages.routes,
+              navigatorObservers: [AnalyticsRouteObserver()],
               translations: AppTranslations(),
               locale: Get.deviceLocale,
               fallbackLocale: const Locale('en', 'US'),

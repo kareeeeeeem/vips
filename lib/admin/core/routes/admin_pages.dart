@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../modules/auth/bindings/admin_auth_binding.dart';
 import '../../modules/auth/views/admin_login_view.dart';
+import '../../modules/analytics/bindings/analytics_binding.dart';
+import '../../modules/analytics/views/analytics_view.dart';
 import '../../modules/audit/bindings/audit_binding.dart';
 import '../../modules/audit/views/audit_logs_view.dart';
 import '../../modules/auth/views/admin_splash_view.dart';
@@ -220,6 +222,14 @@ class AdminPages {
       page: () => const RolesPermissionsView(),
       binding: StaffBinding(),
     ),
+    // Visitors and conversion, from the anonymous session tracking the three
+    // apps report.
+    GetPage(
+      name: AdminRoutes.ANALYTICS,
+      page: () => const AnalyticsView(),
+      binding: AnalyticsBinding(),
+    ),
+
     // Who did what in the console. Gated on settings.read, the same audience
     // that can already see the admin roster.
     GetPage(

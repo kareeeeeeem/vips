@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'appuser/core/translations/app_translations.dart';
 import 'appuser/routes/app_pages.dart';
+import 'core/services/analytics_service.dart';
 import 'core/services/api_service.dart';
 import 'firebase_options.dart';
 
@@ -16,6 +17,10 @@ void main() {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await ApiService().init();
+    // Anonymous screen counting. Nothing here can stop the app booting: the
+    // service swallows its own failures and reports nothing if it cannot
+    // read the preference.
+    await AnalyticsService().init(app: 'consumer');
     // Read the persisted dark-mode preference (written by SettingsController)
     // before the first frame, so the app boots straight into the right theme
     // instead of always starting light until the user revisits Settings.
@@ -44,6 +49,10 @@ class MyApp extends StatelessWidget {
           title: "Application",
           initialRoute: AppPages.INITIAL,
           getPages: AppPages.routes,
+          // One observer rather than a call in every screen's onInit — a
+          // tracker each screen must remember to call misses exactly the
+          // screens somebody forgot.
+          navigatorObservers: [AnalyticsRouteObserver()],
           translations: AppTranslations(),
           locale: Get.deviceLocale,
           fallbackLocale: Locale('en', 'US'),
