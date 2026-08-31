@@ -333,7 +333,9 @@ class _StaffAddEditViewState extends State<StaffAddEditView> {
       case 'admin':
         return 'Full day-to-day control, including deletes and staff';
       case 'manager':
-        return 'Can edit and run the till, but not delete or manage staff';
+        return 'Edits and approvals, but no deletes and no staff changes';
+      case 'cashier':
+        return 'The till and what it needs — nothing else';
       default:
         return 'Read-only across every section';
     }
@@ -401,19 +403,28 @@ class _StaffAddEditViewState extends State<StaffAddEditView> {
     final coveredByRole = roleHasAll || fromRole.contains(permission);
     final selected = coveredByRole || _extraPermissions.contains(permission);
     final action = permission.split('.').last;
+    final enforced = controller.isEnforced(permission);
 
-    return GestureDetector(
+    return Tooltip(
+      message: controller.describe(permission),
+      child: GestureDetector(
       onTap: coveredByRole
           ? () => adminToast('Already granted',
               'The ${adminLabel(_role)} role already includes this.',
               isError: false)
-          : () => setState(() {
-                if (_extraPermissions.contains(permission)) {
-                  _extraPermissions.remove(permission);
-                } else {
-                  _extraPermissions.add(permission);
-                }
-              }),
+          // Grantable, but the operator is told it currently changes nothing
+          // rather than being left to assume it does.
+          : !enforced
+              ? () => adminToast('Grants nothing yet',
+                  controller.enforcementReason(permission),
+                  isError: false)
+              : () => setState(() {
+                    if (_extraPermissions.contains(permission)) {
+                      _extraPermissions.remove(permission);
+                    } else {
+                      _extraPermissions.add(permission);
+                    }
+                  }),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 7.h),
         decoration: BoxDecoration(
@@ -431,11 +442,17 @@ class _StaffAddEditViewState extends State<StaffAddEditView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              selected
-                  ? (coveredByRole ? Icons.lock_outline_rounded : Icons.check_rounded)
-                  : Icons.add_rounded,
+              !enforced
+                  ? Icons.info_outline_rounded
+                  : selected
+                      ? (coveredByRole ? Icons.lock_outline_rounded : Icons.check_rounded)
+                      : Icons.add_rounded,
               size: 13.sp,
-              color: selected ? AdminColors.primary : AdminColors.textMuted,
+              color: !enforced
+                  ? AdminColors.warning
+                  : selected
+                      ? AdminColors.primary
+                      : AdminColors.textMuted,
             ),
             SizedBox(width: 5.w),
             Text(
@@ -443,11 +460,16 @@ class _StaffAddEditViewState extends State<StaffAddEditView> {
               style: TextStyle(
                 fontSize: 11.5.sp,
                 fontWeight: FontWeight.w600,
-                color: selected ? AdminColors.primary : AdminColors.textSecondary,
+                color: !enforced
+                    ? AdminColors.textMuted
+                    : selected
+                        ? AdminColors.primary
+                        : AdminColors.textSecondary,
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

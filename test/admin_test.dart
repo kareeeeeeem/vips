@@ -709,9 +709,54 @@ void main() {
       auth.passwordController.dispose();
     });
 
-    test('the built-in roles are listed in ascending order of reach', () {
+    test('all five built-in roles are listed', () {
       expect(StaffController.builtInRoles,
-          ['viewer', 'manager', 'admin', 'super_admin']);
+          ['viewer', 'cashier', 'manager', 'admin', 'super_admin']);
+    });
+
+    test('permissionsByModule follows the server\'s module order', () {
+      c.moduleOrder.value = ['dashboard', 'users', 'orders'];
+      c.moduleActions.value = {
+        'dashboard': ['read'],
+        'users': ['create', 'read', 'ban'],
+        'orders': ['read', 'cancel'],
+      };
+      final grouped = c.permissionsByModule;
+      // Order matters: alphabetical grouping would put orders before users
+      // and read before create, which is not how the model is laid out.
+      expect(grouped.keys.toList(), ['dashboard', 'users', 'orders']);
+      expect(grouped['users'], ['users.create', 'users.read', 'users.ban']);
+    });
+
+    test('roleGrants understands exact, wildcard and module-wildcard grants', () {
+      c.rolePermissions.value = {
+        'super_admin': ['*'],
+        'viewer': ['users.read'],
+        'manager': ['orders.*'],
+      };
+      expect(c.roleGrants('super_admin', 'users.delete'), isTrue);
+      expect(c.roleGrants('viewer', 'users.read'), isTrue);
+      expect(c.roleGrants('viewer', 'users.ban'), isFalse);
+      expect(c.roleGrants('manager', 'orders.refund'), isTrue);
+      expect(c.roleGrants('manager', 'users.read'), isFalse);
+    });
+
+    test('a permission that gates nothing is reported as such', () {
+      c.catalogue.value = {
+        'orders.cancel': {'label': 'Cancel an order', 'enforced': true, 'reason': ''},
+        'orders.delete': {
+          'label': 'Delete an order',
+          'enforced': false,
+          'reason': 'Orders are financial records.',
+        },
+      };
+      expect(c.isEnforced('orders.cancel'), isTrue);
+      expect(c.isEnforced('orders.delete'), isFalse);
+      expect(c.enforcementReason('orders.delete'), contains('financial records'));
+      expect(c.describe('orders.cancel'), 'Cancel an order');
+      // An unknown key must not throw — it falls back to the raw string.
+      expect(c.describe('nothing.here'), 'nothing.here');
+      expect(c.isEnforced('nothing.here'), isTrue);
     });
 
     test('only a super admin may assign the super admin role', () {

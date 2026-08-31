@@ -13,9 +13,12 @@ import '../../auth/controllers/admin_auth_controller.dart';
 /// salary and leave), which lives under /api/merchant/staff and belongs to
 /// the merchant app.
 class StaffController extends AdminListController {
-  /// The four built-in roles, in ascending order of reach.
+  /// The built-in roles, in ascending order of reach. Cashier sits beside
+  /// viewer rather than above it: it can do more at the till and less
+  /// everywhere else, so the two are not on one ladder.
   static const List<String> builtInRoles = [
     'viewer',
+    'cashier',
     'manager',
     'admin',
     'super_admin',
@@ -27,6 +30,17 @@ class StaffController extends AdminListController {
   final RxList<String> allPermissions = <String>[].obs;
   final RxMap<String, List<String>> rolePermissions = <String, List<String>>{}.obs;
   final RxList<Map<String, dynamic>> customRoles = <Map<String, dynamic>>[].obs;
+  final RxBool isLoadingCatalogue = false.obs;
+
+  /// The descriptive catalogue: what each permission means and whether it
+  /// gates anything yet. Keyed by permission string.
+  final RxMap<String, Map<String, dynamic>> catalogue =
+      <String, Map<String, dynamic>>{}.obs;
+
+  /// Module order as the server declares it, so the console groups
+  /// permissions the same way rather than alphabetically by accident.
+  final RxList<String> moduleOrder = <String>[].obs;
+  final RxMap<String, List<String>> moduleActions = <String, List<String>>{}.obs;
 
   // ── Details ──
   final RxBool isLoadingDetails = false.obs;
@@ -49,6 +63,7 @@ class StaffController extends AdminListController {
       );
 
   Future<void> loadCatalogue() async {
+    isLoadingCatalogue.value = true;
     try {
       final response = await api.permissionCatalogue();
       if (response.success && response.data is Map) {
@@ -57,6 +72,17 @@ class StaffController extends AdminListController {
         if (perms is List) {
           allPermissions.value = perms.map((p) => p.toString()).toList();
         }
+        for (final entry in adminItems(data, 'catalogue')) {
+          catalogue[adminString(entry['key'])] = entry;
+        }
+        final modules = adminItems(data, 'modules');
+        moduleOrder.value = modules.map((m) => adminString(m['name'])).toList();
+        moduleActions.value = {
+          for (final m in modules)
+            adminString(m['name']): (m['actions'] is List
+                ? (m['actions'] as List).map((a) => a.toString()).toList()
+                : <String>[]),
+        };
         final built = adminItems(data, 'builtInRoles');
         rolePermissions.value = {
           for (final role in built)
@@ -68,6 +94,8 @@ class StaffController extends AdminListController {
       }
     } catch (e) {
       debugPrint('[ADMIN STAFF] loadCatalogue failed: $e');
+    } finally {
+      isLoadingCatalogue.value = false;
     }
   }
 
@@ -188,14 +216,43 @@ class StaffController extends AdminListController {
     return ok;
   }
 
-  /// Permissions grouped by module, for a checklist that reads in sections
-  /// rather than as one wall of 27 chips.
+  /// Permissions grouped by module in the server's own order, for a checklist
+  /// that reads in sections rather than as one wall of 47 chips.
   Map<String, List<String>> get permissionsByModule {
+    if (moduleOrder.isNotEmpty) {
+      return {
+        for (final module in moduleOrder)
+          module: (moduleActions[module] ?? const [])
+              .map((action) => '$module.$action')
+              .toList(),
+      };
+    }
+    // Falls back to deriving the grouping if the catalogue never loaded.
     final grouped = <String, List<String>>{};
     for (final permission in allPermissions) {
-      final module = permission.split('.').first;
-      grouped.putIfAbsent(module, () => []).add(permission);
+      grouped.putIfAbsent(permission.split('.').first, () => []).add(permission);
     }
     return grouped;
+  }
+
+  /// What a permission does, for the label under each chip.
+  String describe(String permission) =>
+      adminString(catalogue[permission]?['label'], permission);
+
+  /// False when a permission is declared but gates no route yet — granting it
+  /// changes nothing, and the console says so instead of implying otherwise.
+  bool isEnforced(String permission) =>
+      catalogue[permission]?['enforced'] != false;
+
+  String enforcementReason(String permission) =>
+      adminString(catalogue[permission]?['reason']);
+
+  /// Whether a role grants a specific permission, for the matrix.
+  bool roleGrants(String role, String permission) {
+    final grants = rolePermissions[role] ?? const <String>[];
+    if (grants.contains('*')) return true;
+    if (grants.contains(permission)) return true;
+    final module = permission.split('.').first;
+    return grants.contains('$module.*');
   }
 }

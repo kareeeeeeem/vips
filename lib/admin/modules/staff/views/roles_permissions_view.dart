@@ -35,6 +35,11 @@ class RolesPermissionsView extends GetView<StaffController> {
             )),
       ],
       body: Obx(() {
+        // A load still in flight is not a failure — checking emptiness alone
+        // rendered "could not load" for the whole first second.
+        if (controller.isLoadingCatalogue.value && controller.allPermissions.isEmpty) {
+          return const AdminLoading();
+        }
         if (controller.allPermissions.isEmpty) {
           return AdminErrorState(
             message: 'Could not load the permission catalogue.',
@@ -46,6 +51,7 @@ class RolesPermissionsView extends GetView<StaffController> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 28.h),
           children: [
+            _buildUnenforcedNotice(),
             _buildMatrix(),
             SizedBox(height: 14.h),
             _buildBuiltIn(),
@@ -57,80 +63,171 @@ class RolesPermissionsView extends GetView<StaffController> {
     );
   }
 
-  /// The whole model in one grid: modules down, roles across.
+  /// Every permission against every role.
+  ///
+  /// A summarised "Read / Edit / Full" column stopped describing the model
+  /// once actions became per-module — a role can approve merchants without
+  /// deleting them, and that distinction is the whole point.
   Widget _buildMatrix() {
-    final modules = controller.permissionsByModule.keys.toList();
+    final grouped = controller.permissionsByModule;
 
     return AdminCard(
       title: 'What each role can do',
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 40.h,
-          dataRowMinHeight: 38.h,
-          dataRowMaxHeight: 38.h,
-          columnSpacing: 22.w,
-          columns: [
-            const DataColumn(label: Text('Section')),
-            for (final role in StaffController.builtInRoles)
-              DataColumn(
-                label: Text(
-                  adminLabel(role),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w800,
-                    color: StaffListView.roleColor(role),
-                  ),
-                ),
-              ),
-          ],
-          rows: [
-            for (final module in modules)
-              DataRow(cells: [
-                DataCell(Text(
-                  adminLabel(module),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AdminColors.textPrimary,
-                  ),
-                )),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'A tick means the role grants it outright. Individual operators '
+            'can be given more on top.',
+            style: TextStyle(
+              fontSize: 11.5.sp,
+              height: 1.45,
+              color: AdminColors.textMuted,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowHeight: 42.h,
+              dataRowMinHeight: 34.h,
+              dataRowMaxHeight: 34.h,
+              columnSpacing: 20.w,
+              columns: [
+                const DataColumn(label: Text('Permission')),
                 for (final role in StaffController.builtInRoles)
-                  DataCell(_matrixCell(module, role)),
-              ]),
-          ],
-        ),
+                  DataColumn(
+                    label: Text(
+                      adminLabel(role),
+                      style: TextStyle(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: StaffListView.roleColor(role),
+                      ),
+                    ),
+                  ),
+              ],
+              rows: [
+                for (final entry in grouped.entries)
+                  for (var i = 0; i < entry.value.length; i++)
+                    DataRow(cells: [
+                      DataCell(_permissionLabel(
+                        entry.key,
+                        entry.value[i],
+                        isFirstOfModule: i == 0,
+                      )),
+                      for (final role in StaffController.builtInRoles)
+                        DataCell(_tick(role, entry.value[i])),
+                    ]),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  /// Summarises a role's reach over one module as read / edit / delete,
-  /// which is what an operator actually needs to compare.
-  Widget _matrixCell(String module, String role) {
-    final grants = controller.rolePermissions[role] ?? const <String>[];
-    final all = grants.contains('*');
-    bool has(String action) => all || grants.contains('$module.$action');
+  Widget _permissionLabel(String module, String permission,
+      {required bool isFirstOfModule}) {
+    final action = permission.split('.').last;
+    final enforced = controller.isEnforced(permission);
 
-    final canRead = has('read');
-    final canWrite = has('write');
-    final canDelete = has('delete');
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // The module name is printed once per group so the rows below read as
+        // belonging to it without repeating it on every line.
+        SizedBox(
+          width: 78.w,
+          child: isFirstOfModule
+              ? Text(
+                  adminLabel(module),
+                  style: TextStyle(
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AdminColors.textPrimary,
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        Text(
+          adminLabel(action),
+          style: TextStyle(
+            fontSize: 11.5.sp,
+            color: enforced ? AdminColors.textSecondary : AdminColors.textMuted,
+          ),
+        ),
+        if (!enforced) ...[
+          SizedBox(width: 5.w),
+          Tooltip(
+            message: controller.enforcementReason(permission),
+            child: Icon(Icons.info_outline_rounded,
+                size: 12.sp, color: AdminColors.warning),
+          ),
+        ],
+      ],
+    );
+  }
 
-    if (!canRead) {
-      return Icon(Icons.remove_rounded, size: 15.sp, color: AdminColors.border);
-    }
+  Widget _tick(String role, String permission) {
+    final granted = controller.roleGrants(role, permission);
+    return Icon(
+      granted ? Icons.check_circle_rounded : Icons.remove_rounded,
+      size: 15.sp,
+      color: granted ? StaffListView.roleColor(role) : AdminColors.border,
+    );
+  }
 
-    final label = canDelete
-        ? 'Full'
-        : canWrite
-            ? 'Edit'
-            : 'Read';
-    final color = canDelete
-        ? AdminColors.success
-        : canWrite
-            ? AdminColors.info
-            : AdminColors.textSecondary;
+  /// Some permissions are declared for completeness but gate no route yet.
+  /// Saying so beats letting someone grant one and expect a behaviour change.
+  Widget _buildUnenforcedNotice() {
+    final unenforced = controller.allPermissions
+        .where((p) => !controller.isEnforced(p))
+        .toList();
+    if (unenforced.isEmpty) return const SizedBox.shrink();
 
-    return AdminStatusPill(label: label, color: color, compact: true);
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(13.w),
+      decoration: BoxDecoration(
+        color: AdminColors.warning.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AdminColors.warning.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 16.sp, color: AdminColors.warning),
+              SizedBox(width: 8.w),
+              Text(
+                '${unenforced.length} permission(s) gate nothing yet',
+                style: TextStyle(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AdminColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          for (final permission in unenforced)
+            Padding(
+              padding: EdgeInsets.only(bottom: 4.h),
+              child: Text(
+                '• $permission — ${controller.enforcementReason(permission)}',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  height: 1.4,
+                  color: AdminColors.textSecondary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBuiltIn() {
