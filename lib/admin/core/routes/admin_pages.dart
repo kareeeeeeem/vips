@@ -6,6 +6,12 @@ import '../../modules/auth/views/admin_login_view.dart';
 import '../../modules/auth/views/admin_splash_view.dart';
 import '../../modules/dashboard/bindings/admin_dashboard_binding.dart';
 import '../../modules/dashboard/views/admin_dashboard_view.dart';
+import '../../modules/dashboards/bindings/dashboards_binding.dart';
+import '../../modules/dashboards/views/finance_dashboard_view.dart';
+import '../../modules/dashboards/views/marketing_dashboard_view.dart';
+import '../../modules/dashboards/views/merchants_dashboard_view.dart';
+import '../../modules/dashboards/views/operations_dashboard_view.dart';
+import '../../modules/dashboards/views/sales_dashboard_view.dart';
 import '../../modules/inventory/bindings/inventory_binding.dart';
 import '../../modules/inventory/views/inventory_movements_view.dart';
 import '../../modules/inventory/views/inventory_overview_view.dart';
@@ -61,6 +67,35 @@ class AdminPages {
       name: AdminRoutes.DASHBOARD,
       page: () => const AdminDashboardView(),
       binding: AdminDashboardBinding(),
+    ),
+
+    // The five analytical dashboards. A binding each, so leaving a board
+    // disposes its controller and stops its refresh timer — one shared
+    // binding would leave five timers polling from screens nobody is on.
+    GetPage(
+      name: AdminRoutes.DASH_SALES,
+      page: () => const SalesDashboardView(),
+      binding: SalesDashboardBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.DASH_OPERATIONS,
+      page: () => const OperationsDashboardView(),
+      binding: OperationsDashboardBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.DASH_FINANCE,
+      page: () => const FinanceDashboardView(),
+      binding: FinanceDashboardBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.DASH_MARKETING,
+      page: () => const MarketingDashboardView(),
+      binding: MarketingDashboardBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.DASH_MERCHANTS,
+      page: () => const MerchantsDashboardView(),
+      binding: MerchantsDashboardBinding(),
     ),
 
     // Detail routes carry the same binding as their list, so opening one

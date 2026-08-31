@@ -10,6 +10,11 @@ abstract class AdminRoutes {
   static const SPLASH           = _AdminPaths.SPLASH;
   static const LOGIN            = _AdminPaths.LOGIN;
   static const DASHBOARD        = _AdminPaths.DASHBOARD;
+  static const DASH_SALES       = _AdminPaths.DASH_SALES;
+  static const DASH_OPERATIONS  = _AdminPaths.DASH_OPERATIONS;
+  static const DASH_FINANCE     = _AdminPaths.DASH_FINANCE;
+  static const DASH_MARKETING   = _AdminPaths.DASH_MARKETING;
+  static const DASH_MERCHANTS   = _AdminPaths.DASH_MERCHANTS;
   static const USERS            = _AdminPaths.USERS;
   static const USER_DETAILS     = _AdminPaths.USER_DETAILS;
   static const MERCHANTS        = _AdminPaths.MERCHANTS;
@@ -47,6 +52,13 @@ abstract class _AdminPaths {
   static const SPLASH           = '/';
   static const LOGIN            = '/login';
   static const DASHBOARD        = '/dashboard';
+  // The five analytical dashboards. Nested under '/dashboards' (plural) so
+  // they cannot collide with the overview at '/dashboard'.
+  static const DASH_SALES       = '/dashboards/sales';
+  static const DASH_OPERATIONS  = '/dashboards/operations';
+  static const DASH_FINANCE     = '/dashboards/finance';
+  static const DASH_MARKETING   = '/dashboards/marketing';
+  static const DASH_MERCHANTS   = '/dashboards/merchants';
   static const USERS            = '/users';
   static const USER_DETAILS     = '/users/:id';
   static const MERCHANTS        = '/merchants';

@@ -40,6 +40,39 @@ class AdminApiService {
   Future<ApiResponse> dashboardRecent({int limit = 8}) =>
       _api.get('/admin/dashboard/recent', queryParams: {'limit': limit});
 
+  // ── Analytical dashboards ─────────────────────────────────
+  /// The five dashboards share one shape: `{window, ...figures, ...tables}`.
+  /// One method covers them all, so adding a sixth needs no new client code.
+  ///
+  /// `period` is a preset window (today/week/month/year/custom); when it is
+  /// `custom`, `startDate` and `endDate` carry the range.
+  Future<ApiResponse> dashboard(
+    String name, {
+    String? period,
+    String? startDate,
+    String? endDate,
+    String? merchantId,
+  }) =>
+      _api.get('/admin/dashboards/$name', queryParams: _clean({
+            'period': period,
+            'startDate': startDate,
+            'endDate': endDate,
+            'merchantId': merchantId,
+          }));
+
+  Future<ApiResponse> exportDashboard(
+    String name, {
+    String? period,
+    String? startDate,
+    String? endDate,
+  }) =>
+      _api.get('/admin/dashboards/$name/export', queryParams: _clean({
+            'format': 'csv',
+            'period': period,
+            'startDate': startDate,
+            'endDate': endDate,
+          }));
+
   // ── Users ─────────────────────────────────────────────────
   Future<ApiResponse> users({
     int page = 1,

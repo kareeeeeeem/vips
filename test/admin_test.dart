@@ -30,6 +30,13 @@ import 'package:vip/admin/modules/inventory/controllers/low_stock_controller.dar
 import 'package:vip/admin/modules/reports/controllers/reports_controller.dart';
 import 'package:vip/admin/modules/staff/controllers/staff_controller.dart';
 import 'package:vip/admin/modules/auth/controllers/admin_auth_controller.dart';
+import 'package:vip/admin/modules/dashboards/controllers/finance_dashboard_controller.dart';
+import 'package:vip/admin/modules/dashboards/controllers/marketing_dashboard_controller.dart';
+import 'package:vip/admin/modules/dashboards/controllers/merchants_dashboard_controller.dart';
+import 'package:vip/admin/modules/dashboards/controllers/operations_dashboard_controller.dart';
+import 'package:vip/admin/modules/dashboards/controllers/sales_dashboard_controller.dart';
+import 'package:vip/admin/modules/dashboards/models/dashboard_models.dart';
+import 'package:vip/admin/modules/dashboards/views/dashboard_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -219,7 +226,10 @@ void main() {
       // here: a hand-maintained copy goes stale the moment a section is
       // added, and then the test fails for the wrong reason.
       final registered = AdminPages.routes.map((r) => r.name).toSet();
-      for (final entry in AdminDrawer.entries) {
+      // allEntries, not entries: the five analytical boards are nested inside
+      // the Dashboards group, and checking only the top level would let a
+      // broken child route ship.
+      for (final entry in AdminDrawer.allEntries) {
         expect(registered, contains(entry.route),
             reason: '${entry.label} points at a route with no GetPage');
       }
@@ -246,7 +256,7 @@ void main() {
         AdminRoutes.STAFF_EDIT,
         AdminRoutes.ROLES,
       };
-      final drawerRoutes = AdminDrawer.entries.map((e) => e.route).toSet();
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
       for (final page in AdminPages.routes) {
         expect(
           drawerRoutes.contains(page.name) ||
@@ -258,7 +268,7 @@ void main() {
     });
 
     test('every bottom-nav destination also appears in the drawer', () {
-      final drawerRoutes = AdminDrawer.entries.map((e) => e.route).toSet();
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
       for (final entry in AdminBottomNav.entries) {
         expect(drawerRoutes, contains(entry.route),
             reason: '${entry.label} is reachable from the bottom bar only');
@@ -266,8 +276,35 @@ void main() {
     });
 
     test('routes are unique', () {
-      final routes = AdminDrawer.entries.map((e) => e.route).toList();
+      // A group repeats the route of the board it opens, so uniqueness is
+      // asserted over the leaves an operator can actually land on.
+      final routes = AdminDrawer.allEntries
+          .where((e) => !e.isGroup)
+          .map((e) => e.route)
+          .toList();
       expect(routes.toSet().length, routes.length);
+    });
+
+    test('every dashboard in the switcher is also in the drawer', () {
+      // Two lists naming the same five boards is exactly how one of them ends
+      // up pointing at a route the other never registered.
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
+      for (final tab in DashboardShell.tabs) {
+        expect(drawerRoutes, contains(tab.route),
+            reason: '${tab.label} is reachable from the switcher only');
+      }
+    });
+
+    test('the switcher and the drawer agree on what each board needs', () {
+      final byRoute = {
+        for (final e in AdminDrawer.allEntries)
+          if (e.permission != null) e.route: e.permission,
+      };
+      for (final tab in DashboardShell.tabs) {
+        expect(byRoute[tab.route], tab.permission,
+            reason: '${tab.label} is gated differently in the drawer and the '
+                'switcher, so one of them will offer a board that 403s');
+      }
     });
   });
 
@@ -834,6 +871,257 @@ void main() {
   // ═══════════════════════════════════════════════════════════
   // AdminAuthController permission checks
   // ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // Analytical dashboards
+  // ═══════════════════════════════════════════════════════════
+  group('DashboardPeriod', () {
+    test('every preset round-trips through its wire key', () {
+      for (final period in DashboardPeriod.values) {
+        expect(DashboardPeriodX.fromKey(period.key), period);
+      }
+    });
+
+    test('an unknown key falls back to the default window', () {
+      // The server does the same thing, so the chip and the data agree
+      // instead of the screen claiming a window nobody queried.
+      expect(DashboardPeriodX.fromKey('fortnight'), DashboardPeriod.month);
+      expect(DashboardPeriodX.fromKey(''), DashboardPeriod.month);
+    });
+  });
+
+  group('ChartPoint', () {
+    test('reads the label and value spellings the endpoints actually send', () {
+      expect(ChartPoint.fromJson({'date': '2026-08-01', 'value': 12.5}).label,
+          '2026-08-01');
+      expect(
+          ChartPoint.fromJson({'status': 'pending', 'count': 4},
+                  labelKey: 'status', valueKey: 'count')
+              .value,
+          4);
+      expect(
+          ChartPoint.fromJson({'category': 'Food', 'amount': 9},
+                  labelKey: 'category', valueKey: 'amount')
+              .label,
+          'Food');
+      expect(
+          ChartPoint.fromJson({'segment': 'Active', 'count': 3},
+                  labelKey: 'segment', valueKey: 'count')
+              .value,
+          3);
+    });
+
+    test('a missing label reads as a dash rather than throwing', () {
+      final point = ChartPoint.fromJson(const {});
+      expect(point.label, '—');
+      expect(point.value, 0);
+    });
+
+    test('an int and a double both parse to the same value', () {
+      // Mongo returns whichever the aggregation produced, and a list builder
+      // that throws on one of them blanks the whole screen.
+      expect(ChartPoint.fromJson({'date': 'a', 'value': 7}).value, 7.0);
+      expect(ChartPoint.fromJson({'date': 'a', 'value': 7.0}).value, 7.0);
+    });
+
+    test('slice colours are stable for a given index', () {
+      // A legend that reshuffles its colours on every refresh is unreadable.
+      expect(dashboardSliceColor(0), dashboardSliceColor(0));
+      expect(dashboardSliceColor(kDashboardPalette.length),
+          dashboardSliceColor(0));
+    });
+  });
+
+  group('DashboardBaseController payload reading', () {
+    late SalesDashboardController c;
+
+    setUp(() {
+      c = SalesDashboardController();
+      c.data.value = {
+        'window': {
+          'period': 'week',
+          'groupBy': 'day',
+          'startDate': '2026-08-24T21:00:00.000Z',
+          'endDate': '2026-08-31T10:00:00.000Z',
+        },
+        'totalRevenue': 248.565,
+        'totalOrders': 7,
+        'conversionRate': null,
+        'previous': {'totalRevenue': 100},
+        'change': {'totalRevenue': 148.5, 'totalOrders': null},
+        'engagementMetrics': {'repeatRate': 25},
+        'salesChart': [
+          {'date': '2026-08-24', 'value': 0, 'orders': 0},
+          {'date': '2026-08-25', 'value': 160, 'orders': 2},
+        ],
+        'topProducts': [
+          {'name': 'Latte', 'sales': 5, 'revenue': 220}
+        ],
+      };
+    });
+
+    test('reads numbers, counts and money off the payload', () {
+      expect(c.money('totalRevenue'), 248.565);
+      expect(c.count('totalOrders'), 7);
+      expect(c.number('totalRevenue'), 248.565);
+    });
+
+    test('an absent key reads as zero rather than throwing', () {
+      expect(c.money('notThere'), 0);
+      expect(c.count('notThere'), 0);
+      expect(c.table('notThere'), isEmpty);
+      expect(c.chart('notThere'), isEmpty);
+    });
+
+    test('an explicit null is distinguishable from zero', () {
+      // "Not measurable" and "measured zero" must never render the same way.
+      expect(c.isNull('conversionRate'), isTrue);
+      expect(c.isNull('totalOrders'), isFalse);
+      expect(c.conversionIsTracked, isFalse);
+    });
+
+    test('a change with no baseline stays null instead of becoming zero', () {
+      expect(c.change('totalRevenue'), 148.5);
+      expect(c.change('totalOrders'), isNull);
+      expect(c.change('neverSent'), isNull);
+    });
+
+    test('previous-period and nested figures read through', () {
+      expect(c.previous('totalRevenue'), 100);
+      expect(c.nested('engagementMetrics', 'repeatRate'), 25);
+      expect(c.nested('notABlock', 'x'), 0);
+    });
+
+    test('the window label reports what the server applied, not what was asked',
+        () {
+      // A bad custom range falls back server-side; a filter still reading
+      // "Custom" over last month's numbers is how a whole board is misread.
+      c.period.value = DashboardPeriod.custom;
+      expect(c.appliedWindowLabel, contains('by day'));
+      expect(c.appliedWindowLabel, isNot(equals(DashboardPeriod.custom.label)));
+    });
+
+    test('charts keep zero buckets so a flat stretch is visible', () {
+      final chart = c.salesChart;
+      expect(chart.length, 2);
+      expect(chart.first.value, 0);
+      expect(chart[1].count, 2);
+    });
+
+    test('order volume is derived from the revenue series, not refetched', () {
+      // Two series over two different windows drawn on one screen is the
+      // failure this rules out.
+      expect(c.orderVolume.map((p) => p.label).toList(),
+          c.salesChart.map((p) => p.label).toList());
+      expect(c.orderVolume[1].value, 2);
+    });
+
+    test('the channel split adds up to the revenue it came from', () {
+      c.data['onlineRevenue'] = 232.5;
+      c.data['posRevenue'] = 16.065;
+      final total = c.channelSplit.fold<double>(0, (sum, p) => sum + p.value);
+      expect(total, closeTo(c.totalRevenue, 0.001));
+    });
+
+    test('a custom filter with no range is ignored', () {
+      // Otherwise the controller would query period=custom with no dates and
+      // the server would silently answer for a different window.
+      c.period.value = DashboardPeriod.week;
+      c.setFilter(DashboardPeriod.custom, null);
+      expect(c.period.value, DashboardPeriod.week);
+    });
+
+    test('every board names the endpoint and permission it needs', () {
+      expect(SalesDashboardController().endpoint, 'sales');
+      expect(SalesDashboardController().permission, 'reports.read');
+      expect(OperationsDashboardController().endpoint, 'operations');
+      // The shift-level board, so a cashier can open it.
+      expect(OperationsDashboardController().permission, 'dashboard.read');
+      expect(FinanceDashboardController().permission, 'reports.read');
+      expect(MarketingDashboardController().permission, 'reports.read');
+      expect(MerchantsDashboardController().permission, 'reports.read');
+    });
+  });
+
+  group('Dashboard figures that must not be faked', () {
+    test('fulfilment time reports no sample instead of zero', () {
+      final c = OperationsDashboardController();
+      c.data.value = {'averageFulfillmentTime': null, 'fulfillmentSampleSize': 0};
+      expect(c.hasFulfilmentSample, isFalse);
+
+      c.data.value = {'averageFulfillmentTime': 4.2, 'fulfillmentSampleSize': 5};
+      expect(c.hasFulfilmentSample, isTrue);
+      expect(c.averageFulfilmentHours, 4.2);
+    });
+
+    test('churn reports no cohort instead of perfect retention', () {
+      final c = MarketingDashboardController();
+      c.data.value = {'churnRate': null, 'churnBaseline': 0};
+      expect(c.hasChurnBaseline, isFalse);
+
+      c.data.value = {'churnRate': 18.5, 'churnBaseline': 40};
+      expect(c.hasChurnBaseline, isTrue);
+      expect(c.churnRate, 18.5);
+    });
+
+    test('an unrated merchant is not printed as a zero rating', () {
+      expect(dashboardRating(null), 'Unrated');
+      expect(dashboardRating(0), 'Unrated');
+      expect(dashboardRating(4.75), '4.8 ★');
+    });
+
+    test('money and percentage columns dash out on a missing value', () {
+      expect(dashboardMoney(null), '—');
+      expect(dashboardPercent(null), '—');
+      expect(dashboardCount(null), '—');
+      expect(dashboardPercent(10.25), '10.3%');
+    });
+
+    test('the merchant ranking carries orders alongside revenue', () {
+      final c = MerchantsDashboardController();
+      c.data.value = {
+        'topMerchants': [
+          {'name': 'Cafe Central', 'revenue': 1250, 'orders': 45},
+          {'revenue': 10},
+        ],
+      };
+      expect(c.revenueRanking.first.label, 'Cafe Central');
+      expect(c.revenueRanking.first.count, 45);
+      // A row with no name still ranks rather than throwing mid-build.
+      expect(c.revenueRanking[1].label, 'Unknown');
+    });
+
+    test('the finance board keeps the coverage behind its margin', () {
+      final c = FinanceDashboardController();
+      c.data.value = {
+        'totalRevenue': 246,
+        'costedRevenue': 13.5,
+        'costCoverage': 5.488,
+        'margin': 57.037,
+        'merchantsOnZeroRate': 3,
+      };
+      // A margin without its coverage is a statement about 5% of the business
+      // presented as a statement about all of it.
+      expect(c.costCoverage, 5.488);
+      expect(c.costedRevenue, lessThan(c.totalRevenue));
+      expect(c.merchantsOnZeroRate, 3);
+    });
+  });
+
+  group('Identity loading', () {
+    test('an unknown identity is not the same as no permissions', () {
+      // A browser refresh on any route enters past the splash, so nothing has
+      // asked /admin/me yet. Treating that as "denied" would strip every
+      // permission-gated control off the screen for a super admin.
+      final auth = AdminAuthController();
+      expect(auth.isIdentityLoaded.value, isFalse);
+      expect(auth.can('reports.read'), isFalse);
+
+      // The nav gates on this flag, not on `can`, so nothing is hidden while
+      // the answer is still unknown.
+      expect(DashboardShell.tabs.length, 5);
+    });
+  });
+
   group('AdminAuthController.can', () {
     late AdminAuthController c;
 

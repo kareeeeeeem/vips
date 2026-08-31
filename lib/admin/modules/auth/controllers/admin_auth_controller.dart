@@ -31,6 +31,24 @@ class AdminAuthController extends GetxController {
   final RxString adminRole = 'viewer'.obs;
   final RxList<String> permissions = <String>[].obs;
 
+  /// True once /admin/me has answered. Until then nothing is known about what
+  /// the caller may do, and a permission check would wrongly answer "no".
+  final RxBool isIdentityLoaded = false.obs;
+
+  /// De-duplicates concurrent restores: the splash and [onInit] can both ask
+  /// at once on a normal boot.
+  Future<bool>? _restoring;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // A deep link or a browser refresh on any route enters the app past the
+    // splash, so nothing else would ever load the signed-in admin: the avatar
+    // falls back to a placeholder and every permission-gated control hides
+    // itself as though the account had no permissions at all.
+    if (ApiService().isLoggedIn && adminId.value.isEmpty) restoreSession();
+  }
+
   bool get canSubmit =>
       emailController.text.trim().isNotEmpty && passwordController.text.isNotEmpty;
 
@@ -48,6 +66,7 @@ class AdminAuthController extends GetxController {
     if (granted is List) {
       permissions.value = granted.map((p) => p.toString()).toList();
     }
+    isIdentityLoaded.value = true;
   }
 
   /// Whether the caller holds a permission. '*' and a module wildcard both
@@ -126,7 +145,16 @@ class AdminAuthController extends GetxController {
 
   /// Confirms the stored token still belongs to a live admin.
   /// Returns false for "not signed in", which routes back to Login.
-  Future<bool> restoreSession() async {
+  Future<bool> restoreSession() {
+    final inFlight = _restoring;
+    if (inFlight != null) return inFlight;
+    final future = _restoreSession();
+    _restoring = future;
+    future.whenComplete(() => _restoring = null);
+    return future;
+  }
+
+  Future<bool> _restoreSession() async {
     if (!ApiService().isLoggedIn) return false;
     try {
       final response = await _api.me();
@@ -174,6 +202,7 @@ class AdminAuthController extends GetxController {
     adminEmail.value = '';
     adminRole.value = 'viewer';
     permissions.clear();
+    isIdentityLoaded.value = false;
     emailController.clear();
     passwordController.clear();
     Get.offAllNamed(AdminRoutes.LOGIN);
