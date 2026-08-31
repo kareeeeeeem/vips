@@ -1,3 +1,4 @@
+import 'package:vip/core/chat/views/chat_list_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -27,6 +28,18 @@ class MerchantCustomersView extends GetView<MerchantCustomersController> {
           style: TextStyle(color: const Color(0xFF1F2937), fontSize: 18.sp, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          // The conversations already open. A merchant answers messages far
+          // more often than they start one, so this is the way in.
+          IconButton(
+            icon: const Icon(Icons.forum_outlined, color: Color(0xFF1F2937)),
+            tooltip: 'Messages',
+            onPressed: () => Get.to(() => const ChatListView(
+                  accent: Color(0xFF1B7A43),
+                  title: 'Customer messages',
+                )),
+          ),
+        ],
       ),
       body: Column(
         children: [

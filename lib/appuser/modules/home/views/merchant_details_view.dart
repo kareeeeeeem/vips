@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:vip/core/chat/views/chat_conversation_view.dart';
 import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/widgets/custom_network_image.dart';
 import 'package:vip/appuser/modules/home/controllers/home_controller.dart';
@@ -175,6 +176,23 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
                   pinned: true,
                   expandedHeight: 180.h,
                   actions: [
+                    // Message this store. The conversation is between this
+                    // customer and this merchant; the server refuses any
+                    // other pairing, so there is nothing to choose here.
+                    IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline_rounded),
+                      tooltip: 'Message this store',
+                      onPressed: () {
+                        final id = _merchantId;
+                        if (id == null || id.isEmpty) return;
+                        Get.to(() => ChatConversationView(
+                              withUserId: id,
+                              withName: merchant!['storeName']?.toString() ??
+                                  'This store',
+                              accent: brandColor,
+                            ));
+                      },
+                    ),
                     // shareMerchant() was real (share_plus) and unreachable.
                     IconButton(
                       icon: const Icon(Icons.share_rounded),

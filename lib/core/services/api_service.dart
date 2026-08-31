@@ -113,6 +113,10 @@ class ApiService {
   // ── Check if logged in ──
   bool get isLoggedIn => _token != null;
 
+  /// The stored token, for the few callers that cannot go through Dio — the
+  /// chat socket authenticates on its own handshake.
+  String? get authToken => _token;
+
   // ── GET Request ──
   Future<ApiResponse> get(
     String path, {

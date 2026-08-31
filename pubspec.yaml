@@ -100,6 +100,7 @@ dependencies:
   http_parser: ^4.0.2
   path: ^1.9.0
   firebase_core: ^4.13.0
+  socket_io_client: ^3.1.6
 
 dev_dependencies:
   flutter_test:
