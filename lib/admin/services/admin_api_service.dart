@@ -333,6 +333,67 @@ class AdminApiService {
             'groupBy': groupBy,
           }));
 
+  // ── Staff and roles ───────────────────────────────────────
+  Future<ApiResponse> staff({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? adminRole,
+  }) =>
+      _api.get('/admin/staff', queryParams: _clean({
+            'page': page,
+            'limit': limit,
+            'search': search,
+            'adminRole': adminRole,
+          }));
+
+  Future<ApiResponse> staffMember(String id) => _api.get('/admin/staff/$id');
+
+  Future<ApiResponse> createStaff({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+    required String adminRole,
+    List<String> permissions = const [],
+  }) =>
+      _api.post('/admin/staff', {
+        'fullName': fullName,
+        'email': email,
+        'phone': phone,
+        'password': password,
+        'adminRole': adminRole,
+        'permissions': permissions,
+      });
+
+  /// Only the fields actually being changed are sent — the backend applies
+  /// what it is given, so sending everything would overwrite a field the
+  /// operator never touched.
+  Future<ApiResponse> updateStaff(String id, Map<String, dynamic> changes) =>
+      _api.put('/admin/staff/$id', changes);
+
+  Future<ApiResponse> deleteStaff(String id) => _api.delete('/admin/staff/$id');
+
+  Future<ApiResponse> permissionCatalogue() => _api.get('/admin/permissions');
+
+  Future<ApiResponse> roles() => _api.get('/admin/roles');
+
+  Future<ApiResponse> createRole({
+    required String name,
+    String description = '',
+    List<String> permissions = const [],
+  }) =>
+      _api.post('/admin/roles', {
+        'name': name,
+        'description': description,
+        'permissions': permissions,
+      });
+
+  Future<ApiResponse> updateRole(String id, Map<String, dynamic> changes) =>
+      _api.put('/admin/roles/$id', changes);
+
+  Future<ApiResponse> deleteRole(String id) => _api.delete('/admin/roles/$id');
+
   // ── Platform settings ─────────────────────────────────────
   Future<ApiResponse> settings() => _api.get('/admin/settings');
 

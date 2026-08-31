@@ -25,6 +25,11 @@ import '../../modules/pos/views/pos_invoices_view.dart';
 import '../../modules/reports/bindings/reports_binding.dart';
 import '../../modules/reports/views/reports_view.dart';
 import '../../modules/settings/bindings/admin_settings_binding.dart';
+import '../../modules/staff/bindings/staff_binding.dart';
+import '../../modules/staff/views/roles_permissions_view.dart';
+import '../../modules/staff/views/staff_add_edit_view.dart';
+import '../../modules/staff/views/staff_details_view.dart';
+import '../../modules/staff/views/staff_list_view.dart';
 import '../../modules/settings/views/admin_settings_view.dart';
 import '../../modules/users/bindings/users_binding.dart';
 import '../../modules/users/views/user_details_view.dart';
@@ -140,6 +145,33 @@ class AdminPages {
       name: AdminRoutes.REPORTS,
       page: () => const ReportsView(),
       binding: AdminReportsBinding(),
+    ),
+    // Console operators. STAFF_NEW is registered before STAFF_DETAILS so the
+    // literal '/staff/new' is not captured by the ':id' pattern.
+    GetPage(
+      name: AdminRoutes.STAFF,
+      page: () => const StaffListView(),
+      binding: StaffBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.STAFF_NEW,
+      page: () => const StaffAddEditView(),
+      binding: StaffBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.STAFF_EDIT,
+      page: () => const StaffAddEditView(),
+      binding: StaffBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.STAFF_DETAILS,
+      page: () => const StaffDetailsView(),
+      binding: StaffBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.ROLES,
+      page: () => const RolesPermissionsView(),
+      binding: StaffBinding(),
     ),
     GetPage(
       name: AdminRoutes.SETTINGS,

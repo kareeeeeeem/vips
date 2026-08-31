@@ -24,16 +24,42 @@ class AdminAuthController extends GetxController {
   final RxString adminEmail = ''.obs;
   final RxString adminId = ''.obs;
 
+  /// The signed-in admin's role and effective permissions, from /admin/me.
+  /// Used to hide controls the caller cannot use — presentation only: every
+  /// action is gated server-side too, so this is a courtesy, not the
+  /// security boundary.
+  final RxString adminRole = 'viewer'.obs;
+  final RxList<String> permissions = <String>[].obs;
+
   bool get canSubmit =>
       emailController.text.trim().isNotEmpty && passwordController.text.isNotEmpty;
 
   void togglePasswordVisibility() => isPasswordVisible.toggle();
 
-  void _adopt(Map<String, dynamic> user) {
+  void _adopt(Map<String, dynamic> user, [Map<String, dynamic>? envelope]) {
     adminId.value    = adminString(user['_id']);
     adminName.value  = adminString(user['fullName']);
     adminEmail.value = adminString(user['email']);
+    adminRole.value  = adminString(
+      envelope?['adminRole'] ?? user['adminRole'],
+      'viewer',
+    );
+    final granted = envelope?['permissions'] ?? user['permissions'];
+    if (granted is List) {
+      permissions.value = granted.map((p) => p.toString()).toList();
+    }
   }
+
+  /// Whether the caller holds a permission. '*' and a module wildcard both
+  /// count, matching the server's own check.
+  bool can(String permission) {
+    if (permissions.contains('*')) return true;
+    if (permissions.contains(permission)) return true;
+    final module = permission.split('.').first;
+    return permissions.contains('$module.*');
+  }
+
+  bool get isSuperAdmin => adminRole.value == 'super_admin';
 
   /// POST /admin/login. The backend refuses any non-admin account, so a
   /// customer's correct password still cannot open the console.
@@ -62,8 +88,11 @@ class AdminAuthController extends GetxController {
       if (response.success && token != null && token.isNotEmpty) {
         await ApiService().setToken(token);
 
-        final user = response.data is Map ? response.data['user'] : null;
-        if (user is Map) _adopt(Map<String, dynamic>.from(user));
+        final envelope = response.data is Map
+            ? Map<String, dynamic>.from(response.data as Map)
+            : null;
+        final user = envelope?['user'];
+        if (user is Map) _adopt(Map<String, dynamic>.from(user), envelope);
 
         passwordController.clear();
         Get.offAllNamed(AdminRoutes.DASHBOARD);
@@ -101,9 +130,12 @@ class AdminAuthController extends GetxController {
     if (!ApiService().isLoggedIn) return false;
     try {
       final response = await _api.me();
-      final user = response.data is Map ? response.data['user'] : null;
+      final envelope = response.data is Map
+          ? Map<String, dynamic>.from(response.data as Map)
+          : null;
+      final user = envelope?['user'];
       if (response.success && user is Map) {
-        _adopt(Map<String, dynamic>.from(user));
+        _adopt(Map<String, dynamic>.from(user), envelope);
         return true;
       }
       // A 403 here means a real token for a non-admin account (someone
@@ -140,6 +172,8 @@ class AdminAuthController extends GetxController {
     adminId.value = '';
     adminName.value = '';
     adminEmail.value = '';
+    adminRole.value = 'viewer';
+    permissions.clear();
     emailController.clear();
     passwordController.clear();
     Get.offAllNamed(AdminRoutes.LOGIN);

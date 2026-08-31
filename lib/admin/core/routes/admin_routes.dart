@@ -25,6 +25,11 @@ abstract class AdminRoutes {
   static const POS_INVOICE      = _AdminPaths.POS_INVOICE;
   static const POS_INVOICES     = _AdminPaths.POS_INVOICES;
   static const REPORTS          = _AdminPaths.REPORTS;
+  static const STAFF            = _AdminPaths.STAFF;
+  static const STAFF_NEW        = _AdminPaths.STAFF_NEW;
+  static const STAFF_DETAILS    = _AdminPaths.STAFF_DETAILS;
+  static const STAFF_EDIT       = _AdminPaths.STAFF_EDIT;
+  static const ROLES            = _AdminPaths.ROLES;
   static const SETTINGS         = _AdminPaths.SETTINGS;
 
   // ── Builders for the parameterised detail routes ──────────
@@ -34,6 +39,8 @@ abstract class AdminRoutes {
   static String userDetails(String id) => '$USERS/$id';
   static String merchantDetails(String id) => '$MERCHANTS/$id';
   static String orderDetails(String id) => '$ORDERS/$id';
+  static String staffDetails(String id) => '$STAFF/$id';
+  static String staffEdit(String id) => '$STAFF/$id/edit';
 }
 
 abstract class _AdminPaths {
@@ -55,5 +62,11 @@ abstract class _AdminPaths {
   static const POS_INVOICE      = '/pos/invoice';
   static const POS_INVOICES     = '/pos/invoices';
   static const REPORTS          = '/reports';
+  static const STAFF            = '/staff';
+  // Literal, so it must be registered ahead of '/staff/:id'.
+  static const STAFF_NEW        = '/staff/new';
+  static const STAFF_DETAILS    = '/staff/:id';
+  static const STAFF_EDIT       = '/staff/:id/edit';
+  static const ROLES            = '/roles';
   static const SETTINGS         = '/settings';
 }

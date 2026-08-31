@@ -28,6 +28,8 @@ import 'package:vip/admin/modules/merchants/controllers/merchants_controller.dar
 import 'package:vip/admin/modules/inventory/controllers/inventory_movements_controller.dart';
 import 'package:vip/admin/modules/inventory/controllers/low_stock_controller.dart';
 import 'package:vip/admin/modules/reports/controllers/reports_controller.dart';
+import 'package:vip/admin/modules/staff/controllers/staff_controller.dart';
+import 'package:vip/admin/modules/auth/controllers/admin_auth_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -239,6 +241,10 @@ void main() {
         AdminRoutes.POS_CHECKOUT,
         AdminRoutes.POS_INVOICE,
         AdminRoutes.POS_INVOICES,
+        AdminRoutes.STAFF_NEW,
+        AdminRoutes.STAFF_DETAILS,
+        AdminRoutes.STAFF_EDIT,
+        AdminRoutes.ROLES,
       };
       final drawerRoutes = AdminDrawer.entries.map((e) => e.route).toSet();
       for (final page in AdminPages.routes) {
@@ -681,6 +687,140 @@ void main() {
       c.activeTab.value = 'commission';
       expect(c.exportFilename, startsWith('vips-commission-'));
       expect(c.exportFilename, endsWith('.csv'));
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // StaffController  (Phase 4 — console operators)
+  // ═══════════════════════════════════════════════════════════
+  group('StaffController', () {
+    late StaffController c;
+    late AdminAuthController auth;
+
+    setUp(() {
+      auth = AdminAuthController();
+      Get.put<AdminAuthController>(auth);
+      c = StaffController();
+    });
+
+    tearDown(() {
+      c.searchController.dispose();
+      auth.emailController.dispose();
+      auth.passwordController.dispose();
+    });
+
+    test('the built-in roles are listed in ascending order of reach', () {
+      expect(StaffController.builtInRoles,
+          ['viewer', 'manager', 'admin', 'super_admin']);
+    });
+
+    test('only a super admin may assign the super admin role', () {
+      auth.adminRole.value = 'admin';
+      expect(c.canAssignRole('viewer'), isTrue);
+      expect(c.canAssignRole('manager'), isTrue);
+      expect(c.canAssignRole('admin'), isTrue);
+      // The server refuses this too — the UI just says so first.
+      expect(c.canAssignRole('super_admin'), isFalse);
+
+      auth.adminRole.value = 'super_admin';
+      expect(c.canAssignRole('super_admin'), isTrue);
+    });
+
+    test('canWrite and canDelete follow the caller\'s own permissions', () {
+      auth.permissions.value = ['staff.read'];
+      expect(c.canWrite, isFalse);
+      expect(c.canDelete, isFalse);
+
+      auth.permissions.value = ['staff.read', 'staff.write'];
+      expect(c.canWrite, isTrue);
+      expect(c.canDelete, isFalse);
+
+      auth.permissions.value = ['*'];
+      expect(c.canWrite, isTrue);
+      expect(c.canDelete, isTrue);
+    });
+
+    test('deleteBlockedReason names every reason the server would refuse', () {
+      auth.adminId.value = 'me';
+      auth.adminRole.value = 'super_admin';
+      auth.permissions.value = ['*'];
+      c.total.value = 5;
+
+      // Deleting yourself locks you out mid-session.
+      expect(c.deleteBlockedReason({'_id': 'me', 'adminRole': 'admin'}),
+          contains('your own account'));
+
+      // The last admin would leave nobody able to sign in.
+      c.total.value = 1;
+      expect(c.deleteBlockedReason({'_id': 'other', 'adminRole': 'admin'}),
+          contains('last admin'));
+
+      c.total.value = 5;
+      expect(c.deleteBlockedReason({'_id': 'other', 'adminRole': 'admin'}), isNull);
+
+      auth.adminRole.value = 'admin';
+      expect(c.deleteBlockedReason({'_id': 'other', 'adminRole': 'super_admin'}),
+          contains('super admin'));
+
+      auth.permissions.value = ['staff.read'];
+      expect(c.deleteBlockedReason({'_id': 'other', 'adminRole': 'viewer'}),
+          contains('does not allow'));
+    });
+
+    test('isSelf compares against the signed-in admin', () {
+      auth.adminId.value = 'abc123';
+      expect(c.isSelf({'_id': 'abc123'}), isTrue);
+      expect(c.isSelf({'_id': 'other'}), isFalse);
+      expect(c.isSelf({}), isFalse);
+    });
+
+    test('permissions group by module for a readable checklist', () {
+      c.allPermissions.value = [
+        'orders.read', 'orders.write', 'orders.delete',
+        'users.read', 'users.write',
+      ];
+      final grouped = c.permissionsByModule;
+      expect(grouped.keys, containsAll(['orders', 'users']));
+      expect(grouped['orders']!.length, 3);
+      expect(grouped['users']!.length, 2);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // AdminAuthController permission checks
+  // ═══════════════════════════════════════════════════════════
+  group('AdminAuthController.can', () {
+    late AdminAuthController c;
+
+    setUp(() => c = AdminAuthController());
+    tearDown(() {
+      c.emailController.dispose();
+      c.passwordController.dispose();
+    });
+
+    test('the wildcard grants everything', () {
+      c.permissions.value = ['*'];
+      expect(c.can('orders.delete'), isTrue);
+      expect(c.can('anything.at.all'), isTrue);
+    });
+
+    test('an exact permission is honoured', () {
+      c.permissions.value = ['orders.read'];
+      expect(c.can('orders.read'), isTrue);
+      expect(c.can('orders.write'), isFalse);
+    });
+
+    test('a module wildcard covers its actions', () {
+      // Matches the server's own check, so the UI and the gate agree.
+      c.permissions.value = ['orders.*'];
+      expect(c.can('orders.read'), isTrue);
+      expect(c.can('orders.delete'), isTrue);
+      expect(c.can('users.read'), isFalse);
+    });
+
+    test('no permissions grants nothing', () {
+      c.permissions.clear();
+      expect(c.can('dashboard.read'), isFalse);
     });
   });
 }
