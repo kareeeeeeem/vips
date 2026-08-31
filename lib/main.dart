@@ -16,6 +16,17 @@ void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // Point the app at a different backend without editing code:
+    //   flutter run -t lib/main.dart \
+    //     --dart-define=API_BASE_URL=http://localhost:3000/api
+    // Must be set before ApiService's singleton is first constructed, since
+    // Dio captures the base URL at construction. Defaults to production.
+    const overrideBaseUrl = String.fromEnvironment('API_BASE_URL');
+    if (overrideBaseUrl.isNotEmpty) {
+      ApiService.baseUrl = overrideBaseUrl;
+      debugPrint('[APP] API base URL overridden: $overrideBaseUrl');
+    }
+
     await ApiService().init();
     // Anonymous screen counting. Nothing here can stop the app booting: the
     // service swallows its own failures and reports nothing if it cannot
