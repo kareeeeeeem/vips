@@ -72,12 +72,42 @@ class AdminDrawer extends StatelessWidget {
       children: [
         AdminNavEntry(AdminRoutes.POS, 'The till',
             Icons.calculate_outlined, permission: 'pos.read'),
+        AdminNavEntry(AdminRoutes.POS_CUSTOMERS, 'Customers',
+            Icons.contact_page_outlined, permission: 'pos.read'),
         AdminNavEntry(AdminRoutes.POS_INVOICES, 'Receipts',
             Icons.receipt_outlined, permission: 'pos.read'),
+        AdminNavEntry(AdminRoutes.POS_REFUNDS, 'Refunds',
+            Icons.assignment_return_outlined, permission: 'pos.read'),
       ],
     ),
-    AdminNavEntry(AdminRoutes.REPORTS, 'Reports', Icons.insert_chart_outlined,
-        permission: 'reports.read'),
+    // Each report is its own route, so it can be linked to and opened from
+    // here rather than only from a tab strip inside one screen.
+    AdminNavEntry(
+      AdminRoutes.REPORTS,
+      'Reports',
+      Icons.insert_chart_outlined,
+      permission: 'reports.read',
+      children: [
+        AdminNavEntry(AdminRoutes.REPORT_SALES, 'Sales',
+            Icons.trending_up_rounded, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_PROFIT, 'Profit',
+            Icons.savings_outlined, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_PRODUCTS, 'Products',
+            Icons.sell_outlined, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_CUSTOMERS, 'Customers',
+            Icons.people_alt_outlined, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_ORDERS, 'Orders',
+            Icons.receipt_long_outlined, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_MERCHANTS, 'Merchants',
+            Icons.storefront_outlined, permission: 'reports.read'),
+        AdminNavEntry(AdminRoutes.REPORT_COMMISSION, 'Commission',
+            Icons.percent_rounded, permission: 'reports.read'),
+        // Its own permission: reading a report and taking the data out of the
+        // system as a file are separate decisions.
+        AdminNavEntry(AdminRoutes.REPORTS_EXPORT, 'Export',
+            Icons.download_rounded, permission: 'reports.export'),
+      ],
+    ),
     AdminNavEntry(
       AdminRoutes.STAFF,
       'Staff',
@@ -94,8 +124,18 @@ class AdminDrawer extends StatelessWidget {
         permission: 'analytics.read'),
     AdminNavEntry(AdminRoutes.AUDIT, 'Audit log', Icons.fact_check_outlined,
         permission: 'settings.read'),
-    AdminNavEntry(AdminRoutes.SETTINGS, 'Settings', Icons.settings_outlined,
-        permission: 'settings.read'),
+    AdminNavEntry(
+      AdminRoutes.SETTINGS,
+      'Settings',
+      Icons.settings_outlined,
+      permission: 'settings.read',
+      children: [
+        AdminNavEntry(AdminRoutes.SETTINGS, 'Administrators',
+            Icons.admin_panel_settings_outlined, permission: 'settings.read'),
+        AdminNavEntry(AdminRoutes.SETTINGS_SYSTEM, 'System',
+            Icons.dns_outlined, permission: 'settings.read'),
+      ],
+    ),
   ];
 
   /// Every destination the drawer can reach, with groups flattened into it.

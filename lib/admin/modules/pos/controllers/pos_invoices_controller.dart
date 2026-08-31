@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 
 import '../../../core/admin_list_controller.dart';
+import '../../../core/routes/admin_routes.dart';
 
 /// Till receipt history, with the refund action.
 class PosInvoicesController extends AdminListController {
@@ -14,6 +15,20 @@ class PosInvoicesController extends AdminListController {
   /// `totals` from the response: takings and refunds for the current filter.
   final RxNum salesTotal = RxNum(0);
   final RxNum refundedTotal = RxNum(0);
+
+  /// True when this screen was opened as the Refunds entry rather than the
+  /// full receipt history. The two are the same list behind one filter, so
+  /// they share a screen instead of a second one that could drift from it.
+  final RxBool refundsOnly = false.obs;
+
+  @override
+  void onInit() {
+    if (Get.currentRoute == AdminRoutes.POS_REFUNDS) {
+      refundsOnly.value = true;
+      statusFilter.value = 'refunded';
+    }
+    super.onInit();
+  }
 
   @override
   Future<ApiResponse> fetch() => api.posInvoices(

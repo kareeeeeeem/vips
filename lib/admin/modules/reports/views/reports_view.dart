@@ -11,14 +11,37 @@ import '../../../services/admin_api_service.dart';
 import '../controllers/reports_controller.dart';
 
 /// Seven reports behind one date range and granularity.
+///
+/// Each report is its own route, so one can be linked to, bookmarked and
+/// opened from the sidebar. They share a single controller, which is what
+/// keeps the date range and granularity when moving between them — seven
+/// controllers would reset the window on every switch.
 class ReportsView extends GetView<AdminReportsController> {
   const ReportsView({super.key});
 
+  /// The report this route is for. Falls back to the first one, which is what
+  /// the bare '/reports' entry lands on.
+  String get _routeType {
+    final param = Get.parameters['type'];
+    if (param != null && AdminReportsController.reports.contains(param)) {
+      return param;
+    }
+    return AdminReportsController.reports.first;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Arriving on a report route sets the controller to match. Done in build
+    // rather than a binding because the controller is shared across all seven
+    // routes and is already alive when the second one opens.
+    final type = _routeType;
+    if (controller.activeTab.value != type) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => controller.setTab(type));
+    }
+
     return AdminScaffold(
-      title: 'Reports',
-      route: AdminRoutes.REPORTS,
+      title: adminLabel(type),
+      route: AdminRoutes.report(type),
       onRefresh: controller.refreshCurrent,
       actions: [
         Obx(() => IconButton(
@@ -79,7 +102,9 @@ class ReportsView extends GetView<AdminReportsController> {
                 AdminFilterOption(type, adminLabel(type)),
             ],
             selected: controller.activeTab.value,
-            onSelected: controller.setTab,
+            // Navigation rather than local state, so the address bar and the
+            // sidebar agree with the strip about which report is open.
+            onSelected: (type) => Get.offNamed(AdminRoutes.report(type)),
           )),
     );
   }

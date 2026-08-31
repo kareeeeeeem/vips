@@ -42,6 +42,25 @@ import 'package:vip/admin/core/widgets/admin_nav_entry.dart';
 import 'package:vip/admin/modules/analytics/controllers/analytics_controller.dart';
 import 'package:vip/core/services/analytics_service.dart';
 
+/// Whether a registered route pattern matches a concrete path.
+///
+/// '/reports/:type' serves '/reports/profit', so a sidebar entry pointing at
+/// the concrete path is satisfied by the pattern — the alternative is seven
+/// identical GetPages registered only to keep a test happy.
+bool _matches(String pattern, String path) {
+  final p = pattern.split('/');
+  final c = path.split('/');
+  if (p.length != c.length) return false;
+  for (var i = 0; i < p.length; i++) {
+    if (p[i].startsWith(':')) continue;
+    if (p[i] != c[i]) return false;
+  }
+  return true;
+}
+
+bool _isRegistered(String route) => AdminPages.routes
+    .any((r) => r.name == route || _matches(r.name, route));
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -229,12 +248,11 @@ void main() {
       // Checked against the real route table rather than a list repeated
       // here: a hand-maintained copy goes stale the moment a section is
       // added, and then the test fails for the wrong reason.
-      final registered = AdminPages.routes.map((r) => r.name).toSet();
       // allEntries, not entries: the five analytical boards are nested inside
       // the Dashboards group, and checking only the top level would let a
       // broken child route ship.
       for (final entry in AdminDrawer.allEntries) {
-        expect(registered, contains(entry.route),
+        expect(_isRegistered(entry.route), isTrue,
             reason: '${entry.label} points at a route with no GetPage');
       }
     });
@@ -260,9 +278,14 @@ void main() {
       };
       final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
       for (final page in AdminPages.routes) {
+        // A parameterised page is reached through the routes that match it,
+        // so it counts as navigable when any drawer entry resolves to it.
+        final reachedByPattern = page.name.contains(':') &&
+            drawerRoutes.any((r) => _matches(page.name, r));
         expect(
           drawerRoutes.contains(page.name) ||
-              openedFromAnotherScreen.contains(page.name),
+              openedFromAnotherScreen.contains(page.name) ||
+              reachedByPattern,
           isTrue,
           reason: '${page.name} is registered but nothing navigates to it',
         );
@@ -285,6 +308,35 @@ void main() {
           .map((e) => e.route)
           .toList();
       expect(routes.toSet().length, routes.length);
+    });
+
+    test('every report is its own route, not just a tab', () {
+      // Seven tabs inside one screen meant no report could be linked to or
+      // bookmarked. Each is a route now, all served by one page.
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
+      for (final type in AdminReportsController.reports) {
+        final route = AdminRoutes.report(type);
+        expect(_isRegistered(route), isTrue, reason: '$route has no page');
+        expect(drawerRoutes, contains(route),
+            reason: '$route is registered but not offered in the sidebar');
+      }
+      expect(drawerRoutes, contains(AdminRoutes.REPORTS_EXPORT));
+    });
+
+    test('the export entry needs its own permission', () {
+      // Reading a report and taking the data out as a file are separate
+      // decisions, so the sidebar cannot offer export on reports.read alone.
+      final export = AdminDrawer.allEntries
+          .firstWhere((e) => e.route == AdminRoutes.REPORTS_EXPORT);
+      expect(export.permission, 'reports.export');
+    });
+
+    test('the literal report routes are registered before the pattern', () {
+      // '/reports/export' would otherwise be captured by '/reports/:type' and
+      // open the reports screen for a report called "export".
+      final names = AdminPages.routes.map((r) => r.name).toList();
+      expect(names.indexOf(AdminRoutes.REPORTS_EXPORT),
+          lessThan(names.indexOf(AdminRoutes.REPORT_DETAIL)));
     });
 
     test('a screen behind a tab strip is also reachable from the drawer', () {

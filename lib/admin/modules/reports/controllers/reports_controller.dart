@@ -163,6 +163,37 @@ class AdminReportsController extends GetxController {
     }
   }
 
+  /// Exports a report other than the one on screen, for the export list.
+  Future<String?> exportReportOfType(String type) async {
+    if (isExporting.value) return null;
+    isExporting.value = true;
+    try {
+      final response = await _api.exportReport(
+        type,
+        from: _iso(dateRange.value?.start),
+        to: _iso(dateRange.value?.end),
+        groupBy: groupableReports.contains(type) ? groupBy.value : null,
+      );
+      if (response.success && response.data is String) {
+        return response.data as String;
+      }
+      adminToast('Export failed', response.message, isError: true);
+      return null;
+    } catch (e) {
+      debugPrint('[ADMIN REPORTS] export $type failed: $e');
+      adminToast('Export failed',
+          'Could not build the file. Please try again.', isError: true);
+      return null;
+    } finally {
+      isExporting.value = false;
+    }
+  }
+
+  String exportFilenameFor(String type) {
+    final stamp = DateTime.now().toIso8601String().substring(0, 10);
+    return 'vips-$type-$stamp.csv';
+  }
+
   String get exportFilename {
     final stamp = DateTime.now().toIso8601String().substring(0, 10);
     return 'vips-${activeTab.value}-$stamp.csv';

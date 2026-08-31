@@ -30,7 +30,18 @@ abstract class AdminRoutes {
   static const POS_CHECKOUT     = _AdminPaths.POS_CHECKOUT;
   static const POS_INVOICE      = _AdminPaths.POS_INVOICE;
   static const POS_INVOICES     = _AdminPaths.POS_INVOICES;
+  static const POS_CUSTOMERS    = _AdminPaths.POS_CUSTOMERS;
+  static const POS_REFUNDS      = _AdminPaths.POS_REFUNDS;
   static const REPORTS          = _AdminPaths.REPORTS;
+  static const REPORT_DETAIL    = _AdminPaths.REPORT_DETAIL;
+  static const REPORT_SALES      = '/reports/sales';
+  static const REPORT_PROFIT     = '/reports/profit';
+  static const REPORT_PRODUCTS   = '/reports/products';
+  static const REPORT_CUSTOMERS  = '/reports/customers';
+  static const REPORT_ORDERS     = '/reports/orders';
+  static const REPORT_MERCHANTS  = '/reports/merchants';
+  static const REPORT_COMMISSION = '/reports/commission';
+  static const REPORTS_EXPORT   = _AdminPaths.REPORTS_EXPORT;
   static const STAFF            = _AdminPaths.STAFF;
   static const STAFF_NEW        = _AdminPaths.STAFF_NEW;
   static const STAFF_DETAILS    = _AdminPaths.STAFF_DETAILS;
@@ -39,6 +50,7 @@ abstract class AdminRoutes {
   static const ANALYTICS        = _AdminPaths.ANALYTICS;
   static const AUDIT            = _AdminPaths.AUDIT;
   static const SETTINGS         = _AdminPaths.SETTINGS;
+  static const SETTINGS_SYSTEM  = _AdminPaths.SETTINGS_SYSTEM;
 
   // ── Builders for the parameterised detail routes ──────────
   // The registered names carry a `:id` segment, so navigation must go through
@@ -49,6 +61,10 @@ abstract class AdminRoutes {
   static String orderDetails(String id) => '$ORDERS/$id';
   static String staffDetails(String id) => '$STAFF/$id';
   static String staffEdit(String id) => '$STAFF/$id/edit';
+
+  /// One of the seven report types — 'sales', 'profit', 'products',
+  /// 'customers', 'orders', 'merchants', 'commission'.
+  static String report(String type) => '$REPORTS/$type';
 }
 
 abstract class _AdminPaths {
@@ -77,7 +93,12 @@ abstract class _AdminPaths {
   static const POS_CHECKOUT     = '/pos/checkout';
   static const POS_INVOICE      = '/pos/invoice';
   static const POS_INVOICES     = '/pos/invoices';
+  static const POS_CUSTOMERS    = '/pos/customers';
+  static const POS_REFUNDS      = '/pos/refunds';
   static const REPORTS          = '/reports';
+  // Literal, so it must be registered ahead of '/reports/:type'.
+  static const REPORTS_EXPORT   = '/reports/export';
+  static const REPORT_DETAIL    = '/reports/:type';
   static const STAFF            = '/staff';
   // Literal, so it must be registered ahead of '/staff/:id'.
   static const STAFF_NEW        = '/staff/new';
@@ -87,4 +108,5 @@ abstract class _AdminPaths {
   static const ANALYTICS        = '/analytics';
   static const AUDIT            = '/audit';
   static const SETTINGS         = '/settings';
+  static const SETTINGS_SYSTEM  = '/settings/system';
 }

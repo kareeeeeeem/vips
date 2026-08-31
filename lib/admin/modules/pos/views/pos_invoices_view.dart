@@ -16,8 +16,12 @@ class PosInvoicesView extends GetView<PosInvoicesController> {
   @override
   Widget build(BuildContext context) {
     return AdminScaffold(
-      title: 'POS Receipts',
-      route: AdminRoutes.POS,
+      // The same list either way — the Refunds entry is this screen with the
+      // status filter already applied, not a second screen that could drift.
+      title: controller.refundsOnly.value ? 'Refunds' : 'POS Receipts',
+      route: controller.refundsOnly.value
+          ? AdminRoutes.POS_REFUNDS
+          : AdminRoutes.POS_INVOICES,
       onRefresh: () => controller.load(),
       actions: [
         IconButton(

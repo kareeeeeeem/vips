@@ -33,8 +33,10 @@ import '../../modules/pos/bindings/pos_binding.dart';
 import '../../modules/pos/views/pos_checkout_view.dart';
 import '../../modules/pos/views/pos_home_view.dart';
 import '../../modules/pos/views/pos_invoice_view.dart';
+import '../../modules/pos/views/pos_customers_view.dart';
 import '../../modules/pos/views/pos_invoices_view.dart';
 import '../../modules/reports/bindings/reports_binding.dart';
+import '../../modules/reports/views/reports_export_view.dart';
 import '../../modules/reports/views/reports_view.dart';
 import '../../modules/settings/bindings/admin_settings_binding.dart';
 import '../../modules/staff/bindings/staff_binding.dart';
@@ -43,6 +45,7 @@ import '../../modules/staff/views/staff_add_edit_view.dart';
 import '../../modules/staff/views/staff_details_view.dart';
 import '../../modules/staff/views/staff_list_view.dart';
 import '../../modules/settings/views/admin_settings_view.dart';
+import '../../modules/settings/views/system_settings_view.dart';
 import '../../modules/users/bindings/users_binding.dart';
 import '../../modules/users/views/user_details_view.dart';
 import '../../modules/users/views/users_list_view.dart';
@@ -190,8 +193,34 @@ class AdminPages {
       page: () => const PosInvoicesView(),
       binding: PosInvoicesBinding(),
     ),
+    // The same screen behind the status filter, rather than a second one that
+    // could drift from it.
+    GetPage(
+      name: AdminRoutes.POS_REFUNDS,
+      page: () => const PosInvoicesView(),
+      binding: PosInvoicesBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.POS_CUSTOMERS,
+      page: () => const PosCustomersView(),
+      binding: PosCustomersBinding(),
+    ),
+    // The seven reports are one screen behind seven routes: linkable and
+    // bookmarkable, but sharing a controller so the date range survives a
+    // move between them. EXPORT is registered first — the literal would
+    // otherwise be captured by the ':type' pattern.
     GetPage(
       name: AdminRoutes.REPORTS,
+      page: () => const ReportsView(),
+      binding: AdminReportsBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.REPORTS_EXPORT,
+      page: () => const ReportsExportView(),
+      binding: AdminReportsBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.REPORT_DETAIL,
       page: () => const ReportsView(),
       binding: AdminReportsBinding(),
     ),
@@ -240,6 +269,11 @@ class AdminPages {
     GetPage(
       name: AdminRoutes.SETTINGS,
       page: () => const AdminSettingsView(),
+      binding: AdminSettingsBinding(),
+    ),
+    GetPage(
+      name: AdminRoutes.SETTINGS_SYSTEM,
+      page: () => const SystemSettingsView(),
       binding: AdminSettingsBinding(),
     ),
   ];
