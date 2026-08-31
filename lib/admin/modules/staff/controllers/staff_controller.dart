@@ -142,6 +142,13 @@ class StaffController extends AdminListController {
       return 'Only a super admin can remove another super admin.';
     }
     if (total.value <= 1) return 'The last admin cannot be removed.';
+    // Their name signs every receipt, till session and stock movement they
+    // touched. Deleting the account does not remove those rows, it blanks who
+    // is on them — so an operator with history is disabled, never deleted.
+    final signed = adminInt(staff['signedRecords']);
+    if (signed > 0) {
+      return 'Recorded on $signed till and stock record(s) — disable instead';
+    }
     return null;
   }
 

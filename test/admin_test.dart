@@ -1213,6 +1213,47 @@ void main() {
     });
   });
 
+  group('StaffController.deleteBlockedReason', () {
+    late AdminAuthController auth;
+
+    setUp(() {
+      auth = AdminAuthController();
+      Get.put<AdminAuthController>(auth);
+      auth.permissions.value = ['*'];
+      auth.adminId.value = 'me';
+    });
+
+    tearDown(Get.reset);
+
+    test('an operator with till or ledger history cannot be deleted', () {
+      // Their name is what those records are signed with. Deleting the
+      // account blanks the attribution rather than removing the rows, so the
+      // control has to say so before the tap instead of 409-ing after it.
+      final c = StaffController();
+      c.total.value = 5;
+      final reason = c.deleteBlockedReason({
+        '_id': 'x',
+        'adminRole': 'cashier',
+        'signedRecords': 12,
+      });
+      expect(reason, isNotNull);
+      expect(reason, contains('12'));
+      expect(reason, contains('disable'));
+    });
+
+    test('an operator who has signed nothing is not blocked on that ground', () {
+      final c = StaffController();
+      c.total.value = 5;
+      final reason = c.deleteBlockedReason({
+        '_id': 'x',
+        'adminRole': 'viewer',
+        'signedRecords': 0,
+      });
+      // Nothing blocks it: a super admin, not themselves, not the last one.
+      expect(reason, isNull);
+    });
+  });
+
   group('AdminAuthController.can', () {
     late AdminAuthController c;
 
