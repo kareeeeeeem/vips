@@ -105,6 +105,17 @@ class MerchantsDashboardView extends GetView<MerchantsDashboardController> {
           total > 0 ? '${(selling / total * 100).toStringAsFixed(1)}%' : '—',
           note: 'Share of the roster that sold in this window',
         ),
+        // Only shown when there is something to explain. Without it this
+        // board's revenue is quietly smaller than the sales board's for the
+        // same window, which reads as a bug in one of the two.
+        if (controller.unattributedRevenue > 0)
+          QuickStat(
+            'Not through any merchant',
+            adminMoney(controller.unattributedRevenue),
+            tone: AdminColors.warning,
+            note: '${controller.unattributedOrders} fulfilled order(s) carrying '
+                'no merchant — the gap against the sales dashboard',
+          ),
       ],
     );
   }

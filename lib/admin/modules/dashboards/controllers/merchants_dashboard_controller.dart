@@ -20,7 +20,17 @@ class MerchantsDashboardController extends DashboardBaseController {
   /// top-N ranking, and the more actionable half of the roster.
   int get idleMerchants => count('idleMerchants');
 
+  /// Revenue attributable to a merchant. Deliberately not the same figure as
+  /// the sales dashboard's total, which counts every sale; the difference is
+  /// [unattributedRevenue], so the two boards reconcile instead of quietly
+  /// disagreeing about one window.
   double get totalRevenue => money('totalRevenue');
+
+  /// Fulfilled revenue on orders carrying no merchant — a deleted merchant's
+  /// record still ranks under 'Deleted merchant', but an order that never had
+  /// one cannot appear in a per-merchant ranking at all.
+  double get unattributedRevenue => money('unattributedRevenue');
+  int get unattributedOrders => count('unattributedOrders');
 
   List<ChartPoint> get growthChart => chart('merchantGrowthChart');
 
