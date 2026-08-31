@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart' hide Response;
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
@@ -153,6 +153,52 @@ class ApiService {
       return ApiResponse.fromDioResponse(response);
     } on DioException catch (e) {
       return ApiResponse.fromDioError(e);
+    }
+  }
+
+  // ── Multipart upload ──
+  /// Posts a file as multipart/form-data.
+  ///
+  /// Goes through the same Dio instance as everything else, so the auth
+  /// header, the cold-start timeout and the app-wide 401 redirect all apply —
+  /// a second HTTP client would quietly miss all three.
+  Future<ApiResponse> postFile(
+    String path, {
+    required List<int> bytes,
+    required String filename,
+    String field = 'file',
+    String? contentType,
+    Map<String, dynamic>? queryParams,
+    Map<String, dynamic>? fields,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        ...?fields,
+        field: MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: contentType == null ? null : DioMediaType.parse(contentType),
+        ),
+      });
+      final response = await _dio.post(path, data: form, queryParameters: queryParams);
+      return ApiResponse.fromDioResponse(response);
+    } on DioException catch (e) {
+      return ApiResponse.fromDioError(e);
+    }
+  }
+
+  /// Fetches a file as raw bytes — a template or an export, where the body is
+  /// the payload rather than a JSON envelope.
+  Future<List<int>?> getBytes(String path) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        path,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return response.data;
+    } on DioException catch (e) {
+      debugPrint('[API] getBytes $path failed: ${e.message}');
+      return null;
     }
   }
 

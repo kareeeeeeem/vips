@@ -33,6 +33,8 @@ import '../modules/merchant_catalog/views/create_item_view.dart';
 import '../modules/merchant_catalog/views/create_voucher_view.dart';
 import '../modules/merchant_catalog/views/create_coupon_view.dart';
 import '../modules/merchant_catalog/views/merchant_catalog_view.dart';
+import '../modules/merchant_catalog/views/bulk_import_view.dart';
+import '../modules/merchant_catalog/controllers/bulk_import_controller.dart';
 
 import '../modules/merchant_subscription/bindings/merchant_subscription_binding.dart';
 import '../modules/merchant_subscription/views/my_business_plan_view.dart';
@@ -224,6 +226,13 @@ class MerchantAppPages {
       name: MerchantRoutes.CATALOG,
       page: () => const MerchantCatalogView(),
       binding: MerchantCatalogBinding(),
+    ),
+    // Uploading a spreadsheet of products instead of typing them in one at a
+    // time. Its own binding: the catalog controller has no part in it.
+    GetPage(
+      name: MerchantRoutes.BULK_IMPORT,
+      page: () => const BulkImportView(),
+      binding: BindingsBuilder(() => Get.lazyPut(() => BulkImportController())),
     ),
     GetPage(
       name: MerchantRoutes.BUSINESS_PLAN,

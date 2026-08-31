@@ -91,6 +91,15 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
                   },
                 ),
                 _buildActionTile(
+                  icon: Icons.upload_file_outlined,
+                  title: 'Import from a file',
+                  subtitle: 'Add many products at once from a spreadsheet',
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(MerchantRoutes.BULK_IMPORT);
+                  },
+                ),
+                _buildActionTile(
                   icon: Icons.local_activity_outlined,
                   title: 'New Voucher',
                   subtitle: 'Create a discount voucher',

@@ -20,6 +20,7 @@ abstract class MerchantRoutes {
   static const BILL_SCAN_ME = _MerchantPaths.BILL_SCAN_ME;
   static const INVOICE_RECEIPT = _MerchantPaths.INVOICE_RECEIPT;
   static const CREATE_ITEM = _MerchantPaths.CREATE_ITEM;
+  static const BULK_IMPORT = _MerchantPaths.BULK_IMPORT;
   static const CREATE_VOUCHER = _MerchantPaths.CREATE_VOUCHER;
   static const CREATE_COUPON = _MerchantPaths.CREATE_COUPON;
   static const BUSINESS_PLAN = _MerchantPaths.BUSINESS_PLAN;
@@ -83,6 +84,7 @@ abstract class _MerchantPaths {
   static const BILL_SCAN_ME = '/bill-scan-me';
   static const INVOICE_RECEIPT = '/invoice-receipt';
   static const CREATE_ITEM = '/create-item';
+  static const BULK_IMPORT = '/import-products';
   static const CREATE_VOUCHER = '/create-voucher';
   static const CREATE_COUPON = '/create-coupon';
   static const BUSINESS_PLAN = '/business-plan';
