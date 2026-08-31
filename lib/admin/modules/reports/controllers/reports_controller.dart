@@ -1,34 +1,56 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show DateTimeRange;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/admin_toast.dart';
 import '../../../services/admin_api_service.dart';
 
-/// The four reports the backend exposes, loaded together and re-fetched when
-/// the date range changes.
+/// The seven reports, one date range, one granularity.
 ///
-/// `merchantsReport` is deliberately not date-scoped — it reports the
-/// approval funnel and lifetime performance, which a date window would make
-/// misleading rather than more precise.
+/// Each report is fetched on demand and cached, so switching tabs does not
+/// refetch what is already on screen — but changing the range or granularity
+/// clears the cache, because every cached answer was for the old window.
 class AdminReportsController extends GetxController {
   final AdminApiService _api = AdminApiService();
 
-  final RxBool isLoading = false.obs;
-  final RxString errorMessage = ''.obs;
+  /// Tab order. `merchants` is lifetime data; the rest honour the range.
+  static const List<String> reports = [
+    'sales',
+    'profit',
+    'products',
+    'customers',
+    'orders',
+    'merchants',
+    'commission',
+  ];
+
+  /// Reports whose numbers are lifetime rather than windowed. Saying so on
+  /// screen stops the date range being read as applying to them.
+  static const Set<String> lifetimeReports = {'merchants'};
+
+  /// Reports that accept a day/week/month/year grouping.
+  static const Set<String> groupableReports = {'sales', 'profit', 'customers'};
+
+  static const List<String> granularities = ['day', 'week', 'month', 'year'];
+
   final RxString activeTab = 'sales'.obs;
-
-  final Rxn<Map<String, dynamic>> sales = Rxn<Map<String, dynamic>>();
-  final Rxn<Map<String, dynamic>> users = Rxn<Map<String, dynamic>>();
-  final Rxn<Map<String, dynamic>> merchants = Rxn<Map<String, dynamic>>();
-  final Rxn<Map<String, dynamic>> orders = Rxn<Map<String, dynamic>>();
-
+  final RxString groupBy = 'day'.obs;
   final Rxn<DateTimeRange> dateRange = Rxn<DateTimeRange>();
+
+  final RxBool isLoading = false.obs;
+  final RxBool isExporting = false.obs;
+  final RxString errorMessage = ''.obs;
+
+  final RxMap<String, Map<String, dynamic>> cache =
+      <String, Map<String, dynamic>>{}.obs;
+
+  Map<String, dynamic>? get current => cache[activeTab.value];
+
+  bool get isLifetime => lifetimeReports.contains(activeTab.value);
+  bool get isGroupable => groupableReports.contains(activeTab.value);
 
   @override
   void onInit() {
     super.onInit();
-    // Default window: the last 30 days, matching what the backend falls back
-    // to when no range is given.
     final now = DateTime.now();
     dateRange.value = DateTimeRange(
       start: now.subtract(const Duration(days: 29)),
@@ -39,63 +61,110 @@ class AdminReportsController extends GetxController {
 
   String? _iso(DateTime? date) => date?.toIso8601String().substring(0, 10);
 
-  Future<void> load() async {
+  Future<void> load({bool force = false}) async {
+    final type = activeTab.value;
+    if (!force && cache.containsKey(type)) return;
+
     isLoading.value = true;
     errorMessage.value = '';
-    final from = _iso(dateRange.value?.start);
-    final to = _iso(dateRange.value?.end);
-
     try {
-      final results = await Future.wait([
-        _api.salesReport(from: from, to: to),
-        _api.usersReport(from: from, to: to),
-        _api.merchantsReport(),
-        _api.ordersReport(from: from, to: to),
-      ]);
-
-      Map<String, dynamic>? unwrap(int index) {
-        final response = results[index];
-        return response.success && response.data is Map
-            ? Map<String, dynamic>.from(response.data as Map)
-            : null;
-      }
-
-      sales.value = unwrap(0);
-      users.value = unwrap(1);
-      merchants.value = unwrap(2);
-      orders.value = unwrap(3);
-
-      if (sales.value == null && users.value == null &&
-          merchants.value == null && orders.value == null) {
-        errorMessage.value = results.first.message.isNotEmpty
-            ? results.first.message
-            : 'Could not load reports.';
+      final response = await _api.report(
+        type,
+        from: _iso(dateRange.value?.start),
+        to: _iso(dateRange.value?.end),
+        groupBy: groupableReports.contains(type) ? groupBy.value : null,
+      );
+      if (response.success && response.data is Map) {
+        cache[type] = Map<String, dynamic>.from(response.data as Map);
+      } else {
+        errorMessage.value = response.message.isNotEmpty
+            ? response.message
+            : 'Could not load this report.';
       }
     } catch (e) {
-      debugPrint('[ADMIN REPORTS] load failed: $e');
-      errorMessage.value = 'Could not load reports. Please try again.';
+      debugPrint('[ADMIN REPORTS] load $type failed: $e');
+      errorMessage.value = 'Could not load this report. Please try again.';
     } finally {
       isLoading.value = false;
     }
   }
 
-  void setTab(String tab) => activeTab.value = tab;
-
-  void setDateRange(DateTimeRange range) {
-    dateRange.value = range;
+  void setTab(String tab) {
+    if (activeTab.value == tab) return;
+    activeTab.value = tab;
     load();
   }
 
-  /// Reads `summary.<key>` off one of the four reports.
-  num summary(Rxn<Map<String, dynamic>> report, String key) {
-    final data = report.value;
+  /// Both of these invalidate every cached answer: they were all computed
+  /// for the previous window.
+  void setDateRange(DateTimeRange range) {
+    dateRange.value = range;
+    cache.clear();
+    load(force: true);
+  }
+
+  void setGroupBy(String value) {
+    if (groupBy.value == value) return;
+    groupBy.value = value;
+    for (final type in groupableReports) {
+      cache.remove(type);
+    }
+    load(force: true);
+  }
+
+  Future<void> refreshCurrent() => load(force: true);
+
+  /// Reads `summary.<key>` off the active report with a safe fallback.
+  num summary(String key) {
+    final data = current;
     if (data == null || data['summary'] is! Map) return 0;
     final value = (data['summary'] as Map)[key];
     return value is num ? value : 0;
   }
 
-  List<Map<String, dynamic>> section(Rxn<Map<String, dynamic>> report, String key) {
-    final data = report.value;
+  /// True when the backend explicitly sent null — "no data" rather than zero.
+  bool summaryIsNull(String key) {
+    final data = current;
+    if (data == null || data['summary'] is! Map) return true;
+    return (data['summary'] as Map)[key] == null;
+  }
+
+  List<Map<String, dynamic>> section(String key) {
+    final data = current;
     return data == null ? const [] : adminItems(data, key);
+  }
+
+  /// Downloads the active report as CSV.
+  ///
+  /// Goes through ApiService so the auth header is attached; the file arrives
+  /// as a string the caller hands to the browser.
+  Future<String?> exportCsv() async {
+    if (isExporting.value) return null;
+    isExporting.value = true;
+    try {
+      final response = await _api.exportReport(
+        activeTab.value,
+        from: _iso(dateRange.value?.start),
+        to: _iso(dateRange.value?.end),
+        groupBy: isGroupable ? groupBy.value : null,
+      );
+      if (response.success && response.data is String) {
+        return response.data as String;
+      }
+      adminToast('Export failed', response.message, isError: true);
+      return null;
+    } catch (e) {
+      debugPrint('[ADMIN REPORTS] export failed: $e');
+      adminToast('Export failed',
+          'Could not build the file. Please try again.', isError: true);
+      return null;
+    } finally {
+      isExporting.value = false;
+    }
+  }
+
+  String get exportFilename {
+    final stamp = DateTime.now().toIso8601String().substring(0, 10);
+    return 'vips-${activeTab.value}-$stamp.csv';
   }
 }

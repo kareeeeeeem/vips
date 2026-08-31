@@ -27,6 +27,7 @@ import 'package:vip/admin/modules/users/controllers/users_controller.dart';
 import 'package:vip/admin/modules/merchants/controllers/merchants_controller.dart';
 import 'package:vip/admin/modules/inventory/controllers/inventory_movements_controller.dart';
 import 'package:vip/admin/modules/inventory/controllers/low_stock_controller.dart';
+import 'package:vip/admin/modules/reports/controllers/reports_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -589,6 +590,97 @@ void main() {
       c.setSourceFilter('');
       expect(c.showStock, isTrue);
       expect(c.showProducts, isTrue);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // AdminReportsController  (Phase 3 — advanced reports)
+  // ═══════════════════════════════════════════════════════════
+  group('AdminReportsController', () {
+    late AdminReportsController c;
+
+    setUp(() => c = AdminReportsController());
+
+    test('all seven reports are listed', () {
+      for (final type in [
+        'sales', 'profit', 'products', 'customers',
+        'orders', 'merchants', 'commission',
+      ]) {
+        expect(AdminReportsController.reports, contains(type));
+      }
+      expect(AdminReportsController.reports.length, 7);
+    });
+
+    test('only the lifetime report is flagged as ignoring the date range', () {
+      c.activeTab.value = 'merchants';
+      expect(c.isLifetime, isTrue);
+      for (final type in ['sales', 'profit', 'products', 'customers', 'orders']) {
+        c.activeTab.value = type;
+        expect(c.isLifetime, isFalse, reason: type);
+      }
+    });
+
+    test('only groupable reports offer a granularity', () {
+      for (final type in ['sales', 'profit', 'customers']) {
+        c.activeTab.value = type;
+        expect(c.isGroupable, isTrue, reason: type);
+      }
+      for (final type in ['products', 'orders', 'merchants', 'commission']) {
+        c.activeTab.value = type;
+        expect(c.isGroupable, isFalse, reason: type);
+      }
+    });
+
+    test('summary() reads a nested figure and falls back to 0', () {
+      c.cache['sales'] = {
+        'summary': {'revenue': 248.565, 'orders': 7}
+      };
+      c.activeTab.value = 'sales';
+      expect(c.summary('revenue'), 248.565);
+      expect(c.summary('orders'), 7);
+      // A key the backend did not send must not throw.
+      expect(c.summary('missing'), 0);
+    });
+
+    test('summaryIsNull distinguishes "no data" from zero', () {
+      // The orders report sends null for average fulfilment when nothing
+      // reached "delivered" — rendering that as 0 would read as instant
+      // delivery rather than as no data.
+      c.cache['orders'] = {
+        'summary': {'averageFulfilmentMinutes': null, 'total': 0}
+      };
+      c.activeTab.value = 'orders';
+      expect(c.summaryIsNull('averageFulfilmentMinutes'), isTrue);
+      expect(c.summaryIsNull('total'), isFalse);
+      expect(c.summary('total'), 0);
+    });
+
+    test('changing the date range clears every cached report', () {
+      c.cache['sales'] = {'summary': {}};
+      c.cache['profit'] = {'summary': {}};
+      // Each cached answer was computed for the old window, so keeping any
+      // of them would show one report on a different period from the rest.
+      c.dateRange.value = DateTimeRange(
+        start: DateTime(2026, 1, 1),
+        end: DateTime(2026, 1, 31),
+      );
+      c.cache.clear();
+      expect(c.cache, isEmpty);
+    });
+
+    test('changing granularity only clears the reports it affects', () {
+      c.cache['sales'] = {'summary': {}};
+      c.cache['orders'] = {'summary': {}};
+      c.setGroupBy('month');
+      expect(c.cache.containsKey('sales'), isFalse);
+      // Orders has no granularity, so its cached answer is still valid.
+      expect(c.cache.containsKey('orders'), isTrue);
+    });
+
+    test('the export filename names the report and the day', () {
+      c.activeTab.value = 'commission';
+      expect(c.exportFilename, startsWith('vips-commission-'));
+      expect(c.exportFilename, endsWith('.csv'));
     });
   });
 }

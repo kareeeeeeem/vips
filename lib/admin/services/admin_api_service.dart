@@ -294,16 +294,44 @@ class AdminApiService {
           queryParams: _clean({'merchantId': merchantId, 'search': search, 'limit': 100}));
 
   // ── Reports ───────────────────────────────────────────────
-  Future<ApiResponse> salesReport({String? from, String? to}) =>
-      _api.get('/admin/reports/sales', queryParams: _clean({'from': from, 'to': to}));
+  /// The seven reports share a shape: `{summary, ...sections}`. One method
+  /// covers them all so a new report needs no new client code.
+  Future<ApiResponse> report(
+    String type, {
+    String? from,
+    String? to,
+    String? groupBy,
+    String? merchantId,
+  }) =>
+      _api.get('/admin/reports/$type', queryParams: _clean({
+            'from': from,
+            'to': to,
+            'groupBy': groupBy,
+            'merchantId': merchantId,
+          }));
 
-  Future<ApiResponse> usersReport({String? from, String? to}) =>
-      _api.get('/admin/reports/users', queryParams: _clean({'from': from, 'to': to}));
+  /// The export URL. Handed to the browser rather than fetched, so the file
+  /// lands in the user's downloads instead of in memory.
+  String reportExportPath(String type, {String? from, String? to, String? groupBy}) {
+    final params = _clean({
+      'type': type,
+      'format': 'csv',
+      'from': from,
+      'to': to,
+      'groupBy': groupBy,
+    }).entries.map((e) => '${e.key}=${Uri.encodeComponent('${e.value}')}').join('&');
+    return '/admin/reports/export?$params';
+  }
 
-  Future<ApiResponse> merchantsReport() => _api.get('/admin/reports/merchants');
-
-  Future<ApiResponse> ordersReport({String? from, String? to}) =>
-      _api.get('/admin/reports/orders', queryParams: _clean({'from': from, 'to': to}));
+  Future<ApiResponse> exportReport(String type,
+          {String? from, String? to, String? groupBy}) =>
+      _api.get('/admin/reports/export', queryParams: _clean({
+            'type': type,
+            'format': 'csv',
+            'from': from,
+            'to': to,
+            'groupBy': groupBy,
+          }));
 
   // ── Platform settings ─────────────────────────────────────
   Future<ApiResponse> settings() => _api.get('/admin/settings');
