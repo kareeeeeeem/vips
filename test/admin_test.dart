@@ -37,6 +37,8 @@ import 'package:vip/admin/modules/dashboards/controllers/operations_dashboard_co
 import 'package:vip/admin/modules/dashboards/controllers/sales_dashboard_controller.dart';
 import 'package:vip/admin/modules/dashboards/models/dashboard_models.dart';
 import 'package:vip/admin/modules/dashboards/views/dashboard_shell.dart';
+import 'package:vip/admin/modules/products/controllers/products_controller.dart';
+import 'package:vip/admin/core/widgets/admin_nav_entry.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -1119,6 +1121,95 @@ void main() {
       // The nav gates on this flag, not on `can`, so nothing is hidden while
       // the answer is still unknown.
       expect(DashboardShell.tabs.length, 5);
+    });
+  });
+
+  group('AdminProductsController', () {
+    late AdminProductsController c;
+
+    setUp(() => c = AdminProductsController());
+
+    test('the selling price is the discount when one is in force', () {
+      // This must match what the till freezes onto a line, or the catalogue
+      // screen and a receipt would disagree about what a product costs.
+      expect(c.sellingPrice({'price': 10.0, 'discountPrice': 7.5}), 7.5);
+      expect(c.sellingPrice({'price': 10.0, 'discountPrice': 0}), 10.0);
+      expect(c.sellingPrice({'price': 10.0, 'discountPrice': null}), 10.0);
+      expect(c.sellingPrice(const {}), 0);
+    });
+
+    test('a cost of zero reads as "not recorded", not as free', () {
+      expect(c.hasCost({'costPrice': 4.0}), isTrue);
+      expect(c.hasCost({'costPrice': 0}), isFalse);
+      expect(c.hasCost(const {}), isFalse);
+    });
+
+    test('products with no cost are counted so the screen can say why', () {
+      c.items.value = [
+        {'costPrice': 4.0},
+        {'costPrice': 0},
+        {'name': 'no cost key'},
+      ];
+      expect(c.missingCostCount, 2);
+    });
+
+    test('status filters name what they select', () {
+      expect(AdminProductsController.statusLabel('active'), 'Active');
+      expect(AdminProductsController.statusLabel('inactive'), 'Hidden');
+      // The filter that exists to find what holds the profit report back.
+      expect(AdminProductsController.statusLabel('no_cost'), 'No cost set');
+      expect(AdminProductsController.statusLabel(''), 'All');
+    });
+
+    test('deleting is blocked without the permission', () {
+      // No auth controller is registered here, so `can` answers false — the
+      // reason must still be a sentence rather than a null that reads as
+      // "allowed".
+      expect(c.deleteBlockedReason(const {}), isNotNull);
+    });
+  });
+
+  group('Navigation permissions', () {
+    test('an entry with no permission is always allowed', () {
+      expect(
+        AdminDrawer.isAllowed(
+          const AdminNavEntry('/x', 'X', Icons.abc)),
+        isTrue,
+      );
+    });
+
+    test('an unknown identity does not hide a section', () {
+      // No AdminAuthController registered stands in for "/admin/me has not
+      // answered". Reading that as "denied" would empty the drawer on a
+      // browser refresh.
+      expect(
+        AdminDrawer.isAllowed(const AdminNavEntry(
+            '/x', 'X', Icons.abc, permission: 'reports.read')),
+        isTrue,
+      );
+    });
+
+    test('every drawer and bottom-nav destination names its permission', () {
+      // A destination with no permission cannot be filtered, so it would be
+      // offered to a role the server refuses.
+      final unguarded = [
+        ...AdminDrawer.allEntries.where((e) => !e.isGroup),
+        ...AdminBottomNav.entries,
+      ].where((e) => e.permission == null).map((e) => e.label).toList();
+      expect(unguarded, isEmpty,
+          reason: 'these sections cannot be hidden from a role that cannot '
+              'open them: ${unguarded.join(', ')}');
+    });
+
+    test('the bottom bar is a subset of the drawer, permissions included', () {
+      final byRoute = {
+        for (final e in AdminDrawer.allEntries) e.route: e.permission,
+      };
+      for (final entry in AdminBottomNav.entries) {
+        expect(byRoute[entry.route], entry.permission,
+            reason: '${entry.label} is gated differently in the two bars, so '
+                'one of them will offer a screen the other hides');
+      }
     });
   });
 

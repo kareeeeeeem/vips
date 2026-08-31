@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../routes/admin_routes.dart';
 import '../theme/admin_theme.dart';
+import 'admin_drawer.dart';
 import 'admin_nav_entry.dart';
 
 /// Reports and Settings live in the drawer only.
@@ -13,16 +14,31 @@ class AdminBottomNav extends StatelessWidget {
   const AdminBottomNav({super.key, required this.currentRoute});
 
   static const List<AdminNavEntry> entries = [
-    AdminNavEntry(AdminRoutes.DASHBOARD, 'Home', Icons.dashboard_rounded),
-    AdminNavEntry(AdminRoutes.USERS, 'Users', Icons.people_alt_rounded),
-    AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_rounded),
-    AdminNavEntry(AdminRoutes.MERCHANTS, 'Stores', Icons.storefront_rounded),
-    AdminNavEntry(AdminRoutes.INVENTORY, 'Stock', Icons.inventory_2_rounded),
+    AdminNavEntry(AdminRoutes.DASHBOARD, 'Home', Icons.dashboard_rounded,
+        permission: 'dashboard.read'),
+    AdminNavEntry(AdminRoutes.USERS, 'Users', Icons.people_alt_rounded,
+        permission: 'users.read'),
+    AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_rounded,
+        permission: 'orders.read'),
+    AdminNavEntry(AdminRoutes.MERCHANTS, 'Stores', Icons.storefront_rounded,
+        permission: 'merchants.read'),
+    AdminNavEntry(AdminRoutes.INVENTORY, 'Stock', Icons.inventory_2_rounded,
+        permission: 'inventory.read'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final index = entries.indexWhere((e) => e.route == currentRoute);
+    // Reactive for the same reason as the drawer: /admin/me can answer after
+    // this bar is first built.
+    return Obx(() => _build());
+  }
+
+  Widget _build() {
+    AdminDrawer.watchPermissions();
+    // Filtered, then indexed off the filtered list — indexing the full list
+    // would highlight the wrong tab for any role that cannot see all five.
+    final visible = entries.where(AdminDrawer.isAllowed).toList();
+    final index = visible.indexWhere((e) => e.route == currentRoute);
 
     return Container(
       decoration: const BoxDecoration(
@@ -34,8 +50,8 @@ class AdminBottomNav extends StatelessWidget {
         child: SizedBox(
           height: 62.h,
           child: Row(
-            children: List.generate(entries.length, (i) {
-              final entry = entries[i];
+            children: List.generate(visible.length, (i) {
+              final entry = visible[i];
               final isActive = i == index;
               return Expanded(
                 child: InkWell(

@@ -14,7 +14,8 @@ class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, required this.currentRoute});
 
   static const List<AdminNavEntry> entries = [
-    AdminNavEntry(AdminRoutes.DASHBOARD, 'Dashboard', Icons.dashboard_outlined),
+    AdminNavEntry(AdminRoutes.DASHBOARD, 'Dashboard', Icons.dashboard_outlined,
+        permission: 'dashboard.read'),
     // The five analytical boards, grouped rather than flattened into the
     // list: nine top-level entries would have become fourteen, and a drawer
     // you must scroll to reach Settings is a worse drawer. The group's own
@@ -36,14 +37,24 @@ class AdminDrawer extends StatelessWidget {
             Icons.storefront_outlined, permission: 'reports.read'),
       ],
     ),
-    AdminNavEntry(AdminRoutes.USERS, 'Users', Icons.people_alt_outlined),
-    AdminNavEntry(AdminRoutes.MERCHANTS, 'Merchants', Icons.storefront_outlined),
-    AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_outlined),
-    AdminNavEntry(AdminRoutes.INVENTORY, 'Inventory', Icons.inventory_2_outlined),
-    AdminNavEntry(AdminRoutes.POS, 'Point of Sale', Icons.point_of_sale_outlined),
-    AdminNavEntry(AdminRoutes.REPORTS, 'Reports', Icons.insert_chart_outlined),
-    AdminNavEntry(AdminRoutes.STAFF, 'Staff', Icons.badge_outlined),
-    AdminNavEntry(AdminRoutes.SETTINGS, 'Settings', Icons.settings_outlined),
+    AdminNavEntry(AdminRoutes.USERS, 'Users', Icons.people_alt_outlined,
+        permission: 'users.read'),
+    AdminNavEntry(AdminRoutes.MERCHANTS, 'Merchants', Icons.storefront_outlined,
+        permission: 'merchants.read'),
+    AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_outlined,
+        permission: 'orders.read'),
+    AdminNavEntry(AdminRoutes.PRODUCTS, 'Products', Icons.sell_outlined,
+        permission: 'products.read'),
+    AdminNavEntry(AdminRoutes.INVENTORY, 'Inventory', Icons.inventory_2_outlined,
+        permission: 'inventory.read'),
+    AdminNavEntry(AdminRoutes.POS, 'Point of Sale', Icons.point_of_sale_outlined,
+        permission: 'pos.read'),
+    AdminNavEntry(AdminRoutes.REPORTS, 'Reports', Icons.insert_chart_outlined,
+        permission: 'reports.read'),
+    AdminNavEntry(AdminRoutes.STAFF, 'Staff', Icons.badge_outlined,
+        permission: 'staff.read'),
+    AdminNavEntry(AdminRoutes.SETTINGS, 'Settings', Icons.settings_outlined,
+        permission: 'settings.read'),
   ];
 
   /// Every destination the drawer can reach, with groups flattened into it.
@@ -55,6 +66,29 @@ class AdminDrawer extends StatelessWidget {
   /// Whether a route sits inside a group, and so should keep it open.
   static bool isInsideGroup(AdminNavEntry group, String route) =>
       group.children.any((c) => c.route == route);
+
+  /// Whether the signed-in operator may open a destination.
+  ///
+  /// "Not yet known" counts as allowed: /admin/me may not have answered, and
+  /// reading that as "denied" would strip the drawer to nothing on a refresh.
+  /// This is presentation only — every screen behind these is gated
+  /// server-side too — but a section that always answers 403 is not a section.
+  /// Touches the reactive fields `isAllowed` reads, so an enclosing [Obx]
+  /// subscribes to them even on the branch that returns early.
+  static void watchPermissions() {
+    if (!Get.isRegistered<AdminAuthController>()) return;
+    final auth = Get.find<AdminAuthController>();
+    auth.isIdentityLoaded.value;
+    auth.permissions.length;
+  }
+
+  static bool isAllowed(AdminNavEntry entry) {
+    if (entry.permission == null) return true;
+    if (!Get.isRegistered<AdminAuthController>()) return true;
+    final auth = Get.find<AdminAuthController>();
+    if (!auth.isIdentityLoaded.value) return true;
+    return auth.can(entry.permission!);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,16 +105,22 @@ class AdminDrawer extends StatelessWidget {
         children: [
           _buildHeader(),
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.symmetric(vertical: 10.h),
-              children: [
-                for (final entry in entries)
-                  if (entry.isGroup)
-                    _NavGroup(group: entry, currentRoute: currentRoute)
-                  else
-                    _drawerItem(entry, isActive: entry.route == currentRoute),
-              ],
-            ),
+            // Reactive, because /admin/me can answer after this is first
+            // built — on a refresh the drawer would otherwise stay showing
+            // whatever it decided before the permissions arrived.
+            child: Obx(() {
+              watchPermissions();
+              return ListView(
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                children: [
+                  for (final entry in entries)
+                    if (entry.isGroup)
+                      _NavGroup(group: entry, currentRoute: currentRoute)
+                    else if (isAllowed(entry))
+                      _drawerItem(entry, isActive: entry.route == currentRoute),
+                ],
+              );
+            }),
           ),
           const Divider(indent: 20, endIndent: 20, color: AdminColors.divider),
           _buildLogoutButton(),
@@ -223,7 +263,7 @@ class _NavGroupState extends State<_NavGroup> {
     // would otherwise come up empty and hide itself.
     final unknown = auth == null || !auth.isIdentityLoaded.value;
     final visible = widget.group.children
-        .where((c) => c.permission == null || unknown || auth.can(c.permission!))
+        .where((c) => unknown || AdminDrawer.isAllowed(c))
         .toList();
 
     if (visible.isEmpty) return const SizedBox.shrink();

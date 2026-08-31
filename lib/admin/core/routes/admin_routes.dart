@@ -21,6 +21,7 @@ abstract class AdminRoutes {
   static const MERCHANT_DETAILS = _AdminPaths.MERCHANT_DETAILS;
   static const ORDERS           = _AdminPaths.ORDERS;
   static const ORDER_DETAILS    = _AdminPaths.ORDER_DETAILS;
+  static const PRODUCTS         = _AdminPaths.PRODUCTS;
   static const INVENTORY            = _AdminPaths.INVENTORY;
   static const INVENTORY_MOVEMENTS  = _AdminPaths.INVENTORY_MOVEMENTS;
   static const INVENTORY_TRANSFERS  = _AdminPaths.INVENTORY_TRANSFERS;
@@ -65,6 +66,7 @@ abstract class _AdminPaths {
   static const MERCHANT_DETAILS = '/merchants/:id';
   static const ORDERS           = '/orders';
   static const ORDER_DETAILS    = '/orders/:id';
+  static const PRODUCTS         = '/products';
   static const INVENTORY            = '/inventory';
   static const INVENTORY_MOVEMENTS  = '/inventory/movements';
   static const INVENTORY_TRANSFERS  = '/inventory/transfers';

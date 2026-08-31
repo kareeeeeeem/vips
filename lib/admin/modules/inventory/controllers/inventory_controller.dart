@@ -5,6 +5,7 @@ import 'package:vip/core/services/api_service.dart';
 import '../../../core/admin_list_controller.dart';
 import '../../../core/admin_toast.dart';
 import '../../../services/admin_api_service.dart';
+import '../../auth/controllers/admin_auth_controller.dart';
 
 /// Platform-wide inventory.
 ///
@@ -103,6 +104,45 @@ class AdminInventoryController extends AdminListController {
 
   /// Saves an edited stock line, then refreshes both the list and the alert
   /// counts — a restock should clear its own alert, not leave a stale badge.
+  AdminAuthController? get _auth =>
+      Get.isRegistered<AdminAuthController>() ? Get.find<AdminAuthController>() : null;
+
+  bool get canCreate => _auth?.can('inventory.create') ?? false;
+  bool get canDelete => _auth?.can('inventory.delete') ?? false;
+
+  /// Merchants to pick from when opening a stock line. Loaded lazily, because
+  /// only the add sheet needs them.
+  final RxList<Map<String, dynamic>> merchants = <Map<String, dynamic>>[].obs;
+  final RxBool isLoadingMerchants = false.obs;
+
+  Future<void> loadMerchants() async {
+    if (merchants.isNotEmpty || isLoadingMerchants.value) return;
+    isLoadingMerchants.value = true;
+    try {
+      final response = await api.merchants(limit: 100, status: 'active');
+      if (response.success && response.data is Map) {
+        merchants.value = adminItems(Map<String, dynamic>.from(response.data as Map));
+      }
+    } finally {
+      isLoadingMerchants.value = false;
+    }
+  }
+
+  /// Opens a stock line. A line is one item in one location, so the same item
+  /// in two store rooms is two lines — which is what makes a transfer between
+  /// them a real movement rather than a relabelling.
+  Future<bool> createItem(Map<String, dynamic> body) => mutate(
+        () => api.createInventoryItem(body),
+        successTitle: 'Stock line opened',
+        failureTitle: 'Could not open the stock line',
+      );
+
+  Future<bool> deleteItem(String id, String reason) => mutate(
+        () => api.deleteInventoryItem(id),
+        successTitle: 'Stock line removed',
+        failureTitle: 'Could not remove the stock line',
+      );
+
   Future<bool> updateItem(String id, Map<String, dynamic> body) async {
     final ok = await mutate(
       () => api.updateInventoryItem(id, body),

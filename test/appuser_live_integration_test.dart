@@ -6,6 +6,7 @@
 //   Flutter controller logic → HTTP → backend route → DB (or simulation) → response
 
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
@@ -78,10 +79,23 @@ Future<Map<String, dynamic>> _delete(
 String? _token;
 String? _userId;
 
+/// A phone number that is unique per run.
+///
+/// The last four digits of a millisecond timestamp repeat every ten seconds,
+/// so two runs close together — or one run after a recent one — collided on
+/// the unique phone index and failed registration for a reason that had
+/// nothing to do with what the test was checking.
+final _random = math.Random();
+String _uniquePhone(String prefix) {
+  final stamp = DateTime.now().microsecondsSinceEpoch.toString();
+  final suffix = _random.nextInt(1000).toString().padLeft(3, '0');
+  return '$prefix${stamp.substring(stamp.length - 6)}$suffix';
+}
+
 Future<void> _ensureLoggedIn() async {
   if (_token != null) return;
   // Register a fresh test user (or login if already exists)
-  final phone = '9999${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}';
+  final phone = _uniquePhone('9999');
   final reg = await _post('/auth/register', {
     'fullName': 'Integration Tester',
     'phone': phone,
@@ -130,8 +144,7 @@ void main() async {
 
   group('Auth', () {
     test('register → returns success + token', () async {
-      final phone =
-          '8888${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}';
+      final phone = _uniquePhone('8888');
       final r = await _post('/auth/register', {
         'fullName': 'Auth Test User',
         'phone': phone,

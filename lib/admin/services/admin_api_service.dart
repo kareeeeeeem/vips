@@ -97,6 +97,24 @@ class AdminApiService {
   Future<ApiResponse> changeUserRole(String id, String role) =>
       _api.put('/admin/users/$id/role', {'role': role});
 
+  Future<ApiResponse> createUser({
+    required String fullName,
+    required String phone,
+    String? email,
+    String? city,
+  }) =>
+      _api.post('/admin/users', _clean({
+            'fullName': fullName,
+            'phone': phone,
+            'email': email,
+            'city': city,
+          }));
+
+  /// Only the fields being changed are sent — the backend applies what it is
+  /// given, so sending everything would rewrite a field nobody touched.
+  Future<ApiResponse> updateUser(String id, Map<String, dynamic> changes) =>
+      _api.put('/admin/users/$id', changes);
+
   Future<ApiResponse> deleteUser(String id) => _api.delete('/admin/users/$id');
 
   // ── Merchants ─────────────────────────────────────────────
@@ -180,6 +198,14 @@ class AdminApiService {
   Future<ApiResponse> updateInventoryItem(String id, Map<String, dynamic> body) =>
       _api.put('/admin/inventory/$id', body);
 
+  /// Opens a new stock line. A line is one item in one location, so the same
+  /// item in two store rooms is two lines.
+  Future<ApiResponse> createInventoryItem(Map<String, dynamic> body) =>
+      _api.post('/admin/inventory', body);
+
+  Future<ApiResponse> deleteInventoryItem(String id) =>
+      _api.delete('/admin/inventory/$id');
+
   Future<ApiResponse> inventoryAlerts({int limit = 50}) =>
       _api.get('/admin/inventory/alerts', queryParams: {'limit': limit});
 
@@ -226,6 +252,36 @@ class AdminApiService {
             'toLocation': toLocation,
             'reason': reason,
           }));
+
+  // ── Product catalogue ─────────────────────────────────────
+  /// The catalogue across every merchant. Separate from [merchantProducts],
+  /// which reads the public content route for the till.
+  Future<ApiResponse> products({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? merchantId,
+    String? category,
+    String? status,
+  }) =>
+      _api.get('/admin/products', queryParams: _clean({
+            'page': page,
+            'limit': limit,
+            'search': search,
+            'merchantId': merchantId,
+            'category': category,
+            'status': status,
+          }));
+
+  Future<ApiResponse> productDetails(String id) => _api.get('/admin/products/$id');
+
+  Future<ApiResponse> createProduct(Map<String, dynamic> body) =>
+      _api.post('/admin/products', body);
+
+  Future<ApiResponse> updateProduct(String id, Map<String, dynamic> changes) =>
+      _api.put('/admin/products/$id', changes);
+
+  Future<ApiResponse> deleteProduct(String id) => _api.delete('/admin/products/$id');
 
   // ── Point of sale ─────────────────────────────────────────
   Future<ApiResponse> posSession() => _api.get('/admin/pos/session');

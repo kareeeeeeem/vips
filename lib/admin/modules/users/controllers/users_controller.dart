@@ -4,6 +4,7 @@ import 'package:vip/core/services/api_service.dart';
 
 import '../../../core/admin_list_controller.dart';
 import '../../../services/admin_api_service.dart';
+import '../../auth/controllers/admin_auth_controller.dart';
 
 class AdminUsersController extends AdminListController {
   /// '' | 'active' | 'banned'
@@ -75,6 +76,39 @@ class AdminUsersController extends AdminListController {
         () => api.changeUserRole(id, role),
         successTitle: 'Role updated',
       );
+
+  AdminAuthController? get _auth =>
+      Get.isRegistered<AdminAuthController>() ? Get.find<AdminAuthController>() : null;
+
+  bool get canCreate => _auth?.can('users.create') ?? false;
+  bool get canUpdate => _auth?.can('users.update') ?? false;
+
+  Future<bool> createUser({
+    required String fullName,
+    required String phone,
+    String? email,
+    String? city,
+  }) =>
+      mutate(
+        () => api.createUser(
+            fullName: fullName, phone: phone, email: email, city: city),
+        successTitle: 'Customer added',
+        failureTitle: 'Could not add the customer',
+      );
+
+  /// Only the fields that actually changed are sent, so an edit cannot
+  /// overwrite something another operator changed while this sheet was open.
+  Future<bool> updateUser(String id, Map<String, dynamic> changes) async {
+    final ok = await mutate(
+      () => api.updateUser(id, changes),
+      successTitle: 'Customer updated',
+      failureTitle: 'Could not update the customer',
+    );
+    // The details sheet reads from its own copy, so refresh it too or the
+    // screen keeps showing the values that were just replaced.
+    if (ok && details.value != null) await loadDetails(id);
+    return ok;
+  }
 
   Future<bool> deleteUser(String id) => mutate(
         () => api.deleteUser(id),

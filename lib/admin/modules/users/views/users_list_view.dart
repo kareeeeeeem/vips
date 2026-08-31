@@ -8,6 +8,7 @@ import '../../../core/widgets/admin_scaffold.dart';
 import '../../../core/widgets/admin_widgets.dart';
 import '../../../services/admin_api_service.dart';
 import '../controllers/users_controller.dart';
+import 'user_edit_sheet.dart';
 
 /// The console's user directory.
 ///
@@ -24,6 +25,22 @@ class UsersListView extends GetView<AdminUsersController> {
       title: 'Users',
       route: AdminRoutes.USERS,
       onRefresh: () => controller.load(),
+      actions: [
+        Obx(() {
+          final allowed = controller.canCreate;
+          return IconButton(
+            tooltip: allowed
+                ? 'Add a customer'
+                : 'Adding needs the users.create permission',
+            onPressed: allowed
+                ? () => showUserEditSheet(controller: controller)
+                : null,
+            icon: Icon(Icons.person_add_alt_rounded,
+                size: 20.sp,
+                color: allowed ? AdminColors.primary : AdminColors.border),
+          );
+        }),
+      ],
       body: Column(
         children: [
           _buildFilters(),

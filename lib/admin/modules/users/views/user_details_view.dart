@@ -7,6 +7,7 @@ import '../../../core/widgets/admin_scaffold.dart';
 import '../../../core/widgets/admin_widgets.dart';
 import '../../../services/admin_api_service.dart';
 import '../controllers/users_controller.dart';
+import 'user_edit_sheet.dart';
 
 /// Full account record: profile fields, lifetime order/spend summary, recent
 /// orders and recent wallet transactions — everything `GET /admin/users/:id`
@@ -387,6 +388,21 @@ class UserDetailsView extends GetView<AdminUsersController> {
         final busy = controller.isMutating.value;
         return Column(
           children: [
+            // Correcting a name, phone or email is an ordinary edit, kept
+            // apart from the three decisions below — each of which is its own
+            // permission and its own confirmation.
+            AdminButton(
+              label: controller.canUpdate
+                  ? 'Edit details'
+                  : 'Editing needs the users.update permission',
+              icon: Icons.edit_outlined,
+              color: AdminColors.primary,
+              isLoading: busy,
+              onPressed: controller.canUpdate
+                  ? () => showUserEditSheet(controller: controller, user: user)
+                  : null,
+            ),
+            SizedBox(height: 10.h),
             AdminButton(
               label: banned ? 'Reinstate account' : 'Ban account',
               icon: banned ? Icons.lock_open_rounded : Icons.block_rounded,

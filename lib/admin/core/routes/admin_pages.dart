@@ -21,6 +21,8 @@ import '../../modules/merchants/bindings/merchants_binding.dart';
 import '../../modules/merchants/views/merchant_details_view.dart';
 import '../../modules/merchants/views/merchants_list_view.dart';
 import '../../modules/orders/bindings/orders_binding.dart';
+import '../../modules/products/bindings/products_binding.dart';
+import '../../modules/products/views/products_list_view.dart';
 import '../../modules/orders/views/order_details_view.dart';
 import '../../modules/orders/views/orders_list_view.dart';
 import '../../modules/pos/bindings/pos_binding.dart';
@@ -132,6 +134,14 @@ class AdminPages {
       name: AdminRoutes.ORDER_DETAILS,
       page: () => const OrderDetailsView(),
       binding: AdminOrdersBinding(),
+    ),
+
+    // The catalogue itself. Stock levels live on the Inventory screens; this
+    // is the product record behind them — price, cost and visibility.
+    GetPage(
+      name: AdminRoutes.PRODUCTS,
+      page: () => const ProductsListView(),
+      binding: AdminProductsBinding(),
     ),
 
     // The four inventory screens are siblings behind one tab strip.

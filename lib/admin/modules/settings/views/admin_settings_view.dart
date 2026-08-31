@@ -112,7 +112,11 @@ class AdminSettingsView extends GetView<AdminSettingsController> {
     final currentId = Get.find<AdminAuthController>().adminId.value;
 
     return Obx(() => AdminCard(
-          title: 'Administrators (${controller.admins.length})',
+          title: 'Administrators (${controller.adminCount.value})',
+          subtitle: controller.adminsTruncated.value
+              ? 'Showing the first ${controller.admins.length}. The Staff '
+                  'screen lists them all.'
+              : null,
           trailing: TextButton.icon(
             onPressed: controller.isSaving.value ? null : _showCreateAdminSheet,
             icon: Icon(Icons.person_add_alt_rounded, size: 16.sp),

@@ -10,6 +10,7 @@ import '../../../core/widgets/admin_scaffold.dart';
 import '../../../core/widgets/admin_widgets.dart';
 import '../../../services/admin_api_service.dart';
 import '../controllers/inventory_controller.dart';
+import 'stock_line_sheet.dart';
 import '../widgets/inventory_filter.dart';
 import '../widgets/inventory_tabs.dart';
 
@@ -32,6 +33,19 @@ class InventoryOverviewView extends GetView<AdminInventoryController> {
         await controller.loadAlerts();
       },
       actions: [
+        Obx(() {
+          final allowed = controller.canCreate;
+          return IconButton(
+            tooltip: allowed
+                ? 'Open a stock line'
+                : 'Opening a line needs the inventory.create permission',
+            onPressed:
+                allowed ? () => showStockLineSheet(controller: controller) : null,
+            icon: Icon(Icons.add_box_outlined,
+                size: 20.sp,
+                color: allowed ? AdminColors.primary : AdminColors.border),
+          );
+        }),
         Obx(() => IconButton(
               tooltip: 'Low-stock alerts',
               onPressed: () => Get.toNamed(AdminRoutes.INVENTORY_ALERTS),
@@ -276,6 +290,20 @@ class InventoryOverviewView extends GetView<AdminInventoryController> {
                   onPressed: () => _showEditSheet(item),
                   icon: Icon(Icons.edit_outlined, size: 18.sp, color: AdminColors.textMuted),
                 ),
+                Obx(() {
+                  final allowed = controller.canDelete;
+                  return IconButton(
+                    tooltip: allowed
+                        ? 'Remove this stock line'
+                        : 'Removing needs the inventory.delete permission',
+                    onPressed: (allowed && !controller.isMutating.value)
+                        ? () => _confirmRemove(item)
+                        : null,
+                    icon: Icon(Icons.delete_outline_rounded,
+                        size: 18.sp,
+                        color: allowed ? AdminColors.danger : AdminColors.border),
+                  );
+                }),
               ],
             ),
             SizedBox(height: 10.h),
@@ -342,6 +370,28 @@ class InventoryOverviewView extends GetView<AdminInventoryController> {
   }
 
   // ── Edit sheet ────────────────────────────────────────────
+
+  /// Removing a line writes its closing balance to the ledger first, so the
+  /// history keeps the item name and the quantity that was on hand after the
+  /// line itself is gone.
+  Future<void> _confirmRemove(Map<String, dynamic> item) async {
+    final name = adminString(item['name'], 'this item');
+    final onHand = adminInt(item['currentStock']);
+
+    final confirmed = await adminConfirm(
+      title: 'Remove $name?',
+      message: onHand > 0
+          ? 'This line still holds $onHand unit(s). Removing it writes them '
+              'out of stock in the ledger and cannot be undone. Transfer them '
+              'first if the stock still exists.'
+          : 'The line is removed and recorded in the stock ledger. This '
+              'cannot be undone.',
+      confirmLabel: 'Remove',
+    );
+    if (!confirmed) return;
+    await controller.deleteItem(
+      adminString(item['_id']), 'Removed from the admin console');
+  }
 
   void _showEditSheet(Map<String, dynamic> item) {
     final id = adminString(item['_id']);

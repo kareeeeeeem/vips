@@ -165,6 +165,11 @@ class AdminStatusPill extends StatelessWidget {
 /// The white rounded panel every list and report section sits in.
 class AdminCard extends StatelessWidget {
   final String? title;
+
+  /// A qualifier under the title — what the card is counted over, or what it
+  /// is not showing. Where a caveat goes so it cannot be missed.
+  final String? subtitle;
+
   final Widget child;
   final Widget? trailing;
   final EdgeInsetsGeometry? padding;
@@ -172,6 +177,7 @@ class AdminCard extends StatelessWidget {
   const AdminCard({
     super.key,
     this.title,
+    this.subtitle,
     required this.child,
     this.trailing,
     this.padding,
@@ -207,6 +213,13 @@ class AdminCard extends StatelessWidget {
                 if (trailing != null) trailing!,
               ],
             ),
+            if (subtitle != null) ...[
+              SizedBox(height: 3.h),
+              Text(
+                subtitle!,
+                style: TextStyle(fontSize: 11.5.sp, color: AdminColors.textMuted),
+              ),
+            ],
             SizedBox(height: 14.h),
           ],
           child,

@@ -17,6 +17,12 @@ class AdminSettingsController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   final RxList<Map<String, dynamic>> admins = <Map<String, dynamic>>[].obs;
+
+  /// The real number of admin accounts, which can exceed the roster returned.
+  /// The endpoint caps the list; showing its length as the total would report
+  /// a smaller platform than the one that exists.
+  final RxInt adminCount = 0.obs;
+  final RxBool adminsTruncated = false.obs;
   final RxMap<String, dynamic> integrations = <String, dynamic>{}.obs;
   final RxMap<String, dynamic> environment = <String, dynamic>{}.obs;
 
@@ -34,6 +40,8 @@ class AdminSettingsController extends GetxController {
       if (response.success && response.data is Map) {
         final data = Map<String, dynamic>.from(response.data as Map);
         admins.value = adminItems(data, 'admins');
+        adminCount.value = adminInt(data['adminCount'], admins.length);
+        adminsTruncated.value = adminBool(data['adminsTruncated']);
         integrations.value = data['integrations'] is Map
             ? Map<String, dynamic>.from(data['integrations'] as Map)
             : {};
