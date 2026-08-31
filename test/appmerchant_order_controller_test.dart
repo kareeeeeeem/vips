@@ -22,6 +22,19 @@ class FakeMerchantOrderService implements MerchantOrderServiceInterface {
   ResponseModel updateStatusResponse = ResponseModel(true, 'OK');
   bool throwOnGetOrders = false;
 
+  ResponseModel etaResponse = ResponseModel(true, 'Estimate set');
+  int etaCallCount = 0;
+  int? lastEtaOrderId;
+  DateTime? lastEtaValue;
+
+  @override
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at) async {
+    etaCallCount++;
+    lastEtaOrderId = orderId;
+    lastEtaValue = at;
+    return etaResponse;
+  }
+
   @override
   Future<List<MerchantOrder>?> getCurrentOrders() async => ordersToReturn;
 
@@ -182,6 +195,51 @@ void main() {
       fakeService.updateStatusResponse = ResponseModel(false, 'Denied');
       final result = await c.updateOrderStatus(1, 'confirmed');
       expect(result, isFalse);
+    });
+  });
+
+  group('setEstimatedDelivery', () {
+    test('sends the chosen time and reports success', () async {
+      fakeService.ordersToReturn = [makeOrder(id: 1)];
+      final at = DateTime.now().add(const Duration(hours: 2));
+      final result = await c.setEstimatedDelivery(1, at);
+      expect(result, isTrue);
+      expect(fakeService.lastEtaOrderId, equals(1));
+      expect(fakeService.lastEtaValue, equals(at));
+    });
+
+    test('a null estimate is sent through, not swallowed', () async {
+      fakeService.ordersToReturn = [makeOrder(id: 1)];
+      final result = await c.setEstimatedDelivery(1, null);
+      expect(result, isTrue);
+      expect(fakeService.etaCallCount, equals(1));
+      expect(fakeService.lastEtaValue, isNull);
+    });
+
+    // A promise already in the past is not a promise. Refused before the
+    // request goes out, so the customer never sees one.
+    test('refuses a time in the past without calling the service', () async {
+      final result = await c.setEstimatedDelivery(
+        1,
+        DateTime.now().subtract(const Duration(minutes: 5)),
+      );
+      expect(result, isFalse);
+      expect(fakeService.etaCallCount, equals(0));
+    });
+
+    test('returns false when the service reports failure', () async {
+      fakeService.etaResponse = ResponseModel(false, 'Denied');
+      final result = await c.setEstimatedDelivery(
+        1,
+        DateTime.now().add(const Duration(hours: 1)),
+      );
+      expect(result, isFalse);
+    });
+
+    test('the busy flag is cleared whichever way the call ends', () async {
+      fakeService.etaResponse = ResponseModel(false, 'Denied');
+      await c.setEstimatedDelivery(1, DateTime.now().add(const Duration(hours: 1)));
+      expect(c.isUpdatingEta.value, isFalse);
     });
   });
 

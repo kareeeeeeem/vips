@@ -24,6 +24,19 @@ class FakeMerchantOrderRepository implements MerchantOrderRepositoryInterface {
   int? lastGetOrdersOffset;
   String? lastGetOrdersStatus;
 
+  ResponseModel etaResponse = ResponseModel(true, 'Estimate set');
+  int? lastEtaOrderId;
+  DateTime? lastEtaValue;
+  bool etaCalled = false;
+
+  @override
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at) async {
+    etaCalled = true;
+    lastEtaOrderId = orderId;
+    lastEtaValue = at;
+    return etaResponse;
+  }
+
   @override
   Future<List<MerchantOrder>?> getCurrentOrders() async => currentOrders;
 
@@ -125,6 +138,30 @@ void main() {
       fakeRepo.orderStats = {'totalOrders': 10};
       final result = await service.getOrderStats();
       expect(result!['totalOrders'], equals(10));
+    });
+  });
+
+  group('setOrderEta', () {
+    test('passes the order and the time straight to the repository', () async {
+      final at = DateTime.utc(2026, 9, 2, 14, 30);
+      final response = await service.setOrderEta(42, at);
+      expect(fakeRepo.etaCalled, isTrue);
+      expect(fakeRepo.lastEtaOrderId, equals(42));
+      expect(fakeRepo.lastEtaValue, equals(at));
+      expect(response.success, isTrue);
+    });
+
+    test('a null clears rather than being dropped on the way down', () async {
+      await service.setOrderEta(42, null);
+      expect(fakeRepo.etaCalled, isTrue);
+      expect(fakeRepo.lastEtaValue, isNull);
+    });
+
+    test('surfaces a failure from the repository unchanged', () async {
+      fakeRepo.etaResponse = ResponseModel(false, 'Not your order');
+      final response = await service.setOrderEta(42, DateTime.now());
+      expect(response.success, isFalse);
+      expect(response.message, equals('Not your order'));
     });
   });
 

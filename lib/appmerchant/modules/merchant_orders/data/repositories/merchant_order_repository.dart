@@ -172,6 +172,38 @@ class MerchantOrderRepository implements MerchantOrderRepositoryInterface {
   }
 
   @override
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at) async {
+    try {
+      // Backend: PUT /api/merchant/orders/:id/eta
+      // An explicit null in the body is what clears the estimate, so it is
+      // sent rather than omitted — an absent key would leave the old value
+      // standing and the merchant would think they had cleared it.
+      Response response = await apiClient.putData(
+        '${AppConstants.updatedOrderStatusUri}/$orderId/eta',
+        {'estimatedDeliveryAt': at?.toUtc().toIso8601String()},
+        handleError: false,
+      );
+
+      if (response.statusCode == 200) {
+        return ResponseModel(
+          true,
+          response.body['message'] ??
+              (at == null ? 'Estimate cleared' : 'Estimate set'),
+        );
+      }
+      return ResponseModel(
+        false,
+        response.body?['message'] ??
+            response.statusText ??
+            'Failed to update the delivery estimate',
+      );
+    } catch (e) {
+      debugPrint('Error setting order ETA: $e');
+      return ResponseModel(false, 'Network error occurred');
+    }
+  }
+
+  @override
   Future<List<String>?> getCancelReasons() async {
     try {
       // GET /merchant/orders?type=store → {reasons: [...]} (CANCEL_REASONS

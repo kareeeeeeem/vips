@@ -45,6 +45,11 @@ class MerchantOrderService implements MerchantOrderServiceInterface {
   }
 
   @override
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at) async {
+    return await orderRepositoryInterface.setOrderEta(orderId, at);
+  }
+
+  @override
   Future<List<String>?> getCancelReasons() async {
     return await orderRepositoryInterface.getCancelReasons();
   }

@@ -23,6 +23,9 @@ abstract class MerchantOrderServiceInterface {
     MerchantOrderStatusUpdateBody updateStatusBody,
   );
 
+  /// Set or clear the expected delivery time for an order.
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at);
+
   /// Get cancellation reasons for orders
   Future<List<String>?> getCancelReasons();
 

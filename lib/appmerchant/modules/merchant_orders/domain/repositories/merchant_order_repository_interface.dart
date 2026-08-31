@@ -23,6 +23,13 @@ abstract class MerchantOrderRepositoryInterface {
     MerchantOrderStatusUpdateBody updateStatusBody,
   );
 
+  /// Set or clear the expected delivery time.
+  ///
+  /// A null [at] clears the estimate: a merchant who no longer knows must
+  /// be able to say so rather than leave a stale promise on the
+  /// customer's tracking screen.
+  Future<ResponseModel> setOrderEta(int orderId, DateTime? at);
+
   /// Get order cancellation reasons
   Future<List<String>?> getCancelReasons();
 

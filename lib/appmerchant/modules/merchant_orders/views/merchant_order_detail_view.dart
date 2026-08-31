@@ -54,6 +54,7 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
               SizedBox(height: 16.h),
               _buildDeliveryCard(order),
               SizedBox(height: 16.h),
+              _buildEtaCard(order),
               _buildPaymentCard(order),
               SizedBox(height: 24.h),
               _buildActionButtons(order),
@@ -354,6 +355,154 @@ class MerchantOrderDetailView extends GetView<MerchantOrderController> {
         ],
       ),
     );
+  }
+
+  /// Statuses past which an estimate means nothing — the order has already
+  /// arrived, been collected, or stopped.
+  static const _finishedStatuses = {
+    'delivered', 'picked_up', 'canceled', 'cancelled', 'refunded', 'failed',
+  };
+
+  /// The expected delivery time, and the only place in this app that sets it.
+  ///
+  /// Deliberately a time the merchant types, not a computed one: nothing here
+  /// tracks a courier, and a countdown derived from an average would be a
+  /// number the platform cannot stand behind on the customer's screen.
+  Widget _buildEtaCard(MerchantOrder order) {
+    final status = (order.orderStatus ?? '').toLowerCase();
+    // Nothing to promise about an order that is already over.
+    if (_finishedStatuses.contains(status)) return const SizedBox.shrink();
+
+    final raw = order.estimatedDeliveryAt;
+    final at = raw == null ? null : DateTime.tryParse(raw)?.toLocal();
+    final overdue = at != null && at.isBefore(DateTime.now());
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: _card(
+        title: 'Expected Delivery',
+        icon: Icons.schedule_outlined,
+        child: Obx(() {
+          final busy = controller.isUpdatingEta.value;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      at == null ? 'Not set' : _formatEta(at),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: at == null
+                            ? const Color(0xFF9CA3AF)
+                            : (overdue
+                                ? const Color(0xFFDC2626)
+                                : const Color(0xFF111827)),
+                      ),
+                    ),
+                  ),
+                  if (busy)
+                    SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              // Said plainly rather than left for the customer to work out.
+              if (overdue) ...[
+                SizedBox(height: 4.h),
+                Text(
+                  'This time has passed — update it or clear it.',
+                  style: TextStyle(fontSize: 11.sp, color: const Color(0xFFDC2626)),
+                ),
+              ],
+              if (at == null) ...[
+                SizedBox(height: 4.h),
+                Text(
+                  'The customer sees "not yet known" until you set one.',
+                  style: TextStyle(fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                ),
+              ],
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: busy ? null : () => _pickEta(order, at),
+                      icon: Icon(Icons.edit_calendar_outlined, size: 16.sp),
+                      label: Text(
+                        at == null ? 'Set estimate' : 'Change',
+                        style: TextStyle(fontSize: 12.sp),
+                      ),
+                    ),
+                  ),
+                  if (at != null) ...[
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () => controller.setEstimatedDelivery(order.id!, null),
+                        icon: Icon(Icons.close, size: 16.sp),
+                        label: Text('Clear', style: TextStyle(fontSize: 12.sp)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFDC2626),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  /// Date then time. Cancelling either step cancels the whole edit rather
+  /// than falling back to a default the merchant did not choose.
+  Future<void> _pickEta(MerchantOrder order, DateTime? current) async {
+    final context = Get.context;
+    if (context == null || order.id == null) return;
+
+    final now = DateTime.now();
+    final base = (current != null && current.isAfter(now)) ? current : now;
+
+    final date = await showDatePicker(
+      context: context,
+      initialDate: base,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 30)),
+    );
+    if (date == null) return;
+    if (!context.mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(base),
+    );
+    if (time == null) return;
+
+    await controller.setEstimatedDelivery(
+      order.id!,
+      DateTime(date.year, date.month, date.day, time.hour, time.minute),
+    );
+  }
+
+  String _formatEta(DateTime at) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(at.year, at.month, at.day);
+    final hh = at.hour.toString().padLeft(2, '0');
+    final mm = at.minute.toString().padLeft(2, '0');
+    final diff = day.difference(today).inDays;
+    if (diff == 0) return 'Today at $hh:$mm';
+    if (diff == 1) return 'Tomorrow at $hh:$mm';
+    return '${at.day}/${at.month}/${at.year} at $hh:$mm';
   }
 
   Widget _buildPaymentCard(MerchantOrder order) {

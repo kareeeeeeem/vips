@@ -19,6 +19,10 @@ class MerchantOrderController extends GetxController {
   final orders = <MerchantOrder>[].obs;
   final filteredOrders = <MerchantOrder>[].obs;
   final currentOrder = Rxn<MerchantOrder>();
+
+  /// True while a delivery estimate is being saved, so the control can
+  /// disable itself instead of accepting a second tap mid-request.
+  final isUpdatingEta = false.obs;
   final orderDetails = <MerchantOrderDetailsModel>[].obs;
   final selectedTab = 0.obs;
   final searchQuery = ''.obs;
@@ -213,6 +217,41 @@ class MerchantOrderController extends GetxController {
       debugPrint('Error updating order status: $e');
       safeSnackbar('Error', 'Failed to update order status');
       return false;
+    }
+  }
+
+  /// Sets or clears the expected delivery time for [orderId].
+  ///
+  /// Passing null clears it. The customer's tracking screen renders a cleared
+  /// estimate as "not yet known", which is honest; leaving a stale one there
+  /// is a promise the merchant no longer believes.
+  Future<bool> setEstimatedDelivery(int orderId, DateTime? at) async {
+    if (at != null && at.isBefore(DateTime.now())) {
+      safeSnackbar('Error', 'The delivery estimate cannot be in the past');
+      return false;
+    }
+    try {
+      isUpdatingEta.value = true;
+      final response = await orderService.setOrderEta(orderId, at);
+
+      if (response.success) {
+        // Re-read rather than patch locally: the value shown must be the one
+        // the backend stored, not the one this screen hoped it stored.
+        if (currentOrder.value?.id == orderId) {
+          await getOrderDetails(orderId);
+        }
+        await loadOrders();
+        safeSnackbar('Success', response.message);
+        return true;
+      }
+      safeSnackbar('Error', response.message);
+      return false;
+    } catch (e) {
+      debugPrint('Error setting delivery estimate: $e');
+      safeSnackbar('Error', 'Failed to update the delivery estimate');
+      return false;
+    } finally {
+      isUpdatingEta.value = false;
     }
   }
 

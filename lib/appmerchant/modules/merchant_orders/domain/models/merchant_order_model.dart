@@ -97,6 +97,12 @@ class MerchantOrder {
   double? bringChangeAmount;
   List<MerchantOrderDetailsModel>? orderDetails;
 
+  /// When the merchant expects this order to reach the customer, ISO-8601.
+  /// Written by PUT /merchant/orders/:id/eta and read by the customer's
+  /// tracking screen — null means no promise has been made, which is not
+  /// the same as a promise of "now".
+  String? estimatedDeliveryAt;
+
   MerchantOrder({
     this.id,
     this.orderAmount,
@@ -160,6 +166,9 @@ class MerchantOrder {
 
   MerchantOrder.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    // toMerchantJSON sends snake_case; the ETA endpoint answers in camel.
+    estimatedDeliveryAt =
+        (json['estimated_delivery_at'] ?? json['estimatedDeliveryAt'])?.toString();
     orderAmount = json['order_amount']?.toDouble();
     couponDiscountAmount = json['coupon_discount_amount']?.toDouble();
     couponDiscountTitle = json['coupon_discount_title'];
