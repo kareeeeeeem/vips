@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../modules/auth/bindings/admin_auth_binding.dart';
 import '../../modules/auth/views/admin_login_view.dart';
+import '../../modules/audit/bindings/audit_binding.dart';
+import '../../modules/audit/views/audit_logs_view.dart';
 import '../../modules/auth/views/admin_splash_view.dart';
 import '../../modules/dashboard/bindings/admin_dashboard_binding.dart';
 import '../../modules/dashboard/views/admin_dashboard_view.dart';
@@ -217,6 +219,13 @@ class AdminPages {
       name: AdminRoutes.ROLES,
       page: () => const RolesPermissionsView(),
       binding: StaffBinding(),
+    ),
+    // Who did what in the console. Gated on settings.read, the same audience
+    // that can already see the admin roster.
+    GetPage(
+      name: AdminRoutes.AUDIT,
+      page: () => const AuditLogsView(),
+      binding: AuditBinding(),
     ),
     GetPage(
       name: AdminRoutes.SETTINGS,

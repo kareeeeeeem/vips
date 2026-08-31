@@ -36,6 +36,7 @@ abstract class AdminRoutes {
   static const STAFF_DETAILS    = _AdminPaths.STAFF_DETAILS;
   static const STAFF_EDIT       = _AdminPaths.STAFF_EDIT;
   static const ROLES            = _AdminPaths.ROLES;
+  static const AUDIT            = _AdminPaths.AUDIT;
   static const SETTINGS         = _AdminPaths.SETTINGS;
 
   // ── Builders for the parameterised detail routes ──────────
@@ -82,5 +83,6 @@ abstract class _AdminPaths {
   static const STAFF_DETAILS    = '/staff/:id';
   static const STAFF_EDIT       = '/staff/:id/edit';
   static const ROLES            = '/roles';
+  static const AUDIT            = '/audit';
   static const SETTINGS         = '/settings';
 }

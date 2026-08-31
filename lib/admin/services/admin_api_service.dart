@@ -422,6 +422,32 @@ class AdminApiService {
             'groupBy': groupBy,
           }));
 
+  // ── Audit log ─────────────────────────────────────────────
+  /// What operators have done in the console. `outcome` filters to
+  /// 'success' or 'denied' — a refused attempt is the line this exists for.
+  Future<ApiResponse> auditLogs({
+    int page = 1,
+    int limit = 20,
+    String? search,
+    String? actorId,
+    String? targetType,
+    String? outcome,
+    String? from,
+    String? to,
+  }) =>
+      _api.get('/admin/audit/logs', queryParams: _clean({
+            'page': page,
+            'limit': limit,
+            'search': search,
+            'actorId': actorId,
+            'targetType': targetType,
+            'outcome': outcome,
+            'from': from,
+            'to': to,
+          }));
+
+  Future<ApiResponse> auditEntry(String id) => _api.get('/admin/audit/logs/$id');
+
   // ── Staff and roles ───────────────────────────────────────
   Future<ApiResponse> staff({
     int page = 1,

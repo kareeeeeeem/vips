@@ -241,22 +241,20 @@ void main() {
       // Detail, checkout and sibling-tab routes are opened from a parent
       // screen rather than the drawer, so they are listed here explicitly.
       // Anything not in either set would be a page nothing can navigate to.
+      // Kept deliberately short: anything that can be a drawer destination
+      // should be one, so this list is for the routes that genuinely cannot
+      // — a record's own detail page, and a step inside a flow.
       const openedFromAnotherScreen = {
         AdminRoutes.SPLASH,
         AdminRoutes.LOGIN,
         AdminRoutes.USER_DETAILS,
         AdminRoutes.MERCHANT_DETAILS,
         AdminRoutes.ORDER_DETAILS,
-        AdminRoutes.INVENTORY_MOVEMENTS,
-        AdminRoutes.INVENTORY_TRANSFERS,
-        AdminRoutes.INVENTORY_ALERTS,
         AdminRoutes.POS_CHECKOUT,
         AdminRoutes.POS_INVOICE,
-        AdminRoutes.POS_INVOICES,
         AdminRoutes.STAFF_NEW,
         AdminRoutes.STAFF_DETAILS,
         AdminRoutes.STAFF_EDIT,
-        AdminRoutes.ROLES,
       };
       final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
       for (final page in AdminPages.routes) {
@@ -285,6 +283,22 @@ void main() {
           .map((e) => e.route)
           .toList();
       expect(routes.toSet().length, routes.length);
+    });
+
+    test('a screen behind a tab strip is also reachable from the drawer', () {
+      // These were reachable only from inside their parent screen, so an
+      // operator had to already know the tabs existed to find them.
+      final drawerRoutes = AdminDrawer.allEntries.map((e) => e.route).toSet();
+      for (final route in [
+        AdminRoutes.INVENTORY_MOVEMENTS,
+        AdminRoutes.INVENTORY_TRANSFERS,
+        AdminRoutes.INVENTORY_ALERTS,
+        AdminRoutes.POS_INVOICES,
+        AdminRoutes.ROLES,
+        AdminRoutes.AUDIT,
+      ]) {
+        expect(drawerRoutes, contains(route));
+      }
     });
 
     test('every dashboard in the switcher is also in the drawer', () {
