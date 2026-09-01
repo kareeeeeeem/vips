@@ -17,6 +17,10 @@ import '../modules/business_registration/views/business_registration_view.dart';
 import '../modules/business_registration/views/address_details_view.dart';
 import '../modules/business_registration/views/social_media_setup_view.dart';
 import '../modules/business_registration/views/qr_receive_view.dart';
+import '../modules/merchant_earn/bindings/merchant_earn_binding.dart';
+import '../modules/merchant_earn/views/merchant_earn_view.dart';
+import '../modules/merchant_guarantee/bindings/merchant_guarantee_binding.dart';
+import '../modules/merchant_guarantee/views/merchant_guarantee_view.dart';
 
 import '../modules/merchant_ads/bindings/merchant_ads_binding.dart';
 import '../modules/merchant_ads/views/merchant_ads_view.dart';
@@ -253,6 +257,18 @@ class MerchantAppPages {
       name: MerchantRoutes.GIFT_BACK_FORM,
       page: () => const GiftBackFormView(),
       binding: MerchantGiftBackBinding(),
+    ),
+    // §4.1: the merchant records the sale, because they are the one who saw
+    // the money. §5.1: and they manage the guarantee that funds the points.
+    GetPage(
+      name: MerchantRoutes.EARN,
+      page: () => const MerchantEarnView(),
+      binding: MerchantEarnBinding(),
+    ),
+    GetPage(
+      name: MerchantRoutes.GUARANTEE,
+      page: () => const MerchantGuaranteeView(),
+      binding: MerchantGuaranteeBinding(),
     ),
     GetPage(
       name: MerchantRoutes.GIFT_BACK_INQUIRY,

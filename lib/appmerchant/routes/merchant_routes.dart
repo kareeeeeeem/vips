@@ -28,6 +28,8 @@ abstract class MerchantRoutes {
   static const PLAN_MIGRATION = _MerchantPaths.PLAN_MIGRATION;
   static const CATALOG = _MerchantPaths.CATALOG;
   static const GIFT_BACK_FORM = _MerchantPaths.GIFT_BACK_FORM;
+  static const EARN           = _MerchantPaths.EARN;
+  static const GUARANTEE      = _MerchantPaths.GUARANTEE;
   static const GIFT_BACK_INQUIRY = _MerchantPaths.GIFT_BACK_INQUIRY;
   static const GIFT_BACK_PIN = _MerchantPaths.GIFT_BACK_PIN;
   static const GIFT_BACK_STATUS = _MerchantPaths.GIFT_BACK_STATUS;
@@ -92,6 +94,8 @@ abstract class _MerchantPaths {
   static const PLAN_MIGRATION = '/plan-migration';
   static const CATALOG = '/merchant-catalog';
   static const GIFT_BACK_FORM = '/gift-back-form';
+  static const EARN           = '/earn';
+  static const GUARANTEE      = '/guarantee';
   static const GIFT_BACK_INQUIRY = '/gift-back-inquiry';
   static const GIFT_BACK_PIN = '/gift-back-pin';
   static const GIFT_BACK_STATUS = '/gift-back-status';

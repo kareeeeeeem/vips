@@ -569,6 +569,9 @@ class ProfileController extends GetxController {
         'route': '/mobile',
       },
       {'icon': Icons.card_giftcard, 'title': 'Gifted', 'route': '/gift'},
+      // §6.1: change kept as points, and how much of the monthly
+      // allowance is left. Nothing else in the app showed either.
+      {'icon': Icons.savings, 'title': 'Giftback', 'route': '/giftback'},
       {'icon': Icons.payment, 'title': 'Pay Bill', 'route': '/pay-bills'},
       {'icon': Icons.discount, 'title': 'Promotions', 'route': '/promotions'},
       {

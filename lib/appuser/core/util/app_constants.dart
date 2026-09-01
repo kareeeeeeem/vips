@@ -74,11 +74,15 @@ class AppConstants {
 
   // Rewards
   static const String couponsUri = '/api/rewards/coupons';
-  static const String expenseToRewardUri = '/api/rewards/expense-to-reward';
+  /// §4.1: points are added by the merchant, who scans the customer's QR
+  /// and enters the invoice. The customer-side endpoint is gone.
+  static const String myQrUri = '/api/user/profile';
   static const String applyCouponUri = '/api/rewards/apply-coupon';
   static const String giftVouchersUri = '/api/rewards/gift-vouchers';
   static const String purchaseVoucherUri = '/api/rewards/purchase-voucher';
-  static const String sendGiftUri = '/api/rewards/send-gift';
+  /// §4.3: buying an offer in a friend's name. Replaced send-gift, which
+  /// moved gateway-funded balance between accounts.
+  static const String giftOfferUri = '/api/rewards/gift-offer';
   static const String spinWheelUri = '/api/rewards/spin-wheel';
   static const String validateQrUri = '/api/rewards/validate-qr';
 

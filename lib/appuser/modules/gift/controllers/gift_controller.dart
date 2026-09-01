@@ -71,9 +71,13 @@ class GiftController extends GetxController {
     isLoading.value = true;
 
     try {
-      final response = await ApiService().post('/rewards/send-gift', {
+      // §4.3: value cannot move between accounts. What a friend receives is
+      // an offer bought with the sender's own points, not a balance transfer
+      // — this used to post to /rewards/send-gift, which moved dinars topped
+      // up through a payment gateway from one person to another.
+      final response = await ApiService().post('/rewards/gift-offer', {
         'recipientPhone': userIdController.text,
-        'amount': amount,
+        'points': amount.round(),
         'message': 'Gift from VIPs App',
       });
 

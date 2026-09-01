@@ -255,6 +255,9 @@ class ExpenseToRewardController extends GetxController {
 
     try {
       final parsedAmount = double.tryParse(billAmount.value) ?? 0.0;
+      // §4.1 moved this to the till: the shop scans the customer's QR and
+      // enters the invoice they issued. The server answers 410 here now, and
+      // its message is what the customer needs to read.
       final response = await ApiService().post('/rewards/expense-to-reward', {
         'amount': parsedAmount,
         'merchantId': userId.value,

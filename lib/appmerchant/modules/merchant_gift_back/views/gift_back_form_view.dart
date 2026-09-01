@@ -156,7 +156,7 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Limit Information',
+                              'How Giftback works',
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w800,
@@ -165,25 +165,58 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                             ),
                             SizedBox(height: 16.h),
                             _buildLimitRow(
-                              'Daily Limit', 'Remaining Daily Limit',
-                              '${controller.dailyLimit.value.toStringAsFixed(4)} $c',
-                              '${controller.remainingDailyLimit.value.toStringAsFixed(4)} $c',
+                              'Change it covers', 'Becomes spendable in',
+                              'Under ${controller.maxChangeTnd.value.toStringAsFixed(3)} $c',
+                              '${controller.activationDelayHours.value} hours',
                             ),
                             SizedBox(height: 12.h),
+                            // The cap follows the customer across every shop
+                            // they visit, so it cannot be shown until one has
+                            // been identified — a number here before then
+                            // would be this merchant's guess, not a fact.
                             _buildLimitRow(
-                              'Monthly Limit', 'Remaining Monthly Limit',
-                              '${controller.monthlyLimit.value.toStringAsFixed(4)} $c',
-                              '${controller.remainingMonthlyLimit.value.toStringAsFixed(4)} $c',
+                              "Customer's monthly cap",
+                              controller.allowanceKnown.value
+                                  ? 'Left this month'
+                                  : 'Left this month',
+                              '${controller.monthlyCapTnd.value.toStringAsFixed(0)} $c',
+                              controller.allowanceKnown.value
+                                  ? '${controller.remainingAllowanceTnd.value.toStringAsFixed(3)} $c'
+                                  : 'Scan the customer first',
                             ),
                             SizedBox(height: 12.h),
                             Text(
-                              'Transaction Limit',
+                              'Points the customer receives',
                               style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600),
                             ),
                             SizedBox(height: 4.h),
                             Text(
-                              '${controller.txMin.value.toStringAsFixed(4)} - ${controller.txMax.value.toStringAsFixed(4)} $c',
+                              '${controller.pointsForChange} points',
                               style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                            ),
+                            SizedBox(height: 16.h),
+                            // The consent step. §7 rests the platform's
+                            // position on this being the customer's choice,
+                            // so it is a control the merchant must tick with
+                            // the customer, not a line of small print.
+                            CheckboxListTile(
+                              value: controller.customerConsented.value,
+                              onChanged: (v) => controller.setConsent(v ?? false),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              activeColor: const Color(0xFF10B981),
+                              title: Text(
+                                'The customer agreed to give up their change',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF065F46),
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Ask them out loud. Without this the points cannot be recorded.',
+                                style: TextStyle(fontSize: 11.sp, color: const Color(0xFF047857)),
+                              ),
                             ),
                           ],
                         ),

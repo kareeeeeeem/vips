@@ -427,6 +427,21 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
 
   Widget _buildOperationsList() {
     final List<Map<String, dynamic>> menuItems = [
+      // The two the whole loyalty model runs on, so they lead: recording a
+      // sale is how a customer earns anything, and the guarantee is what
+      // pays for it.
+      {
+        'title': 'Add Points',
+        'icon': Icons.qr_code_scanner_rounded,
+        'route': MerchantRoutes.EARN,
+        'color': const Color(0xFF10B981),
+      },
+      {
+        'title': 'My Guarantee',
+        'icon': Icons.account_balance_outlined,
+        'route': MerchantRoutes.GUARANTEE,
+        'color': const Color(0xFF00205C),
+      },
       {
         'title': 'Income/Expense',
         'icon': Icons.account_balance_wallet_outlined,

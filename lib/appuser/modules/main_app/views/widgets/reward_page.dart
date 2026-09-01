@@ -78,23 +78,21 @@ class _RewardPageState extends State<RewardPage> {
 
     setState(() => isSubmitting = true);
     try {
+      // §4.1: the shop adds the points, from the invoice they issued. This
+      // screen used to credit whatever the customer typed, which minted
+      // points against no sale and no merchant.
       final response = await ApiService().post('/rewards/expense-to-reward', {
         'amount': amount,
         if (phoneIdController.text.trim().isNotEmpty) 'merchantId': phoneIdController.text.trim(),
       });
-      if (response.success) {
-        final pointsEarned = response.data is Map ? response.data['pointsEarned'] : null;
-        Get.back();
-        safeSnackbar(
-          'Success',
-          pointsEarned != null
-              ? 'You earned $pointsEarned VIPS points!'
-              : 'Expense converted to rewards!',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } else {
-        safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
-      }
+      Get.back();
+      safeSnackbar(
+        'Show your QR at the till',
+        response.message.isNotEmpty
+            ? response.message
+            : 'Points are added by the shop when they scan your VIPs code.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (_) {
       safeSnackbar('Error', 'Could not process reward. Please try again.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
     } finally {

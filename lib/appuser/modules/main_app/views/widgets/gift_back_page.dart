@@ -90,13 +90,16 @@ class _GiftBackPageState extends State<GiftBackPage> {
 
     setState(() => isSubmitting = true);
     try {
-      final response = await ApiService().post('/rewards/send-gift', {
+      // §4.3: points are not transferable and balance does not move between
+      // accounts. The sanctioned way to share value is to buy an offer in a
+      // friend's name, which is what this now does.
+      final response = await ApiService().post('/rewards/gift-offer', {
         'recipientPhone': recipientPhone,
-        'amount': amount,
+        'points': amount.round(),
       });
       if (response.success) {
         Get.back();
-        safeSnackbar('Success', 'Gift sent to $recipientPhone!', snackPosition: SnackPosition.BOTTOM);
+        safeSnackbar('Sent', 'Their gift code is on its way to $recipientPhone.', snackPosition: SnackPosition.BOTTOM);
       } else {
         safeSnackbar('Error', response.message, snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
       }

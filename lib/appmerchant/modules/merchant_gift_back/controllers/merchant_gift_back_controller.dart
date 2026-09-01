@@ -53,13 +53,26 @@ class MerchantGiftBackController extends GetxController {
 
   // --- Limits (from API) ---
   final currency = 'D'.obs;
-  final dailyLimit = 0.0.obs;
-  final remainingDailyLimit = 0.0.obs;
-  final monthlyLimit = 0.0.obs;
-  final remainingMonthlyLimit = 0.0.obs;
-  final txMin = 0.0.obs;
-  final txMax = 0.0.obs;
+
+  // §4.2. The cap is the customer's, not this merchant's: 50 TND a month per
+  // person, across every shop they visit. The old per-merchant daily and
+  // monthly ceilings measured the wrong thing entirely.
+  final maxChangeTnd = 5.0.obs;
+  final monthlyCapTnd = 50.0.obs;
+  final activationDelayHours = 12.obs;
+  /// How much of *this customer's* monthly allowance is left. Only knowable
+  /// once a customer has been resolved.
+  final remainingAllowanceTnd = 0.0.obs;
+  final allowanceKnown = false.obs;
   final limitsLoaded = false.obs;
+
+  /// The customer has to say yes before their change becomes points. Never
+  /// defaulted to true — an opt-in that starts on is not an opt-in, and §7
+  /// rests the platform's exemption on this being the customer's choice.
+  final customerConsented = false.obs;
+
+  /// The invoice the change came off, for the approval log (§6.2).
+  final invoiceController = TextEditingController();
 
   double get enteredAmount => double.tryParse(amountController.text.trim()) ?? 0;
 
@@ -78,18 +91,28 @@ class MerchantGiftBackController extends GetxController {
     _loadPinStatus();
   }
 
-  Future<void> _loadLimits() async {
+  /// The platform-wide rules. The per-customer allowance comes later, with
+  /// [lookupRecipient], because it belongs to a specific person.
+  Future<void> _loadLimits({String? userId, String? phone}) async {
     try {
-      final response = await ApiService().get('/merchant/gift-back/limits');
+      final response = await ApiService().get(
+        '/merchant/gift-back/limits',
+        queryParams: {
+          if (userId != null && userId.isNotEmpty) 'userId': userId,
+          if (userId == null && phone != null && phone.isNotEmpty) 'phone': phone,
+        },
+      );
       if (response.success && response.data is Map) {
         final d = Map<String, dynamic>.from(response.data as Map);
-        currency.value = (d['currency'] ?? 'D').toString();
-        dailyLimit.value = _num(d['dailyLimit']);
-        remainingDailyLimit.value = _num(d['remainingDailyLimit']);
-        monthlyLimit.value = _num(d['monthlyLimit']);
-        remainingMonthlyLimit.value = _num(d['remainingMonthlyLimit']);
-        txMin.value = _num(d['txMin']);
-        txMax.value = _num(d['txMax']);
+        maxChangeTnd.value = _num(d['maxChangeTnd']);
+        monthlyCapTnd.value = _num(d['monthlyCapTnd']);
+        activationDelayHours.value =
+            (d['activationDelayHours'] as num?)?.toInt() ?? 12;
+        if (d['allowance'] is Map) {
+          final a = Map<String, dynamic>.from(d['allowance'] as Map);
+          remainingAllowanceTnd.value = _num(a['remainingTnd']);
+          allowanceKnown.value = true;
+        }
         limitsLoaded.value = true;
         _validateForm();
       }
@@ -115,6 +138,9 @@ class MerchantGiftBackController extends GetxController {
     if (phoneController.text != _lastScannedPhone) {
       scannedUserId.value = '';
       recipientName.value = '';
+      // A different customer has a different allowance; the old one is no
+      // longer something this form knows.
+      allowanceKnown.value = false;
     }
 
     final phoneOk = phoneController.text.trim().isNotEmpty;
@@ -125,46 +151,50 @@ class MerchantGiftBackController extends GetxController {
       return;
     }
 
-    final amt = double.tryParse(raw);
-    if (amt == null) {
-      formError.value = 'Enter a valid amount';
+    final change = double.tryParse(raw);
+    if (change == null || change <= 0) {
+      formError.value = 'Enter the change amount';
       isFormValid.value = false;
       return;
     }
 
-    // Mirror the server's caps (routes/merchant.js GIFT_BACK_LIMITS) so the
-    // merchant is told before the inquiry + PIN steps, not after.
-    if (limitsLoaded.value) {
-      if (amt < txMin.value) {
-        formError.value = 'Minimum gift back is ${_fmt(txMin.value)}';
-        isFormValid.value = false;
-        return;
-      }
-      if (amt > txMax.value) {
-        formError.value = 'Maximum per transaction is ${_fmt(txMax.value)}';
-        isFormValid.value = false;
-        return;
-      }
-      if (amt > remainingDailyLimit.value) {
-        formError.value =
-            'Daily limit: only ${_fmt(remainingDailyLimit.value)} left today';
-        isFormValid.value = false;
-        return;
-      }
-      if (amt > remainingMonthlyLimit.value) {
-        formError.value =
-            'Monthly limit: only ${_fmt(remainingMonthlyLimit.value)} left this month';
-        isFormValid.value = false;
-        return;
-      }
-    } else if (amt <= 0) {
-      formError.value = 'Amount must be greater than 0';
+    // §4.2: this is change, not a payment. Checked here so the merchant is
+    // told at the keypad rather than after the PIN step.
+    if (limitsLoaded.value && change >= maxChangeTnd.value) {
+      formError.value =
+          'Giftback covers change under ${_fmt(maxChangeTnd.value)}. '
+          'Hand ${_fmt(change)} back to the customer.';
+      isFormValid.value = false;
+      return;
+    }
+
+    if (allowanceKnown.value && change > remainingAllowanceTnd.value) {
+      formError.value = remainingAllowanceTnd.value <= 0
+          ? 'This customer has used their ${_fmt(monthlyCapTnd.value)} allowance this month.'
+          : 'Only ${_fmt(remainingAllowanceTnd.value)} left of this customer\'s monthly allowance.';
+      isFormValid.value = false;
+      return;
+    }
+
+    if (!customerConsented.value) {
+      formError.value = 'The customer has to agree before their change becomes points.';
       isFormValid.value = false;
       return;
     }
 
     formError.value = '';
     isFormValid.value = true;
+  }
+
+  /// Points the customer will receive, at 100 points to the dinar (§5.1).
+  int get pointsForChange {
+    final change = double.tryParse(amountController.text.trim()) ?? 0;
+    return (change * 100).floor();
+  }
+
+  void setConsent(bool value) {
+    customerConsented.value = value;
+    _validateForm();
   }
 
   String _fmt(double v) =>
@@ -199,10 +229,20 @@ class MerchantGiftBackController extends GetxController {
           ? {'userId': scannedUserId.value}
           : {'phone': phoneController.text.trim()};
       final response =
-          await ApiService().get('/merchant/gift-back/lookup', queryParams: query);
+          await ApiService().get('/merchant/customers/lookup', queryParams: query);
       if (response.success && response.data is Map) {
         final d = Map<String, dynamic>.from(response.data as Map);
         recipientName.value = (d['fullName'] ?? '').toString();
+        if (d['userId'] != null) scannedUserId.value = d['userId'].toString();
+        // The allowance travels with the customer, so read it here rather
+        // than making the merchant discover it when the send is refused.
+        if (d['giftbackAllowance'] is Map) {
+          final a = Map<String, dynamic>.from(d['giftbackAllowance'] as Map);
+          remainingAllowanceTnd.value = _num(a['remainingTnd']);
+          monthlyCapTnd.value = _num(a['capTnd']);
+          allowanceKnown.value = true;
+        }
+        _validateForm();
         return true;
       }
       recipientName.value = '';
@@ -255,38 +295,46 @@ class MerchantGiftBackController extends GetxController {
     if (isSending.value) return;
     isSending.value = true;
     try {
-      final amount = enteredAmount;
+      final change = enteredAmount;
+      final invoice = double.tryParse(invoiceController.text.trim());
       final response = await ApiService().post('/merchant/gift-back', {
         if (scannedUserId.value.isNotEmpty)
           'userId': scannedUserId.value
         else
           'phone': phoneController.text.trim(),
-        'amount': amount,
-        'message': messageController.text.trim().isNotEmpty
-            ? messageController.text.trim()
-            : 'Gift back from merchant',
+        'changeTnd': change,
+        if (invoice != null) 'invoiceTnd': invoice,
+        // Sent explicitly rather than implied by the request existing: the
+        // server refuses without it, which is what makes the opt-in real.
+        'consent': customerConsented.value,
       });
 
       if (response.success) {
         // Set the label before navigating — the status screen reads it on
         // build, and it used to be assigned only after the push.
         statusLabel.value = 'Successful';
+        customerConsented.value = false;
         if (response.data is Map) {
           final d = Map<String, dynamic>.from(response.data as Map);
           lastTransaction.value = d;
-          if (d['remainingDailyLimit'] != null) {
-            remainingDailyLimit.value = _num(d['remainingDailyLimit']);
-          }
-          if (d['remainingMonthlyLimit'] != null) {
-            remainingMonthlyLimit.value = _num(d['remainingMonthlyLimit']);
+          if (d['allowance'] is Map) {
+            final a = Map<String, dynamic>.from(d['allowance'] as Map);
+            remainingAllowanceTnd.value = _num(a['remainingTnd']);
+            allowanceKnown.value = true;
           }
           if (d['recipientName'] != null) {
             recipientName.value = d['recipientName'].toString();
           }
         }
         Get.toNamed(MerchantRoutes.GIFT_BACK_STATUS);
-        safeSnackbar('Success', 'Gift back sent successfully!',
-            backgroundColor: Colors.green, colorText: Colors.white);
+        // Said plainly: the customer will not see these points for twelve
+        // hours, and a merchant who does not know that will be asked why.
+        safeSnackbar(
+          'Recorded',
+          'Points become spendable in ${activationDelayHours.value} hours.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       } else {
         statusLabel.value = 'Failed';
         // Stay on the PIN screen so the merchant can correct and retry

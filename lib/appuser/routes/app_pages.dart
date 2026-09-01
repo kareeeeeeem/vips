@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 import 'package:get/get.dart';
+import '../modules/giftback/bindings/giftback_binding.dart';
+import '../modules/giftback/views/giftback_view.dart';
 
 import '../modules/Cart/bindings/cart_binding.dart';
 import '../modules/Cart/views/cart_view.dart' hide CartBinding;
@@ -265,6 +267,13 @@ class AppPages {
       name: _Paths.GIFT,
       page: () => const GiftView(),
       binding: GiftBinding(),
+    ),
+    // §6.1: points from change the customer chose to keep, and how much of
+    // their monthly allowance is left.
+    GetPage(
+      name: _Paths.GIFTBACK,
+      page: () => const GiftbackView(),
+      binding: GiftbackBinding(),
     ),
     GetPage(
       name: _Paths.EXPENSE_TO_REWARD,
