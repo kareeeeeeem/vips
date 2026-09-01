@@ -41,6 +41,8 @@ class AdminDrawer extends StatelessWidget {
         permission: 'users.read'),
     AdminNavEntry(AdminRoutes.MERCHANTS, 'Merchants', Icons.storefront_outlined,
         permission: 'merchants.read'),
+    AdminNavEntry(AdminRoutes.GUARANTEES, 'Guarantees', Icons.account_balance_outlined,
+        permission: 'merchants.read'),
     AdminNavEntry(AdminRoutes.ORDERS, 'Orders', Icons.receipt_long_outlined,
         permission: 'orders.read'),
     AdminNavEntry(AdminRoutes.PRODUCTS, 'Products', Icons.sell_outlined,

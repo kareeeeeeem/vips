@@ -143,6 +143,30 @@ class AdminApiService {
 
   Future<ApiResponse> deleteMerchant(String id) => _api.delete('/admin/merchants/$id');
 
+  // ── Guarantees (§5.1 / §5.2) ──────────────────────────────
+  // A merchant's guarantee is cash they paid in, held against the points
+  // their offers hand out. It is never platform revenue, so it is read and
+  // reported apart from anything the platform has earned.
+
+  Future<ApiResponse> merchantGuarantee(String id) =>
+      _api.get('/admin/merchants/$id/guarantee');
+
+  /// Records cash received. Admin-only: the deposit stands for money that
+  /// actually arrived, so a merchant cannot credit their own.
+  Future<ApiResponse> depositGuarantee(String id, num amount, {String note = ''}) =>
+      _api.post('/admin/merchants/$id/guarantee/deposit', {'amount': amount, 'note': note});
+
+  /// The plan sets the commission (§8); the earn rate is the merchant's own
+  /// points-per-dinar policy (§4.1).
+  Future<ApiResponse> setMerchantPlan(String id, {String? plan, num? earnRate}) =>
+      _api.put('/admin/merchants/$id/plan', {
+        if (plan != null) 'plan': plan,
+        if (earnRate != null) 'earnRate': earnRate,
+      });
+
+  /// Guarantee held across every merchant — the platform's total exposure.
+  Future<ApiResponse> guarantees() => _api.get('/admin/guarantees');
+
   // ── Orders ────────────────────────────────────────────────
   Future<ApiResponse> orders({
     int page = 1,

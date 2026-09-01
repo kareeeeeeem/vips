@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 import 'package:get/get.dart';
+import '../../modules/guarantees/bindings/guarantees_binding.dart';
+import '../../modules/guarantees/views/guarantees_view.dart';
 
 import '../../modules/auth/bindings/admin_auth_binding.dart';
 import '../../modules/auth/views/admin_login_view.dart';
@@ -131,6 +133,14 @@ class AdminPages {
       name: AdminRoutes.MERCHANT_DETAILS,
       page: () => const MerchantDetailsView(),
       binding: AdminMerchantsBinding(),
+    ),
+    // §5.1: guarantees are merchants' own money held against the points
+    // their offers hand out, so they sit beside merchants rather than
+    // anywhere near revenue.
+    GetPage(
+      name: AdminRoutes.GUARANTEES,
+      page: () => GuaranteesView(),
+      binding: GuaranteesBinding(),
     ),
 
     GetPage(
