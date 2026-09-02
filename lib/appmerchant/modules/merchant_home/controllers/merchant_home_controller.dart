@@ -19,7 +19,12 @@ class MerchantHomeController extends GetxController {
   /// This slot used to read `netProfit`, which is a *dinar* figure — it was
   /// rendered with a "VIP" prefix under a "VIPs Recovery" label that has no
   /// backing concept anywhere in the backend.
-  final RxDouble vipsIssued = 0.0.obs;
+  /// §5.2: guarantee points this merchant has taken back out as a bank
+  /// transfer. This was `vipsIssued`, rewards and gift-backs added together
+  /// — two different outflows summed into a figure that answered no
+  /// question, sitting next to both of its own parts.
+  final RxDouble vipsRecovery = 0.0.obs;
+  final RxDouble vipsRecoveryTnd = 0.0.obs;
 
   /// The merchant's own spendable VIPs points balance (`User.walletPoints`,
   /// served by GET /merchant/profile). Distinct from [vipsIn]/[vipsOut],
@@ -46,6 +51,14 @@ class MerchantHomeController extends GetxController {
 
   // --- Merchant Profile ---
   final RxString storeName = ''.obs;
+  /// The shop's category, shown under its name in the header. The header
+  /// carried the words "Merchant Dashboard" there instead — the same on
+  /// every merchant's screen, and so telling them nothing.
+  final RxString storeCategory = ''.obs;
+
+  /// The merchant's own live campaigns, shown on the home screen. They had
+  /// to open Advertisements to see whether anything was running at all.
+  final RxList<Map<String, dynamic>> activeAds = <Map<String, dynamic>>[].obs;
   final RxString storePhone = ''.obs;
   final RxString storeAddress = ''.obs;
   final RxString storeImageUrl = ''.obs;
@@ -68,9 +81,17 @@ class MerchantHomeController extends GetxController {
   Future<void> changePage(int index) async {
     final route = switch (index) {
       0 => MerchantRoutes.STORE_PROFILE,
-      1 => MerchantRoutes.FINANCE_DASHBOARD,
+      // The tab is called Rapport and led to the transactions list. The
+      // report is the shop's position; the transactions list is reachable
+      // from inside Finance, where it belongs.
+      1 => MerchantRoutes.REPORT,
       2 => MerchantRoutes.QR_RECEIVE,
-      3 => MerchantRoutes.WALLET,
+      // The wallet tab and the drawer's "Wallet & Finance" entry led to two
+      // different screens, so the same word took the merchant to two places
+      // depending on where they tapped it. Both open Finance, which is the
+      // screen that holds the balances; the wallet screen is reachable from
+      // inside it rather than competing with it.
+      3 => MerchantRoutes.FINANCE_DASHBOARD,
       4 => MerchantRoutes.BUSINESS_PLAN,
       _ => null,
     };
@@ -96,6 +117,7 @@ class MerchantHomeController extends GetxController {
         _loadDashboardStats(),
         _loadMerchantProfile(),
         _loadUnreadNotifications(),
+        _loadActiveAds(),
       ]);
     } finally {
       isLoading.value = false;
@@ -117,9 +139,8 @@ class MerchantHomeController extends GetxController {
         totalDueCollect.value = (data['totalDueCollect'] ?? data['totalCollected'] ?? 0).toDouble();
         vipsIn.value = (data['totalRewards'] ?? 0).toDouble();
         vipsOut.value = (data['totalGiftBack'] ?? 0).toDouble();
-        vipsIssued.value = (data['totalVipsIssued'] ??
-                ((data['totalRewards'] ?? 0) + (data['totalGiftBack'] ?? 0)))
-            .toDouble();
+        vipsRecovery.value = (data['vipsRecoveryPoints'] ?? 0).toDouble();
+        vipsRecoveryTnd.value = (data['vipsRecoveryTnd'] ?? 0).toDouble();
       }
     } catch (_) {}
   }
@@ -151,6 +172,22 @@ class MerchantHomeController extends GetxController {
     }
   }
 
+  Future<void> _loadActiveAds() async {
+    try {
+      final response = await ApiService()
+          .get('/merchant/ads', queryParams: {'status': 'active', 'limit': '10'});
+      if (response.success && response.data is Map) {
+        final data = Map<String, dynamic>.from(response.data as Map);
+        activeAds.value = ((data['ads'] as List?) ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
+    } catch (_) {
+      // A home screen that fails to load because an advert list did is
+      // worse than a home screen with no advert strip.
+    }
+  }
+
   Future<void> _loadMerchantProfile() async {
     try {
       final response = await ApiService().get('/merchant/profile');
@@ -159,6 +196,7 @@ class MerchantHomeController extends GetxController {
         storeName.value = data['storeName'] ?? data['fullName'] ?? '';
         storePhone.value = data['phone'] ?? '';
         storeAddress.value = data['storeAddress'] ?? '';
+        storeCategory.value = data['storeCategory'] ?? '';
         storeImageUrl.value = data['logo'] ?? data['profileImage'] ?? '';
         merchantId.value = data['_id']?.toString() ?? '';
         availablePoints.value = (data['walletPoints'] is num)

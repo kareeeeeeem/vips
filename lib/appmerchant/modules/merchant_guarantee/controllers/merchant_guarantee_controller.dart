@@ -32,6 +32,59 @@ class MerchantGuaranteeController extends GetxController {
 
   final ledger = <Map<String, dynamic>>[].obs;
 
+  // §5.1's two ways to put points behind offers: move back what customers
+  // already spent here, or send money.
+  final recoverablePoints = 0.obs;
+  final pendingBankDeposits = <Map<String, dynamic>>[].obs;
+
+  Future<void> loadTopupSources() async {
+    try {
+      final response = await ApiService().get('/merchant/guarantee/topup');
+      if (response.success && response.data is Map) {
+        final d = Map<String, dynamic>.from(response.data as Map);
+        final rec = Map<String, dynamic>.from(d['recoverable'] as Map? ?? {});
+        recoverablePoints.value = _int(rec['points']);
+        pendingBankDeposits.value = ((d['pendingBankDeposits'] as List?) ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('topup sources failed: $e');
+    }
+  }
+
+  /// Declares a bank transfer. Points appear once it is confirmed as
+  /// received — this does not create them.
+  Future<bool> declareBankTransfer(double amount,
+      {String reference = '', String bankName = ''}) async {
+    if (amount <= 0) {
+      safeSnackbar('Amount missing', 'Enter how much you transferred.');
+      return false;
+    }
+    isMutating.value = true;
+    try {
+      final response = await ApiService().post('/merchant/guarantee/topup/bank', {
+        'amountTnd': amount,
+        'reference': reference,
+        'bankName': bankName,
+      });
+      if (response.success) {
+        safeSnackbar('Sent', response.message,
+            backgroundColor: const Color(0xFF10B981), colorText: Colors.white);
+        await loadTopupSources();
+        return true;
+      }
+      safeSnackbar('Not sent', response.message);
+      return false;
+    } catch (e) {
+      debugPrint('declareBankTransfer failed: $e');
+      safeSnackbar('Error', 'Could not reach the server. Try again.');
+      return false;
+    } finally {
+      isMutating.value = false;
+    }
+  }
+
   static const budgets = ['discount', 'packages', 'general'];
 
   static String budgetLabel(String key) => switch (key) {
@@ -94,6 +147,7 @@ class MerchantGuaranteeController extends GetxController {
             : 'Could not load your guarantee.';
       }
       await loadLedger();
+      await loadTopupSources();
     } catch (e) {
       debugPrint('guarantee load failed: $e');
       error.value = 'Could not reach the server.';

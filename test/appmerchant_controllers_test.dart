@@ -104,11 +104,16 @@ void main() {
       expect(c.totalDueCollect.value, equals(0.0));
       expect(c.vipsIn.value, equals(0.0));
       expect(c.vipsOut.value, equals(0.0));
-      expect(c.vipsIssued.value, equals(0.0));
+      // Renamed from `vipsIssued`, which summed rewards and gift-backs —
+      // two different outflows added into a figure that answered nothing,
+      // sitting beside both of its own parts.
+      expect(c.vipsRecovery.value, equals(0.0));
+      expect(c.vipsRecoveryTnd.value, equals(0.0));
     });
 
     test('initial profile fields are empty and isLoading is true', () {
       expect(c.storeName.value, isEmpty);
+      expect(c.storeCategory.value, isEmpty);
       expect(c.storePhone.value, isEmpty);
       expect(c.storeImageUrl.value, isEmpty);
       expect(c.merchantId.value, isEmpty);

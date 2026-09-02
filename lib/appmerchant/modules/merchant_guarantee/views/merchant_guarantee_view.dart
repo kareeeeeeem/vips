@@ -40,6 +40,8 @@ class MerchantGuaranteeView extends GetView<MerchantGuaranteeController> {
                 _unallocated(),
                 SizedBox(height: 16.h),
               ],
+              _topUp(),
+              SizedBox(height: 16.h),
               _budgets(),
               SizedBox(height: 16.h),
               _refund(),
@@ -327,6 +329,171 @@ class MerchantGuaranteeView extends GetView<MerchantGuaranteeController> {
         'refund' => 'Refunded to you',
         _ => type,
       };
+
+  /// §5.1's two ways to put points behind offers. Deliberately kept apart:
+  /// one is free and instant, the other is real money that has to arrive
+  /// before it counts. Presenting them as one "top up" button would hide
+  /// that difference.
+  Widget _topUp() {
+    return _card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Add points',
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700, color: _ink)),
+          SizedBox(height: 12.h),
+
+          // Source one: what customers already spent here.
+          InkWell(
+            onTap: controller.recoverablePoints.value > 0 ? _moveSheet : null,
+            borderRadius: BorderRadius.circular(12.r),
+            child: Container(
+              padding: EdgeInsets.all(13.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(children: [
+                Icon(Icons.autorenew_rounded, color: _green, size: 20.sp),
+                SizedBox(width: 11.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Reuse points customers spent here',
+                          style: TextStyle(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: _ink)),
+                      SizedBox(height: 2.h),
+                      Text(
+                        controller.recoverablePoints.value > 0
+                            ? '${controller.recoverablePoints.value} points sitting in your general balance. '
+                                'Costs nothing — move them to whichever budget needs them.'
+                            : 'Nothing here yet. Points land back when customers '
+                                'spend vouchers in your shop.',
+                        style: TextStyle(fontSize: 11.5.sp, color: _muted, height: 1.45),
+                      ),
+                    ],
+                  ),
+                ),
+              ]),
+            ),
+          ),
+          SizedBox(height: 10.h),
+
+          // Source two: money.
+          InkWell(
+            onTap: _bankSheet,
+            borderRadius: BorderRadius.circular(12.r),
+            child: Container(
+              padding: EdgeInsets.all(13.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: _line),
+              ),
+              child: Row(children: [
+                Icon(Icons.account_balance_rounded,
+                    color: const Color(0xFF1B6DF9), size: 20.sp),
+                SizedBox(width: 11.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Send a bank transfer',
+                          style: TextStyle(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: _ink)),
+                      SizedBox(height: 2.h),
+                      Text(
+                        '100 points for every dinar. Points appear once the '
+                        'transfer is confirmed as received.',
+                        style: TextStyle(fontSize: 11.5.sp, color: _muted, height: 1.45),
+                      ),
+                    ],
+                  ),
+                ),
+              ]),
+            ),
+          ),
+
+          // Transfers declared but not yet confirmed, so the merchant is not
+          // left wondering whether it went through.
+          if (controller.pendingBankDeposits.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            ...controller.pendingBankDeposits.map((d) => Padding(
+                  padding: EdgeInsets.only(bottom: 6.h),
+                  child: Row(children: [
+                    Icon(Icons.hourglass_top_rounded,
+                        size: 14.sp, color: const Color(0xFFD97706)),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(
+                        '${d['amountTnd']} TND awaiting confirmation'
+                        '${(d['reference'] ?? '').toString().isEmpty ? '' : ' · ref ${d['reference']}'}',
+                        style: TextStyle(
+                            fontSize: 11.5.sp, color: const Color(0xFF92400E)),
+                      ),
+                    ),
+                  ]),
+                )),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _bankSheet() {
+    final amount = TextEditingController();
+    final reference = TextEditingController();
+    final bank = TextEditingController();
+
+    Get.bottomSheet(_sheet(
+      title: 'Send a bank transfer',
+      blurb: 'Tell us what you sent and we will add the points once it lands. '
+          'Every dinar becomes 100 points.',
+      children: [
+        TextField(
+          controller: amount,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: 'Amount transferred (TND)',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        TextField(
+          controller: bank,
+          decoration: InputDecoration(
+            labelText: 'Bank (optional)',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        TextField(
+          controller: reference,
+          decoration: InputDecoration(
+            labelText: 'Transfer reference (optional)',
+            hintText: 'Helps us match it faster',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r)),
+          ),
+        ),
+        SizedBox(height: 16.h),
+        _sheetButton('Send', () async {
+          if (await controller.declareBankTransfer(
+            double.tryParse(amount.text.trim()) ?? 0,
+            reference: reference.text.trim(),
+            bankName: bank.text.trim(),
+          )) {
+            Get.back<void>();
+          }
+        }),
+      ],
+    ));
+  }
 
   void _allocateSheet(String budget) {
     final amount = TextEditingController();

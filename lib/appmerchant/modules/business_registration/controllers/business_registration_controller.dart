@@ -42,16 +42,120 @@ class BusinessRegistrationController extends GetxController {
   final isSocialMediaExpanded     = true.obs;
   final isIdentityExpanded        = true.obs;
 
-  // Business hours schedule
+  // Business hours.
+  //
+  // A day holds a list of shifts, not one span: plenty of shops here close
+  // over the middle of the day and open again in the afternoon, and a single
+  // open/close could only describe that as one long stretch they are not
+  // actually open for. `open`/`close` are kept alongside as the first shift
+  // so anything still reading them keeps working.
   final schedule = <String, Map<String, dynamic>>{
-    'Sunday':    {'enabled': true,  'open': '09:00', 'close': '23:00'},
-    'Monday':    {'enabled': true,  'open': '09:00', 'close': '23:00'},
-    'Tuesday':   {'enabled': true,  'open': '09:00', 'close': '23:00'},
-    'Wednesday': {'enabled': true,  'open': '09:00', 'close': '23:00'},
-    'Thursday':  {'enabled': true,  'open': '09:00', 'close': '23:00'},
-    'Friday':    {'enabled': false, 'open': '14:00', 'close': '23:00'},
-    'Saturday':  {'enabled': true,  'open': '09:00', 'close': '23:00'},
+    'Sunday':    {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
+    'Monday':    {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
+    'Tuesday':   {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
+    'Wednesday': {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
+    'Thursday':  {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
+    'Friday':    {'enabled': false, 'shifts': [{'open': '14:00', 'close': '23:00'}]},
+    'Saturday':  {'enabled': true,  'shifts': [{'open': '09:00', 'close': '23:00'}]},
   }.obs;
+
+  /// The shifts recorded for a day, always at least one.
+  List<Map<String, String>> shiftsFor(String day) {
+    final raw = schedule[day]?['shifts'];
+    if (raw is List && raw.isNotEmpty) {
+      return raw
+          .map((e) => Map<String, String>.from(
+              (e as Map).map((k, v) => MapEntry('$k', '$v'))))
+          .toList();
+    }
+    return [
+      {'open': '09:00', 'close': '23:00'}
+    ];
+  }
+
+  void _writeShifts(String day, List<Map<String, String>> shifts) {
+    final current = Map<String, dynamic>.from(schedule[day] ?? {});
+    current['shifts'] = shifts;
+    // Mirrored for anything reading the old shape.
+    current['open'] = shifts.first['open'];
+    current['close'] = shifts.last['close'];
+    schedule[day] = current;
+    schedule.refresh();
+  }
+
+  /// Adds another shift to a day — an afternoon reopening, a night service.
+  /// The new one starts where the last leaves off so the merchant edits from
+  /// something sensible rather than from midnight.
+  Future<void> addShift(BuildContext context, String day) async {
+    final shifts = shiftsFor(day);
+    final lastClose = _parseTime(shifts.last['close']) ?? const TimeOfDay(hour: 17, minute: 0);
+
+    final open = await showTimePicker(
+      context: context,
+      initialTime: lastClose,
+      helpText: 'Second opening — $day',
+    );
+    if (open == null) return;
+    if (!context.mounted) return;
+
+    final close = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: (open.hour + 4) % 24, minute: open.minute),
+      helpText: 'Closing again — $day',
+    );
+    if (close == null) return;
+
+    shifts.add({'open': _formatTime(open), 'close': _formatTime(close)});
+    shifts.sort((a, b) => (a['open'] ?? '').compareTo(b['open'] ?? ''));
+
+    final current = Map<String, dynamic>.from(schedule[day] ?? {});
+    current['enabled'] = true;
+    schedule[day] = current;
+    _writeShifts(day, shifts);
+  }
+
+  /// Removes one shift. The last one stays: a day with no hours at all is
+  /// what the day's own on/off switch is for.
+  void removeShift(String day, int index) {
+    final shifts = shiftsFor(day);
+    if (shifts.length <= 1) {
+      safeSnackbar('Closed all day?',
+          'Turn $day off instead of removing its only opening hours.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    shifts.removeAt(index);
+    _writeShifts(day, shifts);
+  }
+
+  /// Edits one shift in place.
+  Future<void> editShift(BuildContext context, String day, int index) async {
+    final shifts = shiftsFor(day);
+    if (index >= shifts.length) return;
+
+    final open = await showTimePicker(
+      context: context,
+      initialTime: _parseTime(shifts[index]['open']) ?? const TimeOfDay(hour: 9, minute: 0),
+      helpText: 'Opening time — $day',
+    );
+    if (open == null) return;
+    if (!context.mounted) return;
+
+    final close = await showTimePicker(
+      context: context,
+      initialTime: _parseTime(shifts[index]['close']) ?? const TimeOfDay(hour: 23, minute: 0),
+      helpText: 'Closing time — $day',
+    );
+    if (close == null) return;
+
+    shifts[index] = {'open': _formatTime(open), 'close': _formatTime(close)};
+    shifts.sort((a, b) => (a['open'] ?? '').compareTo(b['open'] ?? ''));
+
+    final current = Map<String, dynamic>.from(schedule[day] ?? {});
+    current['enabled'] = true;
+    schedule[day] = current;
+    _writeShifts(day, shifts);
+  }
 
   // Loyalty type
   final isPrivetLoyalty = false.obs;

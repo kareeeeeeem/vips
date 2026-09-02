@@ -30,6 +30,8 @@ abstract class MerchantRoutes {
   static const GIFT_BACK_FORM = _MerchantPaths.GIFT_BACK_FORM;
   static const EARN           = _MerchantPaths.EARN;
   static const GUARANTEE      = _MerchantPaths.GUARANTEE;
+  static const REPORT         = _MerchantPaths.REPORT;
+  static const REWARD_ACTION  = _MerchantPaths.REWARD_ACTION;
   static const GIFT_BACK_INQUIRY = _MerchantPaths.GIFT_BACK_INQUIRY;
   static const GIFT_BACK_PIN = _MerchantPaths.GIFT_BACK_PIN;
   static const GIFT_BACK_STATUS = _MerchantPaths.GIFT_BACK_STATUS;
@@ -96,6 +98,8 @@ abstract class _MerchantPaths {
   static const GIFT_BACK_FORM = '/gift-back-form';
   static const EARN           = '/earn';
   static const GUARANTEE      = '/guarantee';
+  static const REPORT         = '/report';
+  static const REWARD_ACTION  = '/reward-action';
   static const GIFT_BACK_INQUIRY = '/gift-back-inquiry';
   static const GIFT_BACK_PIN = '/gift-back-pin';
   static const GIFT_BACK_STATUS = '/gift-back-status';

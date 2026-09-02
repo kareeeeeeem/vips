@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/merchant_catalog_controller.dart';
 import '../../../routes/merchant_routes.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 
 class MerchantCatalogView extends GetView<MerchantCatalogController> {
   const MerchantCatalogView({super.key});
@@ -217,6 +218,9 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
               isVoucher: true,
               onToggle: (val) => controller.updateCouponStatus(id, val),
               onDelete: () => _confirmDelete(id, 'voucher'),
+              editable: v['editable'] != false,
+              editableAt: v['editableAt']?.toString(),
+              onEdit: () => controller.openOfferEditor(v),
             );
           },
         ),
@@ -250,6 +254,9 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
               isVoucher: false,
               onToggle: (val) => controller.updateCouponStatus(id, val),
               onDelete: () => _confirmDelete(id, 'coupon'),
+              editable: c['editable'] != false,
+              editableAt: c['editableAt']?.toString(),
+              onEdit: () => controller.openOfferEditor(c),
             );
           },
         ),
@@ -293,6 +300,9 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
     required bool isVoucher,
     required ValueChanged<bool> onToggle,
     required VoidCallback onDelete,
+    bool editable = true,
+    String? editableAt,
+    VoidCallback? onEdit,
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -328,6 +338,20 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
               ],
             ),
           ),
+          // A published offer stands for a while before its terms can be
+          // rewritten, so the control says when rather than vanishing.
+          // Switching it off stays available throughout: stopping an offer
+          // is not the same as quietly changing what it was.
+          IconButton(
+            icon: Icon(
+              editable ? Icons.edit_outlined : Icons.lock_clock_outlined,
+              color: editable ? const Color(0xFF3B82F6) : const Color(0xFF9CA3AF),
+              size: 20.sp,
+            ),
+            onPressed: editable ? onEdit : () => _explainCooldown(editableAt),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
           // The Active/Off badge here was purely decorative — there was no
           // way to deactivate a code short of deleting it outright.
           Transform.scale(
@@ -346,6 +370,21 @@ class MerchantCatalogView extends GetView<MerchantCatalogController> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Why the edit control is closed, and when it opens.
+  void _explainCooldown(String? editableAt) {
+    final at = editableAt == null ? null : DateTime.tryParse(editableAt)?.toLocal();
+    final hours = at == null ? null : at.difference(DateTime.now()).inHours + 1;
+
+    safeSnackbar(
+      'Not yet',
+      hours == null || hours <= 0
+          ? 'This offer was published recently. Its terms can be changed a little later.'
+          : 'This offer was published recently. You can change its terms in '
+              '$hours hour(s). You can switch it off now if you need to stop it.',
+      snackPosition: SnackPosition.BOTTOM,
     );
   }
 

@@ -21,6 +21,10 @@ import '../modules/merchant_earn/bindings/merchant_earn_binding.dart';
 import '../modules/merchant_earn/views/merchant_earn_view.dart';
 import '../modules/merchant_guarantee/bindings/merchant_guarantee_binding.dart';
 import '../modules/merchant_guarantee/views/merchant_guarantee_view.dart';
+import '../modules/merchant_report/bindings/merchant_report_binding.dart';
+import '../modules/merchant_report/views/merchant_report_view.dart';
+import '../modules/merchant_reward_action/bindings/reward_action_binding.dart';
+import '../modules/merchant_reward_action/views/reward_action_view.dart';
 
 import '../modules/merchant_ads/bindings/merchant_ads_binding.dart';
 import '../modules/merchant_ads/views/merchant_ads_view.dart';
@@ -269,6 +273,17 @@ class MerchantAppPages {
       name: MerchantRoutes.GUARANTEE,
       page: () => const MerchantGuaranteeView(),
       binding: MerchantGuaranteeBinding(),
+    ),
+    GetPage(
+      name: MerchantRoutes.REPORT,
+      page: () => const MerchantReportView(),
+      binding: MerchantReportBinding(),
+    ),
+    // §6.2: targeted offers to customer segments.
+    GetPage(
+      name: MerchantRoutes.REWARD_ACTION,
+      page: () => const RewardActionView(),
+      binding: RewardActionBinding(),
     ),
     GetPage(
       name: MerchantRoutes.GIFT_BACK_INQUIRY,

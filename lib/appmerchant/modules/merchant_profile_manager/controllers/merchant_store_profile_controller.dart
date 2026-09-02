@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,6 +18,12 @@ class MerchantStoreProfileController extends GetxController {
   final RxString address = ''.obs;
   final RxString description = ''.obs;
   final RxDouble discountPercentage = 0.0.obs;
+  /// Whether the storefront discount may be changed yet, and when it opens.
+  /// A shop-wide discount is a promise on the storefront, so it stands for a
+  /// day between changes.
+  final RxBool discountEditable = true.obs;
+  final Rxn<DateTime> discountEditableAt = Rxn<DateTime>();
+  final RxBool isSavingDiscount = false.obs;
 
   /// Real contact channels, read from the merchant's BusinessRegistration
   /// (GET /merchant/partnership/status). The header used to draw a website /
@@ -90,6 +97,7 @@ class MerchantStoreProfileController extends GetxController {
         description.value = data['storeDescription'] ?? '';
         discountPercentage.value =
             (data['discountPercentage'] as num?)?.toDouble() ?? 0.0;
+        unawaited(_loadDiscountLock());
         email.value = data['email'] ?? '';
       }
     } catch (_) {}
@@ -207,6 +215,74 @@ class MerchantStoreProfileController extends GetxController {
       safeSnackbar('Error', 'Could not upload image', snackPosition: SnackPosition.BOTTOM);
     }
     return null;
+  }
+
+  Future<void> _loadDiscountLock() async {
+    try {
+      final response = await ApiService().get('/merchant/storefront-discount');
+      if (response.success && response.data is Map) {
+        final d = Map<String, dynamic>.from(response.data as Map);
+        discountPercentage.value =
+            (d['discountPercentage'] as num?)?.toDouble() ?? discountPercentage.value;
+        discountEditable.value = d['editable'] != false;
+        discountEditableAt.value =
+            DateTime.tryParse((d['editableAt'] ?? '').toString());
+      }
+    } catch (e) {
+      debugPrint('storefront discount lock unavailable: $e');
+    }
+  }
+
+  /// Saves a new storefront discount.
+  ///
+  /// The server holds the same cooldown, so a refusal here carries its
+  /// wording rather than a generic failure — the merchant needs to know it
+  /// is a wait, not a fault.
+  Future<bool> saveStorefrontDiscount(double percent) async {
+    if (percent < 0 || percent > 100) {
+      safeSnackbar('Error', 'Enter a discount between 0 and 100',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+    isSavingDiscount.value = true;
+    try {
+      final response = await ApiService()
+          .put('/merchant/storefront-discount', {'discountPercentage': percent});
+      if (response.success) {
+        if (response.data is Map) {
+          final d = Map<String, dynamic>.from(response.data as Map);
+          discountPercentage.value =
+              (d['discountPercentage'] as num?)?.toDouble() ?? percent;
+          discountEditable.value = d['editable'] != false;
+          discountEditableAt.value =
+              DateTime.tryParse((d['editableAt'] ?? '').toString());
+        }
+        safeSnackbar('Saved', response.message,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF10B981),
+            colorText: const Color(0xFFFFFFFF));
+        return true;
+      }
+      safeSnackbar('Not changed', response.message,
+          snackPosition: SnackPosition.BOTTOM);
+      await _loadDiscountLock();
+      return false;
+    } catch (e) {
+      debugPrint('saveStorefrontDiscount failed: $e');
+      safeSnackbar('Error', 'Could not save that. Please try again.',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    } finally {
+      isSavingDiscount.value = false;
+    }
+  }
+
+  /// How long until the discount can be changed again, in whole hours.
+  int get discountHoursRemaining {
+    final at = discountEditableAt.value;
+    if (at == null) return 0;
+    final left = at.difference(DateTime.now());
+    return left.isNegative ? 0 : left.inHours + 1;
   }
 
   /// Seeds the edit form with what is currently on the server so the merchant

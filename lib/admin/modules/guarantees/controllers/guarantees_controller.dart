@@ -24,6 +24,11 @@ class GuaranteesController extends GetxController {
   final RxInt withoutGuarantee = 0.obs;
   final RxInt suspended = 0.obs;
 
+  /// Transfers merchants say they sent. Confirming one is what creates the
+  /// points, so it is the platform's own check that money arrived.
+  final RxList<Map<String, dynamic>> pendingRequests = <Map<String, dynamic>>[].obs;
+  final RxDouble pendingRequestsTnd = 0.0.obs;
+
   static const List<String> plans = ['basic', 'professional', 'advanced'];
 
   static String planLabel(String key) => switch (key) {
@@ -67,8 +72,41 @@ class GuaranteesController extends GetxController {
         errorMessage.value =
             response.message.isNotEmpty ? response.message : 'Could not load guarantees.';
       }
+      await loadRequests();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> loadRequests() async {
+    final response = await api.guaranteeRequests();
+    if (response.success && response.data is Map) {
+      final data = Map<String, dynamic>.from(response.data as Map);
+      pendingRequests.value = adminItems(data);
+      pendingRequestsTnd.value = adminDouble(data['pendingTotalTnd']);
+    }
+  }
+
+  /// Confirms a transfer arrived, or turns it down. Confirming runs the same
+  /// deposit path as a directly recorded one, so the ledger reads the same
+  /// either way.
+  Future<bool> reviewRequest(String id, String action, {String note = ''}) async {
+    isMutating.value = true;
+    try {
+      final response = await api.reviewGuaranteeRequest(id, action, note: note);
+      if (response.success) {
+        adminToast(
+          action == 'confirm' ? 'Confirmed' : 'Turned down',
+          response.message,
+          isError: false,
+        );
+        await load();
+        return true;
+      }
+      adminToast('Could not save', response.message, isError: true);
+      return false;
+    } finally {
+      isMutating.value = false;
     }
   }
 

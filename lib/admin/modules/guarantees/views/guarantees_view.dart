@@ -41,6 +41,10 @@ class GuaranteesView extends GetView<GuaranteesController> {
           children: [
             _totals(),
             SizedBox(height: 16.h),
+            if (controller.pendingRequests.isNotEmpty) ...[
+              _pendingRequests(),
+              SizedBox(height: 16.h),
+            ],
             AdminSearchField(
               controller: _searchField,
               hint: 'Search merchants',
@@ -124,6 +128,134 @@ class GuaranteesView extends GetView<GuaranteesController> {
           ],
         ),
       ],
+    );
+  }
+
+  /// Transfers awaiting confirmation.
+  ///
+  /// Placed above the roster because it is the only thing on this screen
+  /// that is waiting on the operator: until one of these is confirmed, a
+  /// merchant who has paid still cannot award a single point.
+  Widget _pendingRequests() {
+    return AdminCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hourglass_top_rounded,
+                  size: 18.sp, color: AdminColors.warning),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'Transfers to confirm',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AdminColors.textPrimary,
+                  ),
+                ),
+              ),
+              Text(
+                adminMoney(controller.pendingRequestsTnd.value),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AdminColors.warning,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'Confirm only what has actually landed. Confirming creates the '
+            'points, and points that nothing backs are the platform\'s '
+            'liability rather than the merchant\'s.',
+            style: TextStyle(
+                fontSize: 12.sp, color: AdminColors.textSecondary, height: 1.5),
+          ),
+          SizedBox(height: 12.h),
+          ...controller.pendingRequests.map((r) {
+            final id = '${r['id']}';
+            return Padding(
+              padding: EdgeInsets.only(bottom: 10.h),
+              child: Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AdminColors.background,
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: AdminColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${r['merchantName']}',
+                            style: TextStyle(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AdminColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          adminMoney(adminDouble(r['amountTnd'])),
+                          style: TextStyle(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: AdminColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if ('${r['reference'] ?? ''}'.isNotEmpty ||
+                        '${r['bankName'] ?? ''}'.isNotEmpty) ...[
+                      SizedBox(height: 3.h),
+                      Text(
+                        [
+                          if ('${r['bankName'] ?? ''}'.isNotEmpty) '${r['bankName']}',
+                          if ('${r['reference'] ?? ''}'.isNotEmpty)
+                            'ref ${r['reference']}',
+                        ].join(' · '),
+                        style: TextStyle(
+                            fontSize: 11.5.sp, color: AdminColors.textSecondary),
+                      ),
+                    ],
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AdminButton(
+                            label: 'Confirm received',
+                            icon: Icons.check,
+                            onPressed: controller.isMutating.value
+                                ? null
+                                : () => controller.reviewRequest(id, 'confirm'),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: AdminButton(
+                            label: 'Turn down',
+                            icon: Icons.close,
+                            color: AdminColors.danger,
+                            onPressed: controller.isMutating.value
+                                ? null
+                                : () => controller.reviewRequest(id, 'reject'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 

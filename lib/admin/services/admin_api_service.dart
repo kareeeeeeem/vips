@@ -167,6 +167,14 @@ class AdminApiService {
   /// Guarantee held across every merchant — the platform's total exposure.
   Future<ApiResponse> guarantees() => _api.get('/admin/guarantees');
 
+  /// Bank transfers merchants say they have sent, waiting to be confirmed.
+  /// Points do not exist until one is confirmed here.
+  Future<ApiResponse> guaranteeRequests({String status = 'pending'}) =>
+      _api.get('/admin/guarantee-requests', queryParams: {'status': status});
+
+  Future<ApiResponse> reviewGuaranteeRequest(String id, String action, {String note = ''}) =>
+      _api.put('/admin/guarantee-requests/$id', {'action': action, 'note': note});
+
   // ── Orders ────────────────────────────────────────────────
   Future<ApiResponse> orders({
     int page = 1,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vip/core/utils/safe_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/widgets/custom_network_image.dart';
 import '../controllers/merchant_store_profile_controller.dart';
@@ -344,32 +345,119 @@ class MerchantStoreProfileView extends GetView<MerchantStoreProfileController> {
     );
   }
 
+  /// The storefront discount. Tapping it changes it — the figure is the
+  /// merchant's own choice, and until now the only screen that showed it
+  /// offered no way to set it.
   Widget _buildDiscountBanner() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10B981),
+    return Obx(() {
+      final locked = !controller.discountEditable.value;
+      return InkWell(
+        onTap: locked ? _explainDiscountLock : _editDiscount,
         borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Center(
-        child: Obx(
-          () => Text(
-            // Reflects the store's real `discountPercentage` instead of
-            // promising "exclusive offers" that may not exist.
-            controller.discountPercentage.value > 0
-                ? '${controller.discountPercentage.value.toStringAsFixed(0)}% off across the store — customers earn VIPs points on every purchase.'
-                : 'Customers earn VIPs points on every purchase at this store.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
-            ),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 20.w),
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981),
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Column(
+            children: [
+              Text(
+                // Reflects the store's real `discountPercentage` instead of
+                // promising "exclusive offers" that may not exist.
+                controller.discountPercentage.value > 0
+                    ? '${controller.discountPercentage.value.toStringAsFixed(0)}% off across the store — customers earn VIPs points on every purchase.'
+                    : 'Customers earn VIPs points on every purchase at this store.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    locked ? Icons.lock_clock_outlined : Icons.edit_outlined,
+                    size: 13.sp,
+                    color: Colors.white70,
+                  ),
+                  SizedBox(width: 5.w),
+                  Text(
+                    locked
+                        ? 'Changeable in ${controller.discountHoursRemaining}h'
+                        : 'Tap to change',
+                    style: TextStyle(fontSize: 11.sp, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      ),
+      );
+    });
+  }
+
+  void _explainDiscountLock() {
+    safeSnackbar(
+      'Not yet',
+      'You changed your storefront discount recently. You can change it again '
+      'in ${controller.discountHoursRemaining} hour(s) — customers see a '
+      'settled offer rather than one that moves under them.',
+      snackPosition: SnackPosition.BOTTOM,
     );
+  }
+
+  void _editDiscount() {
+    final input = TextEditingController(
+      text: controller.discountPercentage.value.toStringAsFixed(0),
+    );
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Store discount'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: input,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                suffixText: '%',
+                hintText: '0 - 100',
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Once you set this it stays for 24 hours before it can be '
+              'changed again.',
+              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: Get.back, child: const Text('Cancel')),
+          Obx(() => TextButton(
+                onPressed: controller.isSavingDiscount.value
+                    ? null
+                    : () async {
+                        final parsed = double.tryParse(input.text.trim());
+                        if (parsed == null) return;
+                        if (await controller.saveStorefrontDiscount(parsed)) {
+                          Get.back<void>();
+                        }
+                      },
+                child: Text(
+                  controller.isSavingDiscount.value ? 'Saving…' : 'Confirm',
+                ),
+              )),
+        ],
+      ),
+    ).then((_) => input.dispose());
   }
 
   Widget _buildContentTabs() {

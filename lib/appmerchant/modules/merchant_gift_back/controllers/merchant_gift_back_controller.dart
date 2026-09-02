@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:vip/core/services/api_service.dart';
 import '../../../routes/merchant_routes.dart';
@@ -269,10 +270,112 @@ class MerchantGiftBackController extends GetxController {
     Get.toNamed(MerchantRoutes.GIFT_BACK_INQUIRY);
   }
 
+  /// Consent, then PIN.
+  ///
+  /// §7 rests the platform's position on the customer having chosen this,
+  /// so the merchant confirms it in front of them as its own deliberate
+  /// step rather than a checkbox they passed on the way through. The PIN
+  /// that follows authorises the merchant; this authorises the customer,
+  /// and one cannot stand in for the other.
   void onProceedToPin() {
-    pinCode.value = '';
-    pinError.value = '';
-    Get.toNamed(MerchantRoutes.GIFT_BACK_PIN);
+    final change = enteredAmount;
+    final points = pointsForChange;
+
+    Get.dialog<void>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
+        titlePadding: EdgeInsets.fromLTRB(22.w, 22.h, 22.w, 8.h),
+        contentPadding: EdgeInsets.fromLTRB(22.w, 0, 22.w, 8.h),
+        title: Row(
+          children: [
+            Icon(Icons.volunteer_activism_outlined,
+                color: const Color(0xFF10B981), size: 22.sp),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'Ask the customer',
+                style: TextStyle(
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              recipientName.value.isNotEmpty
+                  ? '${recipientName.value} gives up '
+                      '${_fmt(change)} in change and receives $points points.'
+                  : 'The customer gives up ${_fmt(change)} in change '
+                      'and receives $points points.',
+              style: TextStyle(
+                  fontSize: 14.sp, color: const Color(0xFF374151), height: 1.6),
+            ),
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.schedule, size: 16.sp, color: const Color(0xFF059669)),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      'They can spend the points in '
+                      '${activationDelayHours.value} hours, not right away. '
+                      'Say so before they agree.',
+                      style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF065F46),
+                          height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Declining clears consent: the next attempt has to ask again.
+              customerConsented.value = false;
+              _validateForm();
+              Get.back<void>();
+            },
+            child: Text('They said no', style: TextStyle(fontSize: 13.sp)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+            ),
+            onPressed: () {
+              customerConsented.value = true;
+              _validateForm();
+              Get.back<void>();
+              pinCode.value = '';
+              pinError.value = '';
+              Get.toNamed(MerchantRoutes.GIFT_BACK_PIN);
+            },
+            child: Text('They agreed', style: TextStyle(fontSize: 13.sp)),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
   }
 
   /// Real server-side PIN check (POST /auth/pin/verify) — the same gate the

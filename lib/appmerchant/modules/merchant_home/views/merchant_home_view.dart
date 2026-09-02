@@ -30,23 +30,36 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
           onTap: () => Get.toNamed(MerchantRoutes.SWITCH_BUSINESS),
           child: Row(
             children: [
-              Image.asset(
-                'assets/icons/iconmerchant.png',
-                width: 32.w,
-                height: 32.w,
-              ),
-              SizedBox(width: 12.w),
+              // The shop's own logo, not the app's icon. Falls back to the
+              // bundled mark only while the profile is still loading or when
+              // the merchant has not uploaded one.
+              Obx(() {
+                final logo = controller.storeImageUrl.value;
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: logo.isNotEmpty
+                      ? Image.network(
+                          logo,
+                          width: 34.w,
+                          height: 34.w,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            'assets/icons/iconmerchant.png',
+                            width: 34.w,
+                            height: 34.w,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/icons/iconmerchant.png',
+                          width: 34.w,
+                          height: 34.w,
+                        ),
+                );
+              }),
+              SizedBox(width: 10.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Merchant Dashboard',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                   Obx(() => Row(
                     children: [
                       Text(
@@ -64,6 +77,17 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                       ),
                     ],
                   )),
+                  // The category sits where "Merchant Dashboard" used to.
+                  Obx(() => Text(
+                        controller.storeCategory.value.isNotEmpty
+                            ? controller.storeCategory.value
+                            : 'Set your category',
+                        style: TextStyle(
+                          fontSize: 11.5.sp,
+                          color: const Color(0xFF6B7280),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )),
                 ],
               ),
             ],
@@ -158,7 +182,12 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                 return _buildAccountingSummaryCard();
               }),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: 14.h),
+
+              // Campaigns the merchant has running. Given real width here
+              // because it is the one thing on this screen that earns them
+              // customers, rather than reporting on ones they already have.
+              _buildAdsStrip(),
 
               // Operations list
               _buildOperationsList(),
@@ -251,10 +280,10 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                 Icons.arrow_upward_rounded,
               ),
               _vipAccountingItem(
-                'VIPs Issued',
-                controller.vipsIssued.value,
+                'VIPs Recovery',
+                controller.vipsRecovery.value,
                 const Color(0xFF3B82F6),
-                Icons.summarize_rounded,
+                Icons.sync_rounded,
               ),
             ],
           ),
@@ -359,6 +388,231 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
   /// Period filter for the Performance card. This used to be a static
   /// "Today" chip with a chevron and no tap handler at all — it looked like a
   /// filter but the figures were always all-time.
+  /// The merchant's live campaigns, and a way in when there are none.
+  Widget _buildAdsStrip() {
+    return Obx(() {
+      final ads = controller.activeAds;
+
+      if (ads.isEmpty) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 14.h),
+          child: InkWell(
+            onTap: () => Get.toNamed(MerchantRoutes.ADVERTISEMENTS),
+            borderRadius: BorderRadius.circular(14.r),
+            child: Container(
+              height: 96.h,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981),
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.campaign_rounded, color: Colors.white, size: 26.sp),
+                  SizedBox(height: 6.h),
+                  Text(
+                    'Run an ad',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Put your shop in front of VIPs customers nearby',
+                    style: TextStyle(fontSize: 11.sp, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      return Padding(
+        padding: EdgeInsets.only(bottom: 14.h),
+        child: SizedBox(
+          height: 96.h,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: ads.length,
+            separatorBuilder: (_, __) => SizedBox(width: 10.w),
+            itemBuilder: (context, index) {
+              final ad = ads[index];
+              return InkWell(
+                onTap: () => Get.toNamed(MerchantRoutes.ADVERTISEMENTS),
+                borderRadius: BorderRadius.circular(14.r),
+                child: Container(
+                  width: 280.w,
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${ad['title'] ?? 'Campaign'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        '${ad['adType'] ?? 'Banner'} · running',
+                        style: TextStyle(fontSize: 11.sp, color: Colors.white70),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(Icons.visibility_outlined,
+                              size: 13.sp, color: Colors.white70),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${ad['impressions'] ?? 0} seen',
+                            style: TextStyle(fontSize: 11.sp, color: Colors.white),
+                          ),
+                          SizedBox(width: 12.w),
+                          Icon(Icons.touch_app_outlined,
+                              size: 13.sp, color: Colors.white70),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${ad['clicks'] ?? 0} taps',
+                            style: TextStyle(fontSize: 11.sp, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    });
+  }
+
+  /// Income and expense are two different records, so the tile that covers
+  /// both asks which before opening the form on the right one.
+  void _openIncomeOrExpense() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 28.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'What are you recording?',
+              style: TextStyle(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            _financeChoice(
+              label: 'Money in',
+              blurb: 'A sale, a payment received, anything that adds to the till',
+              icon: Icons.south_west_rounded,
+              color: const Color(0xFF059669),
+              type: 'income',
+            ),
+            SizedBox(height: 10.h),
+            _financeChoice(
+              label: 'Money out',
+              blurb: 'Rent, stock, wages, anything you paid for',
+              icon: Icons.north_east_rounded,
+              color: const Color(0xFFDC2626),
+              type: 'expense',
+            ),
+            SizedBox(height: 14.h),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Get.back<void>();
+                  Get.toNamed(MerchantRoutes.FINANCE_DASHBOARD);
+                },
+                child: Text(
+                  'See everything recorded',
+                  style: TextStyle(fontSize: 13.sp),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _financeChoice({
+    required String label,
+    required String blurb,
+    required IconData icon,
+    required Color color,
+    required String type,
+  }) {
+    return InkWell(
+      onTap: () {
+        Get.back<void>();
+        Get.toNamed(MerchantRoutes.ADD_TRANSACTION, arguments: {'type': type});
+      },
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(9.w),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Icon(icon, color: Colors.white, size: 17.sp),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    blurb,
+                    style: TextStyle(fontSize: 11.5.sp, color: const Color(0xFF6B7280)),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18.sp, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTimeSelector() {
     return PopupMenuButton<String>(
       tooltip: 'Change period',
@@ -443,9 +697,19 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         'color': const Color(0xFF00205C),
       },
       {
+        'title': 'Reward Action',
+        'icon': Icons.campaign_outlined,
+        'route': MerchantRoutes.REWARD_ACTION,
+        'color': const Color(0xFF8B5CF6),
+      },
+      {
         'title': 'Income/Expense',
         'icon': Icons.account_balance_wallet_outlined,
+        // Two entries behind one label, so the tile asks which. It used to
+        // land on the finance dashboard, from which recording either one
+        // took two more taps and a tab.
         'route': MerchantRoutes.FINANCE_DASHBOARD,
+        'onTap': _openIncomeOrExpense,
         'color': const Color(0xFF3B82F6),
       },
       {
@@ -545,35 +809,39 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: menuItems.length,
+      // Wide, short rows rather than tall squares: the icon is a marker for
+      // the label beside it, not the subject of the tile. Fitting twice as
+      // many on a screen is the point — this list is thirteen entries long.
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12.w,
-        mainAxisSpacing: 12.h,
-        childAspectRatio: 0.90,
+        crossAxisSpacing: 10.w,
+        mainAxisSpacing: 10.h,
+        childAspectRatio: 2.55,
       ),
       itemBuilder: (context, index) {
         final item = menuItems[index];
         return InkWell(
-          onTap: () => Get.toNamed(item['route']),
-          borderRadius: BorderRadius.circular(16.r),
+          onTap: item['onTap'] as VoidCallback? ??
+              () => Get.toNamed(item['route'] as String),
+          borderRadius: BorderRadius.circular(14.r),
           child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(14.r),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
               ],
               border: Border.all(color: const Color(0xFFF3F4F6)),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(12.w),
+                  padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
                     color: (item['color'] as Color).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
@@ -581,17 +849,20 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                   child: Icon(
                     item['icon'] as IconData,
                     color: item['color'] as Color,
-                    size: 24.sp,
+                    size: 17.sp,
                   ),
                 ),
-                SizedBox(height: 10.h),
-                Text(
-                  item['title'] as String,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF374151),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    item['title'] as String,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF374151),
+                    ),
                   ),
                 ),
               ],

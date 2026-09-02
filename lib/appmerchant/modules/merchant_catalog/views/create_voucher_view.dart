@@ -84,39 +84,50 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Voucher discount', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                        Obx(() => Text('${controller.voucherPercent.value} %',
+                        Text('Voucher value', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
+                        Obx(() => Text(
+                            'D ${controller.voucherValueTnd.value.toStringAsFixed(0)}',
                             style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold, color: const Color(0xFF10B981)))),
                       ],
                     ),
                     SizedBox(height: 12.h),
 
-                    // None of these boxes had a tap handler and 25 was drawn
-                    // as permanently selected, so every voucher was published
-                    // at 25% no matter what the merchant tapped. The presets
-                    // are also capped at 100 now — the old grid offered 200 to
-                    // 500 "%", which a percentage discount cannot be.
+                    // §4.2's third offer is a voucher worth a stated number of
+                    // dinars, not a percentage off. These are the platform's
+                    // suggestions; long-press removes one the merchant will
+                    // not offer, and Add puts a new one in the list for good.
                     Obx(
                       () => Wrap(
                         spacing: 12.w,
                         runSpacing: 12.h,
                         children: [
-                          for (final preset
-                              in MerchantCatalogController.voucherPercentPresets)
-                            _buildPercentageBox(
-                              preset,
-                              controller.voucherPercent.value == preset,
-                              onTap: () => controller.voucherPercent.value = preset,
+                          for (final value in controller.voucherValueOptions)
+                            _buildValueBox(
+                              value,
+                              controller.voucherValueTnd.value == value,
+                              onTap: () =>
+                                  controller.voucherValueTnd.value = value.toDouble(),
+                              onLongPress: () => _confirmHideValue(context, value),
                             ),
-                          _buildPercentageBox(
+                          _buildValueBox(
                             0,
                             false,
                             isAdd: true,
-                            onTap: () => _promptCustomPercent(context),
+                            onTap: () => _promptCustomValue(context),
                           ),
                         ],
                       ),
                     ),
+                    SizedBox(height: 8.h),
+                    Obx(() => Text(
+                          controller.voucherValueTnd.value <= 0
+                              ? 'Pick what the voucher is worth.'
+                              : 'Customers pay '
+                                  '${controller.pointsForVoucherValue(controller.voucherValueTnd.value)} points for it. '
+                                  'Hold a value to take it off your list.',
+                          style: TextStyle(
+                              fontSize: 11.sp, color: const Color(0xFF6B7280)),
+                        )),
 
                     SizedBox(height: 32.h),
                     Row(
@@ -165,21 +176,19 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
     );
   }
 
-  /// Prompts for a percentage the preset grid does not cover.
-  void _promptCustomPercent(BuildContext context) {
-    final input = TextEditingController(
-      text: controller.voucherPercent.value.toString(),
-    );
+  /// Adds a denomination the platform's suggestions do not cover.
+  void _promptCustomValue(BuildContext context) {
+    final input = TextEditingController();
     Get.dialog(
       AlertDialog(
-        title: const Text('Custom discount'),
+        title: const Text('Add a voucher value'),
         content: TextField(
           controller: input,
           autofocus: true,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
-            suffixText: '%',
-            hintText: '1 - 100',
+            prefixText: 'D ',
+            hintText: 'e.g. 75',
           ),
         ),
         actions: [
@@ -187,25 +196,51 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
           TextButton(
             onPressed: () {
               final parsed = int.tryParse(input.text.trim());
-              if (parsed == null) return;
-              controller.setCustomVoucherPercent(parsed);
-              if (parsed > 0 && parsed <= 100) Get.back();
+              if (parsed == null || parsed <= 0) return;
+              controller.setCustomVoucherValue(parsed);
+              Get.back<void>();
             },
-            child: const Text('Apply'),
+            child: const Text('Add'),
           ),
         ],
       ),
     ).then((_) => input.dispose());
   }
 
-  Widget _buildPercentageBox(
+  /// Takes a denomination off this merchant's list. Confirmed because the
+  /// list is theirs and a stray long-press should not silently change it.
+  void _confirmHideValue(BuildContext context, int value) {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Remove D $value?'),
+        content: const Text(
+          'It stops appearing when you create a voucher. You can add it back '
+          'at any time.',
+        ),
+        actions: [
+          TextButton(onPressed: Get.back, child: const Text('Keep it')),
+          TextButton(
+            onPressed: () {
+              controller.hideVoucherValue(value);
+              Get.back<void>();
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildValueBox(
     int value,
     bool isSelected, {
     bool isAdd = false,
     VoidCallback? onTap,
+    VoidCallback? onLongPress,
   }) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
       width: 60.w,
       height: 40.h,
@@ -228,8 +263,9 @@ class CreateVoucherView extends GetView<MerchantCatalogController> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Text('D', style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: isSelected ? const Color(0xFF10B981) : const Color(0xFF6B7280))),
+                  SizedBox(width: 2.w),
                   Text('$value', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: isSelected ? const Color(0xFF10B981) : const Color(0xFF1F2937))),
-                  Icon(Icons.percent, size: 12.sp, color: isSelected ? const Color(0xFF10B981) : const Color(0xFF6B7280)),
                 ],
               ),
       ),

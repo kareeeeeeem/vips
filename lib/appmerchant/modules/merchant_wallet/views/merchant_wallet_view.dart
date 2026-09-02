@@ -254,7 +254,11 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => Get.toNamed(MerchantRoutes.MERCHANT_CREDIT_FORM),
+              // "Adjusted Points" opened the customer-credit form, which
+              // issues credit to a shopper and has nothing to do with the
+              // merchant's own points. It opens the guarantee, where points
+              // are actually topped up.
+              onTap: () => Get.toNamed(MerchantRoutes.GUARANTEE),
               child: Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(

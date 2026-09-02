@@ -81,13 +81,89 @@ class MerchantCatalogController extends GetxController {
   final voucherDescriptionCtrl = TextEditingController();
   final voucherMaxUsageCtrl = TextEditingController();
   final voucherEndDate = Rxn<DateTime>();
-  final voucherPercent = 25.obs;
+  /// A voucher's face value in dinars (§4.2's third offer). This was a
+  /// percentage: a merchant who meant "a 50 dinar voucher" published 50% off.
+  final voucherValueTnd = 50.0.obs;
   final isPublishedVoucher = true.obs;
 
   /// Preset percentages offered in the voucher form's grid. The grid used to
   /// be inert — none of the boxes had a tap handler and 25 was drawn as
   /// permanently selected, so every voucher was created at 25%.
-  static const List<int> voucherPercentPresets = [5, 10, 15, 20, 25, 30, 40, 50];
+  /// Denominations the platform suggests, in dinars. The merchant hides the
+  /// ones they will not offer and can add their own — the list is a starting
+  /// point, not a fixed menu.
+  static const List<int> voucherValuePresets = [50, 100, 150, 200, 250, 300, 400, 500];
+
+  /// Suggestions this merchant has switched off, plus any they have added.
+  /// Kept on the device: it is a preference about their own shop's menu, not
+  /// something another merchant or the platform has any use for.
+  final RxSet<int> hiddenVoucherValues = <int>{}.obs;
+  final RxList<int> customVoucherValues = <int>[].obs;
+
+  static const _hiddenKey = 'voucher_values_hidden';
+  static const _customKey = 'voucher_values_custom';
+
+  /// Every denomination on offer, suggestions and additions, in order.
+  List<int> get voucherValueOptions {
+    final all = <int>{...voucherValuePresets, ...customVoucherValues}
+      ..removeAll(hiddenVoucherValues);
+    final list = all.toList()..sort();
+    return list;
+  }
+
+  Future<void> _loadVoucherValuePrefs() async {
+    try {
+      final prefs = Get.find<SharedPreferences>();
+      hiddenVoucherValues.value =
+          (prefs.getStringList(_hiddenKey) ?? []).map(int.parse).toSet();
+      customVoucherValues.value =
+          (prefs.getStringList(_customKey) ?? []).map(int.parse).toList();
+    } catch (e) {
+      // Preferences missing is not a reason to fail the screen; the merchant
+      // simply sees the full set of suggestions.
+      debugPrint('voucher value prefs unavailable: $e');
+    }
+  }
+
+  Future<void> _saveVoucherValuePrefs() async {
+    try {
+      final prefs = Get.find<SharedPreferences>();
+      await prefs.setStringList(
+          _hiddenKey, hiddenVoucherValues.map((e) => '$e').toList());
+      await prefs.setStringList(
+          _customKey, customVoucherValues.map((e) => '$e').toList());
+    } catch (e) {
+      debugPrint('could not save voucher value prefs: $e');
+    }
+  }
+
+  /// Hide a denomination the merchant will not offer. A hidden value that is
+  /// currently selected moves the selection to whatever is left, so the form
+  /// never sits on a value the merchant has just removed.
+  void hideVoucherValue(int value) {
+    hiddenVoucherValues.add(value);
+    customVoucherValues.remove(value);
+    if (voucherValueTnd.value == value) {
+      final remaining = voucherValueOptions;
+      voucherValueTnd.value = remaining.isEmpty ? 0 : remaining.first.toDouble();
+    }
+    _saveVoucherValuePrefs();
+  }
+
+  void addVoucherValue(int value) {
+    if (value <= 0) return;
+    hiddenVoucherValues.remove(value);
+    if (!voucherValuePresets.contains(value) &&
+        !customVoucherValues.contains(value)) {
+      customVoucherValues.add(value);
+    }
+    voucherValueTnd.value = value.toDouble();
+    _saveVoucherValuePrefs();
+  }
+
+  /// Points a customer spends for a voucher of this value, at the documented
+  /// 100 points to the dinar.
+  int pointsForVoucherValue(num tnd) => (tnd * 100).floor();
 
   // ── Plan limits (drives the "Remaining uploads" banner) ───
   /// -1 means unlimited, per the backend's plan catalogue.
@@ -104,6 +180,7 @@ class MerchantCatalogController extends GetxController {
     loadItems();
     loadCouponsAndVouchers();
     loadPlanLimits();
+    _loadVoucherValuePrefs();
   }
 
   /// Real per-plan product allowance from GET /merchant/subscription/current.
@@ -165,19 +242,200 @@ class MerchantCatalogController extends GetxController {
   /// "50% OFF" and a free-shipping coupon read as "0% OFF".
   static String discountLabel(Map<String, dynamic> c) {
     final type = (c['type'] ?? 'percentage').toString();
+    // `discountUnit` is what the number is measured in; `type` describes the
+    // offer. A voucher's value is in dinars either way.
+    final unit = (c['discountUnit'] ?? '').toString();
     final raw = c['discount'] ?? c['discountPercentage'] ?? 0;
     final value = raw is num ? raw.toDouble() : (double.tryParse('$raw') ?? 0);
     final amount = value == value.roundToDouble()
         ? value.toStringAsFixed(0)
         : value.toStringAsFixed(2);
+    if (unit == 'tnd') return 'D $amount';
     switch (type) {
       case 'shipping':
         return 'Free shipping';
       case 'fixed':
       case 'voucher':
-        return 'D $amount OFF';
+        return 'D $amount';
       default:
         return '$amount% OFF';
+    }
+  }
+
+  /// Change a published offer's terms.
+  ///
+  /// Only the value, the expiry and the description: the code is what
+  /// customers type, and moving it would break vouchers already in wallets.
+  /// The server holds the same cooldown this screen shows, so an offer that
+  /// unlocks between load and save is still checked there.
+  void openOfferEditor(Map<String, dynamic> offer) {
+    final id = (offer['_id'] ?? offer['id'])?.toString() ?? '';
+    if (id.isEmpty) return;
+
+    final isVoucher = (offer['type'] ?? '').toString() == 'voucher' ||
+        (offer['discountUnit'] ?? '').toString() == 'tnd';
+    final rawValue = offer['discount'] ?? offer['discountPercentage'] ?? 0;
+    final value = rawValue is num ? rawValue.toDouble() : 0.0;
+
+    final valueCtrl = TextEditingController(
+      text: value == value.roundToDouble()
+          ? value.toStringAsFixed(0)
+          : value.toStringAsFixed(2),
+    );
+    final descCtrl =
+        TextEditingController(text: (offer['description'] ?? '').toString());
+    final expiry = Rxn<DateTime>(
+      DateTime.tryParse((offer['expiryDate'] ?? '').toString()),
+    );
+    final saving = false.obs;
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edit ${offer['code'] ?? 'offer'}',
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Changing the terms starts the wait again — customers see a '
+                'settled offer, not one that moves under them.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: valueCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: isVoucher ? 'Value (TND)' : 'Discount (%)',
+                  prefixText: isVoucher ? 'D ' : null,
+                  suffixText: isVoucher ? null : '%',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Obx(() => OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: Get.context!,
+                        initialDate: expiry.value ??
+                            DateTime.now().add(const Duration(days: 30)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                      );
+                      if (picked != null) expiry.value = picked;
+                    },
+                    icon: const Icon(Icons.event_outlined, size: 18),
+                    label: Text(
+                      expiry.value == null
+                          ? 'Set an expiry'
+                          : 'Expires ${expiry.value!.toIso8601String().split('T').first}',
+                    ),
+                  )),
+              const SizedBox(height: 18),
+              Obx(() => SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: saving.value
+                          ? null
+                          : () async {
+                              final parsed =
+                                  double.tryParse(valueCtrl.text.trim()) ?? 0;
+                              if (parsed <= 0) {
+                                safeSnackbar('Error',
+                                    isVoucher
+                                        ? 'Enter what the voucher is worth'
+                                        : 'Enter a discount above zero');
+                                return;
+                              }
+                              if (!isVoucher && parsed > 100) {
+                                safeSnackbar('Error',
+                                    'A percentage discount cannot be above 100');
+                                return;
+                              }
+                              saving.value = true;
+                              final ok = await updateOfferTerms(
+                                id,
+                                discount: parsed,
+                                description: descCtrl.text.trim(),
+                                expiryDate: expiry.value,
+                              );
+                              saving.value = false;
+                              if (ok) Get.back<void>();
+                            },
+                      child: saving.value
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Save changes'),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      valueCtrl.dispose();
+      descCtrl.dispose();
+    });
+  }
+
+  /// Sends the new terms. A refusal carries the reason from the server —
+  /// usually that the offer is still inside its cooldown — and is shown as
+  /// written rather than replaced with a generic failure.
+  Future<bool> updateOfferTerms(
+    String id, {
+    required double discount,
+    String? description,
+    DateTime? expiryDate,
+  }) async {
+    try {
+      final response = await _api.put('/merchant/coupons/$id', {
+        'discount': discount,
+        if (description != null) 'description': description,
+        if (expiryDate != null) 'expiryDate': expiryDate.toIso8601String(),
+      });
+      if (response.success) {
+        safeSnackbar('Saved', 'The offer has been updated.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFF10B981),
+            colorText: const Color(0xFFFFFFFF));
+        await loadCouponsAndVouchers();
+        return true;
+      }
+      safeSnackbar('Not saved', response.message,
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    } catch (e) {
+      debugPrint('updateOfferTerms failed: $e');
+      safeSnackbar('Error', 'Could not save that change. Please try again.');
+      return false;
     }
   }
 
@@ -486,8 +744,8 @@ class MerchantCatalogController extends GetxController {
       safeSnackbar('Error', 'Voucher code is required', snackPosition: SnackPosition.BOTTOM);
       return;
     }
-    if (voucherPercent.value <= 0 || voucherPercent.value > 100) {
-      safeSnackbar('Error', 'Pick a discount between 1% and 100%',
+    if (voucherValueTnd.value <= 0) {
+      safeSnackbar('Error', 'Pick what the voucher is worth',
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -504,7 +762,8 @@ class MerchantCatalogController extends GetxController {
       final description = voucherDescriptionCtrl.text.trim();
       final response = await _api.post('/merchant/coupons', {
         'code': code,
-        'discount': voucherPercent.value,
+        'discount': voucherValueTnd.value,
+        'discountUnit': 'tnd',
         if (maxUsage != null && maxUsage > 0) 'maxUsage': maxUsage,
         if (description.isNotEmpty) 'description': description,
         if (voucherEndDate.value != null) 'expiryDate': voucherEndDate.value!.toIso8601String(),
@@ -535,19 +794,21 @@ class MerchantCatalogController extends GetxController {
     voucherDescriptionCtrl.clear();
     voucherMaxUsageCtrl.clear();
     voucherEndDate.value = null;
-    voucherPercent.value = 25;
+    voucherValueTnd.value =
+        voucherValueOptions.isEmpty ? 0 : voucherValueOptions.first.toDouble();
     isPublishedVoucher.value = true;
     tags.clear();
   }
 
-  /// Adds a percentage the presets do not cover.
-  void setCustomVoucherPercent(int value) {
-    if (value <= 0 || value > 100) {
-      safeSnackbar('Error', 'Pick a discount between 1% and 100%',
+  /// Adds a denomination the platform's suggestions do not cover, and keeps
+  /// it in this merchant's list for next time.
+  void setCustomVoucherValue(int value) {
+    if (value <= 0) {
+      safeSnackbar('Error', 'Enter what the voucher is worth, in dinars',
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
-    voucherPercent.value = value;
+    addVoucherValue(value);
   }
 
   @override

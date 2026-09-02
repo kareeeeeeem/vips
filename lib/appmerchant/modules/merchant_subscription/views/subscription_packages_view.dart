@@ -100,11 +100,22 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
 
   // Shown while API returns empty or on error
   Widget _buildFallbackPlans(String currentPlanCode) {
+    // §8's three plans. This listed Free/Basic/Pro/Enterprise at 9.99/29.99/
+    // 99.99 — a different product from the one the platform sells, and codes
+    // the backend would reject on subscribe.
     final plans = [
-      {'id': 'free', 'name': 'Free', 'price': 0.0, 'currency': 'D', 'features': ['10 Products', '1 Cashier', 'Basic POS']},
-      {'id': 'basic', 'name': 'Basic', 'price': 9.99, 'currency': 'D', 'features': ['50 Products', '3 Cashiers', 'Analytics', 'POS']},
-      {'id': 'pro', 'name': 'Pro', 'price': 29.99, 'currency': 'D', 'features': ['500 Products', '10 Cashiers', 'Ads', 'Priority Support']},
-      {'id': 'enterprise', 'name': 'Enterprise', 'price': 99.99, 'currency': 'D', 'features': ['Unlimited', 'All Features', 'API Access']},
+      {
+        'id': 'basic', 'name': 'Basic', 'price': 0.0, 'currency': 'D',
+        'features': ['3% commission on sales', '50 products', '2 cashiers', 'Ratings and basic reports'],
+      },
+      {
+        'id': 'professional', 'name': 'Professional', 'price': 49.0, 'currency': 'D',
+        'features': ['2% commission on sales', '500 products', '10 cashiers', 'Customer database', 'Targeted campaigns'],
+      },
+      {
+        'id': 'advanced', 'name': 'Advanced', 'price': 149.0, 'currency': 'D',
+        'features': ['1% commission on sales', 'Unlimited products', 'Unlimited cashiers', 'Predictive analytics', 'Priority support'],
+      },
     ];
     return PageView.builder(
       controller: PageController(viewportFraction: 0.82),
@@ -122,7 +133,14 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
     final planName = (plan['name'] ?? plan['planName'] ?? plan['code'] ?? plan['id'] ?? 'Plan').toString();
     final price = ((plan['price'] ?? plan['monthlyPrice'] ?? 0) as num?) ?? 0;
     final currency = (plan['currency'] ?? 'D').toString();
-    final features = plan['features'] as List? ?? _extractFeatures(plan);
+    // The API sends `features` as a map (maxProducts, campaigns, …) and the
+    // fallback list below sends it as a list of strings. `as List?` throws on
+    // the map rather than yielding null, so every API-backed card threw while
+    // it was being built and the plan area came up empty.
+    final rawFeatures = plan['features'];
+    final features = rawFeatures is List
+        ? rawFeatures
+        : MerchantSubscriptionController.featureLabels(rawFeatures);
     final planCode = (plan['code'] ?? plan['id'] ?? plan['planCode'] ?? '').toString().toLowerCase();
 
     final Color planColor = _planColor(planCode);
@@ -219,8 +237,6 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
 
   /// `-1` on maxProducts/maxCashiers means unlimited on the backend; this
   /// used to render it literally as "-1 Products" on the Enterprise card.
-  List<String> _extractFeatures(Map plan) =>
-      MerchantSubscriptionController.featureLabels(plan['features']);
 
   Widget _buildFeatureRow(String text) {
     return Padding(
@@ -239,9 +255,9 @@ class SubscriptionPackagesView extends GetView<MerchantSubscriptionController> {
 
   Color _planColor(String code) {
     switch (code) {
-      case 'pro': return const Color(0xFF7C3AED);
-      case 'enterprise': return const Color(0xFF1F2937);
-      case 'basic': return const Color(0xFF1B6DF9);
+      case 'basic': return const Color(0xFF10B981);
+      case 'professional': return const Color(0xFF1B6DF9);
+      case 'advanced': return const Color(0xFF7C3AED);
       default: return const Color(0xFF10B981);
     }
   }
