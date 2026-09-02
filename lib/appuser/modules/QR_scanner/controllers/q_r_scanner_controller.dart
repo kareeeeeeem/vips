@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vip/appuser/routes/app_pages.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -74,6 +75,22 @@ class QRScannerController extends GetxController
     isScanning.value = false;
     isValidating.value = true;
     scannerController.stop();
+
+    // A shop's bill code goes straight to the payment screen rather than
+    // through /rewards/validate-qr, which knows about gifts, coupons and
+    // VIPs ID cards and would answer "unrecognised" for a bill.
+    final billCode = RegExp(r'VB-[A-Z2-9]{8}', caseSensitive: false)
+        .firstMatch(code)
+        ?.group(0)
+        ?.toUpperCase();
+    if (billCode != null) {
+      isValidating.value = false;
+      await Get.toNamed(Routes.PAY_BILL, arguments: {'code': billCode});
+      // Ready for the next scan when they come back.
+      isScanning.value = true;
+      scannerController.start();
+      return;
+    }
 
     try {
       final response = await ApiService().post('/rewards/validate-qr', {'code': code});

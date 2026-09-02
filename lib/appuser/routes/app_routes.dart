@@ -36,6 +36,7 @@ abstract class Routes {
   static const MERCHANT_DETAILS = _Paths.MERCHANT_DETAILS;
   static const GIFT = _Paths.GIFT;
   static const GIFTBACK = _Paths.GIFTBACK;
+  static const PAY_BILL = _Paths.PAY_BILL;
   static const EXPENSE_TO_REWARD = _Paths.EXPENSE_TO_REWARD;
   static const TRANSACTIONS_EXTRACT = _Paths.TRANSACTIONS_EXTRACT;
   static const CREDIT = _Paths.CREDIT;
@@ -87,6 +88,7 @@ abstract class _Paths {
   static const MERCHANT_DETAILS = '/merchant-details';
   static const GIFT = '/gift';
   static const GIFTBACK = '/giftback';
+  static const PAY_BILL = '/pay-bill';
   static const EXPENSE_TO_REWARD = '/expense-to-reward';
   static const TRANSACTIONS_EXTRACT = '/transactions-extract';
   static const CREDIT = '/credit';

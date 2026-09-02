@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 import 'package:vip/appmerchant/routes/merchant_routes.dart';
 import 'package:vip/core/services/api_service.dart';
@@ -104,5 +105,32 @@ class MerchantProfileController extends GetxController {
       return;
     }
     Get.toNamed(MerchantRoutes.BUSINESS_REGISTRATION);
+  }
+
+  /// Hands the merchant back to their own customer account.
+  ///
+  /// The merchant app and the customer app are separate installs with
+  /// different application ids, so this is a launch of the other app rather
+  /// than a switch inside this one. When it is not installed the merchant is
+  /// told plainly instead of the button doing nothing.
+  Future<void> openCustomerApp() async {
+    const uri = 'vipsapp://open';
+    try {
+      final target = Uri.parse(uri);
+      if (await canLaunchUrl(target)) {
+        await launchUrl(target, mode: LaunchMode.externalApplication);
+        return;
+      }
+      safeSnackbar(
+        'VIPs app not installed',
+        'Your customer account lives in the VIPs app. Install it to shop and '
+        'collect points with the same phone number.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      debugPrint('openCustomerApp failed: $e');
+      safeSnackbar('Could not open it', 'Open the VIPs app from your home screen.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
   }
 }

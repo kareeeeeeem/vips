@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <!--
+            Lets the merchant app hand a shop owner back to their own customer
+            account. The two are separate installs with different application
+            ids, so "switch to my customer view" can only be a launch of the
+            other app — there is no shared process to switch inside of.
+
+            Declared on the consumer flavor alone: all three flavors share the
+            main manifest, and a scheme registered there would leave Android
+            with three apps claiming the same link and no way to choose.
+        -->
+        <activity
+            android:name=".MainActivity"
+            tools:node="merge">
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vipsapp" android:host="open" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

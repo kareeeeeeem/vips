@@ -27,7 +27,11 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
         automaticallyImplyLeading:
             false, // يمنع ظهور أيقونة الدروير الافتراضية على اليسار
         title: InkWell(
-          onTap: () => Get.toNamed(MerchantRoutes.SWITCH_BUSINESS),
+          // The logo opens the shop's own storefront — the page customers
+          // see, and the one the merchant edits through. Switching between
+          // shops is a different question, and lives on the chevron beside
+          // the name rather than on the whole header.
+          onTap: () => Get.toNamed(MerchantRoutes.STORE_PROFILE),
           child: Row(
             children: [
               // The shop's own logo, not the app's icon. Falls back to the
@@ -70,10 +74,17 @@ class MerchantHomeView extends GetView<MerchantHomeController> {
                           color: const Color(0xFF111827),
                         ),
                       ),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 20.sp,
-                        color: const Color(0xFF10B981),
+                      GestureDetector(
+                        onTap: () => Get.toNamed(MerchantRoutes.SWITCH_BUSINESS),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 20.sp,
+                            color: const Color(0xFF10B981),
+                          ),
+                        ),
                       ),
                     ],
                   )),

@@ -92,7 +92,10 @@ class MerchantHomeController extends GetxController {
       // screen that holds the balances; the wallet screen is reachable from
       // inside it rather than competing with it.
       3 => MerchantRoutes.FINANCE_DASHBOARD,
-      4 => MerchantRoutes.BUSINESS_PLAN,
+      // The Pro tab opens the points wallet. It used to open the plan page,
+      // which is about money owed to the platform — a different subject from
+      // the points the merchant is actually holding.
+      4 => MerchantRoutes.WALLET,
       _ => null,
     };
     if (route == null) return;

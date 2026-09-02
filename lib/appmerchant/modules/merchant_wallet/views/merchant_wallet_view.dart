@@ -148,7 +148,7 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                 children: [
                   Text(
                     controller.pendingPoints.value > 0
-                        ? '${controller.pendingPoints.value.toInt()} points pending'
+                        ? '${controller.pendingPoints.value.toInt()} points reach customers in 12h'
                         : 'No pending points',
                     style: TextStyle(
                       fontSize: 12.sp,
@@ -199,7 +199,10 @@ class MerchantWalletView extends GetView<MerchantWalletController> {
                 _buildPerformanceDivider(),
                 _buildPerformanceItem('Vips Out', controller.totalVipsOut.value, const Color(0xFFFF5252)),
                 _buildPerformanceDivider(),
-                _buildPerformanceItem('Pending', controller.pendingPayout.value, const Color(0xFF3B82F6)),
+                // Points, like the two beside it. This showed `pendingPayout`
+                // — dinars waiting on a bank transfer — under a heading of
+                // point details, so a merchant read a money figure as points.
+                _buildPerformanceItem('Pending', controller.pendingPoints.value, const Color(0xFF3B82F6)),
               ],
             ),
           ),

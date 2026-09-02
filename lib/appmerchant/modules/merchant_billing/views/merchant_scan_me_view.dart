@@ -15,9 +15,14 @@ class MerchantScanMeView extends StatelessWidget {
     final String orderId = args['orderId'] ?? 'ORD-000000';
     // Present when this QR came from a bill the server actually created.
     final String billId = (args['billId'] ?? '').toString();
-    
-    // In a real app, this data would be JSON or an encrypted string
-    final String qrData = 'vips_order:$orderId:$amount';
+    final String payCode = (args['payCode'] ?? '').toString();
+
+    // The code the customer's app resolves to this exact bill. This used to
+    // be 'vips_order:<number>:<amount>' — a description of the bill rather
+    // than a reference to it, which nothing could look up and therefore
+    // nothing could pay.
+    final String qrData =
+        payCode.isNotEmpty ? 'vips_bill:$payCode' : 'vips_order:$orderId:$amount';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -94,6 +99,41 @@ class MerchantScanMeView extends StatelessWidget {
                     'Order ID: $orderId',
                     style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),
                   ),
+                  if (payCode.isNotEmpty) ...[
+                    SizedBox(height: 10.h),
+                    // The same code in readable form. Cameras fail — bad
+                    // light, a cracked screen, a phone with no autofocus —
+                    // and the customer can type this instead of the payment
+                    // simply not happening.
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            payCode,
+                            style: TextStyle(
+                              fontSize: 19.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2,
+                              color: const Color(0xFF065F46),
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Scan, tap phones, or type this code',
+                            style: TextStyle(
+                                fontSize: 11.sp, color: const Color(0xFF047857)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   SizedBox(height: 24.h),
                   
                   Container(

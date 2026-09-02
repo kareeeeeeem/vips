@@ -211,19 +211,39 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
       };
 
   Widget _buildAddNewButton() {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 20.h),
-      child: OutlinedButton.icon(
-        onPressed: controller.addNewBusiness,
-        icon: const Icon(Icons.add),
-        label: const Text('Add New Business'),
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          side: const BorderSide(color: Color(0xFF10B981)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.only(bottom: 12.h),
+          child: OutlinedButton.icon(
+            onPressed: controller.addNewBusiness,
+            icon: const Icon(Icons.add),
+            label: const Text('Add New Business'),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              side: const BorderSide(color: Color(0xFF10B981)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+            ),
+          ),
         ),
-      ),
+        // The other half of switching: a shop owner is also a customer, and
+        // their own points, offers and orders live in the VIPs app.
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.only(bottom: 20.h),
+          child: TextButton.icon(
+            onPressed: controller.openCustomerApp,
+            icon: Icon(Icons.person_outline, size: 18.sp),
+            label: Text('Use VIPs as a customer',
+                style: TextStyle(fontSize: 13.5.sp)),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              foregroundColor: const Color(0xFF6B7280),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

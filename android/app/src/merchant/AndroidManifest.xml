@@ -3,4 +3,17 @@
     <application
         android:label="VIPs Merchant"
         tools:replace="android:label" />
+
+    <!--
+        Android 11+ hides other installed apps unless they are declared here.
+        Without this, canLaunchUrl('vipsapp://open') answers false even when
+        the customer app is installed, and the merchant is told to install
+        something they already have.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="vipsapp" />
+        </intent>
+    </queries>
 </manifest>

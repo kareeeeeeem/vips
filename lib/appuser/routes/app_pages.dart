@@ -2,6 +2,8 @@
 import 'package:get/get.dart';
 import '../modules/giftback/bindings/giftback_binding.dart';
 import '../modules/giftback/views/giftback_view.dart';
+import '../modules/pay_bill/bindings/pay_bill_binding.dart';
+import '../modules/pay_bill/views/pay_bill_view.dart';
 
 import '../modules/Cart/bindings/cart_binding.dart';
 import '../modules/Cart/views/cart_view.dart' hide CartBinding;
@@ -274,6 +276,12 @@ class AppPages {
       name: _Paths.GIFTBACK,
       page: () => const GiftbackView(),
       binding: GiftbackBinding(),
+    ),
+    // §4.3: settling a shop's bill from the points balance.
+    GetPage(
+      name: _Paths.PAY_BILL,
+      page: () => const PayBillView(),
+      binding: PayBillBinding(),
     ),
     GetPage(
       name: _Paths.EXPENSE_TO_REWARD,

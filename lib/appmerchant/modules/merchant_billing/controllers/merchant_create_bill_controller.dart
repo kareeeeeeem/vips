@@ -110,6 +110,10 @@ class MerchantCreateBillController extends GetxController {
           // The bill's real id, so the QR screen can settle it once the
           // customer has paid (PUT /merchant/billing/:id/pay).
           'billId': (data['_id'] ?? '').toString(),
+          // What the customer's app resolves. The QR used to carry the bill
+          // number and amount as plain text — a label, not a reference, so
+          // nothing on the customer's side could look the bill up and pay it.
+          'payCode': (data['payCode'] ?? '').toString(),
         },
       );
     } catch (e) {
