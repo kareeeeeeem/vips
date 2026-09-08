@@ -114,8 +114,10 @@ class MerchantCatalogController extends GetxController {
   Future<void> _loadVoucherValuePrefs() async {
     try {
       final prefs = Get.find<SharedPreferences>();
-      hiddenVoucherValues.value =
-          (prefs.getStringList(_hiddenKey) ?? []).map(int.parse).toSet();
+      hiddenVoucherValues.clear();
+      hiddenVoucherValues.addAll(
+        (prefs.getStringList(_hiddenKey) ?? []).map(int.parse),
+      );
       customVoucherValues.value =
           (prefs.getStringList(_customKey) ?? []).map(int.parse).toList();
     } catch (e) {
@@ -586,6 +588,10 @@ class MerchantCatalogController extends GetxController {
   }
 
   void resetItemForm() {
+    itemPromoPriceCtrl.clear();
+    selectedCategory.value = 'Select';
+    selectedItemType.value = 'Product';
+    selectedTaxMethod.value = 'Exclusive';
     itemNameCtrl.clear();
     itemCodeCtrl.clear();
     itemPriceCtrl.clear();

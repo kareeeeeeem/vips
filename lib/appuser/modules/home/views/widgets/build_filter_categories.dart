@@ -51,6 +51,14 @@ class BuildFilterCategories extends GetView<HomeController> {
         'label': 'entertainment'.tr,
         'onTap': () => controller.navigateToEntertainment(),
       },
+      // The club is where diamonds are collected, and nothing on the home
+      // screen led to it — a customer had to already know it was under their
+      // profile to find it.
+      {
+        'icon': Icons.diamond_outlined,
+        'label': 'VIPs Club',
+        'onTap': () => controller.navigateToVipsClub(),
+      },
     ];
 
     return SizedBox(

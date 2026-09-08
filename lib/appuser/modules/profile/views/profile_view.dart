@@ -106,7 +106,7 @@ class ProfileView extends GetView<ProfileController> {
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: Row(
                             children: [
-                              GestureDetector(
+                              Expanded(child: GestureDetector(
                                 onTap: () => controller.selectDateRange(),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
@@ -128,19 +128,19 @@ class ProfileView extends GetView<ProfileController> {
                                         color: Colors.grey.shade600,
                                       ),
                                       SizedBox(width: 6.w),
-                                      Text(
+                                      Flexible(child: Text(
                                         'From: ${controller.formatDate(controller.fromDate.value)}  To: ${controller.formatDate(controller.toDate.value)}',
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           color: Colors.black87,
                                           fontWeight: FontWeight.w500,
                                         ),
-                                      ),
+                                      )),
                                     ],
                                   ),
                                 ),
-                              ),
-                              Spacer(),
+                              )),
+                              SizedBox(width: 8.w),
                               Text(
                                 '${controller.filteredOrders.length} Result Found',
                                 style: TextStyle(
@@ -520,7 +520,12 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildServicesRow() {
-    return Obx(() {
+    // Not wrapped in Obx. `primaryColor` and `servicesList` are both plain
+    // getters, so the Obx that used to sit here read zero observables —
+    // GetX's "improper use of a GetX has been detected" condition, which
+    // throws while the widget is being built. Everything below the profile
+    // header came out blank because of it.
+    {
       final primaryColor = controller.primaryColor;
       final services = controller.servicesList.toList();
       // Badges here used to be hardcoded by position (index 0 = active
@@ -557,7 +562,7 @@ class ProfileView extends GetView<ProfileController> {
           },
         ),
       );
-    });
+    }
   }
 
   Widget _buildServiceIcon(
@@ -829,16 +834,18 @@ class ProfileView extends GetView<ProfileController> {
           else
             Icon(isCompleted ? Icons.check_circle_rounded : Icons.close_rounded, color: color, size: 20.sp),
           SizedBox(width: 8.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: color,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           if (onTap != null) ...[
-            const Spacer(),
+            SizedBox(width: 8.w),
             Icon(Icons.chevron_right, color: color, size: 18.sp),
           ],
         ],
@@ -853,7 +860,7 @@ class ProfileView extends GetView<ProfileController> {
         return GestureDetector(
           onTap: () => controller.changeOrderFilter(label),
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
             decoration: BoxDecoration(
               color: isActive ? Colors.orange : Colors.white,
               borderRadius: BorderRadius.circular(9.r),
@@ -864,12 +871,15 @@ class ProfileView extends GetView<ProfileController> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: isActive ? Colors.white : Colors.black87,
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: isActive ? Colors.white : Colors.black87,
+                    ),
                   ),
                 ),
                 if (count > 0 && label == 'Done') ...[
@@ -1405,9 +1415,9 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   _StickyTabBarDelegate({required this.child});
 
   @override
-  double get minExtent => 110.h;
+  double get minExtent => 150.h;
   @override
-  double get maxExtent => 110.h;
+  double get maxExtent => 150.h;
 
   @override
   Widget build(
@@ -1415,7 +1425,7 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return SizedBox(height: 110.h, child: child);
+    return SizedBox(height: 150.h, child: child);
   }
 
   @override

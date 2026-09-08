@@ -20,7 +20,7 @@ class ApiClient extends GetxService {
   final SharedPreferences sharedPreferences;
   static const String noInternetMessage =
       'Connection to API server failed due to internet connection';
-  final int timeoutInSeconds = 30;
+  final int timeoutInSeconds = 60;
 
   String? token;
   String? type;
@@ -43,6 +43,7 @@ class ApiClient extends GetxService {
     int? moduleID,
     String? type,
   ) {
+    this.token = token;
     _mainHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
       AppConstants.localizationKey: languageCode ?? 'en',
@@ -58,6 +59,19 @@ class ApiClient extends GetxService {
     if (_mainHeaders.containsKey('Authorization')) 'Authorization': 'Bearer ***',
   };
 
+  // Read the current session for every request: a client may survive a
+  // logout/login while GetX reuses its repository.
+  Map<String, String> get _sessionHeaders {
+    token = sharedPreferences.getString('auth_token') ??
+        sharedPreferences.getString(AppConstants.token);
+    final headers = Map<String, String>.from(_mainHeaders)
+      ..remove('Authorization');
+    return {
+      ...headers,
+      if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<Response> getData(
     String uri, {
     Map<String, dynamic>? query,
@@ -67,7 +81,13 @@ class ApiClient extends GetxService {
     try {
       debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       http.Response response = await http
-          .get(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
+          .get(
+            Uri.parse(appBaseUrl + uri).replace(queryParameters: {
+              ...Uri.parse(appBaseUrl + uri).queryParameters,
+              ...?query?.map((key, value) => MapEntry(key, value.toString())),
+            }),
+            headers: headers ?? _sessionHeaders,
+          )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
     } catch (e) {
@@ -88,7 +108,7 @@ class ApiClient extends GetxService {
           .post(
             Uri.parse(appBaseUrl + uri),
             body: jsonEncode(body),
-            headers: headers ?? _mainHeaders,
+            headers: headers ?? _sessionHeaders,
           )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
@@ -178,7 +198,7 @@ class ApiClient extends GetxService {
           .put(
             Uri.parse(appBaseUrl + uri),
             body: jsonEncode(body),
-            headers: headers ?? _mainHeaders,
+            headers: headers ?? _sessionHeaders,
           )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
@@ -195,7 +215,7 @@ class ApiClient extends GetxService {
     try {
       debugPrint('====> API Call: $uri\nHeader: $_redactedHeaders');
       http.Response response = await http
-          .delete(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
+          .delete(Uri.parse(appBaseUrl + uri), headers: headers ?? _sessionHeaders)
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
     } catch (e) {
@@ -242,16 +262,9 @@ class ApiClient extends GetxService {
     debugPrint(
       '====> API Response: [${response0.statusCode}] $uri\n${response0.body}',
     );
-    if (handleError) {
-      if (response0.statusCode == 200) {
-        return response0;
-      } else {
-        // ApiChecker.checkApi(response0);
-        return const Response();
-      }
-    } else {
-      return response0;
-    }
+    // Preserve 201/204 successes and structured failures for the controller.
+    // Returning an empty Response hid both created records and error messages.
+    return response0;
   }
 }
 

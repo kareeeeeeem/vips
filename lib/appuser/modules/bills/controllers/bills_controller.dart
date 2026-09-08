@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/services/api_service.dart';
-import '../views/widgets/product_detail_page.dart';
 import '../views/widgets/product_list_page.dart';
 
 class BillsController extends GetxController {

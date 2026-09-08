@@ -120,7 +120,7 @@ class DueListView extends GetView<MerchantDuesController> {
   }
 
   Widget _buildSummaryHeader() {
-    return Obx(() => Container(
+    return Container(
       padding: EdgeInsets.all(24.w),
       child: Row(
         children: [
@@ -129,7 +129,7 @@ class DueListView extends GetView<MerchantDuesController> {
           _buildStatBox('Payable', controller.totalPayable, const Color(0xFFEF4444)),
         ],
       ),
-    ));
+    );
   }
 
   Widget _buildStatBox(String label, RxDouble amount, Color color) {

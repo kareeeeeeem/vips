@@ -33,14 +33,19 @@ class AllMerchantsView extends StatelessWidget {
               return Card(
                 margin: EdgeInsets.only(bottom: 16.h),
                 child: ListTile(
-                  leading: merchant['logo'] != null
+                  leading: SizedBox(
+                    width: 40.w,
+                    height: 40.h,
+                    child: merchant['logo'] != null
                       ? Image.network(
                           merchant['logo'].toString(),
                           width: 40.w,
                           height: 40.h,
                           fit: BoxFit.cover,
+                          errorBuilder: (_, error, stack) => const Icon(Icons.store),
                         )
                       : const Icon(Icons.store),
+                  ),
                   title: Text(merchant['storeName']?.toString() ?? ''),
                   subtitle: Text(merchant['storeCategory']?.toString() ?? ''),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),

@@ -15,6 +15,8 @@ class CartItem {
   final String description;
   final String? image;
   final double price;
+  final double taxRate;
+  final String taxMethod;
   final double? oldPrice;
   final CartItemType type;
   int quantity;
@@ -30,6 +32,8 @@ class CartItem {
     required this.description,
     this.image,
     required this.price,
+    this.taxRate = 0,
+    this.taxMethod = 'None',
     this.oldPrice,
     required this.type,
     this.quantity = 1,
@@ -39,6 +43,8 @@ class CartItem {
   });
 
   double get totalPrice => price * quantity;
+  double get taxAmount => taxMethod == 'Exclusive'
+      ? (price * taxRate / 100 * 1000).round() / 1000 * quantity : 0;
 
   Map<String, dynamic> toJson() {
     return {
@@ -48,6 +54,8 @@ class CartItem {
       'description': description,
       'image': image,
       'price': price,
+      'taxRate': taxRate,
+      'taxMethod': taxMethod,
       'oldPrice': oldPrice,
       'type': type.toString(),
       'quantity': quantity,
@@ -64,6 +72,8 @@ class CartItem {
       description: json['description'],
       image: json['image'],
       price: (json['price'] ?? 0).toDouble(),
+      taxRate: (json['taxRate'] as num?)?.toDouble() ?? 0,
+      taxMethod: json['taxMethod']?.toString() ?? 'None',
       oldPrice: json['oldPrice']?.toDouble(),
       merchantId: json['merchantId'],
       type: CartItemType.values.firstWhere(
@@ -98,6 +108,8 @@ class CartItem {
       description: description ?? this.description,
       image: image ?? this.image,
       price: price ?? this.price,
+      taxRate: taxRate,
+      taxMethod: taxMethod,
       oldPrice: oldPrice ?? this.oldPrice,
       type: type ?? this.type,
       quantity: quantity ?? this.quantity,
@@ -128,7 +140,7 @@ class CartController extends GetxController
   // order's total. Actually deducted server-side in /order/create — this
   // is only a preview of that same math so the UI matches what will happen.
   var walletPointsToRedeem = 0.obs;
-  var vipsToTndRate = 0.1.obs;
+  var vipsToTndRate = 0.01.obs;
 
   // Order Type Management
   var selectedOrderType = 0.obs; // 0: Delivery, 1: Takeaway, 2: In Store
@@ -154,7 +166,7 @@ class CartController extends GetxController
   double get vipsDiscount => 0.0;
   double get couponDiscount => 0.0;
   double get serviceCharge => 0.0;
-  double get vatTax => subtotal * 0.07;
+  double get vatTax => cartItems.fold(0.0, (sum, item) => sum + item.taxAmount);
   double get tipAmount =>
       selectedTipAmount.value > 0
           ? selectedTipAmount.value
@@ -245,6 +257,9 @@ class CartController extends GetxController
           name: item['name'] ?? 'Product',
           description: '',
           price: (item['price'] ?? 0).toDouble(),
+          image: item['image']?.toString(),
+          taxRate: (item['taxRate'] as num?)?.toDouble() ?? 0,
+          taxMethod: item['taxMethod']?.toString() ?? 'None',
           type: CartItemType.product,
           quantity: item['quantity'] ?? 1,
         )).toList();
@@ -512,7 +527,8 @@ class CartController extends GetxController
     cartItems.clear();
     selectedItems.clear();
     try {
-      await ApiService().post('/cart/clear', {});
+      final response = await ApiService().post('/cart/clear', {});
+      if (!response.success) throw StateError(response.message);
     } catch (_) {
       // Local state already cleared optimistically — if the server call
       // failed, reload from the server so a silently-failed clear doesn't
@@ -532,21 +548,11 @@ class CartController extends GetxController
 
   void increaseQuantity(CartItem item) {
     final index = cartItems.indexWhere((i) => i.id == item.id);
-    if (index != -1) {
+    if (index != -1 && cartItems[index].quantity < 999) {
       cartItems[index].quantity++;
       cartItems.refresh();
       final updatedQuantity = cartItems[index].quantity;
-      ApiService().put('/cart/update', {'itemId': item.id, 'quantity': updatedQuantity}).then((res) {
-        if (!res.success) {
-          cartItems[index].quantity = updatedQuantity - 1;
-          cartItems.refresh();
-          safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
-        }
-      }, onError: (_) {
-        cartItems[index].quantity = updatedQuantity - 1;
-        cartItems.refresh();
-        safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
-      });
+      _saveQuantity(item.id, updatedQuantity, updatedQuantity - 1);
     }
   }
 
@@ -556,18 +562,39 @@ class CartController extends GetxController
       cartItems[index].quantity--;
       cartItems.refresh();
       final updatedQuantity = cartItems[index].quantity;
-      ApiService().put('/cart/update', {'itemId': item.id, 'quantity': updatedQuantity}).then((res) {
-        if (!res.success) {
-          cartItems[index].quantity = updatedQuantity + 1;
-          cartItems.refresh();
-          safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
-        }
-      }, onError: (_) {
-        cartItems[index].quantity = updatedQuantity + 1;
-        cartItems.refresh();
-        safeSnackbar('Error', 'Failed to update cart', snackPosition: SnackPosition.BOTTOM);
-      });
+      _saveQuantity(item.id, updatedQuantity, updatedQuantity + 1);
     }
+  }
+
+  final Map<String, Future<void>> _quantityWrites = {};
+  final Map<String, int> _confirmedQuantities = {};
+
+  void _saveQuantity(String id, int quantity, int previous) {
+    _confirmedQuantities.putIfAbsent(id, () => previous);
+    final pending = (_quantityWrites[id] ?? Future<void>.value()).then((_) async {
+      if (!cartItems.any((item) => item.id == id)) return;
+      try {
+        final response = await ApiService().put('/cart/update', {'itemId': id, 'quantity': quantity});
+        if (!response.success) throw StateError(response.message);
+        _confirmedQuantities[id] = quantity;
+      } catch (_) {
+        // Re-find the line: it may have moved or been removed while awaiting
+        // the request. An old failure must not undo a newer quantity change.
+        final current = cartItems.firstWhereOrNull((item) => item.id == id);
+        if (current != null && current.quantity == quantity) {
+          current.quantity = _confirmedQuantities[id] ?? previous;
+          cartItems.refresh();
+          safeSnackbar('Error', 'Could not update the quantity. Please try again.', snackPosition: SnackPosition.BOTTOM);
+        }
+      }
+    });
+    _quantityWrites[id] = pending;
+    pending.whenComplete(() {
+      if (identical(_quantityWrites[id], pending)) {
+        _quantityWrites.remove(id);
+        _confirmedQuantities.remove(id);
+      }
+    });
   }
 
   void removeItem(CartItem item) {
@@ -661,7 +688,8 @@ class CartController extends GetxController
                         selectedItems.remove(item.id);
                         Get.back();
                         try {
-                          await ApiService().delete('/cart/remove/${item.id}');
+                          final response = await ApiService().delete('/cart/remove/${item.id}');
+                          if (!response.success) throw StateError(response.message);
                         } catch (_) {
                           safeSnackbar('Error', 'Could not remove item. Refreshing cart...', snackPosition: SnackPosition.BOTTOM);
                           await _loadCartItems();
@@ -736,7 +764,9 @@ class CartController extends GetxController
       '/checkout',
       arguments: {
         'subtotal': subtotal,
+        'tipAmount': tipAmount,
         'deliveryFee': deliveryFee,
+        'taxAmount': vatTax,
         'discount': discount,
         'deliveryOption': selectedOrderType.value == 0
             ? 'delivery'

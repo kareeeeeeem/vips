@@ -71,6 +71,23 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
               
               SizedBox(height: 48.h),
               
+              Obx(() => Column(children: [
+                if (controller.isPasswordLogin.value) ...[
+                  TextField(
+                    controller: controller.passwordLoginEmail,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: controller.passwordLoginPassword,
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline)),
+                    onSubmitted: (_) => controller.loginWithPassword(),
+                  ),
+                ] else ...[
               Text(
                 'Phone Number',
                 style: TextStyle(
@@ -104,12 +121,19 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
                 ),
               ),
               
+                  const Text('The code will be sent to the email registered with your store.'),
+                ],
+                TextButton(
+                  onPressed: controller.isLoading.value ? null : () => controller.isPasswordLogin.toggle(),
+                  child: Text(controller.isPasswordLogin.value ? 'Sign in with a code' : 'Sign in with email and password'),
+                ),
+              ])),
               SizedBox(height: 40.h),
 
               Obx(() => SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.login,
+                  onPressed: controller.isLoading.value ? null : (controller.isPasswordLogin.value ? controller.loginWithPassword : controller.login),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF97316),
                     elevation: 0,
@@ -126,7 +150,7 @@ class _MerchantLoginViewState extends State<MerchantLoginView> {
                           ),
                         )
                       : Text(
-                          'Get OTP',
+                          controller.isPasswordLogin.value ? 'Sign in' : 'Send code',
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w700,

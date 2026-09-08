@@ -343,16 +343,6 @@ class _MerchantDetailsViewState extends State<MerchantDetailsView> {
                             deal: dealShaped,
                             isFavorite: favoriteIds.contains(id),
                             onTap: () => Get.toNamed(Routes.DEAL_DETAILS, arguments: dealShaped),
-                            onAddToBasket: () => homeController.addToCartServer(
-                              itemId: id,
-                              itemType: 'Product',
-                              name: product['name']?.toString(),
-                              price: (dealShaped['currentPrice'] is num)
-                                  ? (dealShaped['currentPrice'] as num).toDouble()
-                                  : 0,
-                              quantity: 1,
-                              merchantId: dealShaped['merchantId']?.toString(),
-                            ),
                             onToggleFavorite: () => _toggleFavorite(id),
                           );
                         },

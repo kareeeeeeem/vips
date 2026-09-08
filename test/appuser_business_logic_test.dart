@@ -31,6 +31,8 @@ CartItem _item({
   CartItemType type = CartItemType.product,
   Map<String, dynamic>? options,
   bool isFavorite = false,
+  double taxRate = 0,
+  String taxMethod = 'None',
 }) {
   return CartItem(
     id: id,
@@ -41,6 +43,8 @@ CartItem _item({
     type: type,
     options: options,
     isFavorite: isFavorite,
+    taxRate: taxRate,
+    taxMethod: taxMethod,
   );
 }
 
@@ -121,9 +125,14 @@ void main() {
       expect(cart.deliveryFee, equals(0.0));
     });
 
-    test('vatTax is 7% of subtotal', () {
-      cart.cartItems.add(_item(price: 100, quantity: 1));
+    test('vatTax follows the product rate rather than a platform-wide constant', () {
+      cart.cartItems.add(_item(price: 100, quantity: 1, taxRate: 7, taxMethod: 'Exclusive'));
       expect(cart.vatTax, closeTo(7.0, 0.001));
+    });
+    test('untaxed and tax-inclusive products do not add another tax charge', () {
+      cart.cartItems.add(_item(price: 100, taxRate: 19, taxMethod: 'Inclusive'));
+      cart.cartItems.add(_item(price: 100));
+      expect(cart.vatTax, 0);
     });
 
     test('tipAmount prefers selectedTipAmount over customTipAmount', () {
@@ -151,7 +160,7 @@ void main() {
 
     test('total combines subtotal, delivery, discount, tax and tip', () {
       cart.selectedOrderType.value = 0; // delivery => fee 6.0
-      cart.cartItems.add(_item(price: 100, quantity: 1)); // subtotal 100
+      cart.cartItems.add(_item(price: 100, quantity: 1, taxRate: 7, taxMethod: 'Exclusive')); // subtotal 100
       cart.setTipAmount(2.0);
       // total = 100 (subtotal) + 6 (delivery) - 0 (discount) + 0 (service) + 7 (vat 7%) + 2 (tip)
       expect(cart.total, closeTo(115.0, 0.001));

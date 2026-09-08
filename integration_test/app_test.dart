@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:vip/main.dart' as app;
 
@@ -29,7 +30,8 @@ void main() {
   Future<void> settle(WidgetTester tester, {int seconds = 3}) async {
     await tester.pump(Duration(seconds: seconds));
     try {
-      await tester.pumpAndSettle(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle(const Duration(milliseconds: 500),
+          EnginePhase.sendSemanticsUpdate, const Duration(seconds: 10));
     } catch (_) {
       // Some screens have infinite animations (auto-scroll carousels,
       // countdown timers) that never "settle" - that's fine, just move on.
@@ -54,6 +56,9 @@ void main() {
   }
 
   testWidgets('walk through appuser main screens', (tester) async {
+    // Use an in-memory session so a previous simulator login cannot divert
+    // the guest walk or be overwritten by the test.
+    SharedPreferences.setMockInitialValues({});
     app.main();
     await settle(tester, seconds: 4);
     mark('app booted');
@@ -282,5 +287,7 @@ void main() {
       // ignore: avoid_print
       print('##########################################################\n');
     }
+    expect(collectedErrors, isEmpty,
+        reason: 'The screen walk must fail when Flutter reports a rendering or runtime error.');
   });
 }

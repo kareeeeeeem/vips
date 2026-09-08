@@ -199,7 +199,7 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                             // position on this being the customer's choice,
                             // so it is a control the merchant must tick with
                             // the customer, not a line of small print.
-                            CheckboxListTile(
+                            Material(color: Colors.transparent, child: CheckboxListTile(
                               value: controller.customerConsented.value,
                               onChanged: (v) => controller.setConsent(v ?? false),
                               controlAffinity: ListTileControlAffinity.leading,
@@ -217,7 +217,7 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
                                 'Ask them out loud. Without this the points cannot be recorded.',
                                 style: TextStyle(fontSize: 11.sp, color: const Color(0xFF047857)),
                               ),
-                            ),
+                            )),
                           ],
                         ),
                       );
@@ -289,7 +289,7 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
         children: [
           Icon(icon, size: 16.sp, color: const Color(0xFF10B981)),
           SizedBox(width: 12.w),
-          Text(label, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w500)),
+          Expanded(child: Text(label, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w500))),
         ],
       ),
     );
@@ -299,20 +299,21 @@ class GiftBackFormView extends GetView<MerchantGiftBackController> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
+        Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title1, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600)),
             Text(val1, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
           ],
-        ),
-        Column(
+        )),
+        SizedBox(width: 12.w),
+        Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(title2, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF10B981), fontWeight: FontWeight.w600)),
             Text(val2, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: const Color(0xFF10B981))),
           ],
-        ),
+        )),
       ],
     );
   }

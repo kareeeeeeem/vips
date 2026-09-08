@@ -59,7 +59,13 @@ class _GiftBackScanMeViewState extends State<GiftBackScanMeView> {
     _handledScan = true;
     final userId = match.group(1)!;
 
-    final response = await ApiService().get('/merchant/gift-back/lookup?userId=$userId');
+    // `/merchant/customers/lookup` is the one endpoint that resolves a
+    // customer, and it is what MerchantGiftBackController.lookupRecipient()
+    // already calls for a typed phone number. This screen asked for
+    // `/merchant/gift-back/lookup`, which the backend has never served — so
+    // every scanned QR fell through to "invalid code" no matter whose it was.
+    final response = await ApiService()
+        .get('/merchant/customers/lookup', queryParams: {'userId': userId});
     if (!mounted) return;
 
     if (response.success && response.data is Map) {

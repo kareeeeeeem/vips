@@ -168,10 +168,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
             onPressed: () => Get.toNamed('/notifications'),
           ),
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.grey),
-            onPressed: () => Get.toNamed('/cart'),
-          ),
+          // The basket was here and again on the bar at the bottom of the
+          // same screen, so a customer reading a product met two ways into
+          // it and no indication they were the same place. The one that sits
+          // beside "Add to cart", where the decision is actually made, is
+          // the one that stays.
         ],
       ),
       body: SingleChildScrollView(

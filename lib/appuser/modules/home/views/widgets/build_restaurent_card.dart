@@ -7,12 +7,10 @@ class BuildRestaurenCard extends StatelessWidget {
     super.key,
     required this.deal,
     required this.onTap,
-    required this.onAddToBasket, // Nouveau callback
   });
 
   final Map<String, dynamic> deal;
   final VoidCallback onTap;
-  final VoidCallback onAddToBasket; // Nouveau callback
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +324,7 @@ class BuildRestaurenCard extends StatelessWidget {
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: onAddToBasket,
+                      onTap: onTap,
                       child: Container(
                         width: 40.w,
                         height: 40.h,
@@ -349,7 +347,11 @@ class BuildRestaurenCard extends StatelessWidget {
                           ],
                         ),
                         child: Icon(
-                          Icons.add_shopping_cart,
+                          // An invitation to look, not to buy. Adding to a
+                          // basket belongs in the platform's own store, where
+                          // there is something to check out with; on a partner
+                          // shop's offer the only next step is to see it.
+                          Icons.visibility_outlined,
                           color: Colors.white,
                           size: 18.sp,
                         ),

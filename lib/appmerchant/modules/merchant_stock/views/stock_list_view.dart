@@ -8,7 +8,7 @@ class StockListView extends GetView<MerchantStockController> {
 
   @override
   Widget build(BuildContext context) {
-    final searchQuery = ''.obs;
+    final searchQuery = controller.searchQuery;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -168,16 +168,17 @@ class StockListView extends GetView<MerchantStockController> {
   }
 
   void _showSearchDialog(BuildContext context, RxString searchQuery) {
-    final queryController = TextEditingController(text: searchQuery.value);
+    var query = searchQuery.value;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Search Stock'),
-        content: TextField(
-          controller: queryController,
+        content: TextFormField(
+          initialValue: query,
+          onChanged: (value) => query = value,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'Item name or category'),
-          onSubmitted: (v) {
+          onFieldSubmitted: (v) {
             searchQuery.value = v;
             Get.back();
           },
@@ -194,22 +195,22 @@ class StockListView extends GetView<MerchantStockController> {
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
-              searchQuery.value = queryController.text;
+              searchQuery.value = query;
               Get.back();
             },
             child: const Text('Search'),
           ),
         ],
       ),
-    ).then((_) => queryController.dispose());
+    );
   }
 
   void _showAddStockDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final categoryController = TextEditingController();
-    final stockController = TextEditingController();
-    final thresholdController = TextEditingController(text: '10');
-    final priceController = TextEditingController();
+    var name = '';
+    var category = '';
+    var stock = '';
+    var thresholdText = '10';
+    var priceText = '';
 
     showDialog(
       context: context,
@@ -219,11 +220,11 @@ class StockListView extends GetView<MerchantStockController> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Item Name')),
-              TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Category')),
-              TextField(controller: stockController, decoration: const InputDecoration(labelText: 'Current Stock'), keyboardType: TextInputType.number),
-              TextField(controller: thresholdController, decoration: const InputDecoration(labelText: 'Low Stock Threshold'), keyboardType: TextInputType.number),
-              TextField(controller: priceController, decoration: const InputDecoration(labelText: 'Unit Price'), keyboardType: TextInputType.number),
+              TextFormField(onChanged: (v) => name = v, decoration: const InputDecoration(labelText: 'Item Name')),
+              TextFormField(onChanged: (v) => category = v, decoration: const InputDecoration(labelText: 'Category')),
+              TextFormField(onChanged: (v) => stock = v, decoration: const InputDecoration(labelText: 'Current Stock'), keyboardType: TextInputType.number),
+              TextFormField(initialValue: thresholdText, onChanged: (v) => thresholdText = v, decoration: const InputDecoration(labelText: 'Low Stock Threshold'), keyboardType: TextInputType.number),
+              TextFormField(onChanged: (v) => priceText = v, decoration: const InputDecoration(labelText: 'Unit Price'), keyboardType: TextInputType.number),
             ],
           ),
         ),
@@ -231,14 +232,14 @@ class StockListView extends GetView<MerchantStockController> {
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
-              final currentStock = int.tryParse(stockController.text) ?? 0;
-              final threshold = int.tryParse(thresholdController.text) ?? 10;
-              final price = double.tryParse(priceController.text) ?? 0;
-              if (nameController.text.isNotEmpty) {
+              final currentStock = int.tryParse(stock) ?? 0;
+              final threshold = int.tryParse(thresholdText) ?? 10;
+              final price = double.tryParse(priceText) ?? 0;
+              if (name.isNotEmpty) {
                 controller.addStockItem(StockItem(
                   id: '',
-                  name: nameController.text,
-                  category: categoryController.text.isEmpty ? 'General' : categoryController.text,
+                  name: name,
+                  category: category.isEmpty ? 'General' : category,
                   currentStock: currentStock,
                   lowStockThreshold: threshold,
                   unitPrice: price,
@@ -250,13 +251,7 @@ class StockListView extends GetView<MerchantStockController> {
           ),
         ],
       ),
-    ).then((_) {
-      nameController.dispose();
-      categoryController.dispose();
-      stockController.dispose();
-      thresholdController.dispose();
-      priceController.dispose();
-    });
+    );
   }
 
   Widget _buildStockItem(StockItem item) {

@@ -1,3 +1,4 @@
+import 'package:vip/core/services/api_service.dart';
 import 'dart:ui';
 
 class AppConstants {
@@ -14,7 +15,8 @@ class AppConstants {
   static const Color merchantBorder = Color(0xFFE5E7EB);
 
   /// API Endpoints
-  static const String baseUrl = 'https://vips-backend.onrender.com';
+  static String get baseUrl =>
+      ApiService.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
 
   // Auth
   static const String loginUri = '/api/auth/merchant-login';

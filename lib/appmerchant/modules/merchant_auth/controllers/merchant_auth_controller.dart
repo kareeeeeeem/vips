@@ -42,6 +42,12 @@ class MerchantAuthController extends GetxController {
 
   final isLoading = false.obs;
   final phoneNumber = ''.obs;
+  final otpDestination = ''.obs;
+  final passwordLoginEmail = TextEditingController();
+  final passwordLoginPassword = TextEditingController();
+  final isPasswordLogin = true.obs;
+  final requiresTwoFactor = false.obs;
+  int get otpLength => requiresTwoFactor.value ? 6 : 4;
 
   // ── Send OTP ─────────────────────────────────────────────────
   Future<void> login() async {
@@ -63,7 +69,10 @@ class MerchantAuthController extends GetxController {
 
       if (response.success) {
         phoneNumber.value = phone;
-        Get.toNamed(MerchantRoutes.VERIFICATION);
+        requiresTwoFactor.value = false;
+        otpDestination.value = response.data?['destination']?.toString() ?? 'your account email';
+        pinController.clear();
+        if (Get.currentRoute != MerchantRoutes.VERIFICATION) Get.toNamed(MerchantRoutes.VERIFICATION);
       } else {
         safeSnackbar('Error', response.message);
       }
@@ -74,6 +83,44 @@ class MerchantAuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> loginWithPassword() async {
+    if (isLoading.value) return;
+    final email = passwordLoginEmail.text.trim();
+    if (!GetUtils.isEmail(email) || passwordLoginPassword.text.isEmpty) {
+      safeSnackbar('Sign in', 'Enter your email and password');
+      return;
+    }
+    isLoading.value = true;
+    try {
+      final response = await ApiService().post('/auth/merchant-password-login', {
+        'email': email, 'password': passwordLoginPassword.text,
+      });
+      if (!response.success || response.data is! Map) {
+        safeSnackbar('Sign in', response.message);
+        return;
+      }
+      if (response.data['requires2FA'] == true) {
+        requiresTwoFactor.value = true;
+        otpDestination.value = response.data['email']?.toString() ?? email;
+        pinController.clear();
+        if (Get.currentRoute != MerchantRoutes.VERIFICATION) Get.toNamed(MerchantRoutes.VERIFICATION);
+        return;
+      }
+      final token = response.data['token']?.toString();
+      if (token == null || token.isEmpty || response.data['user']?['role'] != 'merchant') {
+        safeSnackbar('Sign in', 'A valid merchant session was not returned');
+        return;
+      }
+      await ApiService().setToken(token);
+      passwordLoginPassword.clear();
+      Get.offAllNamed(MerchantRoutes.HOME);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> resendOtp() => requiresTwoFactor.value ? loginWithPassword() : login();
 
   // ── Create a merchant account ─────────────────────────────────
   // Until this existed the merchant app had no way to create an account at
@@ -149,7 +196,7 @@ class MerchantAuthController extends GetxController {
   // ── Verify OTP & obtain token ─────────────────────────────────
   Future<void> verifyOtp(String otp) async {
     if (isLoading.value) return;
-    if (otp.length < 4) {
+    if (otp.length != otpLength) {
       safeSnackbar('Error', 'Please enter a valid OTP');
       return;
     }
@@ -158,8 +205,8 @@ class MerchantAuthController extends GetxController {
     debugPrint('[MERCHANT_LOGIN] verifyOtp() started');
     try {
       final response = await ApiService().post(
-        '/auth/merchant-verify-otp',
-        {'phone': phoneNumber.value, 'otp': otp},
+        requiresTwoFactor.value ? '/auth/2fa/verify' : '/auth/merchant-verify-otp',
+        {if (requiresTwoFactor.value) 'email': otpDestination.value else 'phone': phoneNumber.value, 'otp': otp},
       );
       debugPrint('[MERCHANT_LOGIN] verifyOtp() response received, success=${response.success}');
 
@@ -288,6 +335,8 @@ class MerchantAuthController extends GetxController {
 
   @override
   void onClose() {
+    passwordLoginEmail.dispose();
+    passwordLoginPassword.dispose();
     phoneController.dispose();
     pinController.dispose();
     storeNameController.dispose();

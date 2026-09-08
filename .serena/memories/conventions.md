@@ -1,0 +1,4 @@
+- Never run mutating integration tests against the existing developer API/database. tests/run-isolated.js owns only its temporary vips_qa_* database/process. test/appuser_live_integration_test.dart targets port 3000 and is not isolated.
+- Point economics are authoritative in lib/vips-backend/config/economics.js: 100 PTS = 1 TND; monetary rounding is in millimes. Preserve separate PTS and TND ledgers.
+- Backend quoteCheckout resolves prices/ownership from catalogue; do not trust client prices. Keys alone cannot enable unimplemented service adapters.
+- ApiService owns token changes; legacy clients must use the same runtime base URL and persisted session.

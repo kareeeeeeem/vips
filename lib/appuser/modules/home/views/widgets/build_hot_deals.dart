@@ -112,14 +112,6 @@ class BuildHotDeals extends GetView<HomeController> {
                   child: BuildOfferCard(
                     deal: deal,
                     onTap: () => controller.navigateToHotDeal(deal),
-                    onAddToBasket: () => controller.addToCartServer(
-                      itemId: id,
-                      itemType: 'Deal',
-                      name: deal['title']?.toString(),
-                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
-                      quantity: 1,
-                      merchantId: deal['merchantId']?.toString(),
-                    ),
                     isFavorite: isFav,
                     onToggleFavorite: () => controller.toggleFavoriteServer(id, itemType: 'Deal'),
                   ),

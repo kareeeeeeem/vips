@@ -50,6 +50,7 @@ class DonationController extends GetxController {
   }
 
   Future<void> proceed() async {
+    if (isLoading.value) return;
     // organizations can be replaced by a shorter real list from
     // /services/organizations after the user already tapped one of the
     // initial placeholder entries — re-validate the index is still in
@@ -60,7 +61,7 @@ class DonationController extends GetxController {
       return;
     }
     final amount = double.tryParse(amountController.text.trim());
-    if (amount == null || amount <= 0) {
+    if (amount == null || !amount.isFinite || amount <= 0) {
       safeSnackbar('Error', 'Please enter a valid amount', snackPosition: SnackPosition.BOTTOM);
       return;
     }

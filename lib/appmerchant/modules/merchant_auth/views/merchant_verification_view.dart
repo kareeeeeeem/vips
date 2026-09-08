@@ -65,9 +65,9 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(text: 'Enter the 4-digit code sent to\n'),
+                    TextSpan(text: 'Enter the ${controller.otpLength}-digit code sent to\n'),
                     TextSpan(
-                      text: controller.phoneNumber.value,
+                      text: controller.otpDestination.value,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF10B981),
@@ -80,7 +80,7 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
               
               Center(
                 child: Pinput(
-                  length: 4,
+                  length: controller.otpLength,
                   controller: controller.pinController,
                   defaultPinTheme: defaultPinTheme,
                   focusedPinTheme: focusedPinTheme,
@@ -95,7 +95,7 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value ? null : () {
                     final pin = controller.pinController.text;
-                    if (pin.length == 4) controller.verifyOtp(pin);
+                    if (pin.length == controller.otpLength) controller.verifyOtp(pin);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
@@ -129,7 +129,7 @@ class MerchantVerificationView extends GetView<MerchantAuthController> {
                 child: Obx(() => TextButton(
                   onPressed: controller.isLoading.value
                       ? null
-                      : () => controller.login(),
+                      : () => controller.resendOtp(),
                   child: RichText(
                     text: TextSpan(
                       style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6B7280)),

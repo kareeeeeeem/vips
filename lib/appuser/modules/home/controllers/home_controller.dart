@@ -230,6 +230,10 @@ class HomeController extends GetxController {
     Get.toNamed(Routes.GIFT);
   }
 
+  void navigateToVipsClub() {
+    Get.toNamed(Routes.V_I_PS_CLUB);
+  }
+
   // Nouvelles méthodes pour le carousel
   void navigateToElectronics() {
     Get.toNamed(Routes.HOT_DEALS);
@@ -900,8 +904,7 @@ class HomeController extends GetxController {
     {
       'id': '1',
       'name': 'Internet',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+      'imageUrl': null,
       'icon': Icons.wifi,
       'color': 0xFF059669, // Vert
       'type': 'internet',
@@ -910,8 +913,7 @@ class HomeController extends GetxController {
     {
       'id': '2',
       'name': 'Mobile',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+      'imageUrl': null,
       'icon': Icons.smartphone,
       'color': 0xFF3B82F6, // Bleu
       'type': 'mobile',
@@ -920,8 +922,7 @@ class HomeController extends GetxController {
     {
       'id': '3',
       'name': 'Electric',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+      'imageUrl': null,
       'icon': Icons.electrical_services,
       'color': 0xFFF59E0B, // Jaune
       'type': 'electricity',
@@ -930,8 +931,7 @@ class HomeController extends GetxController {
     {
       'id': '4',
       'name': 'Gas',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1572949645841-094f3fd7dd65?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+      'imageUrl': null,
       'icon': Icons.local_gas_station,
       'color': 0xFF64748B, // Gris
       'type': 'gas',
@@ -940,8 +940,7 @@ class HomeController extends GetxController {
     {
       'id': '5',
       'name': 'Water',
-      'imageUrl':
-          'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
+      'imageUrl': null,
       'icon': Icons.water_drop,
       'color': 0xFF06B6D4, // Cyan
       'type': 'water',

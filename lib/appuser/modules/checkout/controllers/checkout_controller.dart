@@ -39,8 +39,10 @@ class CheckoutController extends GetxController {
   final TextEditingController customTipController = TextEditingController();
 
   // Order Summary
-  var subtotal = 31.5.obs;
+  var subtotal = 0.0.obs;
+  final isPlacingOrder = false.obs;
   var deliveryFee = 6.0.obs;
+  final taxAmount = 0.0.obs;
   var discount = 0.0.obs;
 
   // Current VIPS wallet points balance (informational only — /order/create
@@ -56,7 +58,7 @@ class CheckoutController extends GetxController {
 
   // Computed
   double get grandTotal {
-    double total = subtotal.value + deliveryFee.value - discount.value - walletDiscountAmount.value;
+    double total = subtotal.value + deliveryFee.value + taxAmount.value - discount.value - walletDiscountAmount.value;
     // Add tip if selected
     if (selectedTip.value > 0) {
       total += selectedTip.value;
@@ -122,6 +124,8 @@ class CheckoutController extends GetxController {
     if (Get.arguments != null) {
       final args = Get.arguments as Map<String, dynamic>;
 
+      selectedTip.value = _parseDouble(args['tipAmount']);
+      taxAmount.value = _parseDouble(args['taxAmount']);
       if (args.containsKey('subtotal')) {
         subtotal.value = _parseDouble(args['subtotal']);
       }
@@ -887,7 +891,16 @@ class CheckoutController extends GetxController {
 
   // ==================== PLACE ORDER ====================
 
-  void placeOrder() async {
+  Future<void> placeOrder() async {
+    if (isPlacingOrder.value) return;
+    isPlacingOrder.value = true;
+    var loadingOpen = true;
+    void closeLoading() {
+      if (loadingOpen) {
+        loadingOpen = false;
+        Get.back();
+      }
+    }
     // Show loading dialog
     Get.dialog(
       Center(
@@ -942,7 +955,7 @@ class CheckoutController extends GetxController {
               : null;
 
       if (cartController == null || cartController.cartItems.isEmpty) {
-        Get.back();
+        closeLoading();
         safeSnackbar(
           'Error',
           'Cart is empty or unavailable.',
@@ -957,7 +970,7 @@ class CheckoutController extends GetxController {
       // backend.
       final merchantId = cartController.cartItems.first.merchantId;
 
-      final response = await ApiService().post('/order/create', {
+      final request = <String, dynamic>{
         if (merchantId != null && merchantId.isNotEmpty) 'merchantId': merchantId,
         'items': items,
         'paymentMethod':
@@ -970,11 +983,36 @@ class CheckoutController extends GetxController {
                 : 'Pickup',
         'orderType': _orderTypeString(selectedOrderType.value),
         if (couponCode.value.isNotEmpty) 'couponCode': couponCode.value,
-        if (discount.value > 0) 'couponDiscountAmount': discount.value,
+        'tipAmount': selectedTip.value > 0 ? selectedTip.value : customTip.value,
+        'orderNote': cartController.additionalNoteController.text.trim(),
         if (walletPointsRedeemed.value > 0) 'walletPointsRedeemed': walletPointsRedeemed.value,
+      };
+      final quote = await ApiService().post('/order/quote', request);
+      if (!quote.success || quote.data is! Map) {
+        closeLoading();
+        safeSnackbar('Cannot place order', quote.message, snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      final quotedTotal = _parseDouble(quote.data['totalAmount']);
+      final previousTotal = grandTotal;
+      subtotal.value = _parseDouble(quote.data['subtotal']);
+      deliveryFee.value = _parseDouble(quote.data['deliveryCharge']);
+      taxAmount.value = _parseDouble(quote.data['taxAmount']);
+      discount.value = _parseDouble(quote.data['discount']);
+      walletPointsRedeemed.value = (quote.data['pointsUsed'] as num).toInt();
+      walletDiscountAmount.value = _parseDouble(quote.data['walletDiscountAmount']);
+      if ((quotedTotal - previousTotal).abs() > 0.0005) {
+        closeLoading();
+        safeSnackbar('Order total updated',
+          'The current total is ${quotedTotal.toStringAsFixed(3)} TND. Review it and tap Place Order to confirm.',
+          snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+      final response = await ApiService().post('/order/create', {
+        ...request,
+        'expectedTotal': quotedTotal,
       });
-
-      Get.back(); // Close loading dialog
+      closeLoading();
 
       if (response.success) {
         try {
@@ -1002,12 +1040,14 @@ class CheckoutController extends GetxController {
       }
     } catch (e) {
       debugPrint('Place order error: $e');
-      Get.back(); // Close loading dialog
+      closeLoading();
       safeSnackbar(
         'Error',
         'Could not place your order. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
+    } finally {
+      isPlacingOrder.value = false;
     }
   }
 
@@ -1366,23 +1406,29 @@ class CheckoutController extends GetxController {
     String? customValue,
   }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: const Color(0xFF6B7280),
-            fontFamily: 'SF Pro Text',
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: const Color(0xFF6B7280),
+              fontFamily: 'SF Pro Text',
+            ),
           ),
         ),
-        Text(
-          customValue ?? 'D ${value.toStringAsFixed(3)}',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            fontFamily: 'SF Pro Display',
+        SizedBox(width: 8.w),
+        Flexible(
+          child: Text(
+            customValue ?? 'D ${value.toStringAsFixed(3)}',
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+              fontFamily: 'SF Pro Display',
+            ),
           ),
         ),
       ],

@@ -431,7 +431,7 @@ class MerchantDeliveryAddress {
 }
 
 class MerchantCustomer {
-  int? id;
+  String? id;
   String? fName;
   String? lName;
   String? phone;
@@ -452,7 +452,7 @@ class MerchantCustomer {
   });
 
   MerchantCustomer.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    id = json['id']?.toString();
     fName = json['f_name'];
     lName = json['l_name'];
     phone = json['phone'];

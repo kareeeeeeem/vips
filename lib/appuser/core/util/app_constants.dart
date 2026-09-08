@@ -1,3 +1,4 @@
+import 'package:vip/core/services/api_service.dart';
 class AppConstants {
   static const String appName = 'VIPs';
   static const double appVersion = 1.0;
@@ -7,7 +8,8 @@ class AppConstants {
   static const double maxSizeOfASingleFile = 10;
 
   // Base URL for the VIPs backend — update for production deployment
-  static const String baseUrl = 'https://vips-backend.onrender.com';
+  static String get baseUrl =>
+      ApiService.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
 
   // ─── VIPs API Endpoints ────────────────────────────────────────────────────
   // Auth
@@ -35,7 +37,10 @@ class AppConstants {
   static const String leaderboardUri = '/api/user/leaderboard';
   static const String referralUri = '/api/user/referral';
   static const String useReferralUri = '/api/user/referral/use';
-  static const String walletTopupUri = '/api/user/wallet/topup';
+  /// Topping up goes through a payment gateway, not the wallet route — this
+  /// named `/api/user/wallet/topup`, which does not exist. Paymee is the
+  /// TND gateway; `/api/payment/paypal/topup-create` is the other one.
+  static const String walletTopupUri = '/api/payment/paymee/topup-initiate';
   static const String reportsUri = '/api/user/reports';
 
   // Content
@@ -76,7 +81,12 @@ class AppConstants {
   static const String couponsUri = '/api/rewards/coupons';
   /// §4.1: points are added by the merchant, who scans the customer's QR
   /// and enters the invoice. The customer-side endpoint is gone.
-  static const String myQrUri = '/api/user/profile';
+  ///
+  /// This pointed at `/api/user/profile`, which the backend has never served.
+  /// The QR a customer shows at the till comes from `/api/user/vips-id`,
+  /// which returns their short VIPs ID and the `VIPS_ID_<n>` payload the
+  /// merchant app scans.
+  static const String myQrUri = '/api/user/vips-id';
   static const String applyCouponUri = '/api/rewards/apply-coupon';
   static const String giftVouchersUri = '/api/rewards/gift-vouchers';
   static const String purchaseVoucherUri = '/api/rewards/purchase-voucher';

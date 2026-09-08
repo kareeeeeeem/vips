@@ -8,6 +8,10 @@ class VIPsClubController extends GetxController {
   // Observable variables
   var currentBannerIndex = 0.obs;
   var convertibleDiamonds = 0.obs;
+  /// How many diamonds make one loyalty point. Sent by the server so the
+  /// screen never quotes a rate the backend would not honour.
+  var diamondsPerPoint = 100.obs;
+  var diamondsValueTnd = 0.0.obs;
   var pendingDiamonds = 0.obs;
   var suspendedDiamonds = 0.obs;
   var todayCoins = 0.obs;
@@ -48,7 +52,17 @@ class VIPsClubController extends GetxController {
       final response = await ApiService().get('/user/vips-club');
       if (response.success && response.data is Map) {
         final data = response.data as Map;
-        convertibleDiamonds.value = _asInt(data['points'] ?? data['convertibleDiamonds']);
+        // Diamonds, not the loyalty-point balance. This read `points`
+        // first, so a customer's points were displayed as diamonds — a
+        // hundred times their real value in the club.
+        convertibleDiamonds.value =
+            _asInt(data['diamonds'] ?? data['convertibleDiamonds']);
+        diamondsPerPoint.value = _asInt(data['diamondsPerPoint']) == 0
+            ? 100
+            : _asInt(data['diamondsPerPoint']);
+        diamondsValueTnd.value = (data['diamondsValueTnd'] is num)
+            ? (data['diamondsValueTnd'] as num).toDouble()
+            : 0;
         pendingDiamonds.value = _asInt(data['pendingDiamonds'] ?? data['pending']);
         suspendedDiamonds.value = _asInt(data['suspendedDiamonds'] ?? data['suspended']);
         superBonus.value = _asInt(data['superBonus'] ?? data['bonus']);
@@ -215,9 +229,18 @@ class VIPsClubController extends GetxController {
     }
   }
 
+  /// Whole points the current diamond balance is worth.
+  int get pointsFromDiamonds =>
+      diamondsPerPoint.value <= 0 ? 0 : convertibleDiamonds.value ~/ diamondsPerPoint.value;
+
   Future<void> convertDiamonds() async {
-    if (convertibleDiamonds.value < 100) {
-      safeSnackbar('Error', 'Minimum 100 diamonds required', backgroundColor: Colors.red, colorText: Colors.white);
+    if (convertibleDiamonds.value < diamondsPerPoint.value) {
+      safeSnackbar(
+        'Not yet',
+        'You need ${diamondsPerPoint.value} diamonds to make one point.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -230,7 +253,12 @@ class VIPsClubController extends GetxController {
             children: [
               const Text('Convert Diamonds', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              Text('Convert ${convertibleDiamonds.value} diamonds to wallet?', textAlign: TextAlign.center),
+              Text(
+                '${pointsFromDiamonds * diamondsPerPoint.value} diamonds become '
+                '$pointsFromDiamonds point(s).'
+                '${convertibleDiamonds.value % diamondsPerPoint.value > 0 ? '\n\nThe remaining ${convertibleDiamonds.value % diamondsPerPoint.value} stay yours.' : ''}',
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -242,11 +270,17 @@ class VIPsClubController extends GetxController {
                         Get.back();
                         try {
                           final response = await ApiService().post('/user/vips-club/convert', {
-                            'points': convertibleDiamonds.value,
+                            'diamonds': convertibleDiamonds.value,
                           });
                           if (response.success && response.data is Map) {
-                            convertibleDiamonds.value = _asInt((response.data as Map)['newPoints']);
-                            safeSnackbar('Success', 'Diamonds converted!', backgroundColor: Colors.green, colorText: Colors.white);
+                            final d = response.data as Map;
+                            // The balance left, not the points gained — this
+                            // assigned `newPoints` to the diamond counter, so
+                            // after converting the screen showed the point
+                            // balance where the diamonds should be.
+                            convertibleDiamonds.value = _asInt(d['diamondsLeft']);
+                            safeSnackbar('Converted', response.message,
+                                backgroundColor: Colors.green, colorText: Colors.white);
                           } else {
                             safeSnackbar('Error', response.message, backgroundColor: Colors.red, colorText: Colors.white);
                           }

@@ -1,0 +1,3605 @@
+{
+  "scope": "Actual iOS simulator exploration. Tapped means a gesture was dispatched; business outcomes need assertions.",
+  "source_logs": [
+    "/tmp/vips-consumer-buttons.log",
+    "/tmp/vips-consumer-buttons-next.log",
+    "/tmp/vips-consumer-buttons-fixes.log",
+    "/tmp/vips-consumer-profile-verified.log"
+  ],
+  "counts": {
+    "screen": 18,
+    "tapped": 214,
+    "flutter_error": 124,
+    "tap_error": 12,
+    "not_hittable": 5,
+    "requires_external_or_dedicated_flow": 5,
+    "run": 3,
+    "summary": 2
+  },
+  "screens": [
+    "/all-merchants",
+    "/login",
+    "/main-app",
+    "/mobile",
+    "/my-orders",
+    "/notifications",
+    "/phone-login",
+    "/profile",
+    "/promotions",
+    "/search",
+    "/settings",
+    "/signup"
+  ],
+  "finished": false,
+  "records": [
+    {
+      "kind": "screen",
+      "route": "/main-app",
+      "actualRoute": "/main-app",
+      "text": [
+        "What are you looking for?",
+        "1",
+        "100% OFF",
+        "FREE SHIPPING",
+        "On all orders above 500 pts",
+        "View Offer",
+        "Todays Deal",
+        "Flash Deal",
+        "Brands",
+        "Favorites",
+        "%",
+        "Offers",
+        "Bills",
+        "Gaming",
+        "Gift",
+        "Fitness",
+        "Cinema Night Out",
+        "38% OFF",
+        "Mega Pizza Feast",
+        "41% OFF",
+        "Syrian Kitchen Special",
+        "38% OFF",
+        "Featured Categories",
+        "See All",
+        "Nearest\nPlaces",
+        "Computer &\nAccessories",
+        "Beauty &\nCosmetics",
+        "Sports &\nFitness",
+        "Ending Soon",
+        "Less than 24h left",
+        "View All",
+        "50%",
+        "03:45:34",
+        "Flash Burger Offer",
+        "Double smash burger + fries — today only!",
+        "55",
+        "TN",
+        "44%",
+        "05:45:34",
+        "Dessert Extravaganza",
+        "Box of 12 premium macarons + hot drink",
+        "45",
+        "TN",
+        "Hot Deals",
+        "View All",
+        "29%",
+        "4.7",
+        "Dream Park Adventure",
+        "29% off @ Dream Park — rides & shows included",
+        "265",
+        "TN",
+        "375",
+        "41%",
+        "4.5",
+        "Mega Pizza Feast",
+        "Large Pizza + 2 Sides + soft drink",
+        "89",
+        "TN",
+        "150",
+        "Explore Outings"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 0,
+      "label": "icon:63670",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 1,
+      "label": "icon:983357 | What are you looking for?",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 2,
+      "label": "icon:983079 | 1",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 3,
+      "label": "icon:62335",
+      "resultRoute": "/cart",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 8.0 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 32 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 31 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 4,
+      "label": "View Offer | icon:57499",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 5,
+      "label": "icon:61201 | Todays Deal",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 6,
+      "label": "icon:61201 | Todays Deal",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "HTTP request failed, statusCode: 404, https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "Leading widget consumes the entire tile width (including ListTile.contentPadding).\nEither resize the tile width so that the leading widget plus any content padding do not exceed the tile width, or use a sized widget, or consider replacing ListTile with a custom widget.\nSee also: https://api.flutter.dev/flutter/material/ListTile-class.html#material.ListTile.4",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 7,
+      "label": "icon:58236 | Brands",
+      "resultRoute": "/all-merchants",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 8,
+      "label": "icon:61901 | Top",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 9,
+      "label": "icon:57947 | Favorites",
+      "resultRoute": "/favorites",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 8.0 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 32 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/promotions",
+      "message": "A RenderFlex overflowed by 31 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 10,
+      "label": "% | Offers",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 11,
+      "label": "icon:58856 | Gaming",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 12,
+      "label": "icon:57535 | Education",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 13,
+      "label": "icon:58267 | Entertainment",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "not_hittable",
+      "route": "/main-app",
+      "index": 14,
+      "label": "Cinema Night Out | 38% OFF",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 15,
+      "label": "Mega Pizza Feast | 41% OFF",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 16,
+      "label": "Cinema Night Out | 38% OFF",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 17,
+      "label": "",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 18,
+      "label": "",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 19,
+      "label": "",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "HTTP request failed, statusCode: 404, https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "Leading widget consumes the entire tile width (including ListTile.contentPadding).\nEither resize the tile width so that the leading widget plus any content padding do not exceed the tile width, or use a sized widget, or consider replacing ListTile with a custom widget.\nSee also: https://api.flutter.dev/flutter/material/ListTile-class.html#material.ListTile.4",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 20,
+      "label": "See All",
+      "resultRoute": "/all-merchants",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 21,
+      "label": "icon:58283 | Nearest\nPlaces",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 22,
+      "label": "icon:58283 | Nearest\nPlaces",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 23,
+      "label": "Beauty &\nCosmetics",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 24,
+      "label": "Sports &\nFitness",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 25,
+      "label": "View All | icon:57499",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 26,
+      "label": "50% | icon:57948 | icon:57402 | 03:43:22 | Flash Burger Offer | Double smash burger + fries — today only! | 55 | TN | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 27,
+      "label": "44% | icon:57948 | icon:57402 | 05:43:17 | Dessert Extravaganza | Box of 12 premium macarons + hot drink | 45 | TN | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 28,
+      "label": "View All | icon:57499",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 29,
+      "label": "icon:58164 | 29% | icon:58873 | 4.7 | icon:57948 | Dream Park Adventure | 29% off @ Dream Park — rides & shows included | 265 | TN | 375 | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 30,
+      "label": "icon:58164 | 41% | icon:58873 | 4.5 | icon:57948 | Mega Pizza Feast | Large Pizza + 2 Sides + soft drink | 89 | TN | 150 | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 31,
+      "label": "View All | icon:57499",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 32,
+      "label": "Grand Egyptian Museum | World heritage at your doorstep | Culture",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 33,
+      "label": "Walk of Cairo | Outdoor Shopping Experience | Outdoor",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 34,
+      "label": "Walk of Cairo | Outdoor Shopping Experience | Outdoor",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 35,
+      "label": "City Stars Plaza | Retail Therapy & Dining | Shopping",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 36,
+      "label": "Al Azhar Park | Green oasis in the heart of Cairo | Outdoor",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 37,
+      "label": "Al Azhar Park | Green oasis in the heart of Cairo | Outdoor",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 38,
+      "label": "View All | icon:57499",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 39,
+      "label": "icon:62956 | -41% | icon:983508 | 4.5 | Mega Pizza Feast | icon:62842 | icon:61358 | Large Pizza + 2 Sides + soft drink | 89 | TN | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 40,
+      "label": "-38% | icon:983508 | 4.8 | Syrian Kitchen Special | icon:62842 | icon:61358 | Authentic Syrian & Egyptian dishes for two | 99 | TN | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 41,
+      "label": "icon:62956 | -37% | icon:983508 | 0 | El Demeshky | icon:62842 | icon:61358 | Syrian & Egyptian dishes | 99 | TN | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 42,
+      "label": "Fresh Mart",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 43,
+      "label": "Fashion Hub",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 44,
+      "label": "TechZone Store",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 45,
+      "label": "TechZone Store",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 46,
+      "label": "View All | icon:57499",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 47,
+      "label": "icon:58164 | 41% | icon:58873 | 4.5 | icon:57948 | Mega Pizza Feast | Large Pizza + 2 Sides + soft drink | 89 | TN | 150 | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 48,
+      "label": "38% | icon:58873 | 4.8 | icon:57948 | Syrian Kitchen Special | Authentic Syrian & Egyptian dishes for two | 99 | TN | 160 | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 49,
+      "label": "38% | icon:58873 | 4.3 | icon:57948 | Cinema Night Out | Premium seat + popcorn + drink combo | 75 | TN | 120 | icon:62625",
+      "resultRoute": "/deal-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 50,
+      "label": "icon:58636 | Home Internet",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 51,
+      "label": "icon:58636 | Mobile Bills",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 52,
+      "label": "Gas Bill",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 53,
+      "label": "TV/Cable",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 54,
+      "label": "Insurance",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 55,
+      "label": "See all",
+      "resultRoute": "/hot-deals",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "HTTP request failed, statusCode: 404, https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "Leading widget consumes the entire tile width (including ListTile.contentPadding).\nEither resize the tile width so that the leading widget plus any content padding do not exceed the tile width, or use a sized widget, or consider replacing ListTile with a custom widget.\nSee also: https://api.flutter.dev/flutter/material/ListTile-class.html#material.ListTile.4",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 56,
+      "label": "Pick Again",
+      "resultRoute": "/all-merchants",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "HTTP request failed, statusCode: 404, https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/all-merchants",
+      "message": "Leading widget consumes the entire tile width (including ListTile.contentPadding).\nEither resize the tile width so that the leading widget plus any content padding do not exceed the tile width, or use a sized widget, or consider replacing ListTile with a custom widget.\nSee also: https://api.flutter.dev/flutter/material/ListTile-class.html#material.ListTile.4",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/main-app",
+      "index": 57,
+      "label": "Nearest for you",
+      "resultRoute": "/all-merchants",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 58,
+      "label": "2B | Gift Card | From | 500 TND | Up to 20000 TND",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 59,
+      "label": "2B | Gift Card | From | 500 TND | Up to 20000 TND",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 60,
+      "label": "2B | Gift Card | From | 500 TND | Up to 20000 TND",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 61,
+      "label": "Amazon | Gift Card | From | 200 USD | Up to 10000 USD",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 62,
+      "label": "icon:62535 | Home",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 63,
+      "label": "icon:63113 | Offers",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 64,
+      "label": "icon:62996 | Digital",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 65,
+      "label": "icon:62589 | Account",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/main-app",
+      "index": 66,
+      "label": "icon:62752",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/my-orders",
+      "actualRoute": "/my-orders",
+      "text": [
+        "You have not placed an order yet.",
+        "My orders"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/my-orders",
+      "index": 0,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/login",
+      "actualRoute": "/login",
+      "text": [
+        "Welcome Back",
+        "Please sign in to continue",
+        "Email",
+        "Password",
+        "Forgot Password?",
+        "Sign In",
+        "Continue as Guest",
+        "Or continue with",
+        "Sign in with Phone",
+        "Don't have an account? ",
+        "Sign Up"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 0,
+      "label": "icon:62624",
+      "resultRoute": "/login",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 1,
+      "label": "Forgot Password?",
+      "resultRoute": "/forgot-password",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 2,
+      "label": "Sign In",
+      "resultRoute": "/login",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 3,
+      "label": "icon:983148 | Continue as Guest",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "A RenderFlex overflowed by 99278 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "requires_external_or_dedicated_flow",
+      "route": "/login",
+      "index": 4,
+      "label": "",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "requires_external_or_dedicated_flow",
+      "route": "/login",
+      "index": 5,
+      "label": "",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "requires_external_or_dedicated_flow",
+      "route": "/login",
+      "index": 6,
+      "label": "",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 7,
+      "label": "icon:983167 | Sign in with Phone",
+      "resultRoute": "/phone-login",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/login",
+      "index": 8,
+      "label": "Sign Up",
+      "resultRoute": "/signup",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/phone-login",
+      "actualRoute": "/phone-login",
+      "text": [
+        "Sign in with Phone",
+        "Enter your phone number and we'll send you a verification code.",
+        "+20 123 456 7890",
+        "Send Code"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/phone-login",
+      "index": 0,
+      "label": "Send Code",
+      "resultRoute": "/phone-login",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/phone-login",
+      "index": 1,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/signup",
+      "actualRoute": "/signup",
+      "text": [
+        "Create Account",
+        "Sign up to get started",
+        "Full Name",
+        "John Doe",
+        "Phone Number",
+        "+1234567890",
+        "Email",
+        "your@email.com",
+        "Password",
+        "••••••••",
+        "Confirm Password",
+        "••••••••",
+        "Create Account",
+        "Or sign up with",
+        "Already have an account? ",
+        "Sign In"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/signup",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/signup",
+      "index": 0,
+      "label": "icon:59070",
+      "resultRoute": "/signup",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/signup",
+      "message": "\"HomeController\" not found. You need to call \"Get.put(HomeController())\" or \"Get.lazyPut(()=>HomeController())\"",
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/signup",
+      "index": 1,
+      "label": "icon:59070",
+      "resultRoute": "/signup",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons.log"
+    },
+    {
+      "kind": "run",
+      "harnessVersion": 2,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/search",
+      "actualRoute": "/search",
+      "text": [
+        "Search restaurants, food...",
+        "Popular Searches",
+        "Fast Food",
+        "Pizza",
+        "Burgers",
+        "Shopping",
+        "Entertainment"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/search",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/search",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/search",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/search",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/search",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/search",
+      "index": 1,
+      "label": "icon:59011",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 2,
+      "label": "Fast Food",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 3,
+      "label": "Pizza",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 4,
+      "label": "Burgers",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 5,
+      "label": "Shopping",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 6,
+      "label": "Entertainment",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/notifications",
+      "actualRoute": "/notifications",
+      "text": [
+        "Notifications",
+        "All",
+        "Unread",
+        "Promotions",
+        "Welcome to VIPs!",
+        "Your account is ready. Explore new offers and start ordering today.",
+        "System",
+        "9/7/2026, 2:46:25 PM",
+        "Options"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 1,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 2,
+      "label": "icon:63655",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 3,
+      "label": "icon:63655",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 4,
+      "label": "All",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 5,
+      "label": "Unread",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 6,
+      "label": "Promotions",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/notifications",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/notifications",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/notifications",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/notifications",
+      "index": 7,
+      "label": "icon:983640",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 8,
+      "label": "icon:63510 | Welcome to VIPs! | Your account is ready. Explore new offers and start ordering today. | System | icon:62746 | 9/7/2026, 2:46:25 PM | Options",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/profile",
+      "actualRoute": "/profile",
+      "text": [
+        "Last Connection",
+        "Yesterday 20:12",
+        "QA Customer",
+        "Current Package",
+        "Free",
+        "1",
+        "Alerts",
+        "VIPsID",
+        "Wallet Points",
+        "10000 points available",
+        "Mob credit",
+        "Gifted",
+        "Giftback",
+        "Pay Bill",
+        "Promotions",
+        "VIPs Club",
+        "In order to be qualified you must:",
+        "10000",
+        "VIP",
+        "To reach the minimum VIPs Points eligible to Win Super Bonus",
+        "40%",
+        "Complete your Profile",
+        "In order to be premium you must:",
+        "Choose Payment Method",
+        "Verify Your Account now"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 0,
+      "label": "icon:58513",
+      "resultRoute": "/vips-club-history",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 1,
+      "label": "icon:62318",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 2,
+      "label": "Current Package | Free",
+      "resultRoute": "/packages",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 3,
+      "label": "icon:62007 | 1 | Alerts",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 4,
+      "label": "icon:60979 | VIPsID",
+      "resultRoute": "/VipsIdPage",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 5,
+      "label": "Wallet Points | 10000 points available | icon:57500",
+      "resultRoute": "/PinValidator",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/mobile",
+      "message": "HTTP request failed, statusCode: 400, https://upload.wikimedia.org/wikipedia/fr/thumb/f/f9/LOGO_TT_.jpg/1200px-LOGO_TT_.jpg",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/mobile",
+      "message": "HTTP request failed, statusCode: 400, https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/200px-Orange_logo.svg.png",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/profile",
+      "index": 6,
+      "label": "icon:58531 | Mob credit",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/mobile",
+      "message": "HandshakeException: Handshake error in client (OS Error: \n\tCERTIFICATE_VERIFY_FAILED: application verification failure(handshake.cc:298))",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 7,
+      "label": "icon:57662 | Gifted",
+      "resultRoute": "/gift",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 8,
+      "label": "icon:58707 | Giftback",
+      "resultRoute": "/giftback",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 9,
+      "label": "icon:58497 | Pay Bill",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 10,
+      "label": "icon:984765 | Promotions",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 11,
+      "label": "icon:57900 | VIPs Club",
+      "resultRoute": "/v-i-ps-club",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 12,
+      "label": "Complete your Profile",
+      "resultRoute": "/edit-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 5.9 pixels on the right.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 13,
+      "label": "icon:63047 | Choose Payment Method | icon:57695",
+      "resultRoute": "/credit",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/settings",
+      "actualRoute": "/settings",
+      "text": [
+        "General",
+        "Language",
+        "English",
+        "Dark Mode",
+        "Security",
+        "Biometric Authentication",
+        "Use fingerprint or face ID",
+        "Two-Factor Authentication",
+        "Extra security for your account",
+        "Change Password",
+        "Reset PIN",
+        "Notifications",
+        "Push Notifications",
+        "Email Notifications",
+        "SMS Notifications",
+        "Order Updates",
+        "Promotions & Offers",
+        "Privacy",
+        "Location Services",
+        "Allow app to access your location",
+        "Data Sharing",
+        "Share data for analytics",
+        "About",
+        "Help & Support",
+        "Privacy Policy",
+        "Terms of Service",
+        "About",
+        "Other",
+        "Clear Cache",
+        "Free up storage space",
+        "Danger Zone",
+        "Logout",
+        "Delete Account",
+        "Permanently delete your account",
+        "Version 1.0.0",
+        "Settings"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/settings",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/settings",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/settings",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/settings",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/settings",
+      "index": 0,
+      "label": "icon:58214 | Language | English | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 1,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 2,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 3,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 4,
+      "label": "icon:58289 | Change Password | icon:57500",
+      "resultRoute": "/change-password",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 5,
+      "label": "icon:62122 | Reset PIN | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 6,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 7,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 8,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 9,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 10,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 11,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 12,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 13,
+      "label": "icon:58123 | Help & Support | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 14,
+      "label": "icon:62160 | Privacy Policy | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 15,
+      "label": "icon:61358 | Terms of Service | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 16,
+      "label": "icon:58173 | About | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 17,
+      "label": "icon:61270 | Clear Cache | Free up storage space | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 18,
+      "label": "icon:58291 | Logout | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "requires_external_or_dedicated_flow",
+      "route": "/settings",
+      "index": 19,
+      "label": "icon:57786 | Delete Account | Permanently delete your account | icon:57500",
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 20,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 21,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/promotions",
+      "actualRoute": "/promotions",
+      "text": [
+        "Promotions",
+        "Order Offers",
+        "Shipping Offers",
+        "Add New Promotions",
+        "20% OFF",
+        "On your next purchase",
+        "Valid until 2026-09-21",
+        "DOUBLE POINTS",
+        "Earn 2× VIPs diamonds this weekend",
+        "Valid until 2026-10-07",
+        "10% CASHBACK",
+        "On all food orders",
+        "Valid until 2026-09-14",
+        "Apply"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 1,
+      "label": "Order Offers",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 2,
+      "label": "Shipping Offers",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 3,
+      "label": "icon:57424 | Add New Promotions | icon:58615",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-next.log"
+    },
+    {
+      "kind": "run",
+      "harnessVersion": 2,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/promotions",
+      "actualRoute": "/promotions",
+      "text": [
+        "Promotions",
+        "Order Offers",
+        "Shipping Offers",
+        "Add New Promotions",
+        "20% OFF",
+        "On your next purchase",
+        "Valid until 2026-09-21",
+        "DOUBLE POINTS",
+        "Earn 2× VIPs diamonds this weekend",
+        "Valid until 2026-10-07",
+        "10% CASHBACK",
+        "On all food orders",
+        "Valid until 2026-09-14",
+        "Apply"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 1,
+      "label": "Order Offers",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 2,
+      "label": "Shipping Offers",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 3,
+      "label": "icon:57424 | Add New Promotions | icon:58615",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 4,
+      "label": "icon:58652 | icon:58268 | 20% OFF | On your next purchase | icon:58710 | Valid until 2026-09-21",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 5,
+      "label": "icon:58652",
+      "resultRoute": "/PromotionDetailPage",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 6,
+      "label": "icon:58652",
+      "resultRoute": "/PromotionDetailPage",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 7,
+      "label": "icon:58652 | icon:58268 | DOUBLE POINTS | Earn 2× VIPs diamonds this weekend | icon:58710 | Valid until 2026-10-07",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "not_hittable",
+      "route": "/promotions",
+      "index": 8,
+      "label": "icon:58652",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "not_hittable",
+      "route": "/promotions",
+      "index": 9,
+      "label": "icon:58652",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 10,
+      "label": "icon:58652 | icon:58268 | 10% CASHBACK | On all food orders | icon:58710 | Valid until 2026-09-14",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "not_hittable",
+      "route": "/promotions",
+      "index": 11,
+      "label": "icon:58652",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "not_hittable",
+      "route": "/promotions",
+      "index": 12,
+      "label": "icon:58652",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/promotions",
+      "index": 13,
+      "label": "Apply",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/all-merchants",
+      "actualRoute": "/all-merchants",
+      "text": [
+        "QA Store",
+        "Food",
+        "Fresh Mart",
+        "Grocery",
+        "Fashion Hub",
+        "Fashion",
+        "TechZone Store",
+        "Electronics",
+        "Burger Palace",
+        "Food",
+        "Trending Merchants"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 0,
+      "label": "icon:58890 | QA Store | Food | icon:57500",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 1,
+      "label": "Fresh Mart | Grocery | icon:57500",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 2,
+      "label": "Fashion Hub | Fashion | icon:57500",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 3,
+      "label": "TechZone Store | Electronics | icon:57500",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 4,
+      "label": "icon:58890 | Burger Palace | Food | icon:57500",
+      "resultRoute": "/merchant-details",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 5,
+      "label": "Back | icon:62832",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/all-merchants",
+      "index": 6,
+      "label": "icon:62832",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/mobile",
+      "actualRoute": "/mobile",
+      "text": [
+        "Mobile Card",
+        "Choose Operator",
+        "Orange",
+        "Ooredoo",
+        "Tunisie Telecom",
+        "Choose Credit Amount",
+        "Crd 5 TND",
+        "Crd 2 TND",
+        "Crd 10 TND",
+        "How it works",
+        "Required conditions",
+        "Cancel",
+        "Proceed"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 0,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 1,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 2,
+      "label": "Orange",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 3,
+      "label": "Ooredoo",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 4,
+      "label": "icon:62364 | Tunisie Telecom",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 5,
+      "label": "Crd 5 TND",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 6,
+      "label": "Crd 2 TND",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 7,
+      "label": "Crd 10 TND",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 8,
+      "label": "How it works | icon:57926",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 9,
+      "label": "Required conditions | icon:57926",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 10,
+      "label": "Cancel",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/mobile",
+      "index": 11,
+      "label": "Proceed",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/search",
+      "actualRoute": "/search",
+      "text": [
+        "Search restaurants, food...",
+        "Popular Searches",
+        "Fast Food",
+        "Pizza",
+        "Burgers",
+        "Shopping",
+        "Entertainment"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 1,
+      "label": "icon:59011",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 2,
+      "label": "Fast Food",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 3,
+      "label": "Pizza",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 4,
+      "label": "Burgers",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 5,
+      "label": "Shopping",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/search",
+      "index": 6,
+      "label": "Entertainment",
+      "resultRoute": "/search",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/profile",
+      "actualRoute": "/profile",
+      "text": [
+        "Last Connection",
+        "Today 00:30",
+        "QA Customer",
+        "Current Package",
+        "Free",
+        "Alerts",
+        "VIPsID",
+        "Wallet Points",
+        "10000 points available",
+        "Mob credit",
+        "Gifted",
+        "Giftback",
+        "Pay Bill",
+        "Promotions",
+        "VIPs Club",
+        "In order to be qualified you must:",
+        "10000",
+        "VIP",
+        "To reach the minimum VIPs Points eligible to Win Super Bonus",
+        "40%",
+        "Complete your Profile",
+        "In order to be premium you must:",
+        "Choose Payment Method",
+        "Verify Your Account now"
+      ],
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 0,
+      "label": "icon:58513",
+      "resultRoute": "/vips-club-history",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 1,
+      "label": "icon:62318",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 2,
+      "label": "Current Package | Free",
+      "resultRoute": "/packages",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 3,
+      "label": "icon:62007 | Alerts",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 4,
+      "label": "icon:60979 | VIPsID",
+      "resultRoute": "/VipsIdPage",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 5,
+      "label": "Wallet Points | 10000 points available | icon:57500",
+      "resultRoute": "/PinValidator",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 6,
+      "label": "icon:58531 | Mob credit",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 7,
+      "label": "icon:57662 | Gifted",
+      "resultRoute": "/gift",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 8,
+      "label": "icon:58707 | Giftback",
+      "resultRoute": "/giftback",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 9,
+      "label": "icon:58497 | Pay Bill",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 10,
+      "label": "icon:984765 | Promotions",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 11,
+      "label": "icon:57900 | VIPs Club",
+      "resultRoute": "/v-i-ps-club",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 12,
+      "label": "Complete your Profile",
+      "resultRoute": "/edit-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "Incorrect use of ParentDataWidget.\nThe ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\nUsually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\nThe offending Expanded is currently placed inside a Wrap widget.\nThe ownership chain for the RenderObject that received the incompatible parent data was:\n  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/profile",
+      "message": "A RenderFlex overflowed by 138 pixels on the bottom.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 13,
+      "label": "icon:63047 | Choose Payment Method | icon:57695",
+      "resultRoute": "/credit",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "summary",
+      "records": 117,
+      "flutterErrors": 57,
+      "note": "A dispatched tap is exploratory coverage, not proof of its business outcome.",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/main-app",
+      "message": "Expected: empty\n  Actual: [\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'A RenderFlex overflowed by 138 pixels on the bottom.',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'A RenderFlex overflowed by 138 pixels on the bottom.',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'A RenderFlex overflowed by 138 pixels on the bottom.',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            'Incorrect use of ParentDataWidget.\\n'\n              'The ParentDataWidget Expanded(flex: 1) wants to apply ParentData of type FlexParentData to a RenderObject, which has been set up to accept ParentData of incompatible type WrapParentData.\\n'\n              'Usually, this means that the Expanded widget has the wrong ancestor RenderObjectWidget. Typically, Expanded widgets are placed directly inside Flex widgets.\\n'\n              'The offending Expanded is currently placed inside a Wrap widget.\\n'\n              'The ownership chain for the RenderObject that received the incompatible parent data was:\\n'\n              '  _GestureSemantics ← RawGestureDetector ← GestureDetector ← Obx ← Expanded ← Wrap ← Padding ← Column ← ColoredBox ← Container ← ⋯',\n            ...\n          ]\nFix all runtime errors found during exploration",
+      "source_log": "/tmp/vips-consumer-buttons-fixes.log"
+    },
+    {
+      "kind": "run",
+      "harnessVersion": 2,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/profile",
+      "actualRoute": "/profile",
+      "text": [
+        "Last Connection",
+        "Today 06:29",
+        "QA Customer",
+        "Current Package",
+        "Free",
+        "Alerts",
+        "VIPsID",
+        "Wallet Points",
+        "10000 points available",
+        "Mob credit",
+        "Gifted",
+        "Giftback",
+        "Pay Bill",
+        "Promotions",
+        "VIPs Club",
+        "In order to be qualified you must:",
+        "10000",
+        "VIP",
+        "To reach the minimum VIPs Points eligible to Win Super Bonus",
+        "40%",
+        "Complete your Profile",
+        "In order to be premium you must:",
+        "Choose Payment Method",
+        "Verify Your Account now"
+      ],
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 0,
+      "label": "icon:58513",
+      "resultRoute": "/vips-club-history",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 1,
+      "label": "icon:62318",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 2,
+      "label": "Current Package | Free",
+      "resultRoute": "/packages",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 3,
+      "label": "icon:62007 | Alerts",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 4,
+      "label": "icon:60979 | VIPsID",
+      "resultRoute": "/VipsIdPage",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 5,
+      "label": "Wallet Points | 10000 points available | icon:57500",
+      "resultRoute": "/PinValidator",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 6,
+      "label": "icon:58531 | Mob credit",
+      "resultRoute": "/mobile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 7,
+      "label": "icon:57662 | Gifted",
+      "resultRoute": "/gift",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 8,
+      "label": "icon:58707 | Giftback",
+      "resultRoute": "/giftback",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 9,
+      "label": "icon:58497 | Pay Bill",
+      "resultRoute": "/pay-bills",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 10,
+      "label": "icon:984765 | Promotions",
+      "resultRoute": "/promotions",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 11,
+      "label": "icon:57900 | VIPs Club",
+      "resultRoute": "/v-i-ps-club",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 12,
+      "label": "Complete your Profile",
+      "resultRoute": "/edit-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/profile",
+      "index": 13,
+      "label": "icon:63047 | Choose Payment Method | icon:57695",
+      "resultRoute": "/credit",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/notifications",
+      "actualRoute": "/notifications",
+      "text": [
+        "Notifications",
+        "All",
+        "Unread",
+        "Promotions",
+        "Welcome to VIPs!",
+        "Your account is ready. Explore new offers and start ordering today.",
+        "System",
+        "9/7/2026, 2:46:25 PM",
+        "Options"
+      ],
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 0,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 1,
+      "label": "icon:57492",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 2,
+      "label": "icon:63655",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 3,
+      "label": "icon:63655",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 4,
+      "label": "All",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 5,
+      "label": "Unread",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 6,
+      "label": "Promotions",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 7,
+      "label": "icon:983640",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/notifications",
+      "index": 8,
+      "label": "icon:63510 | Welcome to VIPs! | Your account is ready. Explore new offers and start ordering today. | System | icon:62746 | 9/7/2026, 2:46:25 PM | Options",
+      "resultRoute": "/notifications",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/settings",
+      "actualRoute": "/settings",
+      "text": [
+        "General",
+        "Language",
+        "English",
+        "Dark Mode",
+        "Security",
+        "Biometric Authentication",
+        "Use fingerprint or face ID",
+        "Two-Factor Authentication",
+        "Extra security for your account",
+        "Change Password",
+        "Reset PIN",
+        "Notifications",
+        "Push Notifications",
+        "Email Notifications",
+        "SMS Notifications",
+        "Order Updates",
+        "Promotions & Offers",
+        "Privacy",
+        "Location Services",
+        "Allow app to access your location",
+        "Data Sharing",
+        "Share data for analytics",
+        "About",
+        "Help & Support",
+        "Privacy Policy",
+        "Terms of Service",
+        "About",
+        "Other",
+        "Clear Cache",
+        "Free up storage space",
+        "Danger Zone",
+        "Logout",
+        "Delete Account",
+        "Permanently delete your account",
+        "Version 1.0.0",
+        "Settings"
+      ],
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 0,
+      "label": "icon:58214 | Language | English | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 1,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 2,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 3,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 4,
+      "label": "icon:58289 | Change Password | icon:57500",
+      "resultRoute": "/change-password",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 5,
+      "label": "icon:62122 | Reset PIN | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 6,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 7,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 8,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 9,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 10,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 11,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 12,
+      "label": "",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 13,
+      "label": "icon:58123 | Help & Support | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 14,
+      "label": "icon:62160 | Privacy Policy | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 15,
+      "label": "icon:61358 | Terms of Service | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 16,
+      "label": "icon:58173 | About | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 17,
+      "label": "icon:61270 | Clear Cache | Free up storage space | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 18,
+      "label": "icon:58291 | Logout | icon:57500",
+      "resultRoute": "/settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "requires_external_or_dedicated_flow",
+      "route": "/settings",
+      "index": 19,
+      "label": "icon:57786 | Delete Account | Permanently delete your account | icon:57500",
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 20,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/settings",
+      "index": 21,
+      "label": "icon:57490",
+      "resultRoute": "/main-app",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    },
+    {
+      "kind": "summary",
+      "records": 49,
+      "flutterErrors": 0,
+      "note": "A dispatched tap is exploratory coverage, not proof of its business outcome.",
+      "source_log": "/tmp/vips-consumer-profile-verified.log"
+    }
+  ]
+}

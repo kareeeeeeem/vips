@@ -46,6 +46,7 @@ class StockItem {
 }
 
 class MerchantStockController extends GetxController {
+  final searchQuery = ''.obs;
   final stockItems = <StockItem>[].obs;
   final isLoading = false.obs;
   final totalInventoryValue = 0.0.obs;

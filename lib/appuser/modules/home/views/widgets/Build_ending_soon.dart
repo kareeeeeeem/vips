@@ -12,14 +12,12 @@ class BuildEndingSoon extends StatelessWidget {
     required this.deals,
     required this.onDealTap,
     required this.onViewAll,
-    required this.onAddToBasket,
     required this.onToggleFavorite,
   });
 
   final List<Map<String, dynamic>> deals;
   final Function(Map<String, dynamic>) onDealTap;
   final VoidCallback onViewAll;
-  final Function(Map<String, dynamic>) onAddToBasket;
   final Function(Map<String, dynamic>) onToggleFavorite;
 
   @override
@@ -149,7 +147,6 @@ class BuildEndingSoon extends StatelessWidget {
                   child: BuildOfferCardWithTimer(
                     deal: deal,
                     onTap: () => onDealTap(deal),
-                    onAddToBasket: () => onAddToBasket(deal),
                     isFavorite: isFav,
                     onToggleFavorite: () => onToggleFavorite(deal),
                     endTime: DateTime.tryParse(deal['endTime']?.toString() ?? '') ??
@@ -171,7 +168,6 @@ class BuildOfferCardWithTimer extends StatefulWidget {
     super.key,
     required this.deal,
     required this.onTap,
-    required this.onAddToBasket,
     required this.onToggleFavorite,
     required this.endTime,
     this.isFavorite = false,
@@ -179,7 +175,6 @@ class BuildOfferCardWithTimer extends StatefulWidget {
 
   final Map<String, dynamic> deal;
   final VoidCallback onTap;
-  final VoidCallback onAddToBasket;
   final VoidCallback onToggleFavorite;
   final DateTime endTime;
   final bool isFavorite;
@@ -448,7 +443,7 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: widget.onAddToBasket,
+                      onTap: widget.onTap,
                       child: Container(
                         width: 40.w,
                         height: 40.h,
@@ -471,7 +466,9 @@ class _BuildOfferCardWithTimerState extends State<BuildOfferCardWithTimer> {
                           ],
                         ),
                         child: Icon(
-                          Icons.add_shopping_cart,
+                          // An invitation to look, not to buy — see
+                          // build_offer_card for why.
+                          Icons.visibility_outlined,
                           color: Colors.white,
                           size: 18.sp,
                         ),

@@ -13,6 +13,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vip/core/services/api_service.dart';
+import 'package:vip/appuser/modules/Cart/controllers/cart_controller.dart';
+import 'package:vip/appmerchant/core/api/api_client.dart' as merchant;
+import 'package:vip/appuser/core/api/api_client.dart' as consumer;
+import 'package:vip/appmerchant/core/util/app_constants.dart' as merchant_config;
+import 'package:vip/appuser/core/util/app_constants.dart' as consumer_config;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +56,7 @@ void main() {
               'echo': echoBody,
               'method': method,
               'authHeader': request.headers.value('authorization'),
+              'query': request.uri.queryParameters,
             },
           };
           request.response.statusCode = 200;
@@ -62,6 +68,23 @@ void main() {
         case '/unauthorized':
           body = {'success': false, 'message': 'Token expired'};
           request.response.statusCode = 401;
+          break;
+        case '/late-unauthorized':
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          body = {'success': false, 'message': 'Old session expired'};
+          request.response.statusCode = 401;
+          break;
+        case '/plain-map':
+          body = {'orders': <dynamic>[], 'total_size': 0};
+          request.response.statusCode = 200;
+          break;
+        case '/numeric-error':
+          body = {'success': false, 'message': 123};
+          request.response.statusCode = 400;
+          break;
+        case '/created':
+          body = {'success': true, 'data': {'id': 'created-record'}};
+          request.response.statusCode = 201;
           break;
         case '/auth/login':
           body = {'success': false, 'message': 'Invalid phone or password'};
@@ -81,11 +104,30 @@ void main() {
     await server.close(force: true);
   });
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    await ApiService().init();
   });
 
   group('successful requests', () {
+    test('consecutive failed cart writes restore the last confirmed quantity', () async {
+      final controller = CartController();
+      final item = CartItem(id: 'failed-cart-line', name: 'Item', description: '',
+          price: 10, type: CartItemType.product);
+      controller.cartItems.clear();
+      controller.cartItems.add(item);
+      controller.increaseQuantity(item);
+      controller.increaseQuantity(item);
+      expect(item.quantity, 3);
+      // The local server rejects both /cart/update writes. Wait for the
+      // observable rollback rather than assuming a fixed network duration.
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while (item.quantity == 3 && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(item.quantity, 1);
+    });
+
     test('get() returns a successful ApiResponse', () async {
       final response = await ApiService().get('/ok');
       expect(response.success, isTrue);
@@ -121,6 +163,7 @@ void main() {
         queryParams: {'page': '2'},
       );
       expect(response.success, isTrue);
+      expect(response.data['query']['page'], '2');
     });
 
     test('a stored token is sent as a Bearer Authorization header', () async {
@@ -134,6 +177,86 @@ void main() {
       await ApiService().clearToken();
       final response = await ApiService().get('/ok');
       expect(response.data['authHeader'], isNull);
+    });
+  });
+
+  group('shared session and response contracts', () {
+    test('consumer legacy client preserves created records and server failures', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final client = consumer.ApiClient(appBaseUrl: ApiService.baseUrl, sharedPreferences: prefs);
+      final created = await client.postData('/created', {});
+      expect(created.statusCode, 201);
+      expect(created.body['data']['id'], 'created-record');
+      final failure = await client.getData('/server-error');
+      expect(failure.statusCode, 500);
+      expect(failure.body['message'], 'Something broke server-side');
+    });
+    test('both HTTP clients follow login and logout without reconstruction', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final merchantClient = merchant.ApiClient(appBaseUrl: ApiService.baseUrl, sharedPreferences: prefs);
+      final userClient = consumer.ApiClient(appBaseUrl: ApiService.baseUrl, sharedPreferences: prefs);
+      await ApiService().setToken('first-session');
+      expect((await merchantClient.getData('/ok')).body['data']['authHeader'], 'Bearer first-session');
+      await ApiService().setToken('second-session');
+      expect((await merchantClient.getData('/ok')).body['data']['authHeader'], 'Bearer second-session');
+      expect((await userClient.getData('/ok')).body['data']['authHeader'], 'Bearer second-session');
+      await ApiService().clearToken();
+      expect(prefs.getString('token'), isNull);
+      expect((await merchantClient.getData('/ok')).body['data']['authHeader'], isNull);
+      expect((await userClient.getData('/ok')).body['data']['authHeader'], isNull);
+      await ApiService().init();
+      expect(ApiService().isLoggedIn, isFalse);
+    });
+
+    test('legacy HTTP clients preserve existing and supplied query parameters', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final client = merchant.ApiClient(appBaseUrl: ApiService.baseUrl, sharedPreferences: prefs);
+      final response = await client.getData('/ok?status=pending', query: {'offset': 10});
+      expect(response.body['data']['query'], {'status': 'pending', 'offset': '10'});
+    });
+
+    test('API base override reaches both apps legacy clients', () {
+      expect(merchant_config.AppConstants.baseUrl, ApiService.baseUrl);
+      expect(consumer_config.AppConstants.baseUrl, ApiService.baseUrl);
+    });
+
+    test('a plain map response retains its data', () async {
+      final response = await ApiService().get('/plain-map');
+      expect(response.success, isTrue);
+      expect(response.data['orders'], isEmpty);
+      expect(response.data['total_size'], 0);
+    });
+
+    test('non-string server errors are converted to messages', () async {
+      final response = await ApiService().get('/numeric-error');
+      expect(response.success, isFalse);
+      expect(response.message, '123');
+    });
+
+    test('401 clears both saved token copies and completes the request', () async {
+      await ApiService().setToken('expired');
+      final response = await ApiService().get('/unauthorized');
+      final prefs = await SharedPreferences.getInstance();
+      expect(response.statusCode, 401);
+      expect(ApiService().isLoggedIn, isFalse);
+      expect(prefs.getString('auth_token'), isNull);
+      expect(prefs.getString('token'), isNull);
+    });
+
+    test('a late 401 from a previous session cannot sign out a new login', () async {
+      await ApiService().setToken('old');
+      final pending = ApiService().get('/late-unauthorized');
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      await ApiService().setToken('new');
+      await pending;
+      expect(ApiService().authToken, 'new');
+    });
+
+    test('an empty token is not a session', () async {
+      expect(() => ApiService().setToken('  '), throwsArgumentError);
+      SharedPreferences.setMockInitialValues({'auth_token': ''});
+      await ApiService().init();
+      expect(ApiService().isLoggedIn, isFalse);
     });
   });
 
@@ -175,11 +298,4 @@ void main() {
     });
   });
 
-  // A "401 clears the token and navigates to the login route" test was
-  // deliberately left out: the request's onError interceptor calls
-  // Get.offAllNamed(...) mid-flight from inside the awaited get() call,
-  // before the test ever reaches a pump/pumpAndSettle to drive the route
-  // transition's animation forward — that's a real deadlock (confirmed by
-  // hanging indefinitely), not a flaky timing issue, so it isn't safely
-  // testable this way without changing production navigation code.
 }

@@ -6,12 +6,29 @@ import '../controllers/merchant_catalog_controller.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 import 'widgets/uploads_banner.dart';
 
-class CreateItemView extends GetView<MerchantCatalogController> {
+class CreateItemView extends StatefulWidget {
   const CreateItemView({super.key});
+
+  @override
+  State<CreateItemView> createState() => _CreateItemViewState();
+}
+
+class _CreateItemViewState extends State<CreateItemView> {
+  MerchantCatalogController get controller =>
+      Get.find<MerchantCatalogController>();
+  late final Map<String, dynamic>? editItem;
+
+  @override
+  void initState() {
+    super.initState();
+    editItem = Get.arguments as Map<String, dynamic>?;
+    controller.resetItemForm();
+    _initEditMode();
+  }
 
   /// Pre-populate form when editing an existing item passed via Get.arguments.
   void _initEditMode() {
-    final item = Get.arguments as Map<String, dynamic>?;
+    final item = editItem;
     if (item == null) return;
     controller.itemNameCtrl.text = item['name']?.toString() ?? '';
     controller.itemCodeCtrl.text = item['code']?.toString() ?? '';
@@ -19,25 +36,36 @@ class CreateItemView extends GetView<MerchantCatalogController> {
     controller.itemAlertQtyCtrl.text = (item['alertQty'] ?? '').toString();
     controller.itemVatCtrl.text = (item['vat'] ?? '').toString();
     controller.itemImageUrl.value = item['image']?.toString() ?? '';
-    if (item['category'] != null) controller.selectedCategory.value = item['category'].toString();
+    if (item['category'] != null)
+      controller.selectedCategory.value = item['category'].toString();
     controller.isPublished.value = item['isActive'] as bool? ?? true;
     controller.isFeatureProduct.value = item['isFeature'] as bool? ?? false;
+    controller.hasMultiVariants.value = item['hasVariants'] as bool? ?? false;
+    controller.selectedItemType.value =
+        item['productType']?.toString() ?? 'Product';
+    controller.selectedTaxMethod.value =
+        item['taxMethod']?.toString() ?? 'Exclusive';
+    controller.hasPromotionalPrice.value = item['discountPrice'] != null;
+    controller.itemPromoPriceCtrl.text =
+        item['discountPrice']?.toString() ?? '';
   }
 
   @override
   Widget build(BuildContext context) {
-    // Populate form when entering edit mode
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initEditMode());
-
-    final editItem = Get.arguments as Map<String, dynamic>?;
     final editId = (editItem?['_id'] ?? editItem?['id'])?.toString();
     final isEditMode = editId != null && editId.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(isEditMode ? 'Edit Item' : 'Create Item',
-            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
+        title: Text(
+          isEditMode ? 'Edit Item' : 'Create Item',
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -65,46 +93,80 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                     // Type + Code
                     Row(
                       children: [
-                        Expanded(child: _dropdownObx('Type *', controller.selectedItemType,
-                            ['Product', 'Service', 'Digital', 'Bundle'])),
+                        Expanded(
+                          child: _dropdownObx(
+                            'Type *',
+                            controller.selectedItemType,
+                            ['Product', 'Service', 'Digital', 'Bundle'],
+                          ),
+                        ),
                         SizedBox(width: 16.w),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _label('Code *'),
-                            _textField(controller.itemCodeCtrl, 'e.g. SKU-001'),
-                          ],
-                        )),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Code *'),
+                              _textField(
+                                controller.itemCodeCtrl,
+                                'e.g. SKU-001',
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 16.h),
 
                     // Category
                     _label('Category *'),
-                    _dropdownObx('Select category', controller.selectedCategory,
-                        ['General', 'Food', 'Electronics', 'Fashion', 'Beauty', 'Health', 'Services', 'Other']),
+                    _dropdownObx(
+                      'Select category',
+                      controller.selectedCategory,
+                      [
+                        'General',
+                        'Food',
+                        'Electronics',
+                        'Fashion',
+                        'Beauty',
+                        'Health',
+                        'Services',
+                        'Other',
+                      ],
+                    ),
                     SizedBox(height: 16.h),
 
                     // Price + Alert Qty
                     Row(
                       children: [
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _label('Selling Price *'),
-                            _textField(controller.itemPriceCtrl, '0.00',
-                                type: TextInputType.numberWithOptions(decimal: true)),
-                          ],
-                        )),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Selling Price *'),
+                              _textField(
+                                controller.itemPriceCtrl,
+                                '0.00',
+                                type: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         SizedBox(width: 16.w),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _label('Alert Quantity'),
-                            _textField(controller.itemAlertQtyCtrl, '5',
-                                type: TextInputType.number),
-                          ],
-                        )),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('Alert Quantity'),
+                              _textField(
+                                controller.itemAlertQtyCtrl,
+                                '5',
+                                type: TextInputType.number,
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 16.h),
@@ -114,22 +176,48 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                     SizedBox(height: 6.h),
                     Row(
                       children: [
-                        Obx(() => ElevatedButton(
-                          onPressed: controller.isUploadingImage.value ? null : controller.pickAndUploadImage,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF3F4F6),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                        Obx(
+                          () => ElevatedButton(
+                            onPressed:
+                                controller.isUploadingImage.value
+                                    ? null
+                                    : controller.pickAndUploadImage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            child:
+                                controller.isUploadingImage.value
+                                    ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : Text(
+                                      'Choose File',
+                                      style: TextStyle(
+                                        color: const Color(0xFF6B7280),
+                                        fontSize: 12.sp,
+                                      ),
+                                    ),
                           ),
-                          child: controller.isUploadingImage.value
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                              : Text('Choose File',
-                                  style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12.sp)),
-                        )),
+                        ),
                         SizedBox(width: 12.w),
-                        Obx(() => Text(
-                          controller.itemImageUrl.value.isNotEmpty ? 'Image selected' : 'No File chosen',
-                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12.sp),
+                        Flexible(child: Obx(
+                          () => Text(
+                            controller.itemImageUrl.value.isNotEmpty
+                                ? 'Image selected'
+                                : 'No File chosen',
+                            style: TextStyle(
+                              color: const Color(0xFF9CA3AF),
+                              fontSize: 12.sp,
+                            ),
+                          ),
                         )),
                       ],
                     ),
@@ -138,46 +226,75 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                     // Tax
                     Row(
                       children: [
-                        Expanded(child: _dropdownObx('Tax Method', controller.selectedTaxMethod,
-                            ['Exclusive', 'Inclusive', 'None'])),
+                        Expanded(
+                          child: _dropdownObx(
+                            'Tax Method',
+                            controller.selectedTaxMethod,
+                            ['Exclusive', 'Inclusive', 'None'],
+                          ),
+                        ),
                         SizedBox(width: 16.w),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _label('VAT %'),
-                            _textField(controller.itemVatCtrl, '0',
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _label('VAT %'),
+                              _textField(
+                                controller.itemVatCtrl,
+                                '0',
                                 type: TextInputType.number,
-                                suffix: const Icon(Icons.percent, size: 16, color: Color(0xFF9CA3AF))),
-                          ],
-                        )),
+                                suffix: const Icon(
+                                  Icons.percent,
+                                  size: 16,
+                                  color: Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 24.h),
 
                     // Checkboxes
-                    _buildCheckboxRow('Feature Product (Will be displayed in POS)', controller.isFeatureProduct),
+                    _buildCheckboxRow(
+                      'Feature Product (Will be displayed in POS)',
+                      controller.isFeatureProduct,
+                    ),
                     SizedBox(height: 12.h),
-                    _buildCheckboxRow('This Product has multi variants', controller.hasMultiVariants),
+                    _buildCheckboxRow(
+                      'This Product has multi variants',
+                      controller.hasMultiVariants,
+                    ),
                     SizedBox(height: 12.h),
-                    _buildCheckboxRow('Add Promotional Price', controller.hasPromotionalPrice),
+                    _buildCheckboxRow(
+                      'Add Promotional Price',
+                      controller.hasPromotionalPrice,
+                    ),
                     // The checkbox had no field behind it and nothing was ever
                     // sent, so a "promotional price" could never be set.
-                    Obx(() => controller.hasPromotionalPrice.value
-                        ? Padding(
-                            padding: EdgeInsets.only(top: 12.h),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _label('Promotional price *'),
-                                _textField(
-                                  controller.itemPromoPriceCtrl,
-                                  '0.00',
-                                  type: const TextInputType.numberWithOptions(decimal: true),
+                    Obx(
+                      () =>
+                          controller.hasPromotionalPrice.value
+                              ? Padding(
+                                padding: EdgeInsets.only(top: 12.h),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _label('Promotional price *'),
+                                    _textField(
+                                      controller.itemPromoPriceCtrl,
+                                      '0.00',
+                                      type:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          )
-                        : const SizedBox.shrink()),
+                              )
+                              : const SizedBox.shrink(),
+                    ),
                     // The delivery / takeaway / dine-in + prep-time block that
                     // used to sit here had no backing anywhere: fulfilment is
                     // chosen per ORDER (Order.orderType), never per product,
@@ -188,13 +305,22 @@ class CreateItemView extends GetView<MerchantCatalogController> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Publish', style: TextStyle(
-                            fontSize: 14.sp, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
-                        Obx(() => Switch(
-                          value: controller.isPublished.value,
-                          onChanged: (val) => controller.isPublished.value = val,
-                          activeThumbColor: const Color(0xFF10B981),
-                        )),
+                        Text(
+                          'Publish',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF374151),
+                          ),
+                        ),
+                        Obx(
+                          () => Switch(
+                            value: controller.isPublished.value,
+                            onChanged:
+                                (val) => controller.isPublished.value = val,
+                            activeThumbColor: const Color(0xFF10B981),
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 32.h),
@@ -208,72 +334,111 @@ class CreateItemView extends GetView<MerchantCatalogController> {
               padding: EdgeInsets.all(24.w),
               child: SizedBox(
                 width: double.infinity,
-                child: Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : () async {
-                          bool ok;
-                          if (isEditMode) {
-                            final name = controller.itemNameCtrl.text.trim();
-                            final price = double.tryParse(controller.itemPriceCtrl.text.trim()) ?? 0.0;
-                            // Both of these used to `return` in silence,
-                            // leaving the merchant tapping Save with nothing
-                            // happening and no reason given.
-                            if (name.isEmpty) {
-                              safeSnackbar('Error', 'Product name is required',
-                                  snackPosition: SnackPosition.BOTTOM);
-                              return;
-                            }
-                            if (price <= 0) {
-                              safeSnackbar('Error', 'Please enter a valid selling price',
-                                  snackPosition: SnackPosition.BOTTOM);
-                              return;
-                            }
-                            double? promo;
-                            if (controller.hasPromotionalPrice.value) {
-                              promo = double.tryParse(controller.itemPromoPriceCtrl.text.trim());
-                              if (promo == null || promo <= 0) {
-                                safeSnackbar('Error', 'Enter the promotional price',
-                                    snackPosition: SnackPosition.BOTTOM);
-                                return;
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed:
+                        controller.isLoading.value
+                            ? null
+                            : () async {
+                              bool ok;
+                              if (isEditMode) {
+                                final name =
+                                    controller.itemNameCtrl.text.trim();
+                                final price =
+                                    double.tryParse(
+                                      controller.itemPriceCtrl.text.trim(),
+                                    ) ??
+                                    0.0;
+                                // Both of these used to `return` in silence,
+                                // leaving the merchant tapping Save with nothing
+                                // happening and no reason given.
+                                if (name.isEmpty) {
+                                  safeSnackbar(
+                                    'Error',
+                                    'Product name is required',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+                                if (price <= 0) {
+                                  safeSnackbar(
+                                    'Error',
+                                    'Please enter a valid selling price',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                  return;
+                                }
+                                double? promo;
+                                if (controller.hasPromotionalPrice.value) {
+                                  promo = double.tryParse(
+                                    controller.itemPromoPriceCtrl.text.trim(),
+                                  );
+                                  if (promo == null || promo <= 0) {
+                                    safeSnackbar(
+                                      'Error',
+                                      'Enter the promotional price',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                    return;
+                                  }
+                                  if (promo >= price) {
+                                    safeSnackbar(
+                                      'Error',
+                                      'The promotional price must be lower than the selling price',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                    return;
+                                  }
+                                }
+                                ok = await controller.updateItem(editId, {
+                                  ...controller.buildItemPayload(
+                                    name: name,
+                                    price: price,
+                                    promo: promo,
+                                  ),
+                                  'description': editItem?['description'] ?? '',
+                                });
+                              } else {
+                                ok = await controller.createItemFromForm();
                               }
-                              if (promo >= price) {
-                                safeSnackbar('Error',
-                                    'The promotional price must be lower than the selling price',
-                                    snackPosition: SnackPosition.BOTTOM);
-                                return;
+                              // Only leave the form when the save actually landed;
+                              // it used to navigate to the catalog either way, so
+                              // a rejected save looked like a successful one.
+                              if (ok) {
+                                Get.offNamed(MerchantRoutes.CATALOG);
                               }
-                            }
-                            ok = await controller.updateItem(
-                              editId,
-                              controller.buildItemPayload(
-                                name: name, price: price, promo: promo,
+                            },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      disabledBackgroundColor: const Color(
+                        0xFF10B981,
+                      ).withValues(alpha: 0.6),
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child:
+                        controller.isLoading.value
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
                               ),
-                            );
-                          } else {
-                            ok = await controller.createItemFromForm();
-                          }
-                          // Only leave the form when the save actually landed;
-                          // it used to navigate to the catalog either way, so
-                          // a rejected save looked like a successful one.
-                          if (ok) {
-                            Get.offNamed(MerchantRoutes.CATALOG);
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    disabledBackgroundColor: const Color(0xFF10B981).withValues(alpha: 0.6),
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                    elevation: 0,
+                            )
+                            : Text(
+                              isEditMode ? 'Save Changes' : 'Publish Item',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                   ),
-                  child: controller.isLoading.value
-                      ? const SizedBox(
-                          height: 20, width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(isEditMode ? 'Save Changes' : 'Publish Item',
-                          style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w700)),
-                )),
+                ),
               ),
             ),
           ],
@@ -284,10 +449,19 @@ class CreateItemView extends GetView<MerchantCatalogController> {
 
   Widget _label(String text) => Padding(
     padding: EdgeInsets.only(bottom: 6.h),
-    child: Text(text, style: TextStyle(fontSize: 13.sp, color: const Color(0xFF374151), fontWeight: FontWeight.w500)),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 13.sp,
+        color: const Color(0xFF374151),
+        fontWeight: FontWeight.w500,
+      ),
+    ),
   );
 
-  Widget _textField(TextEditingController ctrl, String hint, {
+  Widget _textField(
+    TextEditingController ctrl,
+    String hint, {
     TextInputType type = TextInputType.text,
     Widget? suffix,
   }) {
@@ -300,49 +474,80 @@ class CreateItemView extends GetView<MerchantCatalogController> {
         suffixIcon: suffix,
         contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.r),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.r),
-            borderSide: const BorderSide(color: Color(0xFF10B981))),
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: const BorderSide(color: Color(0xFF10B981)),
+        ),
       ),
     );
   }
 
   Widget _dropdownObx(String hint, RxString selected, List<String> options) {
-    return Obx(() => DropdownButtonFormField<String>(
-      key: ValueKey(selected.value),
-      initialValue: options.contains(selected.value) ? selected.value : null,
-      hint: Text(hint, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
-      decoration: InputDecoration(
-        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        border: OutlineInputBorder(
+    return Obx(
+      () => DropdownButtonFormField<String>(
+        isExpanded: true,
+        key: ValueKey(selected.value),
+        initialValue: options.contains(selected.value) ? selected.value : null,
+        hint: Text(
+          hint,
+          style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        ),
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 12.h,
+          ),
+          border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.r),
-            borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-        focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.r),
-            borderSide: const BorderSide(color: Color(0xFF10B981))),
+            borderSide: const BorderSide(color: Color(0xFF10B981)),
+          ),
+        ),
+        items:
+            options
+                .map(
+                  (o) => DropdownMenuItem(
+                    value: o,
+                    child: Text(o, style: const TextStyle(fontSize: 13)),
+                  ),
+                )
+                .toList(),
+        onChanged: (v) => selected.value = v!,
       ),
-      items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: const TextStyle(fontSize: 13)))).toList(),
-      onChanged: (v) => selected.value = v!,
-    ));
+    );
   }
 
   Widget _buildCheckboxRow(String label, RxBool rxBool) {
-    return Obx(() => Row(
-      children: [
-        SizedBox(
-          width: 20.w, height: 20.w,
-          child: Checkbox(
-            value: rxBool.value,
-            onChanged: (val) => rxBool.value = val!,
-            activeColor: const Color(0xFF10B981),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
+    return Obx(
+      () => Row(
+        children: [
+          SizedBox(
+            width: 20.w,
+            height: 20.w,
+            child: Checkbox(
+              value: rxBool.value,
+              onChanged: (val) => rxBool.value = val!,
+              activeColor: const Color(0xFF10B981),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+            ),
           ),
-        ),
-        SizedBox(width: 8.w),
-        Expanded(child: Text(label, style: TextStyle(fontSize: 12.sp, color: const Color(0xFF4B5563)))),
-      ],
-    ));
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF4B5563)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

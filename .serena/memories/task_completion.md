@@ -1,0 +1,4 @@
+- Verify concrete changed flows, inspect test exit status and failures; static callback/API inventories are not runtime button verification.
+- Preserve full test logs while using RTK summaries to reduce output. Build and Flutter test runs share generated assets: execute them sequentially.
+- Device navigation tests need an isolated backend and synthetic account. External provider success, native capabilities and signed release builds require separate evidence.
+- Do not claim the apps finished based only on unit tests or debug APK compilation.

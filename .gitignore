@@ -72,3 +72,13 @@ node_modules/
 /android/key.properties
 /android/app/upload-keystore.jks
 .aider*
+
+# Reviewed-screen captures kept beside the code so they cannot be moved or
+# deleted mid-review. Not part of the build.
+_screens/
+
+# The QRPayPro admin product (Laravel/MySQL), kept locally as the source of the
+# console's theme — 560 MB of vendor code and two licensed archives. The parts
+# actually used were copied into lib/vips-backend/admin-web/assets and are
+# committed there; see that folder's README for what was taken and why.
+lib/admin_dashboard/

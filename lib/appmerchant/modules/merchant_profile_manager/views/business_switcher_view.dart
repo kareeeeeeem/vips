@@ -87,7 +87,11 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
         contentPadding: EdgeInsets.all(16.w),
         leading: CircleAvatar(
           radius: 25.r,
@@ -133,6 +137,7 @@ class BusinessSwitcherView extends GetView<MerchantProfileController> {
             _showPinPrompt(context, profile);
           }
         },
+        ),
       ),
     );
   }

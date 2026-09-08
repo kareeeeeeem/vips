@@ -59,8 +59,8 @@ class ElectricBillController extends GetxController {
           (status.data['utilityBills']?['configured'] == true);
       if (!configured) {
         safeSnackbar(
-          'Coming Soon',
-          'This service isn\'t available yet — real provider integration is still pending.',
+          'Service unavailable',
+          status.success ? 'Bill payment is currently unavailable.' : status.message,
           snackPosition: SnackPosition.BOTTOM,
         );
         return;

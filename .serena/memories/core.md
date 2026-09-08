@@ -1,0 +1,3 @@
+- Two apps share one Flutter package: consumer lib/appuser, merchant lib/appmerchant; shared clients/services in lib/core.
+- Backend lib/vips-backend is a separate Git repository nested inside the Flutter checkout. Inspect both worktrees; preserve pre-existing changes.
+- Read `mem:tech_stack` for runtime boundaries; `mem:suggested_commands` for isolated tests; `mem:conventions` for money/session invariants; `mem:task_completion` for verification limits.

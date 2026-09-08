@@ -1,0 +1,4 @@
+- In lib/vips-backend: npm test creates its own temporary local Mongo database and API port 3100, then cleans up.
+- UI fixtures: node tests/run-isolated.js --ui; generated /tmp/vips-ui-config.json is for local test sessions only. Keep the server running during device tests; stop it to remove its database.
+- Flutter: flutter analyze --no-pub; flutter build apk --debug --flavor consumer -t lib/main.dart --no-pub; merchant uses --flavor merchant -t lib/main_merchant.dart.
+- Scripts: python3 scripts/audit-app-contracts.py; python3 scripts/collect-ui-results.py <log>.

@@ -1,3 +1,4 @@
+import 'package:vip/core/services/api_service.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -10,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/utils/safe_snackbar.dart';
 import '../../routes/merchant_routes.dart';
 import '../util/app_constants.dart';
 
@@ -18,7 +20,7 @@ class ApiClient extends GetxService {
   final SharedPreferences sharedPreferences;
   static const String noInternetMessage =
       'Connection to API server failed due to internet connection';
-  final int timeoutInSeconds = 30;
+  final int timeoutInSeconds = 60;
 
   String? token;
   String? type;
@@ -45,12 +47,26 @@ class ApiClient extends GetxService {
     int? moduleID,
     String? type,
   ) {
+    this.token = token;
     _mainHeaders = {
       'Content-Type': 'application/json; charset=UTF-8',
       AppConstants.localizationKey: languageCode ?? 'en',
       AppConstants.moduleId: moduleID != null ? moduleID.toString() : '',
       'Authorization': 'Bearer ${token ?? ''}',
       'vendorType': type ?? '',
+    };
+  }
+
+  // Read the current session for every request: a client may survive a
+  // logout/login while GetX reuses its repository.
+  Map<String, String> get _sessionHeaders {
+    token = sharedPreferences.getString('auth_token') ??
+        sharedPreferences.getString(AppConstants.token);
+    final headers = Map<String, String>.from(_mainHeaders)
+      ..remove('Authorization');
+    return {
+      ...headers,
+      if (token != null && token!.isNotEmpty) 'Authorization': 'Bearer $token',
     };
   }
 
@@ -62,7 +78,13 @@ class ApiClient extends GetxService {
   }) async {
     try {
       http.Response response = await http
-          .get(Uri.parse(appBaseUrl + uri), headers: headers ?? _mainHeaders)
+          .get(
+            Uri.parse(appBaseUrl + uri).replace(queryParameters: {
+              ...Uri.parse(appBaseUrl + uri).queryParameters,
+              ...?query?.map((key, value) => MapEntry(key, value.toString())),
+            }),
+            headers: headers ?? _sessionHeaders,
+          )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
     } catch (e) {
@@ -81,7 +103,7 @@ class ApiClient extends GetxService {
           .post(
             Uri.parse(appBaseUrl + uri),
             body: jsonEncode(body),
-            headers: headers ?? _mainHeaders,
+            headers: headers ?? _sessionHeaders,
           )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
@@ -101,7 +123,7 @@ class ApiClient extends GetxService {
           .put(
             Uri.parse(appBaseUrl + uri),
             body: jsonEncode(body),
-            headers: headers ?? _mainHeaders,
+            headers: headers ?? _sessionHeaders,
           )
           .timeout(Duration(seconds: timeoutInSeconds));
       return handleResponse(response, uri, handleError);
@@ -119,7 +141,7 @@ class ApiClient extends GetxService {
   }) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(appBaseUrl + uri));
-      request.headers.addAll(_mainHeaders);
+      request.headers.addAll(_sessionHeaders);
 
       for (var bodyPart in multipartBody) {
         if (foundation.kIsWeb) {
@@ -160,15 +182,28 @@ class ApiClient extends GetxService {
     bool handleError,
   ) {
     if (handleError) {
-      if (response.statusCode == 401) {
+      // 401 is an expired or unknown session; 403 with ACCOUNT_SUSPENDED is
+      // the shop being suspended from the admin console mid-session. Both
+      // mean every subsequent request is refused, so both end the session
+      // rather than leaving the merchant tapping through failures.
+      final suspended = response.statusCode == 403 &&
+          response.body.contains('ACCOUNT_SUSPENDED');
+      if (response.statusCode == 401 || suspended) {
         final isAuthUri = uri.contains('/auth/merchant-login') ||
             uri.contains('/auth/login') ||
             uri.contains(AppConstants.loginUri);
         if (!isAuthUri) {
           token = null;
-          sharedPreferences.remove(AppConstants.token);
-          sharedPreferences.remove('auth_token');
+          ApiService().clearToken();
+          _mainHeaders.remove('Authorization');
           Get.offAllNamed(MerchantRoutes.LOGIN);
+          if (suspended) {
+            safeSnackbar(
+              'Account suspended',
+              'This shop has been suspended. Please contact support.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
         }
       }
     }

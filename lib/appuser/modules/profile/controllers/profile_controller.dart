@@ -26,6 +26,25 @@ class ProfileController extends GetxController {
   // Dynamic profile fields
   final RxString packageName = '--'.obs;
   final RxString lastLogin = '--'.obs;
+
+  /// "Last connection" in the terms a person thinks in. An exact timestamp is
+  /// precision nobody asked for; what they want to know is whether it was
+  /// today.
+  String _connectionLabel(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    final two = (int n) => n.toString().padLeft(2, '0');
+
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes} min ago';
+    if (now.year == dt.year && now.month == dt.month && now.day == dt.day) {
+      return 'Today ${two(dt.hour)}:${two(dt.minute)}';
+    }
+    if (diff.inDays < 2) return 'Yesterday ${two(dt.hour)}:${two(dt.minute)}';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return '${two(dt.day)}/${two(dt.month)}/${dt.year}';
+  }
+
   // Vendor stats
   final RxString vendorProducts = '0'.obs;
   final RxString vendorSales = '0'.obs;
@@ -75,15 +94,20 @@ class ProfileController extends GetxController {
         isVerified.value = user['isVerified'] == true;
         packageName.value =
             user['package'] ?? user['packageName'] ?? user['plan'] ?? '--';
-        if (user['lastLogin'] != null || user['lastConnection'] != null) {
-          final raw = user['lastLogin'] ?? user['lastConnection'];
+        // The session before this one. `lastLogin` is stamped during the
+        // login that then displays it, so showing it told the customer the
+        // time they had just opened the app.
+        final rawPrevious = user['previousLogin'] ?? user['lastConnection'];
+        if (rawPrevious != null) {
           try {
-            final dt = DateTime.parse(raw.toString());
-            lastLogin.value =
-                '${dt.day}/${dt.month} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+            final dt = DateTime.parse(rawPrevious.toString()).toLocal();
+            lastLogin.value = _connectionLabel(dt);
           } catch (_) {
-            lastLogin.value = raw.toString();
+            lastLogin.value = rawPrevious.toString();
           }
+        } else {
+          // Nothing before this means this is their first time in.
+          lastLogin.value = 'First visit';
         }
 
         final statsRaw = user['stats'];

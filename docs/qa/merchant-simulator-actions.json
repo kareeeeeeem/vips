@@ -1,0 +1,1903 @@
+{
+  "scope": "Actual iOS simulator exploration. Tapped means a gesture was dispatched; business outcomes need assertions.",
+  "source_logs": [
+    "/tmp/vips-merchant-buttons-core.log",
+    "/tmp/vips-merchant-buttons-fixes.log"
+  ],
+  "counts": {
+    "run": 2,
+    "screen": 13,
+    "tapped": 133,
+    "flutter_error": 11,
+    "tap_error": 7,
+    "summary": 2,
+    "unavailable": 5
+  },
+  "screens": [
+    "/due-list",
+    "/gift-back-form",
+    "/merchant-catalog",
+    "/merchant-create-bill",
+    "/merchant-customers",
+    "/merchant-home",
+    "/merchant-notifications",
+    "/merchant-orders",
+    "/merchant-settings",
+    "/merchant-wallet",
+    "/staff-management",
+    "/switch-business"
+  ],
+  "finished": true,
+  "records": [
+    {
+      "kind": "run",
+      "harnessVersion": 2,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-home",
+      "actualRoute": "/merchant-home",
+      "text": [
+        "Performance",
+        "Sale",
+        "D 0.00",
+        "Expense",
+        "D 0.00",
+        "Today",
+        "Stock Value",
+        "D 0.00",
+        "Sale Due",
+        "D 0.00",
+        "Due Collect",
+        "D 0.00",
+        "VIPs In",
+        "VIPs Out",
+        "VIPs Recovery",
+        "Run an ad",
+        "Put your shop in front of VIPs customers nearby",
+        "Add Points",
+        "My Guarantee",
+        "Reward Action",
+        "Income/Expense",
+        "All Party",
+        "Products",
+        "Sale",
+        "Sales List",
+        "Due List",
+        "My Stock",
+        "Accounts",
+        "Transactions",
+        "Tax Rates",
+        "Staff",
+        "Advertisements",
+        "Barcode",
+        "Asset Management",
+        "QA Store",
+        "Food",
+        "2",
+        "Brand",
+        "Rapport",
+        "Wallet",
+        "Pro"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 0,
+      "label": "Today | icon:58195",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 1,
+      "label": "icon:62996 | Run an ad | Put your shop in front of VIPs customers nearby",
+      "resultRoute": "/advertisements",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 2,
+      "label": "icon:983244 | Add Points",
+      "resultRoute": "/earn",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 3,
+      "label": "icon:60978 | My Guarantee",
+      "resultRoute": "/guarantee",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 4,
+      "label": "icon:61223 | Reward Action",
+      "resultRoute": "/reward-action",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 5,
+      "label": "icon:60979 | Income/Expense",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 6,
+      "label": "icon:62058 | All Party",
+      "resultRoute": "/merchant-customers",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 7,
+      "label": "icon:61748 | Products",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 8,
+      "label": "icon:62139 | Sale",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 9,
+      "label": "icon:62191 | Sales List",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/due-list",
+      "message": "      [Get] the improper use of a GetX has been detected. \n      You should only use GetX or Obx for the specific widget that will be updated.\n      If you are seeing this error, you probably did not insert any observable variables into GetX/Obx \n      or insert them outside the scope that GetX considers suitable for an update \n      (example: GetX => HeavyWidget => variableObservable).\n      If you need to update a parent widget and a child widget, wrap each one in an Obx/GetX.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/due-list",
+      "message": "A RenderFlex overflowed by 99259 pixels on the bottom.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-home",
+      "index": 10,
+      "label": "icon:61079 | Due List",
+      "resultRoute": "/due-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 11,
+      "label": "icon:984723 | My Stock",
+      "resultRoute": "/stock-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 12,
+      "label": "icon:60978 | Accounts",
+      "resultRoute": "/accounts",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 13,
+      "label": "icon:62472 | Transactions",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 14,
+      "label": "icon:62192 | Tax Rates",
+      "resultRoute": "/tax-rates",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 15,
+      "label": "icon:61112 | Staff",
+      "resultRoute": "/staff-management",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 16,
+      "label": "icon:61223 | Advertisements",
+      "resultRoute": "/advertisements",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 17,
+      "label": "icon:62170 | Barcode",
+      "resultRoute": "/barcode-gen",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 18,
+      "label": "icon:61704 | Asset Management",
+      "resultRoute": "/asset-management",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/switch-business",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-home",
+      "index": 19,
+      "label": "QA Store | icon:58195 | Food",
+      "resultRoute": "/switch-business",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 20,
+      "label": "icon:62005 | 2",
+      "resultRoute": "/merchant-notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 21,
+      "label": "icon:62005 | 2",
+      "resultRoute": "/merchant-notifications",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 22,
+      "label": "icon:63670",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 23,
+      "label": "icon:63670",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 24,
+      "label": "icon:62922",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 25,
+      "label": "icon:62329 | Brand",
+      "resultRoute": "/store-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 26,
+      "label": "icon:983193 | Rapport",
+      "resultRoute": "/report",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 27,
+      "label": "icon:60979 | Wallet",
+      "resultRoute": "/finance-dashboard",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-home",
+      "index": 28,
+      "label": "icon:983148 | Pro",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-orders",
+      "actualRoute": "/merchant-orders",
+      "text": [
+        "Total Orders",
+        "2",
+        "Pending",
+        "2",
+        "Today",
+        "0",
+        "Revenue",
+        "D 0.00",
+        "Search orders by ID, customer name...",
+        "All",
+        "Pending",
+        "Confirmed",
+        "Processing",
+        "Ready",
+        "Handover",
+        "Picked Up",
+        "Delivered",
+        "Cancelled",
+        "Refund Req.",
+        "Refunded",
+        "No orders found",
+        "Orders will appear here once customers place them",
+        "Order Management"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 0,
+      "label": "All",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 1,
+      "label": "Pending",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 2,
+      "label": "Confirmed",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 3,
+      "label": "Processing",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 4,
+      "label": "Ready",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 5,
+      "label": "Handover",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 6,
+      "label": "Picked Up",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 7,
+      "label": "Delivered",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 8,
+      "label": "Cancelled",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 9,
+      "label": "Refund Req.",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 10,
+      "label": "Refunded",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 11,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 12,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/merchant-orders",
+      "message": "A RenderFlex overflowed by 83 pixels on the bottom.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-orders",
+      "index": 13,
+      "label": "icon:57984",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/merchant-orders",
+      "message": "A RenderFlex overflowed by 83 pixels on the bottom.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-orders",
+      "index": 14,
+      "label": "icon:57984",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-catalog",
+      "actualRoute": "/merchant-catalog",
+      "text": [
+        "QA Coffee",
+        "Active",
+        "D 10.00",
+        "100 in stock",
+        "My Catalog",
+        "Items",
+        "Vouchers",
+        "Coupons",
+        "Add New"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 0,
+      "label": "",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 1,
+      "label": "icon:61453",
+      "resultRoute": "/create-item",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 2,
+      "label": "icon:57787",
+      "resultRoute": "/merchant-catalog",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 3,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 4,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 5,
+      "label": "Items",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 6,
+      "label": "Vouchers",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 7,
+      "label": "Coupons",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-catalog",
+      "index": 8,
+      "label": "icon:57415 | Add New",
+      "resultRoute": "/merchant-catalog",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-create-bill",
+      "actualRoute": "/merchant-create-bill",
+      "text": [
+        "Enter Amount",
+        "D",
+        "0.00",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ".",
+        "0",
+        "Generate QR Code",
+        "New Order Bill"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 0,
+      "label": "1",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 1,
+      "label": "2",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 2,
+      "label": "3",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 3,
+      "label": "4",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 4,
+      "label": "5",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 5,
+      "label": "6",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 6,
+      "label": "7",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 7,
+      "label": "8",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 8,
+      "label": "9",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 9,
+      "label": ".",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 10,
+      "label": "0",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 11,
+      "label": "icon:61109",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 12,
+      "label": "Generate QR Code",
+      "resultRoute": "/merchant-create-bill",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 13,
+      "label": "icon:57706",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-create-bill",
+      "index": 14,
+      "label": "icon:57706",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-wallet",
+      "actualRoute": "/merchant-wallet",
+      "text": [
+        "My Wallet",
+        "v",
+        "0",
+        "PTS",
+        "No pending points",
+        "Point Details",
+        "Vips In",
+        "v",
+        "0",
+        "Vips Out",
+        "v",
+        "0",
+        "Pending",
+        "v",
+        "0",
+        "Adjusted Points",
+        "Credit Now",
+        "v",
+        "0",
+        "Points Gifted",
+        "Gift Back Now",
+        "Available Balance",
+        "D 0.000",
+        "Request Payout",
+        "Payout Accounts",
+        "No saved account yet. Add one so payouts don't need the details retyped.",
+        "Add Payout Account",
+        "Payout Requests",
+        "No payout requests yet.",
+        "Activity",
+        "Vips In",
+        "Vips Out",
+        "All dates",
+        "0 Result Found",
+        "No transactions found",
+        "Wallet Points"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 0,
+      "label": "icon:57495 | icon:57759 | Adjusted Points | Credit Now",
+      "resultRoute": "/guarantee",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/gift-back-form",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/gift-back-form",
+      "message": "ListTile background color or ink splashes may be invisible.\nThe ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\nTo fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/gift-back-form",
+      "message": "A RenderFlex overflowed by 46 pixels on the right.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-wallet",
+      "index": 1,
+      "label": "v | 0 | Points Gifted | Gift Back Now",
+      "resultRoute": "/gift-back-form",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 2,
+      "label": "icon:60978 | Request Payout",
+      "resultRoute": "/merchant-wallet",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 3,
+      "label": "icon:57415 | Add Payout Account",
+      "resultRoute": "/merchant-wallet",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 4,
+      "label": "icon:59011",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 5,
+      "label": "Activity",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 6,
+      "label": "Vips In",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 7,
+      "label": "Vips Out",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 8,
+      "label": "icon:57634 | All dates",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 9,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 10,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 11,
+      "label": "Refresh | icon:58644",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-wallet",
+      "index": 12,
+      "label": "icon:58644",
+      "resultRoute": "/merchant-wallet",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-customers",
+      "actualRoute": "/merchant-customers",
+      "text": [
+        "Search by name, phone or email",
+        "No customers yet",
+        "My Customers"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-customers",
+      "index": 0,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-customers",
+      "index": 1,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-customers",
+      "index": 2,
+      "label": "Messages | icon:61616",
+      "resultRoute": "/ChatListView",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-customers",
+      "index": 3,
+      "label": "icon:61616",
+      "resultRoute": "/ChatListView",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "summary",
+      "records": 100,
+      "flutterErrors": 8,
+      "note": "A dispatched tap is exploratory coverage, not proof of its business outcome.",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/merchant-home",
+      "message": "Expected: empty\n  Actual: [\n            '      [Get] the improper use of a GetX has been detected. \\n'\n              '      You should only use GetX or Obx for the specific widget that will be updated.\\n'\n              '      If you are seeing this error, you probably did not insert any observable variables into GetX/Obx \\n'\n              '      or insert them outside the scope that GetX considers suitable for an update \\n'\n              '      (example: GetX => HeavyWidget => variableObservable).\\n'\n              '      If you need to update a parent widget and a child widget, wrap each one in an Obx/GetX.',\n            'A RenderFlex overflowed by 99259 pixels on the bottom.',\n            'ListTile background color or ink splashes may be invisible.\\n'\n              'The ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\\n'\n              'To fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.',\n            'A RenderFlex overflowed by 83 pixels on the bottom.',\n            'A RenderFlex overflowed by 83 pixels on the bottom.',\n            'ListTile background color or ink splashes may be invisible.\\n'\n              'The ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\\n'\n              'To fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.',\n            'ListTile background color or ink splashes may be invisible.\\n'\n              'The ListTile is wrapped in a DecoratedBox that has a background color. Because ListTile paints its background and ink splashes on the nearest Material ancestor, this DecoratedBox will hide those effects.\\n'\n              'To fix this, wrap the ListTile in its own Material widget, or remove the background color from the intermediate DecoratedBox.',\n            'A RenderFlex overflowed by 46 pixels on the right.'\n          ]\nFix all runtime errors found during exploration",
+      "source_log": "/tmp/vips-merchant-buttons-core.log"
+    },
+    {
+      "kind": "run",
+      "harnessVersion": 2,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/due-list",
+      "actualRoute": "/due-list",
+      "text": [
+        "Receivable",
+        "D 0.00",
+        "Payable",
+        "D 0.00",
+        "All Dues",
+        "No dues recorded",
+        "Tap the + button to record a due",
+        "Dues Management"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 0,
+      "label": "Show menu | icon:57984",
+      "resultRoute": "/due-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 1,
+      "label": "icon:57984",
+      "resultRoute": "/due-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 2,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 3,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 4,
+      "label": "icon:57423",
+      "resultRoute": "/due-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/due-list",
+      "index": 5,
+      "label": "icon:57423",
+      "resultRoute": "/due-list",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/switch-business",
+      "actualRoute": "/switch-business",
+      "text": [
+        "Your business profile",
+        "Q",
+        "QA Store",
+        "Food",
+        "Not registered",
+        "Add New Business",
+        "Use VIPs as a customer",
+        "Switch Business"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/switch-business",
+      "index": 0,
+      "label": "Q | QA Store | Food | Not registered | icon:57689",
+      "resultRoute": "/store-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/switch-business",
+      "index": 1,
+      "label": "icon:57415 | Add New Business",
+      "resultRoute": "/business-registration",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/switch-business",
+      "index": 2,
+      "label": "icon:58519 | Use VIPs as a customer",
+      "resultRoute": "/switch-business",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/switch-business",
+      "index": 3,
+      "label": "icon:57706",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/switch-business",
+      "index": 4,
+      "label": "icon:57706",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/gift-back-form",
+      "actualRoute": "/gift-back-form",
+      "text": [
+        "Phone / ID",
+        "#12345678",
+        "Enter Back Amount",
+        "0.000",
+        "D",
+        "Service Charge & Vat/Tax: 000 D",
+        "How Giftback works",
+        "Change it covers",
+        "Under 5.000 D",
+        "Becomes spendable in",
+        "12 hours",
+        "Customer's monthly cap",
+        "50 D",
+        "Left this month",
+        "Scan the customer first",
+        "Points the customer receives",
+        "0 points",
+        "The customer agreed to give up their change",
+        "Ask them out loud. Without this the points cannot be recorded.",
+        "Cancel",
+        "Proceed",
+        "Gift Back",
+        "Help !"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 0,
+      "label": "icon:58615",
+      "resultRoute": "/gift-back-scan-me",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 1,
+      "label": "icon:58615",
+      "resultRoute": "/gift-back-scan-me",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 2,
+      "label": "The customer agreed to give up their change | Ask them out loud. Without this the points cannot be recorded.",
+      "resultRoute": "/gift-back-form",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 3,
+      "label": "",
+      "resultRoute": "/gift-back-form",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 4,
+      "label": "Cancel",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 5,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 6,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/gift-back-form",
+      "index": 7,
+      "label": "Help !",
+      "resultRoute": "/merchant-settings",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-orders",
+      "actualRoute": "/merchant-orders",
+      "text": [
+        "Total Orders",
+        "2",
+        "Pending",
+        "2",
+        "Today",
+        "0",
+        "Revenue",
+        "D 0.00",
+        "Search orders by ID, customer name...",
+        "All",
+        "Pending",
+        "Confirmed",
+        "Processing",
+        "Ready",
+        "Handover",
+        "Picked Up",
+        "Delivered",
+        "Cancelled",
+        "Refund Req.",
+        "Refunded",
+        "Order #1002",
+        "PENDING",
+        "QC",
+        "QA Customer",
+        "21699000002",
+        "1 items",
+        "D 10.00",
+        "CASH",
+        "Sep 07, 2026 17:13",
+        "Reject",
+        "Accept",
+        "Order #1001",
+        "PENDING",
+        "QC",
+        "QA Customer",
+        "21699000002",
+        "1 items",
+        "D 10.00",
+        "CASH",
+        "Sep 07, 2026 16:43",
+        "Reject",
+        "Accept",
+        "Order Management"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 0,
+      "label": "All",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 1,
+      "label": "Pending",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 2,
+      "label": "Confirmed",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 3,
+      "label": "Processing",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 4,
+      "label": "Ready",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 5,
+      "label": "Handover",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 6,
+      "label": "Picked Up",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 7,
+      "label": "Delivered",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 8,
+      "label": "Cancelled",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 9,
+      "label": "Refund Req.",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 10,
+      "label": "Refunded",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 11,
+      "label": "icon:62333 | Order #1002 | icon:58500 | PENDING | QC | QA Customer | 21699000002 | icon:57500 | 1 items | D 10.00 | CASH | Sep 07, 2026 17:13 | Reject | Accept",
+      "resultRoute": "/merchant-order-detail",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 12,
+      "label": "Reject",
+      "resultRoute": "/merchant-orders",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 13,
+      "label": "Accept",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-orders",
+      "index": 14,
+      "label": "Accept",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/merchant-orders",
+      "message": "A RenderFlex overflowed by 83 pixels on the bottom.",
+      "context": "during layout",
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-orders",
+      "index": 15,
+      "label": "icon:57984",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "flutter_error",
+      "route": "/merchant-orders",
+      "message": "A RenderFlex overflowed by 83 pixels on the bottom.",
+      "context": "during layout",
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tap_error",
+      "route": "/merchant-orders",
+      "index": 16,
+      "label": "icon:57984",
+      "resultRoute": "/merchant-orders",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "unavailable",
+      "route": "/merchant-orders",
+      "index": 17,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "unavailable",
+      "route": "/merchant-orders",
+      "index": 18,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "unavailable",
+      "route": "/merchant-orders",
+      "index": 19,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "unavailable",
+      "route": "/merchant-orders",
+      "index": 20,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-settings",
+      "actualRoute": "/merchant-settings",
+      "text": [
+        "QA Store",
+        "ID: 6a9ea1be...",
+        "Verified",
+        "STORE MANAGEMENT",
+        "Store Profile",
+        "View and edit details",
+        "Language",
+        "English",
+        "Security PIN",
+        "Not set — required to approve bills",
+        "SUPPORT & LEGAL",
+        "Help & Support",
+        "Contact admin",
+        "Privacy Policy",
+        "Terms of Service",
+        "Settings"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 0,
+      "label": "Store QR code | icon:983242",
+      "resultRoute": "/qr-receive",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 1,
+      "label": "icon:983242",
+      "resultRoute": "/qr-receive",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 2,
+      "label": "icon:62446 | Store Profile | View and edit details | icon:57695",
+      "resultRoute": "/store-profile",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 3,
+      "label": "icon:61775 | Language | English | icon:57695",
+      "resultRoute": "/merchant-settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 4,
+      "label": "icon:63624 | Security PIN | Not set — required to approve bills | icon:57695",
+      "resultRoute": "/merchant-settings",
+      "dialog": true,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 5,
+      "label": "icon:58123 | Help & Support | Contact admin | icon:57695",
+      "resultRoute": "/merchant-settings",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 6,
+      "label": "icon:62160 | Privacy Policy | icon:57695",
+      "resultRoute": "/merchant-privacy",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 7,
+      "label": "icon:61358 | Terms of Service | icon:57695",
+      "resultRoute": "/merchant-terms",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 8,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-settings",
+      "index": 9,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/merchant-notifications",
+      "actualRoute": "/merchant-notifications",
+      "text": [
+        "Order Updated",
+        "Order #1001 → confirmed",
+        "1 mins ago",
+        "Order Updated",
+        "Order #1002 → confirmed",
+        "1 mins ago",
+        "New Order",
+        "Order #1002 — D 10.000",
+        "20 hours ago",
+        "New Order",
+        "Order #1001 — D 10.000",
+        "21 hours ago",
+        "Notifications",
+        "Mark all as read"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 0,
+      "label": "icon:62333 | Order Updated | Order #1001 → confirmed | 1 mins ago",
+      "resultRoute": "/merchant-order-detail",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 1,
+      "label": "icon:62333 | Order Updated | Order #1002 → confirmed | 1 mins ago",
+      "resultRoute": "/merchant-order-detail",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 2,
+      "label": "icon:62333 | New Order | Order #1002 — D 10.000 | 20 hours ago",
+      "resultRoute": "/merchant-order-detail",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 3,
+      "label": "icon:62333 | New Order | Order #1001 — D 10.000 | 21 hours ago",
+      "resultRoute": "/merchant-order-detail",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 4,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/merchant-notifications",
+      "index": 5,
+      "label": "icon:57490",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "unavailable",
+      "route": "/merchant-notifications",
+      "index": 6,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "screen",
+      "route": "/staff-management",
+      "actualRoute": "/staff-management",
+      "text": [
+        "Employee Directory",
+        "No Staff Added",
+        "Tap + to add staff members",
+        "Staff Management"
+      ],
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/staff-management",
+      "index": 0,
+      "label": "icon:58514",
+      "resultRoute": "/staff-management",
+      "dialog": false,
+      "sheet": true,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/staff-management",
+      "index": 1,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "tapped",
+      "route": "/staff-management",
+      "index": 2,
+      "label": "icon:57492",
+      "resultRoute": "/merchant-home",
+      "dialog": false,
+      "sheet": false,
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    },
+    {
+      "kind": "summary",
+      "records": 70,
+      "flutterErrors": 2,
+      "note": "A dispatched tap is exploratory coverage, not proof of its business outcome.",
+      "source_log": "/tmp/vips-merchant-buttons-fixes.log"
+    }
+  ]
+}

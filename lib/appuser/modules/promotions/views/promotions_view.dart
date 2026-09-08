@@ -5,8 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:vip/appuser/modules/promotions/views/widgets/promotion_detail_dialog.dart'
-    hide Promotion;
+import 'package:vip/appuser/modules/promotions/views/widgets/promotion_detail_dialog.dart';
 
 import '../controllers/promotions_controller.dart';
 
@@ -271,7 +270,7 @@ class PromotionsView extends GetView<PromotionsController> {
             ClipPath(
               clipper: RealisticTicketClipper(),
               child: Container(
-                height: 110.h,
+                height: 150.h,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -360,7 +359,7 @@ class PromotionsView extends GetView<PromotionsController> {
 
                         // Perforations verticales fines
                         CustomPaint(
-                          size: Size(1.w, 110.h),
+                          size: Size(1.w, 150.h),
                           painter: PerforationLinePainter(),
                         ),
 
@@ -379,6 +378,8 @@ class PromotionsView extends GetView<PromotionsController> {
                                 // Title
                                 Text(
                                   promotion.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 20.sp,
                                     fontWeight: FontWeight.w700,
@@ -394,6 +395,8 @@ class PromotionsView extends GetView<PromotionsController> {
                                 // Brand Name
                                 Text(
                                   promotion.brandName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w600,

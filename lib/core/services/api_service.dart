@@ -55,11 +55,13 @@ class ApiService {
         onResponse: (response, handler) {
           return handler.next(response);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
             final path = error.requestOptions.path;
             final isAuthPath = path.contains('/auth/login') ||
                 path.contains('/auth/merchant-login') ||
+                path.contains('/auth/merchant-password-login') ||
+                path.contains('/auth/merchant-social') ||
                 path.contains('/auth/register') ||
                 path.contains('/auth/social');
             // Only treat this as "your session expired" when we actually
@@ -68,10 +70,33 @@ class ApiService {
             // that must not force-navigate them away from wherever they
             // are (e.g. straight back to Login right after tapping
             // "Continue as Guest").
-            if (!isAuthPath && _token != null) {
-              clearToken();
-              Get.offAllNamed(unauthorizedRoute);
+            if (!isAuthPath && _token != null &&
+                error.requestOptions.headers['Authorization'] == 'Bearer $_token') {
+              await clearToken();
+              if (Get.key.currentState != null) Get.offAllNamed(unauthorizedRoute);
             }
+          } else if (error.response?.statusCode == 403 &&
+              error.response?.data is Map &&
+              (error.response!.data as Map)['code'] == 'ACCOUNT_SUSPENDED') {
+            // The account was suspended from the admin console while this
+            // session was open. The backend refuses every request from here
+            // on, so staying on the screen would just show one error after
+            // another — sign out and say why, once.
+            if (_token == null ||
+                error.requestOptions.headers['Authorization'] != 'Bearer $_token') {
+              return handler.next(error);
+            }
+            await clearToken();
+            if (Get.key.currentState != null) Get.offAllNamed(unauthorizedRoute);
+            safeSnackbar(
+              'Account suspended',
+              (error.response!.data as Map)['message']?.toString() ??
+                  'This account has been suspended. Please contact support.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.redAccent,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
           } else if (error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
               error.type == DioExceptionType.connectionError) {
@@ -93,14 +118,18 @@ class ApiService {
   // ── Initialize (call once on app start) ──
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
+    _token = prefs.getString('auth_token') ?? prefs.getString('token');
+    if (_token != null && _token!.trim().isEmpty) _token = null;
+    if (_token != null) await setToken(_token!);
   }
 
   // ── Save token after login ──
   Future<void> setToken(String token) async {
+    if (token.trim().isEmpty) throw ArgumentError('Token must not be empty');
     _token = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
+    await prefs.setString('token', token);
   }
 
   // ── Clear token on logout ──
@@ -108,6 +137,7 @@ class ApiService {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('token');
   }
 
   // ── Check if logged in ──
@@ -237,10 +267,10 @@ class ApiResponse {
 
     if (body is Map) {
       return ApiResponse(
-        success: body['success'] ?? true,
+        success: statusCode >= 200 && statusCode < 300 && body['success'] != false,
         statusCode: statusCode,
         message: (body['message'] ?? 'Success').toString(),
-        data: body['data'],
+        data: body.containsKey('data') ? body['data'] : body,
       );
     }
 
@@ -270,7 +300,7 @@ class ApiResponse {
     } else if (error.response != null) {
       final body = error.response?.data;
       message =
-          body is Map ? (body['message'] ?? 'Server error') : 'Server error';
+          body is Map ? (body['message'] ?? 'Server error').toString() : 'Server error';
     } else {
       message = 'Something went wrong: ${error.message}';
     }

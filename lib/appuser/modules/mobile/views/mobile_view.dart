@@ -157,7 +157,10 @@ class MobilesView extends GetView<MobilesController> {
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Center(
-                              child: Image.network(operator['logoUrl']),
+                              child: Image.network(
+                                operator['logoUrl'],
+                                errorBuilder: (_, error, stack) => const Icon(Icons.sim_card_outlined),
+                              ),
                             ),
                           ),
                           SizedBox(height: 12.h),
@@ -399,7 +402,10 @@ class MobilesView extends GetView<MobilesController> {
                     ),
                   ],
                 ),
-                child: Image.network(operator['logoUrl']),
+                child: Image.network(
+                  operator['logoUrl'],
+                  errorBuilder: (_, error, stack) => const Icon(Icons.sim_card_outlined),
+                ),
               ),
             ),
           ),

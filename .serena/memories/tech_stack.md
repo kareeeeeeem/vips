@@ -1,0 +1,3 @@
+- Flutter entrypoints: lib/main.dart (consumer), lib/main_merchant.dart (merchant). Android/iOS flavors consumer and merchant.
+- GetX routes/bindings manage controllers. Firebase initializes before runApp; SharedPreferences stores sessions. Shared Dio ApiService coexists with legacy app-specific HTTP clients.
+- lib/vips-backend: Node CommonJS, Express, Mongoose, local MongoDB for isolated tests. Socket.IO shares the API server port.

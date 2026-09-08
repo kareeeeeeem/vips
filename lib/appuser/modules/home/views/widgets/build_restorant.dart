@@ -112,14 +112,6 @@ class BuildRestorant extends GetView<HomeController> {
                   child: BuildRestaurenCard(
                     deal: deal,
                     onTap: () => controller.navigateToHotDeal(deal),
-                    onAddToBasket: () => controller.addToCartServer(
-                      itemId: (deal['_id'] ?? deal['id'])?.toString() ?? '',
-                      itemType: 'Deal',
-                      name: deal['title']?.toString(),
-                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
-                      quantity: 1,
-                      merchantId: deal['merchantId']?.toString(),
-                    ),
                   ),
                 );
               },

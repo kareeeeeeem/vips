@@ -238,7 +238,7 @@ class MerchantSettingsView extends StatelessWidget {
   }
 
   Widget _buildListTile(IconData icon, String title, String subtitle, VoidCallback onTap) {
-    return Container(
+    return Material(
       color: Colors.white,
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 4.h),
@@ -304,7 +304,7 @@ class MerchantSettingsView extends StatelessWidget {
 
   void _showHelpSheet() {
     Get.bottomSheet(
-      Container(
+      Ink(
         padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
         child: Column(

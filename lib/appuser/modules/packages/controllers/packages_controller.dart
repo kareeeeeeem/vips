@@ -184,7 +184,7 @@ class PackagesController extends GetxController {
   final isBuying = false.obs;
 
   Future<void> buyPackage() async {
-    if (selectedPackage.value == null) return;
+    if (selectedPackage.value == null || isBuying.value) return;
     final pkg = selectedPackage.value!;
     if (pkg.tier == PackageTier.basic) {
       // Basic is the free/current tier — tapping "Subscribe Now" on it
@@ -197,6 +197,8 @@ class PackagesController extends GetxController {
     try {
       final response = await ApiService().post('/services/packages/subscribe', {
         'tier': pkg.name.toLowerCase(),
+        'quantity': quantity.value,
+        'expectedTotal': totalPrice,
       });
 
       if (response.success) {

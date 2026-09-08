@@ -629,6 +629,14 @@ class CheckoutView extends GetView<CheckoutController> {
             _buildSummaryRow('Subtotal', controller.subtotal.value),
             SizedBox(height: 12.h),
             _buildSummaryRow('Delivery Fee', controller.deliveryFee.value),
+            if (controller.taxAmount.value > 0) ...[
+              SizedBox(height: 12.h),
+              _buildSummaryRow('Tax', controller.taxAmount.value),
+            ],
+            if (controller.selectedTip.value > 0 || controller.customTip.value > 0) ...[
+              SizedBox(height: 12.h),
+              _buildSummaryRow('Tip', controller.selectedTip.value > 0 ? controller.selectedTip.value : controller.customTip.value),
+            ],
             SizedBox(height: 12.h),
             _buildSummaryRow(
               'Discount',

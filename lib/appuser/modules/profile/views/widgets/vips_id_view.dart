@@ -5,30 +5,69 @@ import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vip/appuser/routes/app_pages.dart';
+import 'package:vip/core/services/api_service.dart';
 import 'package:vip/core/utils/safe_snackbar.dart';
 
 class VipsIdDialog {
+  /// Opens the VIPs ID card.
+  ///
+  /// A full page rather than a dialog: this is held up to a camera across a
+  /// counter, and a card boxed inside a dimmed sheet is smaller and dimmer
+  /// than the screen it is being shown on.
   static void show({
     required Color primaryColor,
     required String userId,
     String userName = 'User',
   }) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-        child: VipsIdContent(
-          primaryColor: primaryColor,
-          userId: userId,
-          userName: userName,
-        ),
+    Get.to<void>(
+      () => VipsIdPage(
+        primaryColor: primaryColor,
+        userId: userId,
+        userName: userName,
       ),
-      barrierDismissible: true,
+      fullscreenDialog: true,
     );
   }
 }
 
-class VipsIdContent extends StatelessWidget {
+class VipsIdPage extends StatelessWidget {
+  final Color primaryColor;
+  final String userId;
+  final String userName;
+
+  const VipsIdPage({
+    super.key,
+    required this.primaryColor,
+    required this.userId,
+    this.userName = 'User',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: const Color(0xFF111827),
+        title: Text('My VIPs ID',
+            style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700)),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          child: VipsIdContent(
+            primaryColor: primaryColor,
+            userId: userId,
+            userName: userName,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class VipsIdContent extends StatefulWidget {
   final Color primaryColor;
   final String userId;
   final String userName;
@@ -38,6 +77,49 @@ class VipsIdContent extends StatelessWidget {
     required this.userId,
     this.userName = 'User',
   });
+
+  @override
+  State<VipsIdContent> createState() => _VipsIdContentState();
+}
+
+class _VipsIdContentState extends State<VipsIdContent> {
+  /// The short id a person can read out. Falls back to the account id only
+  /// while it loads — the long form still resolves, so a scan works either
+  /// way, but it is never what the customer is asked to read.
+  String? _vipsId;
+  bool _loading = true;
+
+  Color get primaryColor => widget.primaryColor;
+  String get userId => widget.userId;
+  String get userName => widget.userName;
+
+  /// What the QR carries, and what the ID field shows.
+  String get _shownId => _vipsId ?? userId;
+  String get _qrData => _vipsId != null ? 'VIPS_ID_$_vipsId' : 'VIPS_USER_$userId';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVipsId();
+  }
+
+  Future<void> _loadVipsId() async {
+    try {
+      final response = await ApiService().get('/user/vips-id');
+      if (!mounted) return;
+      if (response.success && response.data is Map) {
+        setState(() {
+          _vipsId = '${(response.data as Map)['vipsId'] ?? ''}';
+          if (_vipsId!.isEmpty) _vipsId = null;
+          _loading = false;
+        });
+        return;
+      }
+    } catch (e) {
+      debugPrint('vips id load failed: $e');
+    }
+    if (mounted) setState(() => _loading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +203,7 @@ class VipsIdContent extends StatelessWidget {
                       ],
                     ),
                     child: QrImageView(
-                      data: 'VIPS_USER_$userId',
+                      data: _qrData,
                       version: QrVersions.auto,
                       size: 180.w,
                       backgroundColor: Colors.white,
@@ -171,7 +253,7 @@ class VipsIdContent extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'ID: $userId',
+                            _loading ? 'ID: …' : 'ID: $_shownId',
                             style: TextStyle(
                               fontSize: 17.sp,
                               fontWeight: FontWeight.w700,

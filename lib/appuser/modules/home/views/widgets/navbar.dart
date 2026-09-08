@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 
 
 // Version avec FAB Scan au centre - HAUTEUR RÉDUITE
@@ -37,7 +36,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
+    return Builder(builder: (context) {
       final primaryColor = _getPrimaryColor();
       final gradientColors = _getGradientColors();
       return Stack(

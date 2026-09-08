@@ -248,7 +248,7 @@ class StaffManagementView extends GetView<MerchantHRMController> {
   /// was fixed at whatever it was created with.
   void _showStatusSheet(StaffMember staff) {
     Get.bottomSheet(
-      Container(
+      Ink(
         padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 24.w),
         decoration: BoxDecoration(
           color: Colors.white,

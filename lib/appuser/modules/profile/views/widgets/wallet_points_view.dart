@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:vip/appuser/core/util/images.dart';
 import 'package:vip/appuser/modules/profile/views/widgets/redeem_page.dart';
 import 'package:vip/core/services/api_service.dart';
-import 'package:vip/core/utils/safe_snackbar.dart';
 
 class WalletPointsController extends GetxController {
   final selectedTab = 'Redeem History'.obs;
@@ -847,15 +846,7 @@ class WalletPointsView extends StatelessWidget {
   // ==================== ADD CARD ====================
   Widget _buildAddCard() {
     return InkWell(
-      onTap: () {
-        // No real payment processor wired yet — same honest state used in
-        // the Credit / Buy VIPS Credits screen's add-card sheet.
-        safeSnackbar(
-          'Coming Soon',
-          'Adding payment cards will be available in a future update',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      },
+      onTap: () => Get.toNamed('/credit'),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         child: Row(
@@ -870,7 +861,7 @@ class WalletPointsView extends StatelessWidget {
             ),
             SizedBox(width: 12.w),
             Text(
-              'Add New Card',
+              'Top up with a payment provider',
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,

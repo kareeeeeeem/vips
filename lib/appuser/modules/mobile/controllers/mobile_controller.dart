@@ -87,8 +87,8 @@ class MobilesController extends GetxController {
         (status.data['mobileRecharge']?['configured'] == true);
     if (!configured) {
       safeSnackbar(
-        'Coming Soon',
-        'Mobile recharge isn\'t available yet — real provider integration is still pending.',
+        'Service unavailable',
+        status.success ? 'Mobile recharge is currently unavailable.' : status.message,
         snackPosition: SnackPosition.BOTTOM,
       );
       return;

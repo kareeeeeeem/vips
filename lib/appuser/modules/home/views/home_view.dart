@@ -87,17 +87,6 @@ class HomeView extends StatelessWidget {
                                     Get.toNamed(Routes.DEAL_DETAILS, arguments: deal);
                                   },
                                   onViewAll: () => controller.onSeeAllPressed('Best Deals'),
-                                  onAddToBasket: (deal) {
-                                    final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
-                                    controller.addToCartServer(
-                                      itemId: id,
-                                      itemType: 'Deal',
-                                      name: deal['title']?.toString(),
-                                      price: (deal['currentPrice'] is num) ? (deal['currentPrice'] as num).toDouble() : 0,
-                                      quantity: 1,
-                                      merchantId: deal['merchantId']?.toString(),
-                                    );
-                                  },
                                   onToggleFavorite: (deal) {
                                     final id = (deal['_id'] ?? deal['id'])?.toString() ?? '';
                                     controller.toggleFavoriteServer(id, itemType: 'Deal');

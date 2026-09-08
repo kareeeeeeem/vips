@@ -91,16 +91,6 @@ class _FavoritesViewState extends State<FavoritesView> {
               deal: deal,
               isFavorite: true,
               onTap: () => Get.toNamed(Routes.DEAL_DETAILS, arguments: deal),
-              onAddToBasket: () => controller.addToCartServer(
-                itemId: id,
-                itemType: itemType,
-                name: deal['title']?.toString(),
-                price: (deal['currentPrice'] is num)
-                    ? (deal['currentPrice'] as num).toDouble()
-                    : 0,
-                quantity: 1,
-                merchantId: deal['merchantId']?.toString(),
-              ),
               onToggleFavorite: () async {
                 await controller.toggleFavoriteServer(id, itemType: itemType);
                 controller.refreshFavoriteDetails();

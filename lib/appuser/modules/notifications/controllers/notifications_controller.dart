@@ -569,7 +569,9 @@ class NotificationsController extends GetxController
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: EdgeInsets.all(24),
-        child: Column(
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -601,6 +603,7 @@ class NotificationsController extends GetxController
                 )
                 .toList(),
           ],
+          ),
         ),
       ),
       backgroundColor: Colors.transparent,

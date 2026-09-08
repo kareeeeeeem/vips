@@ -586,7 +586,10 @@ class PackagesView extends GetView<PackagesController> {
                                           top: 8.h,
                                         ),
                                         child: Text(
-                                          '/year',
+                                          // Priced by the week; the backend
+                                          // sends the period so the two can
+                                          // never disagree.
+                                          '/week',
                                           style: TextStyle(
                                             fontSize: 14.sp,
                                             fontWeight: FontWeight.w500,
@@ -715,7 +718,7 @@ class PackagesView extends GetView<PackagesController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Years of subscription',
+                'Weeks of subscription',
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: Colors.white.withValues(alpha: 0.8),
@@ -1024,7 +1027,7 @@ class PackagesView extends GetView<PackagesController> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total ($quantity ${quantity > 1 ? "years" : "year"})',
+                      'Total ($quantity ${quantity > 1 ? "weeks" : "week"})',
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: const Color(0xFF6B7280),

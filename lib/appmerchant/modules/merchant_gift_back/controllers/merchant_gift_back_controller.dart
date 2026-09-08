@@ -39,7 +39,7 @@ class MerchantGiftBackController extends GetxController {
   /// Trans ID, phone and address.
   final lastTransaction = Rxn<Map<String, dynamic>>();
 
-  // --- Recipient (resolved via GET /merchant/gift-back/lookup) ---
+  // --- Recipient (resolved via GET /merchant/customers/lookup) ---
   final recipientName = ''.obs;
   final isLookingUp = false.obs;
 
@@ -206,7 +206,7 @@ class MerchantGiftBackController extends GetxController {
   }
 
   // Called by GiftBackScanMeView after it resolves a scanned QR to a real
-  // customer via GET /merchant/gift-back/lookup.
+  // customer via GET /merchant/customers/lookup.
   void applyScannedCustomer({
     required String userId,
     required String phone,
@@ -219,7 +219,7 @@ class MerchantGiftBackController extends GetxController {
   }
 
   /// Resolves the typed phone (or scanned id) to a real customer before the
-  /// merchant confirms. `/merchant/gift-back/lookup` already existed for
+  /// merchant confirms. `/merchant/customers/lookup` already existed for
   /// this; nothing called it for a typed number, so the inquiry screen
   /// confirmed a send to a bare phone string and a wrong/unknown number only
   /// failed after the PIN step.
